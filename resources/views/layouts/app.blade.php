@@ -24,15 +24,15 @@
 </head>
 <body class="bg-gray-50 flex flex-col min-h-screen">
 
-    <nav class="bg-red-600 text-white p-4 shadow-md">
+    <nav class="bg-red-600 text-white p-4 shadow-md relative z-30">
         <div class="container mx-auto flex justify-between items-center">
             <a href="{{ route('home') }}" class="text-2xl font-bold tracking-wider">HASTA</a>
             
             <div class="hidden md:flex space-x-6 text-sm font-medium">
                 <a href="{{ route('home') }}" class="hover:text-gray-200">Home</a>
-                <a href="#" class="hover:text-gray-200">About Us</a>
-                <a href="#" class="hover:text-gray-200">FAQ</a>
-                <a href="#" class="hover:text-gray-200">Contact Us</a>
+                <a href="{{ route('pages.about') }}" class="hover:text-gray-200">About Us</a>
+                <a href="{{ route('pages.faq') }}" class="hover:text-gray-200">FAQ</a>
+                <a href="{{ route('pages.contact') }}" class="hover:text-gray-200">Contact Us</a>
             </div>
 
             <div class="flex items-center space-x-4">
@@ -53,6 +53,31 @@
             </div>
         </div>
     </nav>
+
+    @if(!request()->routeIs('home'))
+    <div class="bg-white shadow-sm relative z-20 border-b border-gray-100">
+        <div class="container mx-auto flex justify-center py-4">
+            <div class="bg-orange-500 rounded-full p-1 px-2 inline-flex space-x-2 shadow-lg">
+                <a href="{{ route('book.create') }}" 
+                   class="{{ request()->routeIs('book.create') ? 'bg-white text-orange-600' : 'text-white hover:bg-orange-600' }} px-4 md:px-6 py-2 rounded-full font-bold transition text-sm md:text-base">
+                   Book a Car
+                </a>
+                <a href="{{ route('book.index') }}" 
+                   class="{{ request()->routeIs('book.index') ? 'bg-white text-orange-600' : 'text-white hover:bg-orange-600' }} px-4 md:px-6 py-2 rounded-full font-bold transition text-sm md:text-base">
+                   My Bookings
+                </a>
+                <a href="{{ route('loyalty.index') }}" 
+                   class="{{ request()->routeIs('loyalty.index') ? 'bg-white text-orange-600' : 'text-white hover:bg-orange-600' }} px-4 md:px-6 py-2 rounded-full font-bold transition text-sm md:text-base">
+                   Loyalty & Rewards
+                </a>
+                <a href="{{ route('finance.index') }}" 
+                   class="{{ request()->routeIs('finance.index') ? 'bg-white text-orange-600' : 'text-white hover:bg-orange-600' }} px-4 md:px-6 py-2 rounded-full font-bold transition text-sm md:text-base">
+                   Finance
+                </a>
+            </div>
+        </div>
+    </div>
+    @endif
 
     <main class="flex-grow">
         @if(session('success'))
@@ -84,7 +109,7 @@
             <div>
                  <h4 class="font-bold mb-2">Company</h4>
                  <ul class="space-y-1">
-                     <li>About Us</li>
+                     <li><a href="{{ route('pages.about') }}" class="hover:text-orange-600">About Us</a></li>
                      <li>Testimonials</li>
                  </ul>
             </div>
@@ -92,7 +117,7 @@
                  <h4 class="font-bold mb-2">Support</h4>
                  <ul class="space-y-1">
                      <li>Account</li>
-                     <li>FAQ</li>
+                     <li><a href="{{ route('pages.faq') }}" class="hover:text-orange-600">FAQ</a></li>
                  </ul>
             </div>
             <div>

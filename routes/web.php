@@ -1,5 +1,8 @@
 <?php
-
+use App\Http\Controllers\BookingController;
+use App\Http\Controllers\LoyaltyController;
+use App\Http\Controllers\FinanceController;
+use App\Http\Controllers\PageController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ProfileController;
@@ -44,3 +47,21 @@ Route::middleware('auth')->group(function () {
     // Logout
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 });
+Route::middleware('auth')->group(function () {
+    // 1. Book a Car (Search Page)
+    Route::get('/book', [BookingController::class, 'create'])->name('book.create');
+    
+    // 2. My Bookings (List Page)
+    Route::get('/my-bookings', [BookingController::class, 'index'])->name('book.index');
+    
+    // 3. Loyalty & Rewards
+    Route::get('/loyalty', [LoyaltyController::class, 'index'])->name('loyalty.index');
+    
+    // 4. Finance (Deposits & Fines)
+    Route::get('/finance', [FinanceController::class, 'index'])->name('finance.index');
+});
+
+// Static Pages (Public)
+Route::get('/about', [PageController::class, 'about'])->name('pages.about');
+Route::get('/faq', [PageController::class, 'faq'])->name('pages.faq');
+Route::get('/contact', [PageController::class, 'contact'])->name('pages.contact');

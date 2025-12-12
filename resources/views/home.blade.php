@@ -2,7 +2,9 @@
 
 @section('content')
 <div class="relative bg-white overflow-hidden">
-    <div class="relative h-96 md:h-[600px]"> <img src="https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?q=80&w=1470&auto=format&fit=crop" 
+    <div class="relative h-96 md:h-[600px]">
+        
+        <img src="https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?q=80&w=1470&auto=format&fit=crop" 
              class="absolute w-full h-full object-cover">
         
         <div class="absolute inset-0 bg-gradient-to-b from-gray-900/60 via-gray-900/20 to-transparent"></div>
@@ -10,10 +12,10 @@
         <div class="relative container mx-auto px-6 h-full flex flex-col justify-center items-center text-white">
             
             <div class="bg-orange-500 rounded-full p-1.5 px-3 inline-flex flex-wrap gap-2 md:gap-4 mb-12 shadow-lg justify-center">
-                <a href="#" class="px-5 py-2 hover:bg-orange-600 rounded-full text-sm md:text-base font-bold transition">Book a Car</a>
-                <a href="#" class="px-5 py-2 hover:bg-orange-600 rounded-full text-sm md:text-base font-bold transition">My Bookings</a>
-                <a href="#" class="px-5 py-2 hover:bg-orange-600 rounded-full text-sm md:text-base font-bold transition">Loyalty & Rewards</a>
-                <a href="#" class="px-5 py-2 hover:bg-orange-600 rounded-full text-sm md:text-base font-bold transition">Finance</a>
+                <a href="{{ route('book.create') }}" class="px-5 py-2 hover:bg-orange-600 rounded-full text-sm md:text-base font-bold transition">Book a Car</a>
+                <a href="{{ route('book.index') }}" class="px-5 py-2 hover:bg-orange-600 rounded-full text-sm md:text-base font-bold transition">My Bookings</a>
+                <a href="{{ route('loyalty.index') }}" class="px-5 py-2 hover:bg-orange-600 rounded-full text-sm md:text-base font-bold transition">Loyalty & Rewards</a>
+                <a href="{{ route('finance.index') }}" class="px-5 py-2 hover:bg-orange-600 rounded-full text-sm md:text-base font-bold transition">Finance</a>
             </div>
 
             <h1 class="text-4xl md:text-6xl font-extrabold mb-4 text-center drop-shadow-xl tracking-wide">
