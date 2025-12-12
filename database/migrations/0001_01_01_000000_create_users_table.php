@@ -13,10 +13,31 @@ return new class extends Migration
     {
         Schema::create('users', function (Blueprint $table) {
             $table->id();
+            
+            // Standard Fields
             $table->string('name');
             $table->string('email')->unique();
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
+
+            // --- HASTA Custom Fields (Based on your Screenshots) ---
+            $table->string('phone')->nullable();               // "Phone No."
+            $table->string('student_staff_id')->nullable();    // "Student/Staff ID"
+            $table->string('ic_passport')->nullable();         // "IC/Passport No."
+            $table->date('dob')->nullable();                   // "Date Of Birth"
+            $table->text('home_address')->nullable();          // "Home Address"
+            $table->text('college_address')->nullable();       // "College Address"
+            $table->string('driving_license_no')->nullable();  // "Driving License No."
+            $table->string('emergency_contact_no')->nullable();// "Emergency Contact No."
+            $table->string('nationality')->default('Malaysia');// "Nationality"
+
+            // Role Management (For the Customer/Staff toggle in Login)
+            $table->enum('role', ['customer', 'staff'])->default('customer');
+
+            // Security Question (For the specific Password Reset screen)
+            $table->string('security_question')->nullable();
+            $table->string('security_answer')->nullable();
+
             $table->rememberToken();
             $table->timestamps();
         });
