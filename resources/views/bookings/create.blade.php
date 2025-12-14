@@ -20,7 +20,7 @@
                         <div class="mt-3 ml-2">
                             <label class="inline-flex items-center cursor-pointer group">
                                 <input type="checkbox" class="form-checkbox text-orange-600 rounded focus:ring-orange-500 w-4 h-4">
-                                <span class="ml-2 text-sm text-gray-700 font-semibold group-hover:text-orange-700 transition">Return at</span>
+                                <span class="ml-2 text-sm text-gray-700 font-semibold group-hover:text-orange-700 transition">Return at UTM </span>
                             </label>
                         </div>
                     </div>
