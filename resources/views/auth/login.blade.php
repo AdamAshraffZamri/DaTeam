@@ -9,7 +9,7 @@
         
         <div class="text-center mb-6">
             <div class="inline-block bg-white p-2 px-4 rounded">
-                <span class="text-orange-600 font-bold text-2xl tracking-widest">HASTA</span>
+                <span class="text-orange-600 font-bold text-2xl tracking-widest">HASTE</span>
             </div>
         </div>
 
