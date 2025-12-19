@@ -12,42 +12,58 @@
             backdrop-filter: blur(5px);
             border-radius: 8px;
         }
-        .form-input-transparent {
-            background: transparent;
-            border: 1px solid rgba(255, 255, 255, 0.6);
-            color: white;
+        /* Custom scrollbar for a cleaner look */
+        ::-webkit-scrollbar {
+            width: 8px;
         }
-        .form-input-transparent::placeholder {
-            color: rgba(255, 255, 255, 0.7);
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1; 
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8; 
         }
     </style>
 </head>
-<body class="bg-gray-50 flex flex-col min-h-screen">
+<body class="bg-gray-50 flex flex-col min-h-screen font-sans antialiased">
 
-    <nav class="bg-red-600 text-white p-4 shadow-md relative z-30">
+    <nav class="bg-gradient-to-r from-[#ea580c] to-red-600 text-white p-4 shadow-lg relative z-30">
         <div class="container mx-auto flex justify-between items-center">
-            <a href="{{ route('home') }}" class="text-2xl font-bold tracking-wider">HASTA</a>
             
-            <div class="hidden md:flex space-x-6 text-sm font-medium">
-                <a href="{{ route('home') }}" class="hover:text-gray-200">Home</a>
-                <a href="{{ route('pages.about') }}" class="hover:text-gray-200">About Us</a>
-                <a href="{{ route('pages.faq') }}" class="hover:text-gray-200">FAQ</a>
-                <a href="{{ route('pages.contact') }}" class="hover:text-gray-200">Contact Us</a>
+            <a href="{{ route('home') }}" class="flex items-center">
+                <img src="{{ asset('hasta.jpeg') }}" alt="HASTA Logo" class="h-10 w-auto object-contain drop-shadow-sm hover:scale-105 transition transform">
+            </a>
+            <div class="hidden md:flex space-x-8 text-sm font-bold tracking-wide">
+                <a href="{{ route('home') }}" class="hover:text-orange-100 transition border-b-2 border-transparent hover:border-white pb-1">Home</a>
+                <a href="{{ route('pages.about') }}" class="hover:text-orange-100 transition border-b-2 border-transparent hover:border-white pb-1">About Us</a>
+                <a href="{{ route('pages.faq') }}" class="hover:text-orange-100 transition border-b-2 border-transparent hover:border-white pb-1">FAQ</a>
+                <a href="{{ route('pages.contact') }}" class="hover:text-orange-100 transition border-b-2 border-transparent hover:border-white pb-1">Contact Us</a>
             </div>
 
-            <div class="flex items-center space-x-4">
-                <i class="fas fa-bell text-xl cursor-pointer"></i>
+            <div class="flex items-center space-x-5">
+                <div class="relative cursor-pointer hover:scale-110 transition">
+                    <i class="fas fa-bell text-xl"></i>
+                    <span class="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full border border-white">2</span>
+                </div>
+                
                 @auth
-                    <a href="{{ route('profile.edit') }}">
-                        <i class="fas fa-user-circle text-2xl cursor-pointer"></i>
-                    </a>
-                    <form action="{{ route('logout') }}" method="POST" class="inline">
-                        @csrf
-                        <button type="submit" class="text-xs ml-2 hover:underline">Logout</button>
-                    </form>
+                    <div class="flex items-center gap-3 bg-white/10 px-3 py-1.5 rounded-full border border-white/20 backdrop-blur-md">
+                        <a href="{{ route('profile.edit') }}" class="flex items-center gap-2">
+                            <i class="fas fa-user-circle text-2xl"></i>
+                            <span class="text-xs font-bold hidden sm:block">{{ Auth::user()->name }}</span>
+                        </a>
+                        <div class="w-px h-4 bg-white/30"></div>
+                        <form action="{{ route('logout') }}" method="POST" class="inline">
+                            @csrf
+                            <button type="submit" class="text-xs font-bold hover:text-orange-200 transition">Logout</button>
+                        </form>
+                    </div>
                 @else
-                    <a href="{{ route('login') }}">
-                        <i class="far fa-user-circle text-2xl cursor-pointer"></i>
+                    <a href="{{ route('login') }}" class="bg-white text-orange-600 px-5 py-2 rounded-full font-bold text-sm hover:bg-orange-50 transition shadow-md">
+                        Login
                     </a>
                 @endauth
             </div>
@@ -55,25 +71,31 @@
     </nav>
 
     @if(!request()->routeIs('home'))
-    <div class="bg-white shadow-sm relative z-20 border-b border-gray-100">
+    <div class="bg-white shadow-sm relative z-20 border-b border-gray-100 sticky top-0">
         <div class="container mx-auto flex justify-center py-4">
-            <div class="bg-orange-500 rounded-full p-1 px-2 inline-flex space-x-2 shadow-lg">
+            
+            <div class="bg-gradient-to-r from-[#ea580c] to-red-600 rounded-full p-1.5 inline-flex shadow-xl shadow-orange-500/20">
+                
                 <a href="{{ route('book.create') }}" 
-                   class="{{ request()->routeIs('book.create') ? 'bg-white text-orange-600' : 'text-white hover:bg-orange-600' }} px-4 md:px-6 py-2 rounded-full font-bold transition text-sm md:text-base">
-                   Book a Car
+                   class="{{ request()->routeIs('book.create') ? 'bg-white text-[#ea580c] shadow-md' : 'text-white hover:bg-white/20' }} px-6 py-2.5 rounded-full font-bold transition-all duration-300 text-sm md:text-base flex items-center gap-2">
+                   <i class="fas fa-car"></i> Book a Car
                 </a>
+                
                 <a href="{{ route('book.index') }}" 
-                   class="{{ request()->routeIs('book.index') ? 'bg-white text-orange-600' : 'text-white hover:bg-orange-600' }} px-4 md:px-6 py-2 rounded-full font-bold transition text-sm md:text-base">
-                   My Bookings
+                   class="{{ request()->routeIs('book.index') ? 'bg-white text-[#ea580c] shadow-md' : 'text-white hover:bg-white/20' }} px-6 py-2.5 rounded-full font-bold transition-all duration-300 text-sm md:text-base flex items-center gap-2">
+                   <i class="fas fa-list"></i> My Bookings
                 </a>
+                
                 <a href="{{ route('loyalty.index') }}" 
-                   class="{{ request()->routeIs('loyalty.index') ? 'bg-white text-orange-600' : 'text-white hover:bg-orange-600' }} px-4 md:px-6 py-2 rounded-full font-bold transition text-sm md:text-base">
-                   Loyalty & Rewards
+                   class="{{ request()->routeIs('loyalty.index') ? 'bg-white text-[#ea580c] shadow-md' : 'text-white hover:bg-white/20' }} px-6 py-2.5 rounded-full font-bold transition-all duration-300 text-sm md:text-base flex items-center gap-2">
+                   <i class="fas fa-gift"></i> Loyalty
                 </a>
+                
                 <a href="{{ route('finance.index') }}" 
-                   class="{{ request()->routeIs('finance.index') ? 'bg-white text-orange-600' : 'text-white hover:bg-orange-600' }} px-4 md:px-6 py-2 rounded-full font-bold transition text-sm md:text-base">
-                   Finance
+                   class="{{ request()->routeIs('finance.index') ? 'bg-white text-[#ea580c] shadow-md' : 'text-white hover:bg-white/20' }} px-6 py-2.5 rounded-full font-bold transition-all duration-300 text-sm md:text-base flex items-center gap-2">
+                   <i class="fas fa-wallet"></i> Finance
                 </a>
+
             </div>
         </div>
     </div>
@@ -81,48 +103,84 @@
 
     <main class="flex-grow">
         @if(session('success'))
-            <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative text-center" role="alert">
-                <span class="block sm:inline">{{ session('success') }}</span>
+            <div class="container mx-auto px-4 mt-4">
+                <div class="bg-green-50 border-l-4 border-green-500 text-green-700 p-4 rounded-r shadow-sm flex items-center" role="alert">
+                    <i class="fas fa-check-circle text-xl mr-3"></i>
+                    <span class="font-medium">{{ session('success') }}</span>
+                </div>
             </div>
         @endif
         
         @if($errors->any())
-            <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative text-center">
-                <ul>
-                    @foreach ($errors->all() as $error)
-                         <li>{{ $error }}</li>
-                    @endforeach
-                </ul>
+            <div class="container mx-auto px-4 mt-4">
+                <div class="bg-red-50 border-l-4 border-red-500 text-red-700 p-4 rounded-r shadow-sm">
+                    <ul class="list-disc list-inside">
+                        @foreach ($errors->all() as $error)
+                             <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
+                </div>
             </div>
         @endif
 
         @yield('content')
     </main>
 
-    <footer class="bg-orange-100 text-gray-800 p-8 text-xs">
-        <div class="container mx-auto grid grid-cols-1 md:grid-cols-4 gap-8">
-            <div>
-                <h3 class="font-bold text-lg text-orange-600 mb-2">HASTA</h3>
-                <p>Hasta Travel & Tours Sdn. Bhd.</p>
-                <p>SSM: 1234567 / 20240100987</p>
+    <footer class="bg-gray-900 text-white pt-12 pb-8 text-sm">
+        <div class="container mx-auto px-6">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-12 border-b border-gray-800 pb-12">
+                
+                <div class="space-y-4">
+                    <img src="{{ asset('hasta.jpeg') }}" alt="HASTA Logo" class="h-12 w-auto object-contain mb-4">
+                    <p class="text-gray-400 leading-relaxed">Your premium car rental partner for university life. Affordable, reliable, and convenient.</p>
+                    <div class="flex space-x-4 pt-2">
+                        <a href="#" class="w-8 h-8 rounded-full bg-gray-800 flex items-center justify-center hover:bg-[#ea580c] transition"><i class="fab fa-facebook-f"></i></a>
+                        <a href="#" class="w-8 h-8 rounded-full bg-gray-800 flex items-center justify-center hover:bg-[#ea580c] transition"><i class="fab fa-instagram"></i></a>
+                        <a href="#" class="w-8 h-8 rounded-full bg-gray-800 flex items-center justify-center hover:bg-[#ea580c] transition"><i class="fab fa-twitter"></i></a>
+                    </div>
+                </div>
+
+                <div>
+                     <h4 class="font-bold text-lg mb-4 text-white">Company</h4>
+                     <ul class="space-y-3 text-gray-400">
+                         <li><a href="{{ route('pages.about') }}" class="hover:text-[#ea580c] transition">About Us</a></li>
+                         <li><a href="#" class="hover:text-[#ea580c] transition">Careers</a></li>
+                         <li><a href="#" class="hover:text-[#ea580c] transition">Privacy Policy</a></li>
+                         <li><a href="#" class="hover:text-[#ea580c] transition">Terms of Service</a></li>
+                     </ul>
+                </div>
+
+                <div>
+                     <h4 class="font-bold text-lg mb-4 text-white">Support</h4>
+                     <ul class="space-y-3 text-gray-400">
+                         <li><a href="#" class="hover:text-[#ea580c] transition">My Account</a></li>
+                         <li><a href="{{ route('pages.faq') }}" class="hover:text-[#ea580c] transition">Help Center</a></li>
+                         <li><a href="#" class="hover:text-[#ea580c] transition">Report a Bug</a></li>
+                     </ul>
+                </div>
+
+                <div>
+                    <h4 class="font-bold text-lg mb-4 text-white">Contact Us</h4>
+                    <ul class="space-y-4 text-gray-400">
+                        <li class="flex items-start gap-3">
+                            <i class="fas fa-map-marker-alt mt-1 text-[#ea580c]"></i>
+                            <span>UTM Skudai,<br>Johor Bahru, Malaysia</span>
+                        </li>
+                        <li class="flex items-center gap-3">
+                            <i class="fas fa-phone text-[#ea580c]"></i>
+                            <span>+60 11-1090 0700</span>
+                        </li>
+                        <li class="flex items-center gap-3">
+                            <i class="fas fa-envelope text-[#ea580c]"></i>
+                            <span>support@hasta.com</span>
+                        </li>
+                    </ul>
+                </div>
             </div>
-            <div>
-                 <h4 class="font-bold mb-2">Company</h4>
-                 <ul class="space-y-1">
-                     <li><a href="{{ route('pages.about') }}" class="hover:text-orange-600">About Us</a></li>
-                     <li>Testimonials</li>
-                 </ul>
-            </div>
-             <div>
-                 <h4 class="font-bold mb-2">Support</h4>
-                 <ul class="space-y-1">
-                     <li>Account</li>
-                     <li><a href="{{ route('pages.faq') }}" class="hover:text-orange-600">FAQ</a></li>
-                 </ul>
-            </div>
-            <div>
-                <h4 class="font-bold mb-2">Need any help?</h4>
-                <p class="text-orange-600 font-bold">+60 11-1090 0700</p>
+            
+            <div class="pt-8 text-center text-gray-500 flex flex-col md:flex-row justify-between items-center">
+                <p>&copy; {{ date('Y') }} Hasta Travel & Tours Sdn. Bhd. All rights reserved.</p>
+                <p class="mt-2 md:mt-0">SSM: 20240100987</p>
             </div>
         </div>
     </footer>

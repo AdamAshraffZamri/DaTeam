@@ -9,28 +9,40 @@ class Booking extends Model
 {
     use HasFactory;
 
-    protected $primaryKey = 'booking_id';
+    protected $table = 'bookings';
+    protected $primaryKey = 'bookingID'; // Matches your ERD
 
+    // THIS IS THE MISSING PART CAUSING YOUR ERROR
     protected $fillable = [
-        'customer_id',
-        'vehicle_id',
-        'booking_date',
-        'start_date',
-        'end_date',
-        'pickup_location',
-        'return_location',
-        'total_cost',
-        'booking_status',
-        'booking_type',
+        'customerID', 
+        'vehicleID', 
+        'staffID', 
+        'bookingDate', 
+        'originalDate', 
+        'bookingTime',
+        'returnDate', 
+        'returnTime', 
+        'actualReturnDate', 
+        'actualReturnTime',
+        'pickupLocation', 
+        'returnLocation',
+        'totalCost', 
+        'aggreementDate', 
+        'aggreementLink', 
+        'bookingStatus', 
+        'bookingType'
     ];
 
-    public function vehicle()
-    {
-        return $this->belongsTo(Vehicle::class, 'vehicle_id');
+    // Relationships
+    public function customer() {
+        return $this->belongsTo(Customer::class, 'customerID', 'customerID');
     }
 
-    public function user()
-    {
-        return $this->belongsTo(User::class, 'customer_id');
+    public function vehicle() {
+        return $this->belongsTo(Vehicle::class, 'vehicleID', 'VehicleID'); 
+    }
+
+    public function payment() {
+        return $this->hasOne(Payment::class, 'bookingID', 'bookingID');
     }
 }

@@ -9,41 +9,53 @@ use Illuminate\Validation\Rule;
 
 class ProfileController extends Controller
 {
-    // Show the Edit Profile Form
+    // Show the profile edit form
     public function edit()
     {
-        return view('profile.edit', ['user' => Auth::user()]);
+        // Get the currently logged-in customer
+        $user = Auth::user(); 
+        
+        // Pass it to the view (view expects $user variable)
+        return view('profile.edit', compact('user'));
     }
 
-    // Update the Profile Data
+    // Update the profile
     public function update(Request $request)
     {
         $user = Auth::user();
 
-        // Validate all fields matching your screenshot
+        // 1. Validate Inputs (Check 'customers' table, not 'users')
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'student_staff_id' => 'nullable|string|max:50',
-            'dob' => 'nullable|date',
-            'email' => ['required', 'email', Rule::unique('users')->ignore($user->id)],
-            'ic_passport' => 'nullable|string|max:20',
-            'phone' => 'nullable|string|max:20',
-            'home_address' => 'nullable|string',
-            'college_address' => 'nullable|string',
+            'email' => [
+                'required', 
+                'email', 
+                'max:255', 
+                Rule::unique('customers', 'email')->ignore($user->customerID, 'customerID') // Ignore current user
+            ],
+            'phone' => 'required|string|max:20',
+            'home_address' => 'nullable|string|max:255',
+            'college_address' => 'nullable|string|max:255',
             'driving_license_no' => 'nullable|string|max:50',
-            'emergency_contact_no' => 'nullable|string|max:20',
-            'nationality' => 'nullable|string',
-            // 'faculty' can be added here if you add it to your database
+            
+            // Password is optional (only validate if provided)
+            'password' => 'nullable|string|min:6', 
         ]);
 
-        // Save the updates
-        $user->update($validated);
+        // 2. Update Data (Map Form Inputs -> DB Columns)
+        $user->fullName = $request->name;
+        $user->email = $request->email;
+        $user->phoneNo = $request->phone;
+        $user->homeAddress = $request->home_address;
+        $user->collegeAddress = $request->college_address;
+        $user->drivingNo = $request->driving_license_no;
 
-        // Optional: Update Password if provided
+        // 3. Handle Password Update (Only if filled)
         if ($request->filled('password')) {
-            $request->validate(['password' => 'confirmed|min:6']);
-            $user->update(['password' => Hash::make($request->password)]);
+            $user->password = Hash::make($request->password);
         }
+
+        $user->save();
 
         return redirect()->route('profile.edit')->with('success', 'Profile updated successfully.');
     }

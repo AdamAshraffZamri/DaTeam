@@ -1,70 +1,78 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="relative min-h-screen bg-cover bg-center" style="background-image: url('https://images.unsplash.com/photo-1568605114967-8130f3a36994?q=80&w=1470&auto=format&fit=crop');">
+<div class="relative min-h-[90vh] flex flex-col justify-center bg-cover bg-center" style="background-image: url('https://images.unsplash.com/photo-1568605114967-8130f3a36994?q=80&w=1470&auto=format&fit=crop');">
     
-    <div class="absolute inset-0 bg-white/30 backdrop-blur-sm"></div>
+    <div class="absolute inset-0 bg-black/40 backdrop-blur-[2px]"></div>
 
-    <div class="relative z-10 container mx-auto px-4 py-20">
+    <div class="relative z-10 container mx-auto px-4 mt-10">
         
-        <div class="bg-orange-100/90 backdrop-blur-md rounded-3xl p-8 shadow-2xl max-w-6xl mx-auto mt-10 border border-white/50">
-            
+        <div class="flex justify-center mb-8">
+            <div class="bg-white/10 backdrop-blur-md border border-white/20 p-1.5 rounded-full inline-flex space-x-1">
+                <a href="{{ route('book.create') }}" class="px-8 py-3 rounded-full bg-orange-600 text-white font-bold shadow-lg transform scale-105 transition">Book a Car</a>
+                <a href="{{ route('book.index') }}" class="px-8 py-3 rounded-full text-white font-bold hover:bg-white/10 transition">My Bookings</a>
+                <a href="#" class="px-8 py-3 rounded-full text-white font-bold hover:bg-white/10 transition">Loyalty & Rewards</a>
+                <a href="#" class="px-8 py-3 rounded-full text-white font-bold hover:bg-white/10 transition">Finance</a>
+            </div>
+        </div>
+
+        <div class="text-center mb-12">
+            <h1 class="text-5xl font-extrabold text-white drop-shadow-lg mb-2">Drive your adventure.</h1>
+            <p class="text-xl text-gray-200 font-medium drop-shadow-md">Premium car rental services for UTM Students & Staff.</p>
+        </div>
+
+        <div class="max-w-7xl mx-auto">
             <form action="{{ route('book.search') }}" method="GET">
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-6 items-start">
+                <div class="bg-white rounded-[2rem] shadow-2xl p-4 md:flex md:items-center md:space-x-4 border border-gray-100">
                     
-                    <div class="lg:col-span-5 grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
-                        
-                        <div class="relative">
-                            <div class="bg-white rounded-full flex items-center px-5 py-4 shadow-sm border border-gray-200 focus-within:ring-2 ring-orange-400 transition-all">
-                                <i class="fas fa-map-marker-alt text-green-600 mr-3 text-lg"></i>
-                                <input type="text" 
-                                       name="pickup_location" 
-                                       value="Student Mall, UTM" 
-                                       placeholder="Pickup Location" 
-                                       class="bg-transparent w-full outline-none text-gray-700 placeholder-gray-400 font-medium">
+                    <div class="flex-1 relative group px-4 py-2 hover:bg-gray-50 rounded-2xl transition border border-transparent hover:border-gray-200">
+                        <div class="flex items-center space-x-3">
+                            <div class="bg-green-100 p-2 rounded-full text-green-600"><i class="fas fa-map-marker-alt"></i></div>
+                            <div class="w-full">
+                                <label class="block text-xs font-bold text-gray-500 uppercase tracking-wide">Pickup Point</label>
+                                <input type="text" name="pickup_location" value="Student Mall, UTM" class="w-full bg-transparent border-none p-0 text-gray-800 font-bold text-sm focus:ring-0 truncate">
                             </div>
-                            <p class="text-xs font-bold text-gray-600 ml-4 mt-1">Pickup Point</p>
                         </div>
+                    </div>
 
-                        <div class="relative">
-                            <div class="bg-white rounded-full flex items-center px-5 py-4 shadow-sm border border-gray-200 focus-within:ring-2 ring-orange-400 transition-all">
-                                <i class="fas fa-flag-checkered text-red-600 mr-3 text-lg"></i>
-                                <input type="text" 
-                                       name="return_location" 
-                                       value="Student Mall, UTM" 
-                                       placeholder="Return Location" 
-                                       class="bg-transparent w-full outline-none text-gray-700 placeholder-gray-400 font-medium">
+                    <div class="hidden md:block w-px h-12 bg-gray-200"></div>
+
+                    <div class="flex-1 relative group px-4 py-2 hover:bg-gray-50 rounded-2xl transition border border-transparent hover:border-gray-200">
+                        <div class="flex items-center space-x-3">
+                            <div class="bg-red-100 p-2 rounded-full text-red-600"><i class="fas fa-flag-checkered"></i></div>
+                            <div class="w-full">
+                                <label class="block text-xs font-bold text-gray-500 uppercase tracking-wide">Return Point</label>
+                                <input type="text" name="return_location" value="Student Mall, UTM" class="w-full bg-transparent border-none p-0 text-gray-800 font-bold text-sm focus:ring-0 truncate">
                             </div>
-                            <p class="text-xs font-bold text-gray-600 ml-4 mt-1">Return Point</p>
-                        </div>
-
-                    </div>
-
-                    <div class="md:col-span-3 text-center">
-                        <label class="block text-gray-900 font-bold mb-1 text-lg drop-shadow-sm">Pickup:</label>
-                        <div class="flex space-x-2 justify-center">
-                            <input type="date" name="pickup_date" required class="bg-gray-200/80 rounded-lg px-3 py-2 w-full text-center outline-none border border-gray-300 focus:border-orange-500">
-                            <input type="time" name="pickup_time" class="bg-gray-200/80 rounded-lg px-3 py-2 w-full text-center outline-none border border-gray-300 focus:border-orange-500">
                         </div>
                     </div>
 
-                    <div class="md:col-span-3 text-center">
-                        <label class="block text-gray-900 font-bold mb-1 text-lg drop-shadow-sm">Return:</label>
-                        <div class="flex space-x-2 justify-center">
-                            <input type="date" name="return_date" required class="bg-gray-200/80 rounded-lg px-3 py-2 w-full text-center outline-none border border-gray-300 focus:border-orange-500">
-                            <input type="time" name="return_time" class="bg-gray-200/80 rounded-lg px-3 py-2 w-full text-center outline-none border border-gray-300 focus:border-orange-500">
+                    <div class="hidden md:block w-px h-12 bg-gray-200"></div>
+
+                    <div class="flex-1 relative group px-4 py-2 hover:bg-gray-50 rounded-2xl transition border border-transparent hover:border-gray-200">
+                        <label class="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">Pickup Date</label>
+                        <div class="flex space-x-2">
+                            <input type="date" name="pickup_date" required class="w-full bg-gray-100 rounded-lg border-none py-1 px-2 text-gray-800 text-sm font-bold focus:ring-2 focus:ring-orange-500">
+                            <input type="time" name="pickup_time" class="w-24 bg-gray-100 rounded-lg border-none py-1 px-2 text-gray-800 text-sm font-bold focus:ring-2 focus:ring-orange-500">
                         </div>
                     </div>
 
-                    <div class="lg:col-span-1 flex justify-center lg:justify-end mt-1 lg:mt-9">
-                        <button type="submit" class="w-full lg:w-auto bg-red-600 text-white rounded-xl p-4 shadow-lg hover:bg-red-700 hover:shadow-xl transition transform hover:scale-105 active:scale-95 flex items-center justify-center">
-                            <i class="fas fa-search text-xl"></i>
-                            <span class="ml-2 font-bold lg:hidden">Search</span> 
+                    <div class="flex-1 relative group px-4 py-2 hover:bg-gray-50 rounded-2xl transition border border-transparent hover:border-gray-200">
+                        <label class="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">Return Date</label>
+                        <div class="flex space-x-2">
+                            <input type="date" name="return_date" required class="w-full bg-gray-100 rounded-lg border-none py-1 px-2 text-gray-800 text-sm font-bold focus:ring-2 focus:ring-orange-500">
+                            <input type="time" name="return_time" class="w-24 bg-gray-100 rounded-lg border-none py-1 px-2 text-gray-800 text-sm font-bold focus:ring-2 focus:ring-orange-500">
+                        </div>
+                    </div>
+
+                    <div class="pl-2">
+                        <button type="submit" class="w-full md:w-16 md:h-16 bg-gradient-to-br from-red-600 to-orange-500 rounded-2xl flex items-center justify-center text-white shadow-xl hover:shadow-orange-500/40 hover:scale-105 transition-all duration-300 group">
+                            <i class="fas fa-search text-xl group-hover:rotate-90 transition-transform duration-300"></i>
                         </button>
                     </div>
+
                 </div>
             </form>
-
         </div>
     </div>
 </div>
