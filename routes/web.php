@@ -5,9 +5,10 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\BookingController;
-use App\Http\Controllers\LoyaltyController;
-use App\Http\Controllers\FinanceController;
-use App\Http\Controllers\PageController;
+use App\Http\Controllers\StaffBookingController;
+
+// Note: I removed PageController, LoyaltyController, etc. imports 
+// because if those files don't exist, the whole app crashes.
 
 /*
 |--------------------------------------------------------------------------
@@ -26,17 +27,19 @@ Route::post('/login', [AuthController::class, 'login']);
 Route::get('/register', [AuthController::class, 'showRegister'])->name('register');
 Route::post('/register', [AuthController::class, 'register']);
 
-// Password Reset
-Route::get('/password/reset', [AuthController::class, 'showReset'])->name('password.reset.custom');
-Route::post('/password/reset', [AuthController::class, 'resetPassword']);
+// --- Password Reset Routes (Email Flow) ---
+Route::get('/forgot-password', [AuthController::class, 'showLinkRequestForm'])->name('password.request');
+Route::post('/forgot-password', [AuthController::class, 'sendResetLinkEmail'])->name('password.email');
+Route::get('/reset-password/{token}', [AuthController::class, 'showResetForm'])->name('password.reset');
+Route::post('/reset-password', [AuthController::class, 'reset'])->name('password.update');
 
-// Static Pages
-Route::get('/about', [PageController::class, 'about'])->name('pages.about');
-Route::get('/faq', [PageController::class, 'faq'])->name('pages.faq');
-Route::get('/contact', [PageController::class, 'contact'])->name('pages.contact');
+// --- Placeholder Static Pages (Fixes Navbar Errors) ---
+// These return simple text/views so clicking the links doesn't crash the app
+Route::get('/about', function() { return view('pages.about'); })->name('pages.about');
+Route::get('/faq', function() { return view('pages.faq'); })->name('pages.faq');
+Route::get('/contact', function() { return view('pages.contact'); })->name('pages.contact');
 
-
-// --- Protected Routes (Require Login) ---
+// --- Protected Customer Routes (Require Login) ---
 Route::middleware('auth')->group(function () {
     
     // 1. Profile Management
@@ -44,15 +47,37 @@ Route::middleware('auth')->group(function () {
     Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
-    // 2. Booking Process (The full flow)
-    Route::get('/book', [BookingController::class, 'create'])->name('book.create'); // Step 1: Search Form
-    Route::get('/book/search', [BookingController::class, 'search'])->name('book.search'); // Step 2: Results List
-    Route::get('/book/details/{id}', [BookingController::class, 'show'])->name('book.show'); // Step 3: Details
-    Route::get('/book/payment/{id}', [BookingController::class, 'payment'])->name('book.payment'); // Step 4: Payment
-    Route::get('/book/payment/submit/{id}', [BookingController::class, 'submitPayment'])->name('book.payment.submit'); // Step 5: Submit
-
-    // 3. Dashboard Pages
+    // 2. Booking Process (Customer Flow)
+    Route::get('/book', [BookingController::class, 'create'])->name('book.create'); 
+    Route::get('/book/search', [BookingController::class, 'search'])->name('book.search'); 
+    Route::get('/book/details/{id}', [BookingController::class, 'show'])->name('book.show'); 
+    Route::get('/book/payment/{id}', [BookingController::class, 'payment'])->name('book.payment'); 
+    Route::post('/book/payment/submit/{id}', [BookingController::class, 'submitPayment'])->name('book.payment.submit');
+    
+    // 3. Customer Dashboard Pages
+    // REMOVED DUPLICATE /my-bookings line here
     Route::get('/my-bookings', [BookingController::class, 'index'])->name('book.index');
-    Route::get('/loyalty', [LoyaltyController::class, 'index'])->name('loyalty.index');
-    Route::get('/finance', [FinanceController::class, 'index'])->name('finance.index');
+    Route::post('/my-bookings/cancel/{id}', [BookingController::class, 'cancel'])->name('book.cancel');
+
+    // Placeholders for Loyalty/Finance (Prevents Crash)
+    Route::get('/loyalty', function() { return "Loyalty Program Coming Soon"; })->name('loyalty.index');
+    Route::get('/finance', function() { return "Finance Dashboard Coming Soon"; })->name('finance.index');
+
+    // View Digital Agreement
+    Route::get('/book/agreement/{id}', [BookingController::class, 'showAgreement'])->name('book.agreement');
+});
+
+
+// --- NEW: Staff / Admin Routes (Require Login + Staff Access) ---
+Route::prefix('staff')->middleware(['auth:staff'])->group(function () {
+    
+    // Staff Dashboard
+    Route::get('/dashboard', [StaffBookingController::class, 'dashboard'])->name('staff.dashboard');
+
+    // Booking Management
+    Route::get('/bookings', [StaffBookingController::class, 'index'])->name('staff.bookings.index');
+    
+    // Actions (Approve / Reject)
+    Route::post('/bookings/{id}/approve', [StaffBookingController::class, 'approve'])->name('staff.bookings.approve');
+    Route::post('/bookings/{id}/finalize', [StaffBookingController::class, 'finalize'])->name('staff.bookings.finalize');
 });

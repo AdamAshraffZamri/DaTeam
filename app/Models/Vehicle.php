@@ -9,27 +9,28 @@ class Vehicle extends Model
 {
     use HasFactory;
 
-    protected $primaryKey = 'vehicle_id'; // Match your DB schema
-    
+    // 1. Define Table Name (Optional if matches plural, but good for safety)
+    protected $table = 'vehicles';
+
+    // 2. IMPORTANT: Define Custom Primary Key
+    protected $primaryKey = 'VehicleID'; // Case sensitive matching your DB
+
+    // 3. Define Fillable Columns (Matching your Migration)
     protected $fillable = [
-        'plate_no', 'model', 'type', 'price_hour', 
-        'availability', 'mileage', 'fuel_pickup', 'base_deposit'
+        'plateNo', 
+        'model', 
+        'type', 
+        'priceHour', 
+        'availability', 
+        'mileage', 
+        'fuelType', 
+        'baseDepo',
+        'image' // Add this if you plan to use images later
     ];
 
-    // Helper to get daily price (Price per hour * 24)
-    public function getPricePerDayAttribute()
+    // 4. Relationships (Optional, but good to have ready)
+    public function bookings()
     {
-        return $this->price_hour * 24;
-    }
-
-    // Helper to assign images based on model name
-    public function getImageAttribute()
-    {
-        if (str_contains($this->model, 'Axia')) {
-            return 'https://perodua.com.my/assets/images/cars/axia/colors/white.png';
-        } elseif (str_contains($this->model, 'Myvi')) {
-            return 'https://perodua.com.my/assets/images/cars/myvi/colors/red.png';
-        }
-        return 'https://perodua.com.my/assets/images/cars/bezza/colors/brown.png';
+        return $this->hasMany(Booking::class, 'vehicleID', 'VehicleID');
     }
 }

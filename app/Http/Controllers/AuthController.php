@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\User;
+use App\Models\Customer;
+use App\Models\Staff;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Password;
 
 class AuthController extends Controller
 {
@@ -17,31 +19,35 @@ class AuthController extends Controller
 
     public function login(Request $request)
     {
-        // Validate inputs
+        // 1. Validate Inputs
         $credentials = $request->validate([
             'email' => 'required|email',
             'password' => 'required',
         ]);
 
-        // Attempt to log the user in
-        if (Auth::attempt($credentials)) {
+        // 2. Determine Guard (Customer vs Staff)
+        // This comes from the hidden input <input type="hidden" name="login_type" ...>
+        $guard = $request->input('login_type') === 'staff' ? 'staff' : 'web';
+
+        // 3. Attempt Login
+        if (Auth::guard($guard)->attempt($credentials)) {
             $request->session()->regenerate();
 
-            // Optional: Redirect based on role (Customer vs Staff)
-            if (auth()->user()->role === 'staff') {
-                return redirect()->route('home'); // or a staff dashboard
+            // Redirect based on role
+            if ($guard === 'staff') {
+                return redirect()->route('staff.dashboard');
             }
 
-            return redirect()->intended(route('home'));
+            return redirect()->route('book.create'); // Redirect Customer
         }
 
-        // Login failed
+        // 4. Login Failed
         return back()->withErrors([
             'email' => 'The provided credentials do not match our records.',
         ])->onlyInput('email');
     }
 
-    // --- REGISTRATION ---
+    // --- REGISTRATION (Customers Only) ---
     public function showRegister()
     {
         return view('auth.register');
@@ -49,71 +55,106 @@ class AuthController extends Controller
 
     public function register(Request $request)
     {
+        // 1. Validate (Check 'customers' table for unique email)
         $request->validate([
-            'email' => 'required|email|unique:users',
-            'password' => 'required|confirmed|min:6', // expects 'password_confirmation' field in form
+            'email' => 'required|email|unique:customers,email',
+            'password' => 'required|confirmed|min:6',
             'phone' => 'nullable|string',
-            'role' => 'in:customer,staff', // Validates the toggle from the UI
-            
-            // Custom Security Question Fields
-            'security_question' => 'required|string',
-            'security_answer' => 'required|string',
         ]);
 
-        User::create([
-            'name' => 'New User', // Placeholder name until they update Profile
+        // 2. Create Customer (Map form inputs to DB Columns)
+        $customer = Customer::create([
+            // Use email as name if name input is missing in form, or add name input to form
+            'fullName' => $request->name ?? explode('@', $request->email)[0], 
             'email' => $request->email,
-            'phone' => $request->phone,
+            'phoneNo' => $request->phone, // Map 'phone' to 'phoneNo'
             'password' => Hash::make($request->password),
-            'role' => $request->role ?? 'customer', // Default to customer
             
-            // Save Security Details
-            'security_question' => $request->security_question,
-            'security_answer' => $request->security_answer, 
+            // Default Values required by DB
+            'accountStat' => 'active',
+            'drivingNo' => 'PENDING-' . time() . rand(100,999), // Placeholder needed for unique constraint
         ]);
 
-        // Auto login after reg or redirect to login
-        return redirect()->route('login')->with('success', 'Account created successfully! Please login.');
+        // 3. Auto Login
+        Auth::guard('web')->login($customer);
+
+        return redirect()->route('home')->with('success', 'Account created successfully!');
     }
 
-    // --- CUSTOM PASSWORD RESET (Security Question) ---
-    public function showReset()
+    // --- PASSWORD RESET (EMAIL FLOW) ---
+
+    // 1. Show the "Enter your email" form
+    public function showLinkRequestForm()
     {
-        return view('auth.passwords.reset');
+        return view('auth.passwords.email');
     }
 
-    public function resetPassword(Request $request)
+    // 2. Send the reset link to the email
+    public function sendResetLinkEmail(Request $request)
     {
-        // 1. Validate the form data
-        $request->validate([
-            'email' => 'required|email|exists:users,email',
-            'security_question' => 'required',
-            'security_answer' => 'required',
-            'password' => 'required|confirmed|min:6'
-        ]);
+        $request->validate(['email' => 'required|email']);
 
-        // 2. Find the user
-        $user = User::where('email', $request->email)->first();
+        // We use the 'customers' broker defined in config/auth.php
+        $status = Password::broker('customers')->sendResetLink(
+            $request->only('email')
+        );
 
-        // 3. Verify the Security Answer (Case-insensitive check is often user-friendly)
-        if (strtolower($user->security_answer) !== strtolower($request->security_answer)) {
-             return back()->withErrors(['security_answer' => 'The security answer is incorrect.']);
+        if ($status === Password::RESET_LINK_SENT) {
+            return back()->with('success', __($status));
         }
 
-        // 4. Update the Password
-        $user->update([
-            'password' => Hash::make($request->password)
+        return back()->withErrors(['email' => __($status)]);
+    }
+
+    // 3. Show the "Enter new password" form (User clicks link in email)
+    public function showResetForm(Request $request, $token = null)
+    {
+        return view('auth.passwords.reset')->with(
+            ['token' => $token, 'email' => $request->email]
+        );
+    }
+
+    // 4. Reset the password
+    public function reset(Request $request)
+    {
+        $request->validate([
+            'token' => 'required',
+            'email' => 'required|email',
+            'password' => 'required|confirmed|min:6',
         ]);
 
-        return redirect()->route('login')->with('success', 'Password has been reset successfully.');
+        // Broker handles token verification automatically
+        $status = Password::broker('customers')->reset(
+            $request->only('email', 'password', 'password_confirmation', 'token'),
+            function ($user, $password) {
+                $user->forceFill([
+                    'password' => Hash::make($password)
+                ])->setRememberToken(Str::random(60));
+
+                $user->save();
+
+                // Auto login after reset
+                Auth::guard('web')->login($user);
+            }
+        );
+
+        if ($status === Password::PASSWORD_RESET) {
+            return redirect()->route('home')->with('success', __($status));
+        }
+
+        return back()->withErrors(['email' => __($status)]);
     }
 
     // --- LOGOUT ---
     public function logout(Request $request)
     {
-        Auth::logout();
+        // Logout both guards just in case
+        Auth::guard('web')->logout();
+        Auth::guard('staff')->logout();
+
         $request->session()->invalidate();
         $request->session()->regenerateToken();
+
         return redirect('/');
     }
 }
