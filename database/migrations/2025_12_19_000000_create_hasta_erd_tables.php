@@ -62,6 +62,8 @@ return new class extends Migration
             $table->longText('exception');
             $table->timestamp('failed_at')->useCurrent();
         });
+
+        
         // 1. STAFF (Independent)
         Schema::create('staff', function (Blueprint $table) {
             $table->id('staffID'); // PK
