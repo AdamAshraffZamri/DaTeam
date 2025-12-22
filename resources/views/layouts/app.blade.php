@@ -71,34 +71,38 @@
     </nav>
 
     @if(!request()->routeIs('home'))
-    <div class="bg-white shadow-sm relative z-20 border-b border-gray-100 sticky top-0">
-        <div class="container mx-auto flex justify-center py-4">
-            
-            <div class="bg-gradient-to-r from-[#ea580c] to-red-600 rounded-full p-1.5 inline-flex shadow-xl shadow-orange-500/20">
                 
+        {{-- Navigation Pill --}}
+        <div class="container mx-auto flex justify-center py-4 relative z-20">
+            <div class="bg-white/10 backdrop-blur-md border border-white/20 rounded-full p-1.5 flex items-center shadow-2xl">
+                
+                {{-- Book a Car --}}
                 <a href="{{ route('book.create') }}" 
-                   class="{{ request()->routeIs('book.create') ? 'bg-white text-[#ea580c] shadow-md' : 'text-white hover:bg-white/20' }} px-6 py-2.5 rounded-full font-bold transition-all duration-300 text-sm md:text-base flex items-center gap-2">
-                   <i class="fas fa-car"></i> Book a Car
+                class="px-8 py-2.5 rounded-full font-bold transition {{ request()->routeIs('book.create') ? 'bg-[#ea580c] text-white shadow-lg scale-105' : 'text-white/80 hover:bg-white/10' }}">
+                    Book a Car
                 </a>
-                
+
+                {{-- My Bookings --}}
                 <a href="{{ route('book.index') }}" 
-                   class="{{ request()->routeIs('book.index') ? 'bg-white text-[#ea580c] shadow-md' : 'text-white hover:bg-white/20' }} px-6 py-2.5 rounded-full font-bold transition-all duration-300 text-sm md:text-base flex items-center gap-2">
-                   <i class="fas fa-list"></i> My Bookings
+                class="px-8 py-2.5 rounded-full font-bold transition {{ request()->routeIs('book.index') ? 'bg-[#ea580c] text-white shadow-lg scale-105' : 'text-white/80 hover:bg-white/10' }}">
+                    My Bookings
                 </a>
-                
+
+                {{-- Loyalty --}}
                 <a href="{{ route('loyalty.index') }}" 
-                   class="{{ request()->routeIs('loyalty.index') ? 'bg-white text-[#ea580c] shadow-md' : 'text-white hover:bg-white/20' }} px-6 py-2.5 rounded-full font-bold transition-all duration-300 text-sm md:text-base flex items-center gap-2">
-                   <i class="fas fa-gift"></i> Loyalty
+                class="px-8 py-2.5 rounded-full font-bold transition {{ request()->routeIs('loyalty.index') ? 'bg-[#ea580c] text-white shadow-lg scale-105' : 'text-white/80 hover:bg-white/10' }}">
+                    Loyalty
                 </a>
-                
+
+                {{-- Finance --}}
                 <a href="{{ route('finance.index') }}" 
-                   class="{{ request()->routeIs('finance.index') ? 'bg-white text-[#ea580c] shadow-md' : 'text-white hover:bg-white/20' }} px-6 py-2.5 rounded-full font-bold transition-all duration-300 text-sm md:text-base flex items-center gap-2">
-                   <i class="fas fa-wallet"></i> Finance
+                class="px-8 py-2.5 rounded-full font-bold transition {{ request()->routeIs('finance.index') ? 'bg-[#ea580c] text-white shadow-lg scale-105' : 'text-white/80 hover:bg-white/10' }}">
+                    Finance
                 </a>
 
             </div>
         </div>
-    </div>
+    
     @endif
 
     <main class="flex-grow">
@@ -126,10 +130,9 @@
         @yield('content')
     </main>
 
-    <footer class="bg-gray-900 text-white pt-12 pb-8 text-sm">
+    <footer class="bg-gray-900 text-white pt-12 pb-8 text-sm relative z-20">
         <div class="container mx-auto px-6">
             <div class="grid grid-cols-1 md:grid-cols-4 gap-12 border-b border-gray-800 pb-12">
-                
                 <div class="space-y-4">
                     <img src="{{ asset('hasta.jpeg') }}" alt="HASTA Logo" class="h-12 w-auto object-contain mb-4">
                     <p class="text-gray-400 leading-relaxed">Your premium car rental partner for university life. Affordable, reliable, and convenient.</p>
@@ -139,7 +142,6 @@
                         <a href="#" class="w-8 h-8 rounded-full bg-gray-800 flex items-center justify-center hover:bg-[#ea580c] transition"><i class="fab fa-twitter"></i></a>
                     </div>
                 </div>
-
                 <div>
                      <h4 class="font-bold text-lg mb-4 text-white">Company</h4>
                      <ul class="space-y-3 text-gray-400">
@@ -149,7 +151,6 @@
                          <li><a href="#" class="hover:text-[#ea580c] transition">Terms of Service</a></li>
                      </ul>
                 </div>
-
                 <div>
                      <h4 class="font-bold text-lg mb-4 text-white">Support</h4>
                      <ul class="space-y-3 text-gray-400">
@@ -158,7 +159,6 @@
                          <li><a href="#" class="hover:text-[#ea580c] transition">Report a Bug</a></li>
                      </ul>
                 </div>
-
                 <div>
                     <h4 class="font-bold text-lg mb-4 text-white">Contact Us</h4>
                     <ul class="space-y-4 text-gray-400">
@@ -177,7 +177,6 @@
                     </ul>
                 </div>
             </div>
-            
             <div class="pt-8 text-center text-gray-500 flex flex-col md:flex-row justify-between items-center">
                 <p>&copy; {{ date('Y') }} Hasta Travel & Tours Sdn. Bhd. All rights reserved.</p>
                 <p class="mt-2 md:mt-0">SSM: 20240100987</p>

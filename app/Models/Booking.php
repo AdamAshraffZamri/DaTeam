@@ -45,4 +45,11 @@ class Booking extends Model
     public function payment() {
         return $this->hasOne(Payment::class, 'bookingID', 'bookingID');
     }
+
+    // Add this relationship method
+    public function penalties()
+    {
+        // This assumes your Penalties model is named 'Penalties'
+        return $this->hasMany(\App\Models\Penalties::class, 'bookingID', 'bookingID');
+    }
 }

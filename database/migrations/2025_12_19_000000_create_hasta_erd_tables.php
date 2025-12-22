@@ -76,17 +76,32 @@ return new class extends Migration
             $table->timestamps();
         });
 
-        // 2. CUSTOMER (Independent)
+        // 2. CUSTOMER (Independent) - UPDATED FOR PROFILE FORM
         Schema::create('customers', function (Blueprint $table) {
             $table->id('customerID'); // PK
-            $table->string('fullName');
+            $table->string('fullName'); // Maps to 'name' in form
             $table->string('email')->unique();
-            $table->string('phoneNo');
+            $table->string('phoneNo')->nullable();
             $table->string('stustaffID')->nullable();
-            $table->string('drivingNo')->unique();
+            $table->string('drivingNo')->nullable()->unique();
             $table->text('homeAddress')->nullable();
             $table->text('collegeAddress')->nullable();
             $table->string('password');
+            
+            // --- NEWLY ADDED FIELDS ---
+            $table->string('faculty')->nullable(); // Added as requested
+            $table->string('ic_passport')->nullable();
+            $table->string('nationality')->nullable();
+            $table->date('dob')->nullable();
+            $table->string('emergency_contact_no')->nullable();
+            
+            // Image Upload Paths
+            $table->string('avatar')->nullable();
+            $table->string('student_card_image')->nullable();
+            $table->string('ic_passport_image')->nullable();
+            $table->string('driving_license_image')->nullable();
+            // --------------------------
+
             $table->string('accountStat')->default('active');
             $table->boolean('blacklisted')->default(false);
             $table->timestamps();
@@ -144,7 +159,7 @@ return new class extends Migration
             $table->string('returnLocation');
             $table->decimal('totalCost', 10, 2);
             
-            $table->date('aggreementDate')->nullable(); // Note: ERD spelling 'aggreement'
+            $table->date('aggreementDate')->nullable(); 
             $table->string('aggreementLink')->nullable(); 
 
             $table->string('bookingStatus')->default('Pending');
@@ -154,7 +169,7 @@ return new class extends Migration
 
             $table->foreign('staffID')->references('staffID')->on('staff');
             $table->foreign('customerID')->references('customerID')->on('customers');
-            $table->foreign('vehicleID')->references('VehicleID')->on('vehicles'); // matches Vehicle PK
+            $table->foreign('vehicleID')->references('VehicleID')->on('vehicles'); 
             $table->foreign('voucherID')->references('voucherID')->on('vouchers');
         });
 
@@ -191,6 +206,7 @@ return new class extends Migration
             $table->string('penaltyStatus')->default('Unpaid');
             $table->decimal('fuelSurcharge', 10, 2)->default(0.00);
             $table->decimal('mileageSurcharge', 10, 2)->default(0.00);
+            $table->string('status')->default('Pending');
 
             $table->timestamps();
 
@@ -275,8 +291,6 @@ return new class extends Migration
             $table->unsignedBigInteger('VehicleID');
             $table->unsignedBigInteger('StaffID')->nullable();
 
-            // Note: ERD doesn't explicitly show maintenanceDate, but 'date' is implied by context. 
-            // I'll add 'date' based on standard practice for maintenance tables.
             $table->date('date')->nullable(); 
             $table->string('description')->nullable();
             $table->decimal('cost', 10, 2)->default(0.00);

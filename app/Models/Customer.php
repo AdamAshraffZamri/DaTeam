@@ -28,11 +28,15 @@ class Customer extends Authenticatable
         'collegeAddress',
         'accountStat',
         'blacklisted',
+        'nationality',
+        'dob',
+        'emergencyContactNo',
+        'faculty',
     ];
 
-    protected $hidden = [
-        'password',
-        'remember_token',
+    protected $casts = [
+        'dob' => 'date', // This ensures Carbon handles the date format correctly
+        'password' => 'hashed',
     ];
 
     // 4. Password Override (Laravel expects 'password', your DB has 'password', so this is default behavior)

@@ -3,27 +3,29 @@
 @section('content')
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
 
-<div class="relative w-full min-h-[calc(100vh-64px)] bg-cover bg-center flex flex-col items-center justify-center" 
-     style="background-image: url('{{ asset('hastabg.png') }}');">
+<div class="fixed inset-0 z-0">
+    <div class="absolute inset-0 bg-cover bg-center" style="background-image: url('{{ asset('hastabg.png') }}');"></div>
+    <div class="absolute inset-0 bg-gradient-to-b from-black/80 via-black/50 to-black/90"></div>
+</div>
     
-    <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-black/30"></div>
-
     <div class="relative z-10 w-full max-w-7xl mx-auto px-4 flex flex-col items-center h-full pt-12">
 
-
         <div class="text-center mb-16">
+            <br>
             <h1 class="text-5xl md:text-7xl font-black text-white drop-shadow-2xl tracking-tight mb-2">
                 Drive your adventure.
             </h1>
             <p class="text-lg md:text-xl text-gray-200 font-medium drop-shadow-md tracking-wide">
                 Premium car rental services for UTM Students & Staff.
             </p>
+            <br>
         </div>
 
         <div class="w-full max-w-6xl absolute -bottom-10 px-4">
             <form action="{{ route('book.search') }}" method="GET">
                 <div class="bg-white/10 backdrop-blur-xl border border-white/20 rounded-[2rem] p-3 shadow-2xl flex flex-col md:flex-row items-center gap-2 md:gap-0">
                     
+                    {{-- PICKUP LOCATION --}}
                     <div class="flex-1 px-6 py-2 w-full md:border-r border-white/10">
                         <label class="block text-[10px] font-bold text-gray-300 uppercase tracking-wider mb-1">PICKUP POINT</label>
                         <div class="flex items-center group">
@@ -35,6 +37,7 @@
                         </div>
                     </div>
 
+                    {{-- RETURN LOCATION --}}
                     <div class="flex-1 px-6 py-2 w-full md:border-r border-white/10">
                         <label class="block text-[10px] font-bold text-gray-300 uppercase tracking-wider mb-1">RETURN POINT</label>
                         <div class="flex items-center group">
@@ -46,21 +49,39 @@
                         </div>
                     </div>
 
+                    {{-- PICKUP DATE & TIME --}}
                     <div class="px-6 py-2 w-full md:w-auto md:border-r border-white/10">
                         <label class="block text-[10px] font-bold text-gray-300 uppercase tracking-wider mb-1">PICKUP DATE</label>
                         <div class="flex items-center space-x-2 bg-white/5 rounded-lg px-2 py-1">
                             <input type="date" name="pickup_date" value="{{ date('Y-m-d') }}" class="bg-transparent border-none p-0 text-sm font-bold text-white focus:ring-0 [color-scheme:dark] cursor-pointer">
                             <span class="text-white/20">|</span>
-                            <input type="time" name="pickup_time" value="10:00" class="bg-transparent border-none p-0 text-sm font-bold text-white focus:ring-0 [color-scheme:dark] cursor-pointer">
+                            
+                            {{-- CHANGED: Select Dropdown for Hour Only --}}
+                            <select name="pickup_time" class="bg-transparent border-none p-0 text-sm font-bold text-white focus:ring-0 cursor-pointer appearance-none">
+                                @for($i = 8; $i <= 22; $i++) 
+                                    <option value="{{ sprintf('%02d:00', $i) }}" class="text-black" {{ $i == 10 ? 'selected' : '' }}>
+                                        {{ sprintf('%02d:00', $i) }}
+                                    </option>
+                                @endfor
+                            </select>
                         </div>
                     </div>
 
+                    {{-- RETURN DATE & TIME --}}
                     <div class="px-6 py-2 w-full md:w-auto">
                         <label class="block text-[10px] font-bold text-gray-300 uppercase tracking-wider mb-1">RETURN DATE</label>
                         <div class="flex items-center space-x-2 bg-white/5 rounded-lg px-2 py-1">
                             <input type="date" name="return_date" value="{{ date('Y-m-d', strtotime('+1 day')) }}" class="bg-transparent border-none p-0 text-sm font-bold text-white focus:ring-0 [color-scheme:dark] cursor-pointer">
                             <span class="text-white/20">|</span>
-                            <input type="time" name="return_time" value="10:00" class="bg-transparent border-none p-0 text-sm font-bold text-white focus:ring-0 [color-scheme:dark] cursor-pointer">
+                            
+                            {{-- CHANGED: Select Dropdown for Hour Only --}}
+                            <select name="return_time" class="bg-transparent border-none p-0 text-sm font-bold text-white focus:ring-0 cursor-pointer appearance-none">
+                                @for($i = 8; $i <= 22; $i++)
+                                    <option value="{{ sprintf('%02d:00', $i) }}" class="text-black" {{ $i == 10 ? 'selected' : '' }}>
+                                        {{ sprintf('%02d:00', $i) }}
+                                    </option>
+                                @endfor
+                            </select>
                         </div>
                     </div>
 
@@ -74,6 +95,9 @@
             </form>
         </div>
     </div>
+    <div 
+            class="col-span-1 md:col-span-2 lg:col-span-3 flex flex-col items-center justify-center py-24 text-center">
+        </div>
 </div>
 
 <div class="h-24 bg-gray-50"></div>
