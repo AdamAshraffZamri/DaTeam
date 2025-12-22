@@ -80,4 +80,10 @@ Route::prefix('staff')->middleware(['auth:staff'])->group(function () {
     // Actions (Approve / Reject)
     Route::post('/bookings/{id}/approve', [StaffBookingController::class, 'approve'])->name('staff.bookings.approve');
     Route::post('/bookings/{id}/finalize', [StaffBookingController::class, 'finalize'])->name('staff.bookings.finalize');
+
+    Route::get('/fleet', [FleetController::class, 'index']);
+    Route::get('/fleet/create', [FleetController::class, 'create']);
+    Route::post('/fleet/store', [FleetController::class, 'store']);
+
+    Route::post('/fleet/status/{vehicle}', [FleetController::class, 'updateStatus']);
 });
