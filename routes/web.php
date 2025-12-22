@@ -6,9 +6,12 @@ use App\Http\Controllers\HomeController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\BookingController;
 use App\Http\Controllers\StaffBookingController;
+use App\Http\Controllers\LoyaltyController; // WILDAN added
+use App\Http\Controllers\PenaltyController; // WILDAN added
 
-// Note: I removed PageController, LoyaltyController, etc. imports 
-// because if those files don't exist, the whole app crashes.
+// Note: I removed PageController, LoyaltyController, etc. imports (ADAM)
+// because if those files don't exist, the whole app crashes. (ADAM)
+
 
 /*
 |--------------------------------------------------------------------------
@@ -59,9 +62,14 @@ Route::middleware('auth')->group(function () {
     Route::get('/my-bookings', [BookingController::class, 'index'])->name('book.index');
     Route::post('/my-bookings/cancel/{id}', [BookingController::class, 'cancel'])->name('book.cancel');
 
-    // Placeholders for Loyalty/Finance (Prevents Crash)
-    Route::get('/loyalty', function() { return "Loyalty Program Coming Soon"; })->name('loyalty.index');
+    // Placeholders for Loyalty/Finance (Prevents Crash) (ADAM)
+    //Route::get('/loyalty', function() { return "Loyalty Program Coming Soon"; })->name('loyalty.index');
     Route::get('/finance', function() { return "Finance Dashboard Coming Soon"; })->name('finance.index');
+    // --- WILDAN added Loyalty and Penalties Resource Routes ---
+    Route::resource('loyalty', LoyaltyController::class);
+    Route::resource('penalties', PenaltyController::class);
+
+
 
     // View Digital Agreement
     Route::get('/book/agreement/{id}', [BookingController::class, 'showAgreement'])->name('book.agreement');
