@@ -1,158 +1,192 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="min-h-screen bg-gray-50/50 relative">
-    <div class="absolute top-0 left-0 w-full h-96 bg-gradient-to-b from-orange-100/50 to-transparent -z-10"></div>
+{{-- 1. FIXED BACKGROUND --}}
+<div class="fixed inset-0 z-0">
+    <div class="absolute inset-0 bg-cover bg-center" style="background-image: url('{{ asset('hastabg.png') }}');"></div>
+    <div class="absolute inset-0 bg-gradient-to-b from-black/80 via-black/50 to-black/90"></div>
+</div>
 
-    <div class="container mx-auto px-4 py-12 max-w-7xl">
+{{-- 2. MAIN CONTENT (CARDS ONLY) --}}
+<div class="relative z-10 min-h-[calc(100vh-64px)] py-12">
+    <div class="container mx-auto px-4 max-w-4xl">
         
-        <div class="flex flex-col md:flex-row justify-between items-end mb-10 gap-4">
+        <div class="flex justify-between items-end mb-10">
             <div>
-                <h1 class="text-4xl font-extrabold text-gray-900 tracking-tight">My Bookings</h1>
-                <p class="text-gray-500 mt-2 text-lg">Track your current and past rentals</p>
+                <h1 class="text-4xl font-black text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]">My Bookings</h1>
+                <p class="text-gray-300 mt-2">Manage your active and past rentals.</p>
             </div>
-            
-            <a href="{{ route('home') }}" class="group flex items-center bg-gray-900 hover:bg-orange-600 text-white px-6 py-3 rounded-full font-bold transition-all duration-300 shadow-lg hover:shadow-orange-500/30">
-                <i class="fas fa-plus mr-2 transition-transform group-hover:rotate-90"></i>
-                New Booking
+            <a href="{{ route('book.create') }}" class="bg-[#ea580c] hover:bg-orange-600 text-white px-6 py-3 rounded-xl font-bold shadow-lg transition-all duration-200 transform hover:scale-105 active:scale-95">
+                + New Booking
             </a>
         </div>
 
-        <div class="mb-10 overflow-x-auto pb-2 -mx-4 px-4 scrollbar-hide">
-            <div class="inline-flex space-x-2 bg-white p-1.5 rounded-full shadow-sm border border-gray-200">
-                @foreach(['Submitted', 'Confirmed', 'Active', 'Completed', 'Cancelled'] as $status)
-                <button class="px-5 py-2.5 rounded-full text-sm font-bold whitespace-nowrap transition-all duration-200 text-gray-500 hover:bg-gray-100 hover:text-gray-900">
-                    {{ $status }}
-                </button>
-                @endforeach
-            </div>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            
+        <div class="space-y-7">
+            {{-- LOOP 1: CARDS ONLY --}}
             @forelse($bookings as $booking)
-            <div class="group bg-white rounded-[2rem] p-6 shadow-sm hover:shadow-2xl border border-gray-100 transition-all duration-300 hover:-translate-y-1 relative overflow-hidden">
-                
-                @php
-                    $badgeColor = match($booking->bookingStatus) {
-                        'Submitted' => 'bg-blue-50 text-blue-600 border-blue-100',
-                        'Confirmed' => 'bg-green-50 text-green-600 border-green-100',
-                        'Cancelled' => 'bg-red-50 text-red-600 border-red-100',
-                        'Completed' => 'bg-gray-100 text-gray-600 border-gray-200',
-                        default => 'bg-orange-50 text-orange-600 border-orange-100'
-                    };
-                @endphp
-                <div class="absolute top-6 right-6">
-                    <span class="{{ $badgeColor }} border px-4 py-1.5 rounded-full text-xs font-extrabold uppercase tracking-wider">
-                        {{ $booking->bookingStatus }}
-                    </span>
-                </div>
-
-                <div class="mt-4 mb-6 relative h-40 flex items-center justify-center">
-                    <div class="absolute inset-0 bg-gradient-to-tr from-gray-50 to-transparent rounded-2xl -z-10"></div>
-                    @if($booking->vehicle && $booking->vehicle->image)
-                        <img src="{{ asset('storage/' . $booking->vehicle->image) }}" class="max-h-full max-w-full object-contain drop-shadow-xl transform group-hover:scale-110 transition duration-500 ease-in-out">
-                    @else
-                        <i class="fas fa-car text-6xl text-gray-200"></i>
-                    @endif
-                </div>
-
-                <div class="mb-6">
-                    <h3 class="text-xl font-black text-gray-900 leading-tight">{{ $booking->vehicle->model ?? 'Unknown Vehicle' }}</h3>
-                    <p class="text-sm font-medium text-gray-400 mt-1 flex items-center">
-                        <i class="fas fa-hashtag text-xs mr-1 opacity-50"></i> {{ $booking->vehicle->plateNo ?? 'N/A' }}
-                    </p>
-                </div>
-
-                <div class="relative pl-4 border-l-2 border-dashed border-gray-200 space-y-8 mb-8">
-                    <div class="relative">
-                        <div class="absolute -left-[21px] top-1 h-4 w-4 rounded-full bg-white border-4 border-green-500 shadow-sm"></div>
-                        <div>
-                            <p class="text-xs font-bold text-gray-400 uppercase tracking-wide mb-0.5">Pickup</p>
-                            <p class="text-sm font-bold text-gray-900">
-                                {{ \Carbon\Carbon::parse($booking->originalDate)->format('D, d M Y') }}
-                            </p>
-                            <p class="text-xs font-medium text-gray-500 mt-0.5 truncate max-w-[200px]">
-                                <i class="fas fa-map-marker-alt mr-1 text-gray-300"></i> {{ $booking->pickupLocation }}
-                            </p>
-                        </div>
-                    </div>
-
-                    <div class="relative">
-                        <div class="absolute -left-[21px] top-1 h-4 w-4 rounded-full bg-white border-4 border-red-500 shadow-sm"></div>
-                        <div>
-                            <p class="text-xs font-bold text-gray-400 uppercase tracking-wide mb-0.5">Return</p>
-                            <p class="text-sm font-bold text-gray-900">
-                                {{ \Carbon\Carbon::parse($booking->returnDate)->format('D, d M Y') }}
-                            </p>
-                            <p class="text-xs font-medium text-gray-500 mt-0.5 truncate max-w-[200px]">
-                                <i class="fas fa-flag-checkered mr-1 text-gray-300"></i> {{ $booking->returnLocation }}
-                            </p>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-2 gap-3 pt-6 border-t border-gray-50">
+                <div 
+                    onclick="document.getElementById('modal-{{ $booking->bookingID }}').classList.remove('hidden')" 
+                    class="group bg-white/7 backdrop-blur-[2px] border border-white/15 rounded-3xl p-6 shadow-xl hover:shadow-orange-500/20 hover:bg-white/15 transition-all duration-300 cursor-pointer relative overflow-hidden"
+                >
+                    <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/2 to-transparent opacity-0 group-hover:opacity-10 transition-opacity duration-500 pointer-events-none"></div>
                     
-                    @if($booking->bookingStatus == 'Submitted')
-                        <form action="{{ route('book.cancel', $booking->bookingID) }}" method="POST" onsubmit="return confirm('Cancel this booking?')" class="w-full">
-                            @csrf
-                            <button type="submit" class="flex items-center justify-center w-full py-3 rounded-xl font-bold text-sm text-red-600 bg-red-50 hover:bg-red-100 transition">
-                                Cancel
-                            </button>
-                        </form>
+                    {{-- Card Header --}}
+                    <div class="flex justify-between items-start mb-4">
+                        <div>
+                            <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Booking ID</span>
+                            <p class="text-white font-black text-lg tracking-tight">#{{ $booking->bookingID }}</p>
+                        </div>
+                        <span class="px-3 py-1.5 rounded-full text-[11px] font-bold border uppercase tracking-wide
+                            {{ $booking->bookingStatus == 'Submitted' 
+                                ? 'bg-blue-500/15 text-blue-300 border-blue-500/30' 
+                                : ($booking->bookingStatus == 'Cancelled' 
+                                    ? 'bg-red-500/15 text-red-300 border-red-500/30' 
+                                    : 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30') }}">
+                            {{ $booking->bookingStatus }}
+                        </span>
+                    </div>
 
-                    @elseif($booking->bookingStatus == 'Confirmed')
-                        <a href="{{ route('book.agreement', $booking->bookingID) }}" target="_blank" class="flex items-center justify-center w-full py-3 rounded-xl font-bold text-sm text-green-700 bg-green-50 hover:bg-green-100 transition shadow-sm border border-green-100">
-                            <i class="fas fa-file-contract mr-2"></i> Agreement
-                        </a>
+                    {{-- Vehicle Info --}}
+                    <div class="flex items-center space-x-4 mb-4">
+                        <div class="h-12 w-12 rounded-xl bg-black/30 flex items-center justify-center border border-white/10">
+                            <i class="fas fa-car text-xl text-gray-300 group-hover:text-orange-400 transition-colors duration-200"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-black text-white leading-tight">{{ $booking->vehicle->model }}</h3>
+                            <p class="text-xs text-orange-400 font-bold mt-1 tracking-wide">{{ $booking->vehicle->plateNo }}</p>
+                        </div>
+                    </div>
+                    <div class="text-[11px] text-gray-400 font-medium text-center mt-2 opacity-90">Click to view full details</div>
+                </div>
+            @empty
+                <div class="text-center py-24 bg-white/8 backdrop-blur-sm rounded-3xl border border-white/15">
+                    <div class="bg-white/10 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-5">
+                        <i class="fas fa-calendar-times text-3xl text-gray-500"></i>
+                    </div>
+                    <h3 class="text-xl font-black text-white mb-2">No bookings found</h3>
+                    <p class="text-gray-400 max-w-md mx-auto mb-7">You haven't rented any cars yet.</p>
+                    <a href="{{ route('book.create') }}" class="inline-block px-6 py-2.5 text-orange-400 font-bold bg-orange-500/10 rounded-xl border border-orange-500/20 hover:bg-orange-500 hover:text-white transition-all duration-200">
+                        Book a car now →
+                    </a>
+                </div>
+            @endforelse
+        </div>
+    </div>
+</div>
 
-                    @else
-                        <button disabled class="flex items-center justify-center w-full py-3 rounded-xl font-bold text-sm text-gray-400 bg-gray-50 cursor-not-allowed">
-                            Edit
-                        </button>
-                    @endif
+{{-- 3. MODALS (LOOP 2: COMPLETELY OUTSIDE MAIN CONTENT) --}}
+@foreach($bookings as $booking)
+    <div id="modal-{{ $booking->bookingID }}" class="fixed inset-0 z-[9999] hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+        
+        {{-- Backdrop --}}
+        <div class="absolute inset-0 bg-black/90 backdrop-blur-sm transition-opacity duration-300" 
+             onclick="document.getElementById('modal-{{ $booking->bookingID }}').classList.add('hidden')"></div>
 
-                    <button class="flex items-center justify-center w-full py-3 rounded-xl font-bold text-sm text-white bg-black hover:bg-orange-600 transition shadow-lg hover:shadow-orange-500/25">
-                        RM {{ $booking->totalCost }}
+        {{-- Modal Panel --}}
+        <div class="flex items-center justify-center min-h-screen p-4 sm:p-6 pointer-events-none">
+            <div class="relative bg-[#1a1a1a] border border-white/15 rounded-[2rem] max-w-2xl w-full shadow-2xl overflow-hidden transform transition-all duration-300 scale-95 opacity-0 animate-fade-in pointer-events-auto">
+
+                {{-- Modal Header --}}
+                <div class="bg-white/7 p-6 border-b border-white/15 flex justify-between items-center">
+                    <h3 class="text-xl font-black text-white tracking-tight">Booking Details #{{ $booking->bookingID }}</h3>
+                    <button onclick="document.getElementById('modal-{{ $booking->bookingID }}').classList.add('hidden')" class="text-gray-400 hover:text-white transition-colors duration-200">
+                        <i class="fas fa-times text-xl"></i>
                     </button>
                 </div>
 
-            </div>
-            @empty
-            <div class="col-span-1 md:col-span-2 lg:col-span-3 flex flex-col items-center justify-center py-24 text-center">
-                <div class="w-24 h-24 bg-orange-50 rounded-full flex items-center justify-center mb-6 animate-pulse">
-                    <i class="fas fa-car text-4xl text-orange-400"></i>
+                {{-- Modal Body --}}
+                <div class="p-7 sm:p-8 space-y-7">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-7">
+                        {{-- Dates --}}
+                        <div class="space-y-5">
+                            <div class="relative pl-5 border-l-2 border-dashed border-white/25 space-y-5">
+                                <div>
+                                    <p class="text-[10px] text-gray-400 uppercase font-bold tracking-wider">Pickup</p>
+                                    <p class="text-white font-black text-lg">{{ \Carbon\Carbon::parse($booking->originalDate)->format('d M Y') }}</p>
+                                    <p class="text-sm text-gray-300 mt-1">{{ $booking->pickupLocation }}</p>
+                                </div>
+                                <div>
+                                    <p class="text-[10px] text-gray-400 uppercase font-bold tracking-wider">Return</p>
+                                    <p class="text-white font-black text-lg">{{ \Carbon\Carbon::parse($booking->returnDate)->format('d M Y') }}</p>
+                                    <p class="text-sm text-gray-300 mt-1">{{ $booking->returnLocation }}</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        {{-- Costs --}}
+                        <div class="bg-white/8 rounded-2xl p-5 border border-white/10">
+                            <p class="text-[10px] text-gray-400 uppercase font-bold mb-3 tracking-wider">Financial Summary</p>
+                            <div class="flex justify-between text-gray-300 text-sm mb-3">
+                                <span>Total Rent</span>
+                                <span class="font-black text-white tracking-tight">RM {{ number_format($booking->totalCost, 2) }}</span>
+                            </div>
+                            @if($booking->penalties && $booking->penalties->count() > 0)
+                            <div class="border-t border-white/15 pt-3 mt-2">
+                                @foreach($booking->penalties as $penalty)
+                                <div class="flex justify-between text-xs text-red-400 mb-1 last:mb-0">
+                                    <span>{{ Str::limit($penalty->reason, 18) }}</span>
+                                    <span>+ RM {{ number_format($penalty->amount, 2) }}</span>
+                                </div>
+                                @endforeach
+                            </div>
+                            @endif
+                        </div>
+                    </div>
+
+                    {{-- Documents & Receipt --}}
+                    <div>
+                        <p class="text-[10px] text-gray-400 uppercase font-bold mb-3 tracking-wider">Documents</p>
+                        <div class="grid grid-cols-2 gap-3">
+                            
+                            {{-- View Contract --}}
+                            <a href="{{ route('book.agreement', $booking->bookingID) }}" target="_blank" 
+                               class="flex items-center justify-center gap-2 p-3.5 bg-blue-500/10 rounded-xl border border-blue-500/20 hover:bg-blue-500 hover:text-white text-blue-300 text-sm transition-all duration-200">
+                                <i class="fas fa-file-contract"></i> 
+                                <span>View Contract</span>
+                            </a>
+
+                            {{-- View Receipt --}}
+                            @if($booking->payment && $booking->payment->installmentDetails)
+                                <a href="{{ asset('storage/'.$booking->payment->installmentDetails) }}" target="_blank" 
+                                   class="flex items-center justify-center gap-2 p-3.5 bg-black/25 rounded-xl border border-dashed border-white/20 hover:border-orange-500 hover:text-orange-400 text-gray-300 text-sm transition-colors duration-200">
+                                    <i class="fas fa-receipt"></i> 
+                                    <span>View Receipt</span>
+                                </a>
+                            @else
+                                <div class="flex items-center justify-center gap-2 p-3.5 bg-red-500/10 rounded-xl border border-red-500/20 text-red-400 text-xs font-bold">
+                                    <i class="fas fa-times-circle"></i> No Receipt
+                                </div>
+                            @endif
+                        </div>
+                    </div>
                 </div>
-                <h3 class="text-2xl font-bold text-gray-900">No bookings yet</h3>
-                <p class="text-gray-500 mt-2 mb-8 max-w-sm mx-auto">Ready to hit the road? Start your journey by finding the perfect car for your trip.</p>
-                <a href="{{ route('home') }}" class="bg-orange-500 hover:bg-orange-600 text-white px-8 py-4 rounded-full font-bold shadow-xl hover:shadow-2xl hover:-translate-y-1 transition-all duration-300">
-                    Book a Car Now
-                </a>
+
+                {{-- Modal Footer --}}
+                @if($booking->bookingStatus == 'Submitted')
+                <div class="bg-white/7 p-6 border-t border-white/15 flex flex-col sm:flex-row gap-3">
+                    <form action="{{ route('book.cancel', $booking->bookingID) }}" method="POST" onsubmit="return confirm('Are you sure?')" class="w-full">
+                        @csrf
+                        <button type="submit" class="w-full py-3 rounded-xl font-bold text-red-300 bg-red-500/10 border border-red-500/25 hover:bg-red-500 hover:text-white transition-all duration-200">
+                            Cancel Booking
+                        </button>
+                    </form>
+                    <a href="{{ route('book.edit', $booking->bookingID) }}" class="w-full flex items-center justify-center py-3 bg-[#ea580c] hover:bg-orange-600 text-white rounded-xl font-bold shadow-md transition-all duration-200">
+                        Edit Details
+                    </a>
+                </div>
+                @endif
             </div>
-            @endforelse
-
         </div>
     </div>
-</div>
+@endforeach
 
-@if(session('show_thank_you'))
-<div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4" id="thankYouModal">
-    <div class="bg-white rounded-[2rem] p-10 max-w-md w-full text-center shadow-2xl transform scale-100 transition-all animate-bounce-in relative overflow-hidden">
-        <div class="absolute top-0 left-0 w-full h-32 bg-gradient-to-b from-green-50 to-transparent -z-10"></div>
-        <div class="mx-auto mb-6 w-20 h-20 bg-green-100 rounded-full flex items-center justify-center shadow-inner">
-            <i class="fas fa-check text-4xl text-green-600"></i>
-        </div>
-        <h2 class="text-3xl font-extrabold text-gray-900 mb-3">All Set!</h2>
-        <p class="text-gray-500 mb-8 text-lg leading-relaxed">
-            Your booking has been successfully submitted. We're reviewing it now.
-        </p>
-        <button onclick="document.getElementById('thankYouModal').remove()" 
-                class="w-full bg-gray-900 hover:bg-gray-800 text-white font-bold py-4 px-10 rounded-xl shadow-xl transition transform hover:scale-[1.02]">
-            Awesome
-        </button>
-    </div>
-</div>
-@endif
-
+<style scoped>
+@keyframes fade-in {
+    from { opacity: 0; transform: scale(0.95); }
+    to { opacity: 1; transform: scale(1); }
+}
+.animate-fade-in {
+    animation: fade-in 0.25s ease-out forwards;
+}
+</style>
 @endsection

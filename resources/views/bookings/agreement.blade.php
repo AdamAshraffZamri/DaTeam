@@ -1,85 +1,126 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Rental Agreement #{{ $booking->bookingID }}</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        @media print { .no-print { display: none; } }
-    </style>
-</head>
-<body class="bg-gray-100 py-10 font-serif">
+@extends('layouts.app')
 
-    <div class="max-w-3xl mx-auto bg-white p-12 shadow-lg">
+@section('content')
+<div class="fixed inset-0 z-0">
+    <div class="absolute inset-0 bg-cover bg-center" style="background-image: url('{{ asset('hastabg.png') }}');"></div>
+    <div class="absolute inset-0 bg-gradient-to-b from-black/90 via-black/80 to-black/95"></div>
+</div>
+
+<div class="relative z-10 py-12">
+    <div class="container mx-auto px-4 max-w-3xl">
         
-        <div class="border-b-2 border-gray-800 pb-8 mb-8 flex justify-between items-start">
-            <div>
-                <h1 class="text-4xl font-bold text-gray-900">RENTAL AGREEMENT</h1>
-                <p class="text-gray-500 mt-2">Contract ID: HASTA-{{ str_pad($booking->bookingID, 6, '0', STR_PAD_LEFT) }}</p>
-            </div>
-            <div class="text-right">
-                <h2 class="text-xl font-bold text-orange-600">HASTA CAR RENTAL</h2>
-                <p class="text-sm text-gray-600">UTM Skudai, Johor Bahru</p>
-                <p class="text-sm text-gray-600">Reg: 20240100987</p>
-            </div>
-        </div>
+        {{-- Back Button --}}
+        <a href="{{ route('book.index') }}" class="inline-flex items-center text-gray-400 hover:text-white mb-8 transition">
+            <i class="fas fa-arrow-left mr-2"></i> Back to My Bookings
+        </a>
 
-        <div class="grid grid-cols-2 gap-8 mb-8 text-sm">
-            <div>
-                <h3 class="font-bold bg-gray-100 p-2 mb-2 uppercase">Renter Details</h3>
-                <p><span class="font-bold">Name:</span> {{ $booking->customer->name ?? $booking->customer->fullName }}</p>
-                <p><span class="font-bold">Email:</span> {{ $booking->customer->email }}</p>
-                <p><span class="font-bold">Phone:</span> {{ $booking->customer->phone ?? $booking->customer->phoneNo }}</p>
-            </div>
-            <div>
-                <h3 class="font-bold bg-gray-100 p-2 mb-2 uppercase">Vehicle Details</h3>
-                <p><span class="font-bold">Vehicle:</span> {{ $booking->vehicle->brand }} {{ $booking->vehicle->model }}</p>
-                <p><span class="font-bold">Plate No:</span> {{ $booking->vehicle->plateNo }}</p>
-                <p><span class="font-bold">Color:</span> {{ $booking->vehicle->colour }}</p>
-            </div>
-        </div>
+        <div class="bg-white text-black rounded-[2px] shadow-2xl overflow-hidden relative">
+            
+            {{-- Paper Texture Effect --}}
+            <div class="absolute inset-0 bg-gray-50 opacity-50 pointer-events-none"></div>
 
-        <div class="mb-8 border border-gray-300 p-4">
-            <h3 class="font-bold mb-4 uppercase">Rental Period & Fees</h3>
-            <div class="grid grid-cols-2 gap-4 text-sm">
-                <p><strong>Pickup:</strong> {{ \Carbon\Carbon::parse($booking->originalDate)->format('d M Y') }} at {{ $booking->pickupLocation }}</p>
-                <p><strong>Return:</strong> {{ \Carbon\Carbon::parse($booking->returnDate)->format('d M Y') }} at {{ $booking->returnLocation }}</p>
-                <p class="text-lg mt-2"><strong>Total Paid:</strong> RM {{ number_format($booking->totalCost, 2) }}</p>
-            </div>
-        </div>
-
-        <div class="text-xs text-gray-500 text-justify mb-12 space-y-2">
-            <p><strong>1. AGREEMENT:</strong> By digitally signing this agreement, the Renter acknowledges receipt of the vehicle described above in good working condition.</p>
-            <p><strong>2. LIABILITY:</strong> The Renter agrees to be liable for any damage, loss, or theft of the vehicle during the rental period.</p>
-            <p><strong>3. RETURN:</strong> The vehicle must be returned on the date and time specified. Late returns will incur a penalty of RM50/hour.</p>
-        </div>
-
-        <div class="grid grid-cols-2 gap-12 mt-12">
-            <div>
-                <div class="border-b border-black mb-2 h-12 flex items-end">
-                    <img src="https://upload.wikimedia.org/wikipedia/commons/e/e4/Signature_sample.svg" class="h-10 opacity-50"> 
+            {{-- Contract Content --}}
+            <div class="relative p-12 space-y-8">
+                
+                {{-- Header --}}
+                <div class="text-center border-b-2 border-black pb-8">
+                    <h1 class="text-3xl font-serif font-bold uppercase tracking-widest mb-2">Rental Agreement</h1>
+                    <p class="text-sm font-serif text-gray-600">Agreement ID: #AGR-{{ $booking->bookingID }}-{{ date('Y') }}</p>
                 </div>
-                <p class="font-bold">Authorized Signature</p>
-                <p class="text-xs">HASTA Management</p>
-            </div>
-            <div>
-                <div class="border-b border-black mb-2 h-12 flex items-end relative">
-                    <p class="font-script text-2xl text-blue-900 italic absolute bottom-0 w-full text-center">
-                        Digital Signed: {{ $booking->created_at->format('d/m/Y H:i') }}
-                    </p>
-                </div>
-                <p class="font-bold">Renter Signature</p>
-                <p class="text-xs">Digitally Verified by IP Address</p>
-            </div>
-        </div>
 
-        <div class="mt-12 text-center no-print">
-            <button onclick="window.print()" class="bg-gray-900 text-white px-6 py-3 rounded hover:bg-black font-bold">
-                <i class="fas fa-print mr-2"></i> Print / Save as PDF
+                {{-- Parties --}}
+                <div class="space-y-4 font-serif">
+                    <p><strong>THIS AGREEMENT</strong> is made on <strong>{{ \Carbon\Carbon::parse($booking->aggreementDate)->format('d F Y') }}</strong> between:</p>
+                    
+                    <div class="pl-6 border-l-4 border-gray-300 space-y-4">
+                        <div>
+                            <p class="text-xs text-gray-500 uppercase font-bold">The Owner (Lessor)</p>
+                            <p class="text-lg font-bold">HASTA CAR RENTAL SERVICES</p>
+                            <p class="text-sm">UTM Johor Bahru, Malaysia</p>
+                        </div>
+                        <div>
+                            <p class="text-xs text-gray-500 uppercase font-bold">The Renter (Lessee)</p>
+                            <p class="text-lg font-bold">{{ $booking->customer->name ?? Auth::user()->name }}</p>
+                            <p class="text-sm">ID/Passport: {{ $booking->customer->ic_passport ?? 'N/A' }}</p>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Vehicle Details --}}
+                <div class="font-serif">
+                    <h3 class="text-lg font-bold uppercase border-b border-gray-300 pb-2 mb-4">1. Vehicle Details</h3>
+                    <table class="w-full text-sm text-left">
+                        <tr class="border-b border-gray-100">
+                            <td class="py-2 font-bold text-gray-600">Model</td>
+                            <td class="py-2">{{ $booking->vehicle->model }}</td>
+                        </tr>
+                        <tr class="border-b border-gray-100">
+                            <td class="py-2 font-bold text-gray-600">Plate Number</td>
+                            <td class="py-2">{{ $booking->vehicle->plateNo }}</td>
+                        </tr>
+                        <tr class="border-b border-gray-100">
+                            <td class="py-2 font-bold text-gray-600">Color</td>
+                            <td class="py-2">{{ $booking->vehicle->colour ?? 'Standard' }}</td>
+                        </tr>
+                    </table>
+                </div>
+
+                {{-- Terms --}}
+                <div class="font-serif text-sm space-y-4 text-justify">
+                    <h3 class="text-lg font-bold uppercase border-b border-gray-300 pb-2 mb-4">2. Terms & Conditions</h3>
+                    <p><strong>2.1 Usage:</strong> The Renter agrees to use the vehicle solely for personal use and not for any illegal activities, racing, or subletting.</p>
+                    <p><strong>2.2 Return Policy:</strong> The vehicle must be returned to <strong>{{ $booking->returnLocation }}</strong> by <strong>{{ \Carbon\Carbon::parse($booking->returnDate)->format('d M Y') }}</strong> at <strong>{{ $booking->returnTime }}</strong>. Late returns will incur penalties as per the company policy.</p>
+                    <p><strong>2.3 Fuel & Fines:</strong> The Renter is responsible for all fuel costs and traffic fines incurred during the rental period.</p>
+                    <p><strong>2.4 Condition:</strong> The Renter acknowledges receiving the vehicle in good condition and agrees to return it in the same condition.</p>
+                </div>
+
+                {{-- Signatures --}}
+                <div class="grid grid-cols-2 gap-12 pt-12 mt-12 border-t-2 border-black font-serif">
+                    <div>
+                        <p class="mb-8 font-bold">Signed by Lessor:</p>
+                        <div class="h-16 flex items-end">
+                            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/e4/Signature_sample.svg/1200px-Signature_sample.svg.png" class="h-12 opacity-50"> 
+                        </div>
+                        <div class="border-t border-black pt-2">
+                            <p class="text-sm font-bold">HASTA MANAGER</p>
+                            <p class="text-xs text-gray-500">Authorized Signature</p>
+                        </div>
+                    </div>
+
+                    <div>
+                        <p class="mb-8 font-bold">Signed by Lessee:</p>
+                        <div class="h-16 flex items-end">
+                            <p class="font-script text-2xl text-blue-900">{{ $booking->customer->name ?? Auth::user()->name }}</p>
+                        </div>
+                        <div class="border-t border-black pt-2">
+                            <p class="text-sm font-bold">{{ strtoupper($booking->customer->name ?? Auth::user()->name) }}</p>
+                            <p class="text-xs text-gray-500">Digitally Signed on {{ \Carbon\Carbon::parse($booking->aggreementDate)->format('d/m/Y h:i A') }}</p>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            {{-- Footer Stamp --}}
+            <div class="absolute top-12 right-12 opacity-10 rotate-[-15deg] pointer-events-none">
+                <div class="border-4 border-red-600 rounded-full w-40 h-40 flex items-center justify-center">
+                    <p class="text-red-600 font-black text-2xl uppercase tracking-widest">OFFICIAL COPY</p>
+                </div>
+            </div>
+
+        </div>
+        
+        <div class="text-center mt-8">
+            <button onclick="window.print()" class="bg-white/10 hover:bg-white/20 text-white px-8 py-3 rounded-full font-bold transition">
+                <i class="fas fa-print mr-2"></i> Print Agreement
             </button>
-            <a href="{{ route('book.index') }}" class="text-gray-600 hover:text-black ml-4 underline">Back to Bookings</a>
         </div>
 
     </div>
-</body>
-</html>
+</div>
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&display=swap');
+.font-script { font-family: 'Dancing Script', cursive; }
+</style>
+@endsection
