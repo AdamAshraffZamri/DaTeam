@@ -9,7 +9,7 @@ use App\Http\Controllers\StaffBookingController;
 use App\Http\Controllers\LoyaltyController; 
 use App\Http\Controllers\PenaltyController; 
 use App\Http\Controllers\FinanceController; 
-
+use App\Http\Controllers\VoucherController;
 
 
 /*
@@ -61,16 +61,15 @@ Route::middleware('auth')->group(function () {
     // REMOVED DUPLICATE /my-bookings line here
     Route::get('/my-bookings', [BookingController::class, 'index'])->name('book.index');
     Route::post('/my-bookings/cancel/{id}', [App\Http\Controllers\BookingController::class, 'cancel'])->name('book.cancel');   
-    Route::get('/my-bookings/edit/{id}', [BookingController::class, 'edit'])->name('book.edit');
-    Route::put('/my-bookings/update/{id}', [BookingController::class, 'update'])->name('book.update');
     Route::get('/my-bookings/agreement/{id}', [App\Http\Controllers\BookingController::class, 'showAgreement'])->name('book.agreement');
     // Placeholders for Loyalty/Finance (Prevents Crash) (ADAM)
     
     Route::get('/finance', [FinanceController::class, 'index'])->name('finance.index');
     Route::resource('loyalty', LoyaltyController::class);
     Route::resource('penalties', PenaltyController::class);
-
-
+    Route::post('/voucher/apply', [VoucherController::class, 'apply'])->name('voucher.apply');
+    Route::get('/finance/pay/{id}', [FinanceController::class, 'payBalance'])->name('finance.pay');
+    Route::post('/finance/pay/{id}', [FinanceController::class, 'submitBalance'])->name('finance.submit_balance');
 
     // View Digital Agreement
     Route::get('/book/agreement/{id}', [BookingController::class, 'showAgreement'])->name('book.agreement');

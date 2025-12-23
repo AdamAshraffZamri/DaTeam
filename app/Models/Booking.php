@@ -9,47 +9,45 @@ class Booking extends Model
 {
     use HasFactory;
 
-    protected $table = 'bookings';
-    protected $primaryKey = 'bookingID'; // Matches your ERD
-
-    // THIS IS THE MISSING PART CAUSING YOUR ERROR
+    protected $primaryKey = 'bookingID'; // Important since you aren't using 'id'
+    
     protected $fillable = [
-        'customerID', 
-        'vehicleID', 
-        'staffID', 
-        'bookingDate', 
-        'originalDate', 
-        'bookingTime',
-        'returnDate', 
-        'returnTime', 
-        'actualReturnDate', 
-        'actualReturnTime',
-        'pickupLocation', 
-        'returnLocation',
-        'totalCost', 
-        'aggreementDate', 
-        'aggreementLink', 
-        'bookingStatus', 
-        'bookingType'
+        'customerID', 'vehicleID', 'staffID', 'voucherID',
+        'bookingDate', 'originalDate', 'bookingTime',
+        'returnDate', 'returnTime', 'actualReturnDate', 'actualReturnTime',
+        'pickupLocation', 'returnLocation', 'totalCost',
+        'aggreementDate', 'aggreementLink',
+        'bookingStatus', 'bookingType'
     ];
 
-    // Relationships
-    public function customer() {
+    // --- RELATIONSHIPS ---
+
+    public function customer()
+    {
         return $this->belongsTo(Customer::class, 'customerID', 'customerID');
     }
 
-    public function vehicle() {
-        return $this->belongsTo(Vehicle::class, 'vehicleID', 'VehicleID'); 
+    public function vehicle()
+    {
+        return $this->belongsTo(Vehicle::class, 'vehicleID', 'VehicleID');
     }
 
-    public function payment() {
-        return $this->hasOne(Payment::class, 'bookingID', 'bookingID');
+    // 1. THIS WAS MISSING
+    public function payments()
+    {
+        // A booking can have multiple payments (Deposit + Final Balance)
+        return $this->hasMany(Payment::class, 'bookingID', 'bookingID');
     }
 
-    // Add this relationship method
+    // 2. CHECK THIS TOO (It is also in your controller)
     public function penalties()
     {
-        // This assumes your Penalties model is named 'Penalties'
-        return $this->hasMany(\App\Models\Penalties::class, 'bookingID', 'bookingID');
+        return $this->hasMany(Penalties::class, 'bookingID', 'bookingID');
+    }
+    
+    // Optional: If you use the Voucher relationship
+    public function voucher()
+    {
+        return $this->belongsTo(Voucher::class, 'voucherID', 'voucherID');
     }
 }

@@ -26,7 +26,7 @@
             @forelse($bookings as $booking)
                 <div 
                     onclick="document.getElementById('modal-{{ $booking->bookingID }}').classList.remove('hidden')" 
-                    class="group bg-white/7 backdrop-blur-[2px] border border-white/15 rounded-3xl p-6 shadow-xl hover:shadow-orange-500/20 hover:bg-white/15 transition-all duration-300 cursor-pointer relative overflow-hidden"
+                    class="group bg-black/50 backdrop-blur-[2px] border border-white/15 rounded-3xl p-6 shadow-xl hover:shadow-orange-500/10 hover:bg-white/15 transition-all duration-300 cursor-pointer relative overflow-hidden"
                 >
                     <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/2 to-transparent opacity-0 group-hover:opacity-10 transition-opacity duration-500 pointer-events-none"></div>
                     
@@ -133,7 +133,7 @@
                         </div>
                     </div>
 
-                    {{-- Documents & Receipt --}}
+                    {{-- Documents & Receipt (MAINTAINED) --}}
                     <div>
                         <p class="text-[10px] text-gray-400 uppercase font-bold mb-3 tracking-wider">Documents</p>
                         <div class="grid grid-cols-2 gap-3">
@@ -146,8 +146,9 @@
                             </a>
 
                             {{-- View Receipt --}}
-                            @if($booking->payment && $booking->payment->installmentDetails)
-                                <a href="{{ asset('storage/'.$booking->payment->installmentDetails) }}" target="_blank" 
+                            @if($booking->payments && $booking->payments->count() > 0)
+                                {{-- Link to the latest payment proof --}}
+                                <a href="{{ asset('storage/'.$booking->payments->last()->installmentDetails) }}" target="_blank" 
                                    class="flex items-center justify-center gap-2 p-3.5 bg-black/25 rounded-xl border border-dashed border-white/20 hover:border-orange-500 hover:text-orange-400 text-gray-300 text-sm transition-colors duration-200">
                                     <i class="fas fa-receipt"></i> 
                                     <span>View Receipt</span>
@@ -161,20 +162,23 @@
                     </div>
                 </div>
 
-                {{-- Modal Footer --}}
-                @if($booking->bookingStatus == 'Submitted')
-                <div class="bg-white/7 p-6 border-t border-white/15 flex flex-col sm:flex-row gap-3">
-                    <form action="{{ route('book.cancel', $booking->bookingID) }}" method="POST" onsubmit="return confirm('Are you sure?')" class="w-full">
+                {{-- Modal Footer (UPDATED: Cancel Only) --}}
+                {{-- Show Cancel for: Submitted, Deposit Paid, Paid (Full), and Approved --}}
+                @if(in_array($booking->bookingStatus, ['Submitted', 'Deposit Paid', 'Paid', 'Approved']))
+                <div class="bg-white/7 p-6 border-t border-white/15">
+                    <form action="{{ route('book.cancel', $booking->bookingID) }}" method="POST" onsubmit="return confirm('Cancel booking? If you have paid, you can claim a refund in the Finance Center.');" class="w-full">
                         @csrf
-                        <button type="submit" class="w-full py-3 rounded-xl font-bold text-red-300 bg-red-500/10 border border-red-500/25 hover:bg-red-500 hover:text-white transition-all duration-200">
-                            Cancel Booking
+                        <button type="submit" class="w-full py-3.5 rounded-xl font-bold text-red-400 bg-red-500/10 border border-red-500/20 hover:bg-red-500 hover:text-white transition-all duration-200 flex items-center justify-center gap-2 group">
+                            <i class="fas fa-ban group-hover:rotate-90 transition-transform"></i>
+                            <span>Cancel Booking & Request Refund</span>
                         </button>
                     </form>
-                    <a href="{{ route('book.edit', $booking->bookingID) }}" class="w-full flex items-center justify-center py-3 bg-[#ea580c] hover:bg-orange-600 text-white rounded-xl font-bold shadow-md transition-all duration-200">
-                        Edit Details
-                    </a>
+                    <p class="text-center text-[10px] text-gray-500 mt-3">
+                        *For date changes, please cancel and re-book. Money will be refunded via Finance Center.
+                    </p>
                 </div>
                 @endif
+
             </div>
         </div>
     </div>

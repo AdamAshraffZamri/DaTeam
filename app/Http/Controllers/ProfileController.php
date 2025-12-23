@@ -24,29 +24,27 @@ class ProfileController extends Controller
 
         // 1. Validate the incoming data
         $validated = $request->validate([
+            // ALL FIELDS SET TO REQUIRED
             'name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'email', 'max:255', Rule::unique('customers', 'email')->ignore($user->customerID, 'customerID')],
             
-            // FIX: Check 'customers' table, ignore current 'customerID'
-            'email' => [
-                'required', 
-                'email', 
-                'max:255', 
-                Rule::unique('customers', 'email')->ignore($user->customerID, 'customerID')
-            ],
+            'phone' => ['required', 'string', 'max:20'],
+            'emergency_contact_no' => ['required', 'string', 'max:20'],
+            'home_address' => ['required', 'string', 'max:500'],
+            'college_address' => ['required', 'string', 'max:500'],
+            
+            'student_staff_id' => ['required', 'string', 'max:50'],
+            'ic_passport' => ['required', 'string', 'max:50'],
+            'driving_license_no' => ['required', 'string', 'max:50'],
+            
+            'nationality' => ['required', 'string', 'max:100'],
+            'dob' => ['required', 'date'],
+            'faculty' => ['required', 'string', 'max:255'],
+            
+            'bank_name' => ['required', 'string', 'max:100'],
+            'bank_account_no' => ['required', 'string', 'max:50'],
 
-            'home_address' => ['nullable', 'string', 'max:500'],
-            'student_staff_id' => ['nullable', 'string', 'max:50'],
-            'ic_passport' => ['nullable', 'string', 'max:50'],
-            'college_address' => ['nullable', 'string', 'max:500'],
-            'nationality' => ['nullable', 'string', 'max:100'],
-            'dob' => ['nullable', 'date'],
-            'phone' => ['nullable', 'string', 'max:20'],
-            'driving_license_no' => ['nullable', 'string', 'max:50'],
-            'emergency_contact_no' => ['nullable', 'string', 'max:20'],
-            'password' => ['nullable', 'string', 'min:8'],
-            'faculty' => ['nullable', 'string', 'max:255'],
-
-            // Image Validation
+            // Images can remain nullable if you don't want to force re-upload on every edit
             'avatar' => ['nullable', 'image', 'max:2048'], 
             'student_card_image' => ['nullable', 'image', 'max:2048'],
             'ic_passport_image' => ['nullable', 'image', 'max:2048'],
@@ -68,21 +66,23 @@ class ProfileController extends Controller
             }
         }
 
-        // 3. Update Database Fields (Mapping Form Name -> DB Column)
-        // Since your form uses snake_case but DB uses camelCase, we map them manually:
-        
-        $user->fullName = $request->name;       // Maps 'name' -> 'fullName'
+        // 3. Update Database Fields
+        $user->fullName = $request->name;       
         $user->email = $request->email;
-        $user->homeAddress = $request->home_address; // Maps 'home_address' -> 'homeAddress'
+        $user->homeAddress = $request->home_address;
         $user->stustaffID = $request->student_staff_id;
         $user->ic_passport = $request->ic_passport;
         $user->collegeAddress = $request->college_address;
         $user->nationality = $request->nationality;
         $user->dob = $request->dob;
-        $user->phoneNo = $request->phone;       // Maps 'phone' -> 'phoneNo'
-        $user->drivingNo = $request->driving_license_no; // Maps 'driving_license_no' -> 'drivingNo'
+        $user->phoneNo = $request->phone;       
+        $user->drivingNo = $request->driving_license_no; 
         $user->emergency_contact_no = $request->emergency_contact_no;
         $user->faculty = $request->faculty;
+
+        // Save New Bank Details
+        $user->bankName = $request->bank_name;
+        $user->bankAccountNo = $request->bank_account_no;
 
         // 4. Handle Password Update
         if ($request->filled('password')) {
@@ -92,6 +92,7 @@ class ProfileController extends Controller
         // 5. Save changes
         $user->save();
 
+        // Redirect back to profile view (edit) instead of show
         return redirect()->route('profile.edit')->with('status', 'Profile updated successfully!');
     }
 }

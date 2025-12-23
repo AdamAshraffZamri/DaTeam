@@ -5,19 +5,21 @@ namespace App\Http\Controllers;
 use App\Models\Booking;
 use App\Models\Payment;
 use App\Models\Vehicle;
-use App\Models\Penalties; // Required for Finance/Debt logic
+use App\Models\Penalties;
+use App\Models\Voucher; // Required for Voucher Logic
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
-use Carbon\Carbon; // Required for date calculations
+use Carbon\Carbon;
 
 class BookingController extends Controller
 {
     // --- 1. MY BOOKINGS PAGE ---
     public function index()
     {
+        // Loaded 'payments' to fix the "RelationNotFound" error on the receipt button
         $bookings = Booking::where('customerID', Auth::id())
-                           ->with(['vehicle', 'payment', 'penalties']) 
+                           ->with(['vehicle', 'payments', 'penalties']) 
                            ->orderBy('bookingDate', 'desc')
                            ->get();
 
@@ -25,18 +27,40 @@ class BookingController extends Controller
     }
 
     // --- 2. LANDING / SEARCH FORM ---
-    public function create()
+    public function create() 
     {
+        $user = auth()->user();
+
+        // STRICT CHECK: Verify ALL profile fields are filled
+        if (
+            empty($user->fullName) ||
+            empty($user->email) ||
+            empty($user->phoneNo) ||
+            empty($user->emergency_contact_no) ||
+            empty($user->homeAddress) ||
+            empty($user->collegeAddress) ||
+            empty($user->stustaffID) || // Student/Staff ID
+            empty($user->ic_passport) || // IC or Passport
+            empty($user->drivingNo) || // License Number
+            empty($user->nationality) ||
+            empty($user->dob) ||
+            empty($user->faculty) ||
+            empty($user->bankName) ||
+            empty($user->bankAccountNo)
+        ) {
+            // Redirect to Profile Edit with a specific warning
+            return redirect()->route('profile.edit')
+                ->with('error', '⚠️ Action Required: You must complete ALL profile details (including Bank Info, Addresses, and IDs) before you can book a car.');
+        }
+
+        // If checks pass, proceed to booking page
         return view('bookings.create'); 
     }
 
     // --- 3. SEARCH RESULTS ---
     public function search(Request $request)
     {
-        // Basic logic: return all available vehicles for now
-        // You can add date filtering logic here later if needed
         $vehicles = Vehicle::where('availability', true)->get();
-        
         return view('bookings.search_results', compact('vehicles'));
     }
 
@@ -62,7 +86,6 @@ class BookingController extends Controller
         $pickupLoc = $request->query('pickup_location', 'Student Mall');
         $returnLoc = $request->query('return_location', 'Student Mall');
         
-        // Calculate Total
         $pickup = Carbon::parse($pickupDate);
         $dropoff = Carbon::parse($returnDate);
         $days = $pickup->diffInDays($dropoff) ?: 1;
@@ -72,13 +95,16 @@ class BookingController extends Controller
         return view('bookings.payment', compact('vehicle', 'days', 'total', 'pickupDate', 'returnDate', 'pickupLoc', 'returnLoc'));
     }
 
-    // --- 6. SUBMIT BOOKING (Create & Pay) ---
+    // --- 6. SUBMIT BOOKING (Handles Full/Deposit & Vouchers) ---
     public function submitPayment(Request $request, $id)
     {
         // 1. Validation
         $request->validate([
             'payment_proof' => 'required|image|max:2048',
+            'payment_type' => 'required', // 'full' or 'deposit'
         ]);
+
+        $vehicle = Vehicle::findOrFail($id);
 
         // 2. Upload Proof
         $proofPath = null;
@@ -86,7 +112,28 @@ class BookingController extends Controller
             $proofPath = $request->file('payment_proof')->store('receipts', 'public');
         }
 
-        // 3. Create Booking Record
+        // 3. Recalculate Total (Security)
+        $pickup = Carbon::parse($request->input('pickup_date'));
+        $dropoff = Carbon::parse($request->input('return_date'));
+        $days = $pickup->diffInDays($dropoff) ?: 1;
+        
+        $grandTotal = ($vehicle->priceHour * 24 * $days) + $vehicle->baseDepo;
+
+        // Apply Voucher if present
+        if ($request->filled('voucher_id')) {
+            $voucher = Voucher::find($request->input('voucher_id'));
+            if ($voucher && !$voucher->isUsed) {
+                $grandTotal -= $voucher->voucherAmount;
+                $voucher->update(['isUsed' => true]);
+            }
+        }
+        
+        if($grandTotal < 0) $grandTotal = 0;
+
+        // 4. Determine Status
+        $status = ($request->input('payment_type') == 'deposit') ? 'Deposit Paid' : 'Submitted';
+
+        // 5. Create Booking
         $booking = Booking::create([
             'customerID' => Auth::id(),
             'vehicleID' => $id,
@@ -99,19 +146,22 @@ class BookingController extends Controller
             
             'pickupLocation' => $request->input('pickup_location'), 
             'returnLocation' => $request->input('return_location'), 
-            'totalCost' => $request->input('total'), 
+            
+            'totalCost' => $grandTotal, 
             
             'aggreementDate' => now(),
-            'aggreementLink' => 'agreement_' . Auth::id() . '.pdf', // Placeholder
-            'bookingStatus' => 'Submitted',
+            'aggreementLink' => 'agreement_' . Auth::id() . '.pdf', 
+            'bookingStatus' => $status,
             'bookingType' => 'Standard',
         ]);
 
-        // 4. Create Payment Record
+        // 6. Create Payment Record
+        $amountPaid = ($request->input('payment_type') == 'deposit') ? $vehicle->baseDepo : $grandTotal;
+
         Payment::create([
             'bookingID' => $booking->bookingID,
-            'amount' => $request->input('total'), 
-            'depoAmount' => 50.00, 
+            'amount' => $amountPaid,
+            'depoAmount' => $vehicle->baseDepo, 
             'transactionDate' => now(),
             'paymentMethod' => 'QR Transfer',
             'paymentStatus' => 'Pending Verification',
@@ -123,22 +173,27 @@ class BookingController extends Controller
         return redirect()->route('book.index')->with('show_thank_you', true);
     }
 
-    // --- 7. CANCEL BOOKING (Redirects to Finance for Refund) ---
+    // --- 7. CANCEL BOOKING (Updated Strategy) ---
     public function cancel($id)
     {
         $booking = Booking::where('customerID', Auth::id())->findOrFail($id);
 
-        if ($booking->bookingStatus == 'Submitted') {
+        // Allow cancelling even if Paid/Approved so they can claim refund
+        $allowedStatuses = ['Submitted', 'Deposit Paid', 'Paid', 'Approved'];
+
+        if (in_array($booking->bookingStatus, $allowedStatuses)) {
+            
             $booking->update(['bookingStatus' => 'Cancelled']);
             
-            // Send user to Finance page to claim their money
-            return redirect()->route('finance.index')->with('success', 'Booking cancelled. You can claim your refund below.');
+            // Redirect to Finance Center for refund
+            return redirect()->route('finance.index')
+                ->with('success', 'Booking cancelled. Please check "Claimable" section to request your refund.');
         }
 
-        return back()->with('error', 'Cannot cancel a booking that is already processed.');
+        return back()->with('error', 'Cannot cancel this booking.');
     }
 
-    // --- 8. SHOW AGREEMENT (Optional) ---
+    // --- 8. SHOW AGREEMENT ---
     public function showAgreement($id)
     {
         $booking = Booking::with(['customer', 'vehicle'])->findOrFail($id);
@@ -150,69 +205,6 @@ class BookingController extends Controller
         return view('bookings.agreement', compact('booking'));
     }
 
-    // --- 9. EDIT FORM ---
-    public function edit($id)
-    {
-        $booking = Booking::where('customerID', Auth::id())->findOrFail($id);
-
-        if ($booking->bookingStatus !== 'Submitted') {
-            return redirect()->route('book.index')->with('error', 'Cannot edit a confirmed booking.');
-        }
-
-        return view('bookings.edit', compact('booking'));
-    }
-
-    // --- 10. UPDATE BOOKING (Calculates Price Difference & Penalties) ---
-    public function update(Request $request, $id)
-    {
-        $booking = Booking::where('customerID', Auth::id())->findOrFail($id);
-        $vehicle = $booking->vehicle;
-
-        // 1. Validate
-        $request->validate([
-            'pickup_date' => 'required|date|after_or_equal:today',
-            'return_date' => 'required|date|after:pickup_date',
-            'pickup_location' => 'required|string',
-            'return_location' => 'required|string',
-        ]);
-
-        // 2. Calculate New Price
-        $pickup = Carbon::parse($request->pickup_date);
-        $dropoff = Carbon::parse($request->return_date);
-        $newDays = $pickup->diffInDays($dropoff) ?: 1;
-        
-        $newTotal = ($vehicle->priceHour * 24 * $newDays) + $vehicle->baseDepo;
-        $oldTotal = $booking->totalCost;
-        $difference = $newTotal - $oldTotal;
-
-        // 3. Update the Booking
-        $booking->update([
-            'originalDate' => $request->pickup_date,
-            'returnDate' => $request->return_date,
-            'pickupLocation' => $request->pickup_location,
-            'returnLocation' => $request->return_location,
-            'totalCost' => $newTotal, 
-        ]);
-
-        // 4. Handle Finances (Debt or Refund Logic)
-        if ($difference > 0) {
-            // Price increased -> Create a Debt (Penalty)
-            Penalties::create([
-                'bookingID' => $booking->bookingID,
-                'amount' => $difference,
-                'reason' => 'Booking Modification (Price Increase)',
-                'status' => 'Pending',
-            ]);
-
-            return redirect()->route('finance.index')
-                ->with('warning', 'Booking updated. Additional payment of RM ' . number_format($difference, 2) . ' is required.');
-        
-        } elseif ($difference < 0) {
-            // Price decreased -> Notify user
-            return redirect()->route('book.index')
-                ->with('success', 'Booking updated. Your total price has decreased by RM ' . number_format(abs($difference), 2));
-        }
-
-        return redirect()->route('book.index')->with('success', 'Booking updated successfully.');
-    }
+    // --- DELETED: edit() and update() functions ---
+    // We removed these to simplify logic. Users must Cancel & Rebook.
 }

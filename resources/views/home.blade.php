@@ -23,7 +23,7 @@
                     Loyalty
                 </a>
                 <a href="{{ route('finance.index') }}" class="px-8 py-2.5 text-white/80 font-bold hover:bg-white/10 rounded-full transition">
-                    Finance
+                    Payments
                 </a>
             </div>
         </div>

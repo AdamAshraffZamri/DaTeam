@@ -3,105 +3,170 @@
 @section('content')
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
 
+{{-- 1. BACKGROUND --}}
 <div class="fixed inset-0 z-0">
     <div class="absolute inset-0 bg-cover bg-center" style="background-image: url('{{ asset('hastabg.png') }}');"></div>
     <div class="absolute inset-0 bg-gradient-to-b from-black/80 via-black/50 to-black/90"></div>
 </div>
     
-    <div class="relative z-10 w-full max-w-7xl mx-auto px-4 flex flex-col items-center h-full pt-12">
+{{-- 2. MAIN CONTENT --}}
+<div class="relative z-10 w-full min-h-screen flex flex-col justify-start items-center px-4 pt-32 md:pt-48">
 
-        <div class="text-center mb-16">
-            <br>
-            <h1 class="text-5xl md:text-7xl font-black text-white drop-shadow-2xl tracking-tight mb-2">
-                Drive your adventure.
-            </h1>
-            <p class="text-lg md:text-xl text-gray-200 font-medium drop-shadow-md tracking-wide">
-                Premium car rental services for UTM Students & Staff.
-            </p>
-            <br>
-        </div>
-
-        <div class="w-full max-w-6xl absolute -bottom-10 px-4">
-            <form action="{{ route('book.search') }}" method="GET">
-                <div class="bg-white/10 backdrop-blur-xl border border-white/20 rounded-[2rem] p-3 shadow-2xl flex flex-col md:flex-row items-center gap-2 md:gap-0">
-                    
-                    {{-- PICKUP LOCATION --}}
-                    <div class="flex-1 px-6 py-2 w-full md:border-r border-white/10">
-                        <label class="block text-[10px] font-bold text-gray-300 uppercase tracking-wider mb-1">PICKUP POINT</label>
-                        <div class="flex items-center group">
-                            <button type="button" onclick="openMapModal('pickup')" class="w-8 h-8 rounded-full bg-green-500/20 flex items-center justify-center mr-3 text-green-400 hover:bg-green-500 hover:text-white transition cursor-pointer" title="Pin on Map">
-                                <i class="fas fa-map-marker-alt"></i>
-                            </button>
-                            <input type="text" id="pickup_location" name="pickup_location" value="Student Mall, UTM" 
-                                   class="w-full bg-transparent font-bold text-white focus:outline-none border-none p-0 placeholder-gray-400 focus:ring-0">
-                        </div>
-                    </div>
-
-                    {{-- RETURN LOCATION --}}
-                    <div class="flex-1 px-6 py-2 w-full md:border-r border-white/10">
-                        <label class="block text-[10px] font-bold text-gray-300 uppercase tracking-wider mb-1">RETURN POINT</label>
-                        <div class="flex items-center group">
-                            <button type="button" onclick="openMapModal('return')" class="w-8 h-8 rounded-full bg-red-500/20 flex items-center justify-center mr-3 text-red-400 hover:bg-red-500 hover:text-white transition cursor-pointer" title="Pin on Map">
-                                <i class="fas fa-flag-checkered"></i>
-                            </button>
-                            <input type="text" id="return_location" name="return_location" value="Student Mall, UTM" 
-                                   class="w-full bg-transparent font-bold text-white focus:outline-none border-none p-0 placeholder-gray-400 focus:ring-0">
-                        </div>
-                    </div>
-
-                    {{-- PICKUP DATE & TIME --}}
-                    <div class="px-6 py-2 w-full md:w-auto md:border-r border-white/10">
-                        <label class="block text-[10px] font-bold text-gray-300 uppercase tracking-wider mb-1">PICKUP DATE</label>
-                        <div class="flex items-center space-x-2 bg-white/5 rounded-lg px-2 py-1">
-                            <input type="date" name="pickup_date" value="{{ date('Y-m-d') }}" class="bg-transparent border-none p-0 text-sm font-bold text-white focus:ring-0 [color-scheme:dark] cursor-pointer">
-                            <span class="text-white/20">|</span>
-                            
-                            {{-- CHANGED: Select Dropdown for Hour Only --}}
-                            <select name="pickup_time" class="bg-transparent border-none p-0 text-sm font-bold text-white focus:ring-0 cursor-pointer appearance-none">
-                                @for($i = 8; $i <= 22; $i++) 
-                                    <option value="{{ sprintf('%02d:00', $i) }}" class="text-black" {{ $i == 10 ? 'selected' : '' }}>
-                                        {{ sprintf('%02d:00', $i) }}
-                                    </option>
-                                @endfor
-                            </select>
-                        </div>
-                    </div>
-
-                    {{-- RETURN DATE & TIME --}}
-                    <div class="px-6 py-2 w-full md:w-auto">
-                        <label class="block text-[10px] font-bold text-gray-300 uppercase tracking-wider mb-1">RETURN DATE</label>
-                        <div class="flex items-center space-x-2 bg-white/5 rounded-lg px-2 py-1">
-                            <input type="date" name="return_date" value="{{ date('Y-m-d', strtotime('+1 day')) }}" class="bg-transparent border-none p-0 text-sm font-bold text-white focus:ring-0 [color-scheme:dark] cursor-pointer">
-                            <span class="text-white/20">|</span>
-                            
-                            {{-- CHANGED: Select Dropdown for Hour Only --}}
-                            <select name="return_time" class="bg-transparent border-none p-0 text-sm font-bold text-white focus:ring-0 cursor-pointer appearance-none">
-                                @for($i = 8; $i <= 22; $i++)
-                                    <option value="{{ sprintf('%02d:00', $i) }}" class="text-black" {{ $i == 10 ? 'selected' : '' }}>
-                                        {{ sprintf('%02d:00', $i) }}
-                                    </option>
-                                @endfor
-                            </select>
-                        </div>
-                    </div>
-
-                    <div class="p-1 w-full md:w-auto">
-                        <button type="submit" class="w-full md:w-16 h-14 bg-gradient-to-br from-orange-500 to-red-600 hover:to-red-700 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-orange-500/30 transition transform hover:scale-105 border border-white/10 group">
-                            <i class="fas fa-search text-xl group-hover:scale-110 transition"></i>
-                        </button>
-                    </div>
-
-                </div>
-            </form>
-        </div>
+    {{-- HEADER TEXT --}}
+    <div class="text-center mb-8">
+        <h1 class="text-5xl md:text-7xl font-black text-white drop-shadow-2xl tracking-tight mb-2">
+            Drive your adventure.
+        </h1>
+        <p class="text-lg md:text-xl text-gray-200 font-medium drop-shadow-md tracking-wide">
+            Premium car rental services for UTM Students & Staff.
+        </p>
     </div>
-    <div 
-            class="col-span-1 md:col-span-2 lg:col-span-3 flex flex-col items-center justify-center py-24 text-center">
-        </div>
+
+    {{-- SEARCH FORM CONTAINER --}}
+    <div class="w-full max-w-6xl">
+        <form action="{{ route('book.search') }}" method="GET" id="searchForm">
+            <div class="bg-white/10 backdrop-blur-xl border border-white/20 rounded-[2rem] p-3 shadow-2xl flex flex-col md:flex-row items-center gap-2 md:gap-0">
+                
+                {{-- PICKUP LOCATION --}}
+                <div class="flex-1 px-6 py-2 w-full md:border-r border-white/10">
+                    <label class="block text-[10px] font-bold text-gray-300 uppercase tracking-wider mb-1">PICKUP POINT</label>
+                    <div class="flex items-center group">
+                        <button type="button" onclick="openMapModal('pickup')" class="w-8 h-8 rounded-full bg-green-500/20 flex items-center justify-center mr-3 text-green-400 hover:bg-green-500 hover:text-white transition cursor-pointer">
+                            <i class="fas fa-map-marker-alt"></i>
+                        </button>
+                        <input type="text" id="pickup_location" name="pickup_location" value="Student Mall, UTM" 
+                               class="w-full bg-transparent font-bold text-white focus:outline-none border-none p-0 placeholder-gray-400 focus:ring-0">
+                    </div>
+                </div>
+
+                {{-- RETURN LOCATION --}}
+                <div class="flex-1 px-6 py-2 w-full md:border-r border-white/10">
+                    <label class="block text-[10px] font-bold text-gray-300 uppercase tracking-wider mb-1">RETURN POINT</label>
+                    <div class="flex items-center group">
+                        <button type="button" onclick="openMapModal('return')" class="w-8 h-8 rounded-full bg-red-500/20 flex items-center justify-center mr-3 text-red-400 hover:bg-red-500 hover:text-white transition cursor-pointer">
+                            <i class="fas fa-flag-checkered"></i>
+                        </button>
+                        <input type="text" id="return_location" name="return_location" value="Student Mall, UTM" 
+                               class="w-full bg-transparent font-bold text-white focus:outline-none border-none p-0 placeholder-gray-400 focus:ring-0">
+                    </div>
+                </div>
+
+                {{-- PICKUP DATE & TIME --}}
+                <div class="px-6 py-2 w-full md:w-auto md:border-r border-white/10">
+                    <label class="block text-[10px] font-bold text-gray-300 uppercase tracking-wider mb-1">PICKUP DATE</label>
+                    <div class="flex items-center bg-white/5 rounded-lg px-3 py-1 hover:bg-white/10 transition h-[42px]">
+                        
+                        {{-- Date Input --}}
+                        <input type="date" name="pickup_date" min="{{ date('Y-m-d') }}" value="{{ date('Y-m-d') }}" 
+                               class="bg-transparent border-none p-0 text-sm font-bold text-white focus:ring-0 [color-scheme:dark] cursor-pointer w-[110px]">
+                        
+                        {{-- Divider --}}
+                        <div class="w-px h-5 bg-white/20 mx-3"></div>
+                        
+                        {{-- Time Input Group --}}
+                        <div class="flex items-center">
+                            {{-- Hidden Input --}}
+                            <input type="hidden" name="pickup_time" id="pickup_time_hidden" value="10:00">
+
+                            {{-- Hour (Wider width: w-10) --}}
+                            <input type="number" id="pickup_hour" min="1" max="12" value="10" 
+                                   class="w-10 bg-transparent text-center text-white font-bold text-sm p-0 border-none focus:ring-0 appearance-none"
+                                   oninput="updateHiddenTime('pickup')">
+                            
+                            {{-- Minutes --}}
+                            <span class="text-white font-bold text-sm pb-0.5 -ml-1">:00</span>
+
+                            {{-- AM/PM --}}
+                            <select id="pickup_ampm" class="bg-transparent text-white font-bold text-xs border-none p-0 focus:ring-0 cursor-pointer ml-1"
+                                    onchange="updateHiddenTime('pickup')">
+                                <option value="AM" class="text-black">AM</option>
+                                <option value="PM" class="text-black" selected>PM</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- RETURN DATE & TIME --}}
+                <div class="px-6 py-2 w-full md:w-auto">
+                    <label class="block text-[10px] font-bold text-gray-300 uppercase tracking-wider mb-1">RETURN DATE</label>
+                    <div class="flex items-center bg-white/5 rounded-lg px-3 py-1 hover:bg-white/10 transition h-[42px]">
+                        
+                        {{-- Date Input --}}
+                        <input type="date" name="return_date" min="{{ date('Y-m-d') }}" value="{{ date('Y-m-d', strtotime('+1 day')) }}" 
+                               class="bg-transparent border-none p-0 text-sm font-bold text-white focus:ring-0 [color-scheme:dark] cursor-pointer w-[110px]">
+                        
+                        {{-- Divider --}}
+                        <div class="w-px h-5 bg-white/20 mx-3"></div>
+                        
+                        {{-- Time Input Group --}}
+                        <div class="flex items-center">
+                            {{-- Hidden Input --}}
+                            <input type="hidden" name="return_time" id="return_time_hidden" value="10:00">
+
+                            {{-- Hour (Wider width: w-10) --}}
+                            <input type="number" id="return_hour" min="1" max="12" value="10" 
+                                   class="w-10 bg-transparent text-center text-white font-bold text-sm p-0 border-none focus:ring-0 appearance-none"
+                                   oninput="updateHiddenTime('return')">
+                            
+                            {{-- Minutes --}}
+                            <span class="text-white font-bold text-sm pb-0.5 -ml-1">:00</span>
+
+                            {{-- AM/PM --}}
+                            <select id="return_ampm" class="bg-transparent text-white font-bold text-xs border-none p-0 focus:ring-0 cursor-pointer ml-1"
+                                    onchange="updateHiddenTime('return')">
+                                <option value="AM" class="text-black">AM</option>
+                                <option value="PM" class="text-black" selected>PM</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="p-1 w-full md:w-auto">
+                    <button type="submit" class="w-full md:w-16 h-14 bg-gradient-to-br from-orange-500 to-red-600 hover:to-red-700 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-orange-500/30 transition transform hover:scale-105 border border-white/10 group">
+                        <i class="fas fa-search text-xl group-hover:scale-110 transition"></i>
+                    </button>
+                </div>
+
+            </div>
+        </form>
+    </div>
 </div>
 
+{{-- JAVASCRIPT: Converts 12H input to 24H for the backend --}}
+<script>
+    function updateHiddenTime(type) {
+        // 1. Get Values
+        let hour = parseInt(document.getElementById(type + '_hour').value) || 10; // Default to 10 if empty
+        let ampm = document.getElementById(type + '_ampm').value;
+        const hiddenInput = document.getElementById(type + '_time_hidden');
+
+        // 2. Validate Range (1-12)
+        if (hour < 1) hour = 1;
+        if (hour > 12) hour = 12;
+
+        // 3. Convert to 24-Hour Format
+        let hour24 = hour;
+        
+        if (ampm === 'PM' && hour < 12) {
+            hour24 = hour + 12; // 2 PM becomes 14
+        }
+        if (ampm === 'AM' && hour === 12) {
+            hour24 = 0; // 12 AM becomes 00
+        }
+
+        // 4. Format string "14:00"
+        const formattedTime = (hour24 < 10 ? '0' + hour24 : hour24) + ':00';
+        
+        // 5. Update Hidden Input
+        hiddenInput.value = formattedTime;
+    }
+</script>
+
+{{-- Spacing --}}
+<div class="col-span-1 md:col-span-2 lg:col-span-3 flex flex-col items-center justify-center py-24 text-center"></div>
 <div class="h-24 bg-gray-50"></div>
 
+{{-- MAP MODAL --}}
 <div id="mapModal" class="fixed inset-0 z-50 hidden">
     <div class="absolute inset-0 bg-black/80 backdrop-blur-sm" onclick="closeMapModal()"></div>
     
@@ -131,56 +196,55 @@
     let activeInputId = '';
     let currentAddress = '';
 
-    // Initialize Map
     function initMap() {
-        // UTM Skudai Coordinates
+        // UTM Skudai Default
         const defaultLat = 1.5563;
         const defaultLng = 103.6375;
 
-        // Create Map
+        // 1. Create Map
         map = L.map('leafletMap').setView([defaultLat, defaultLng], 15);
 
-        // Add OpenStreetMap Tiles (Free)
+        // 2. Add Tiles
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '&copy; OpenStreetMap contributors'
         }).addTo(map);
 
-        // Add Draggable Marker
+        // 3. Add Marker
         marker = L.marker([defaultLat, defaultLng], {draggable: true}).addTo(map);
 
-        // Event: When marker is dragged
+        // 4. Drag Event
         marker.on('dragend', function(event) {
             const position = marker.getLatLng();
             fetchAddress(position.lat, position.lng);
         });
     }
 
-    // Open Modal
     function openMapModal(type) {
         activeInputId = type + '_location';
         document.getElementById('mapModal').classList.remove('hidden');
 
+        // Logic to Initialize or Refresh Map
         if (!map) {
-            setTimeout(initMap, 200); // Initialize if not exists
+            // Delay slightly to ensure Modal DOM is rendered before Leaflet calculates size
+            setTimeout(initMap, 200); 
         } else {
-            setTimeout(() => { map.invalidateSize(); }, 200); // Refresh fix
+            setTimeout(() => { map.invalidateSize(); }, 200);
         }
     }
 
-    // Close Modal
     function closeMapModal() {
         document.getElementById('mapModal').classList.add('hidden');
     }
 
-    // Reverse Geocoding (Convert Lat/Lng to Text) using Nominatim (Free)
     async function fetchAddress(lat, lng) {
         document.getElementById('addressPreview').innerText = "Detecting address...";
         try {
+            // Using OSM Nominatim (Reverse Geocoding)
             const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`);
             const data = await response.json();
             
             if(data && data.display_name) {
-                // Simplify address (take first 3 parts)
+                // Formatting: Take first 3 parts of address for brevity
                 const parts = data.display_name.split(',');
                 currentAddress = parts.slice(0, 3).join(', ');
                 document.getElementById('addressPreview').innerText = currentAddress;
@@ -193,16 +257,18 @@
         }
     }
 
-    // Confirm Button Click
     function confirmLocation() {
         if(currentAddress) {
             document.getElementById(activeInputId).value = currentAddress;
             closeMapModal();
         } else {
-            // If user didn't drag, fetch current position
+            // If user opened map and clicked confirm without dragging, get default pos
             const pos = marker.getLatLng();
             fetchAddress(pos.lat, pos.lng).then(() => {
-                document.getElementById(activeInputId).value = currentAddress;
+                // Ensure state is updated before closing
+                if(currentAddress) {
+                    document.getElementById(activeInputId).value = currentAddress;
+                }
                 closeMapModal();
             });
         }
