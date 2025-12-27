@@ -2,8 +2,7 @@
 
 namespace App\Models;
 
-// 1. THIS LINE IS CRITICAL - It fixes the "Trait not found" error
-use Illuminate\Database\Eloquent\Factories\HasFactory; 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Penalties extends Model
@@ -11,19 +10,28 @@ class Penalties extends Model
     use HasFactory;
 
     protected $table = 'penalties';
+    protected $primaryKey = 'penaltyID'; // Fix: Define Primary Key
 
-    // 2. These fields are required for the Finance page logic to work
+    // Fix: Match these to your migration columns!
     protected $fillable = [
         'bookingID', 
-        'amount', 
-        'reason', 
+        'penaltyFees',     // database has this
+        'lateReturnHour',  // database has this
+        'fuelSurcharge',   // database has this
+        'mileageSurcharge',// database has this
+        'penaltyStatus',   // database has this
         'status', 
         'date_imposed'
     ];
 
-    // 3. Relationship to Booking (Required for "Outstanding" list)
     public function booking()
     {
         return $this->belongsTo(Booking::class, 'bookingID', 'bookingID');
+    }
+
+    // Helper to calculate total (optional but useful)
+    public function getTotalAmountAttribute()
+    {
+        return $this->penaltyFees + $this->fuelSurcharge + $this->mileageSurcharge;
     }
 }

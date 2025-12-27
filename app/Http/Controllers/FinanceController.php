@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Booking;
 use App\Models\Penalties;
+use App\Models\Payment; 
 
 class FinanceController extends Controller
 {
@@ -14,22 +15,19 @@ class FinanceController extends Controller
         $user = Auth::user();
 
         // 1. GET CLAIMS (Refunds)
-        // Logic: Bookings that are 'Cancelled' but might have paid something
+        // Updated: Load 'payment' relationship to check depoStatus
         $claims = Booking::where('customerID', $user->customerID)
                          ->where('bookingStatus', 'Cancelled')
-                         ->with('vehicle')
+                         ->with(['vehicle', 'payment']) 
                          ->get();
 
         // 2. GET OUTSTANDING ITEMS
-        
-        // A. Fines (from Penalties table)
         $fines = Penalties::whereHas('booking', function($q) use ($user) {
                     $q->where('customerID', $user->customerID);
                  })
                  ->where('status', 'Pending')
                  ->get();
 
-        // B. Booking Balances (Where status is 'Deposit Paid')
         $balanceBookings = Booking::where('customerID', $user->customerID)
                                   ->where('bookingStatus', 'Deposit Paid')
                                   ->with(['vehicle', 'payments'])
@@ -38,17 +36,28 @@ class FinanceController extends Controller
         return view('finance.index', compact('claims', 'fines', 'balanceBookings'));
     }
 
-    // --- SHOW PAY BALANCE FORM ---
+    // --- NEW: REQUEST REFUND ---
+    public function requestRefund($id)
+    {
+        $booking = Booking::where('customerID', Auth::id())->findOrFail($id);
+
+        if ($booking->payment) {
+            // Update status to 'Requested' so staff can see it
+            $booking->payment->update(['depoStatus' => 'Requested']);
+            return back()->with('success', 'Refund request submitted to admin.');
+        }
+
+        return back()->with('error', 'No payment record found for this booking.');
+    }
+
+    // --- SHOW PAY BALANCE FORM (Keep existing) ---
     public function payBalance($id)
     {
         $user = Auth::user();
-        
-        // Find booking belonging to this user
         $booking = Booking::where('customerID', $user->customerID)
                           ->with(['vehicle', 'payments'])
                           ->findOrFail($id);
 
-        // Calculate Balance
         $totalPaid = $booking->payments->sum('amount');
         $balance = $booking->totalCost - $totalPaid;
 
@@ -59,7 +68,7 @@ class FinanceController extends Controller
         return view('finance.pay_balance', compact('booking', 'balance', 'totalPaid'));
     }
 
-    // --- SUBMIT BALANCE PAYMENT ---
+    // --- SUBMIT BALANCE PAYMENT (Keep existing) ---
     public function submitBalance(Request $request, $id)
     {
         $request->validate([
@@ -75,7 +84,7 @@ class FinanceController extends Controller
         \App\Models\Payment::create([
             'bookingID' => $booking->bookingID,
             'amount' => $balance, 
-            'depoAmount' => 0, // FIX: Added this line (0 because it's not a deposit)
+            'depoAmount' => 0,
             'transactionDate' => now(),
             'paymentMethod' => 'QR Transfer',
             'paymentStatus' => 'Pending Verification', 
@@ -85,5 +94,47 @@ class FinanceController extends Controller
         $booking->update(['bookingStatus' => 'Paid']);
 
         return redirect()->route('finance.index')->with('success', 'Balance payment submitted successfully!');
+    }
+
+    public function payFine($id)
+    {
+        // Find the penalty by its ID
+        $penalty = Penalties::findOrFail($id);
+
+        // Optional: Security check to ensure the penalty belongs to the logged-in user
+        if ($penalty->booking->customerID !== Auth::id()) {
+            abort(403, 'Unauthorized action.');
+        }
+
+        return view('finance.pay_fine', compact('penalty'));
+    }
+
+    public function submitFine(Request $request, $id)
+    {
+        $request->validate([
+            'payment_proof' => 'required|image|max:2048',
+        ]);
+
+        $penalty = Penalties::findOrFail($id);
+        
+        // CALCULATE TOTAL FROM DB COLUMNS
+        // Since 'amount' column doesn't exist, we sum the fees
+        $totalFine = $penalty->penaltyFees + $penalty->fuelSurcharge + $penalty->mileageSurcharge;
+
+        $path = $request->file('payment_proof')->store('receipts', 'public');
+
+        Payment::create([
+            'bookingID' => $penalty->bookingID,
+            'amount' => $totalFine, // <--- USE CALCULATED TOTAL HERE
+            'depoAmount' => 0,
+            'transactionDate' => now(),
+            'paymentMethod' => 'QR Transfer (Fine)',
+            'paymentStatus' => 'Pending Verification',
+            'installmentDetails' => $path 
+        ]);
+
+        $penalty->update(['status' => 'Paid']);
+
+        return redirect()->route('finance.index')->with('success', 'Fine payment submitted successfully!');
     }
 }

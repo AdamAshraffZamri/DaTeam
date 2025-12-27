@@ -9,7 +9,7 @@ class Booking extends Model
 {
     use HasFactory;
 
-    protected $primaryKey = 'bookingID'; // Important since you aren't using 'id'
+    protected $primaryKey = 'bookingID'; 
     
     protected $fillable = [
         'customerID', 'vehicleID', 'staffID', 'voucherID',
@@ -32,22 +32,43 @@ class Booking extends Model
         return $this->belongsTo(Vehicle::class, 'vehicleID', 'VehicleID');
     }
 
-    // 1. THIS WAS MISSING
+    // 1. ALLOWS ACCESSING $booking->payment (Single Latest Payment)
+    public function payment()
+    {
+        return $this->hasOne(Payment::class, 'bookingID', 'bookingID')->latest();
+    }
+
+    // 2. KEEPS HISTORY OF ALL PAYMENTS
     public function payments()
     {
-        // A booking can have multiple payments (Deposit + Final Balance)
         return $this->hasMany(Payment::class, 'bookingID', 'bookingID');
     }
 
-    // 2. CHECK THIS TOO (It is also in your controller)
+    // 3. THIS WAS MISSING -> FIXES THE ERROR
+    public function inspections()
+    {
+        return $this->hasMany(Inspection::class, 'bookingID', 'bookingID');
+    }
+
     public function penalties()
     {
         return $this->hasMany(Penalties::class, 'bookingID', 'bookingID');
     }
     
-    // Optional: If you use the Voucher relationship
     public function voucher()
     {
         return $this->belongsTo(Voucher::class, 'voucherID', 'voucherID');
     }
+
+    public function staff()
+    {
+        // A booking belongs to one staff member (assigned agent)
+        return $this->belongsTo(Staff::class, 'staffID', 'staffID');
+    }
+
+    public function feedback()
+    {
+        // A booking has one feedback
+        return $this->hasOne(Feedback::class, 'bookingID', 'bookingID');
+    }   
 }

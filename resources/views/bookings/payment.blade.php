@@ -183,8 +183,37 @@
 
                     <div class="bg-white/10 backdrop-blur-xl border border-white/20 rounded-[2rem] p-8 shadow-2xl text-center space-y-8">
                         
+                        {{-- NEW: AGREEMENT SECTION --}}
+                        <div class="bg-white/5 rounded-xl p-4 border border-white/10 text-left">
+                            <h4 class="text-white font-bold flex items-center mb-2">
+                                <i class="fas fa-file-signature text-orange-500 mr-2"></i> Rental Agreement
+                            </h4>
+                            <p class="text-xs text-gray-400 mb-4">
+                                Please download the agreement, sign it, and upload it below before proceeding.
+                            </p>
+                            
+                            {{-- Download Button (Updated to use Preview Route) --}}
+                            <a href="{{ route('book.agreement.preview', [
+                                'vehicle_id' => $vehicle->VehicleID, 
+                                'pickup_location' => $pickupLoc,
+                                'return_location' => $returnLoc,
+                                'return_date' => $returnDate,
+                                'return_time' => request('return_time', '10:00')
+                            ]) }}" target="_blank" class="block w-full text-center py-2 rounded-lg border border-white/20 text-gray-300 text-xs font-bold hover:bg-white/5 transition mb-4">
+                                <i class="fas fa-download mr-1"></i> Download Agreement PDF
+                            </a>
+
+                            {{-- Upload Signed Agreement --}}
+                            <label class="block w-full h-24 border-2 border-dashed border-white/20 rounded-xl flex flex-col items-center justify-center cursor-pointer hover:border-orange-500 hover:bg-white/5 transition group">
+                                <i class="fas fa-pen-nib text-gray-500 group-hover:text-orange-500 mb-1 transition"></i>
+                                <span class="text-xs font-bold text-gray-400 group-hover:text-white">Upload Signed Form</span>
+                                <input type="file" name="agreement_proof" class="hidden" required onchange="document.getElementById('agree-name').innerText = this.files[0].name">
+                            </label>
+                            <p id="agree-name" class="text-[10px] text-orange-400 mt-1 font-bold h-4"></p>
+                        </div>
+
                         {{-- QR Section --}}
-                        <div>
+                        <div class="border-t border-white/10 pt-6">
                             <div class="bg-white rounded-2xl p-3 w-48 h-48 flex items-center justify-center overflow-hidden mx-auto mb-4 shadow-2xl border-4 border-white/10">
                                 <img src="{{ asset('qr.JPG') }}" alt="Payment QR Code" class="w-full h-full object-contain">
                             </div>

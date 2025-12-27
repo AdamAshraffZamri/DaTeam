@@ -1,0 +1,147 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\Booking;
+use App\Models\Inspection;
+use App\Models\Penalties;
+use App\Models\Payment;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+
+class InspectionController extends Controller
+{
+    // --- 1. TASK LIST (To Pickup / To Return) ---
+    public function index()
+    {
+        // "To Pickup": Bookings that are CONFIRMED (Payment verified, Agreement signed)
+        $toPickup = Booking::with(['customer', 'vehicle'])
+                           ->where('bookingStatus', 'Confirmed')
+                           ->orderBy('bookingDate', 'asc')
+                           ->get();
+
+        // "To Return": Bookings that are ACTIVE (Currently on the road)
+        $toReturn = Booking::with(['customer', 'vehicle'])
+                           ->where('bookingStatus', 'Active')
+                           ->orderBy('returnDate', 'asc')
+                           ->get();
+
+        return view('staff.inspections.index', compact('toPickup', 'toReturn'));
+    }
+
+    // --- 2. SHOW INSPECTION FORM ---
+    public function create($id)
+    {
+        $booking = Booking::with(['customer', 'vehicle'])->findOrFail($id);
+        
+        // Determine type based on status
+        $type = ($booking->bookingStatus == 'Confirmed') ? 'Pickup' : 'Return';
+
+        return view('staff.inspections.create', compact('booking', 'type'));
+    }
+
+    // --- 3. SAVE INSPECTION & UPDATE STATUS ---
+    public function store(Request $request, $id)
+    {
+        $booking = Booking::findOrFail($id);
+        $type = $request->input('inspectionType');
+
+        // 1. Validation: Removed 'customer_agree'
+        $request->validate([
+            'fuelLevel' => 'required',
+            'mileage' => 'required|numeric',
+            'photos' => 'required', 
+            'photos.*' => 'image|max:4096',
+            'staff_agree' => 'required', // Only Staff agreement required
+        ]);
+
+        // 2. Handle File Uploads
+        $photoPaths = [];
+        if ($request->hasFile('photos')) {
+            foreach ($request->file('photos') as $photo) {
+                $photoPaths[] = $photo->store('inspections', 'public');
+            }
+        }
+        $photoString = json_encode($photoPaths);
+
+        // 3. Append Digital Signature (Staff Only)
+        $staffName = Auth::guard('staff')->user()->name ?? 'Staff';
+        
+        $finalNotes = $request->input('notes') . "\n\n" . 
+                      "[SIGNED] Staff: $staffName (Verified Inspection)";
+
+        // 4. Create Inspection Record
+        Inspection::create([
+            'bookingID' => $booking->bookingID,
+            'staffID' => Auth::guard('staff')->id(),
+            'inspectionType' => $type,
+            'inspectionDate' => now(),
+            
+            'fuelBefore' => ($type == 'Pickup') ? $request->fuelLevel : null,
+            'fuelAfter' => ($type == 'Return') ? $request->fuelLevel : null,
+            'mileageBefore' => ($type == 'Pickup') ? $request->mileage : null,
+            'mileageAfter' => ($type == 'Return') ? $request->mileage : null,
+            
+            'photosBefore' => ($type == 'Pickup') ? $photoString : null,
+            'photosAfter' => ($type == 'Return') ? $photoString : null,
+            
+            'damageCosts' => $request->input('damageCosts', 0),
+            
+            'remarks' => $finalNotes, 
+        ]);
+
+        // 5. Update Workflow Status
+        if ($type == 'Pickup') {
+            
+            // Pickup: Just mark active
+            $booking->update(['bookingStatus' => 'Active']);
+            $msg = 'Pickup inspection verified. Vehicle released.';
+
+        } else {
+            
+            // Return: Mark completed
+            $booking->update([
+                'bookingStatus' => 'Completed',
+                'actualReturnDate' => now()->toDateString(),
+                'actualReturnTime' => now()->toTimeString(),
+            ]);
+
+            $damage = $request->input('damageCosts', 0);
+
+            // --- CRITICAL LINKING LOGIC ---
+            if ($damage > 0) {
+                // CASE A: Damage Found -> Create Penalty & Hold Deposit
+                Penalties::create([
+                    'bookingID' => $booking->bookingID,
+                    'penaltyFees' => $damage,       // FIX: Mapped to 'penaltyFees'
+                    'penaltyStatus' => 'Unpaid',    // FIX: Default status
+                    'status' => 'Pending',          // Visible to customer
+                    // Note: We cannot save 'reason' because the column doesn't exist in your DB schema.
+                    // The details are saved in the Inspection logs/photos.
+                ]);
+
+                // Update Payment to alert Finance NOT to auto-refund
+                if ($booking->payment) {
+                    $booking->payment->update([
+                        'depoStatus' => 'Review Required', 
+                        'paymentStatus' => 'Completed' 
+                    ]);
+                }
+
+                $msg = 'Return processed. Penalty of RM ' . $damage . ' created and linked to customer account.';
+
+            } else {
+                // CASE B: No Damage -> Auto-Refund Deposit
+                if ($booking->payment) {
+                    $booking->payment->update([
+                        'depoStatus' => 'Refunded', 
+                        'paymentStatus' => 'Completed'
+                    ]);
+                }
+                $msg = 'Return verified with NO issues. Deposit released successfully.';
+            }
+        }
+
+        return redirect()->route('staff.inspections.index')->with('success', $msg);
+    }
+}
