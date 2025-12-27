@@ -101,15 +101,23 @@ class BookingController extends Controller
         // 1. Validation
         $request->validate([
             'payment_proof' => 'required|image|max:2048',
+            'agreement_proof' => 'required|file|mimes:pdf,jpg,jpeg,png|max:2048', // FIX: Added Agreement Validation
             'payment_type' => 'required', // 'full' or 'deposit'
         ]);
 
         $vehicle = Vehicle::findOrFail($id);
 
-        // 2. Upload Proof
+        // 2. Upload Proofs
+        // A. Payment Receipt
         $proofPath = null;
         if ($request->hasFile('payment_proof')) {
             $proofPath = $request->file('payment_proof')->store('receipts', 'public');
+        }
+
+        // B. Agreement Form (FIX: Handle File Upload)
+        $agreementPath = null;
+        if ($request->hasFile('agreement_proof')) {
+            $agreementPath = $request->file('agreement_proof')->store('agreements', 'public');
         }
 
         // 3. Recalculate Total (Security)
@@ -150,7 +158,7 @@ class BookingController extends Controller
             'totalCost' => $grandTotal, 
             
             'aggreementDate' => now(),
-            'aggreementLink' => 'agreement_' . Auth::id() . '.pdf', 
+            'aggreementLink' => $agreementPath, // FIX: Save the actual file path here
             'bookingStatus' => $status,
             'bookingType' => 'Standard',
         ]);
@@ -205,6 +213,65 @@ class BookingController extends Controller
         return view('bookings.agreement', compact('booking'));
     }
 
-    // --- DELETED: edit() and update() functions ---
-    // We removed these to simplify logic. Users must Cancel & Rebook.
+    // --- ADD THIS NEW FUNCTION ---
+    public function previewAgreement(Request $request)
+    {
+        $user = Auth::user();
+        $vehicle = Vehicle::findOrFail($request->vehicle_id);
+        
+        // Create a "Fake" Booking Object for the view
+        $booking = new Booking();
+        $booking->bookingID = "PENDING"; // Placeholder
+        $booking->aggreementDate = now();
+        $booking->pickupLocation = $request->pickup_location;
+        $booking->returnLocation = $request->return_location;
+        $booking->returnDate = $request->return_date;
+        $booking->returnTime = $request->return_time;
+        
+        // Manually attach relationships
+        $booking->setRelation('customer', $user);
+        $booking->setRelation('vehicle', $vehicle);
+
+        return view('bookings.agreement', compact('booking'));
+    }
+
+    // --- 9. UPLOAD INSPECTION (Customer Side) ---
+    public function uploadInspection(Request $request, $id)
+    {
+        $booking = Booking::where('customerID', Auth::id())->findOrFail($id);
+
+        $request->validate([
+            'photos' => 'required',
+            'photos.*' => 'image|max:4048', // Allow multiple images
+        ]);
+
+        // Determine Inspection Stage
+        $type = 'Pickup';
+        if ($booking->bookingStatus == 'Active' || $booking->bookingStatus == 'Completed') {
+            $type = 'Return';
+        }
+
+        // Store Photos
+        $photoPaths = [];
+        if ($request->hasFile('photos')) {
+            foreach ($request->file('photos') as $photo) {
+                $photoPaths[] = $photo->store('inspections', 'public');
+            }
+        }
+
+        // Create Inspection Record (No Staff ID)
+        \App\Models\Inspection::create([
+            'bookingID' => $booking->bookingID,
+            'staffID' => null, // Indicates Customer Submission
+            'inspectionType' => $type,
+            'inspectionDate' => now(),
+            // Save as JSON array
+            'photosBefore' => $type == 'Pickup' ? json_encode($photoPaths) : null,
+            'photosAfter' => $type == 'Return' ? json_encode($photoPaths) : null,
+            'fuelBefore' => $request->input('fuel_level'), // Optional
+            'mileageBefore' => $request->input('mileage'), // Optional
+        ]);
+
+        return back()->with('success', 'Inspection photos uploaded successfully!');
+    }
 }

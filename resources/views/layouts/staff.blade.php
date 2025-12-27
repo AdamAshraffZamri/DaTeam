@@ -18,9 +18,7 @@
         <aside class="w-64 bg-white border-r border-gray-100 hidden md:flex flex-col justify-between fixed h-full z-20">
             <div>
                 <div class="h-20 flex items-center px-8">
-                     <div class="border-2 border-orange-600 px-2 py-1 rounded">
-                        <span class="text-3xl font-black text-orange-600 tracking-tighter">HASTA</span>
-                     </div>
+                     <img src="{{ asset('hasta.jpeg') }}" alt="Hasta Logo" class="h-12 w-auto object-contain">
                 </div>
 
                 <nav class="p-4 space-y-2 mt-2">
@@ -55,9 +53,7 @@
             </div>
 
             <div class="p-4 pb-8">
-                <button class="w-full bg-orange-50 text-orange-600 font-bold py-3 rounded-xl mb-6 hover:bg-orange-100 transition flex items-center justify-center border border-orange-100">
-                    <i class="fas fa-clipboard-check mr-2"></i> Inspection Mode
-                </button>
+                
                 
                 <form action="{{ route('logout') }}" method="POST">
                     @csrf

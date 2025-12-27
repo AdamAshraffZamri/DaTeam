@@ -1,14 +1,15 @@
 @extends('layouts.app')
 
 @section('content')
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
 
 {{-- 1. BACKGROUND --}}
 <div class="fixed inset-0 z-0">
     <div class="absolute inset-0 bg-cover bg-center" style="background-image: url('{{ asset('hastabg.png') }}');"></div>
     <div class="absolute inset-0 bg-gradient-to-b from-black/80 via-black/50 to-black/90"></div>
 </div>
-    
+
 {{-- 2. MAIN CONTENT --}}
 <div class="relative z-10 w-full min-h-screen flex flex-col justify-start items-center px-4 pt-32 md:pt-48">
 
@@ -26,7 +27,7 @@
     <div class="w-full max-w-6xl">
         <form action="{{ route('book.search') }}" method="GET" id="searchForm">
             <div class="bg-white/10 backdrop-blur-xl border border-white/20 rounded-[2rem] p-3 shadow-2xl flex flex-col md:flex-row items-center gap-2 md:gap-0">
-                
+
                 {{-- PICKUP LOCATION --}}
                 <div class="flex-1 px-6 py-2 w-full md:border-r border-white/10">
                     <label class="block text-[10px] font-bold text-gray-300 uppercase tracking-wider mb-1">PICKUP POINT</label>
@@ -34,7 +35,7 @@
                         <button type="button" onclick="openMapModal('pickup')" class="w-8 h-8 rounded-full bg-green-500/20 flex items-center justify-center mr-3 text-green-400 hover:bg-green-500 hover:text-white transition cursor-pointer">
                             <i class="fas fa-map-marker-alt"></i>
                         </button>
-                        <input type="text" id="pickup_location" name="pickup_location" value="Student Mall, UTM" 
+                        <input type="text" id="pickup_location" name="pickup_location" value="Student Mall, UTM"
                                class="w-full bg-transparent font-bold text-white focus:outline-none border-none p-0 placeholder-gray-400 focus:ring-0">
                     </div>
                 </div>
@@ -46,7 +47,7 @@
                         <button type="button" onclick="openMapModal('return')" class="w-8 h-8 rounded-full bg-red-500/20 flex items-center justify-center mr-3 text-red-400 hover:bg-red-500 hover:text-white transition cursor-pointer">
                             <i class="fas fa-flag-checkered"></i>
                         </button>
-                        <input type="text" id="return_location" name="return_location" value="Student Mall, UTM" 
+                        <input type="text" id="return_location" name="return_location" value="Student Mall, UTM"
                                class="w-full bg-transparent font-bold text-white focus:outline-none border-none p-0 placeholder-gray-400 focus:ring-0">
                     </div>
                 </div>
@@ -55,29 +56,26 @@
                 <div class="px-6 py-2 w-full md:w-auto md:border-r border-white/10">
                     <label class="block text-[10px] font-bold text-gray-300 uppercase tracking-wider mb-1">PICKUP DATE</label>
                     <div class="flex items-center bg-white/5 rounded-lg px-3 py-1 hover:bg-white/10 transition h-[42px]">
-                        
+
                         {{-- Date Input --}}
-                        <input type="date" name="pickup_date" min="{{ date('Y-m-d') }}" value="{{ date('Y-m-d') }}" 
+                        <input type="date" name="pickup_date" min="{{ date('Y-m-d') }}" value="{{ date('Y-m-d') }}"
                                class="bg-transparent border-none p-0 text-sm font-bold text-white focus:ring-0 [color-scheme:dark] cursor-pointer w-[110px]">
-                        
+
                         {{-- Divider --}}
                         <div class="w-px h-5 bg-white/20 mx-3"></div>
-                        
+
                         {{-- Time Input Group --}}
                         <div class="flex items-center">
-                            {{-- Hidden Input --}}
                             <input type="hidden" name="pickup_time" id="pickup_time_hidden" value="10:00">
 
-                            {{-- Hour (Wider width: w-10) --}}
-                            <input type="number" id="pickup_hour" min="1" max="12" value="10" 
-                                   class="w-10 bg-transparent text-center text-white font-bold text-sm p-0 border-none focus:ring-0 appearance-none"
+                            <input type="number" id="pickup_hour" min="1" max="12" value="10"
+                                   class="w-10 bg-transparent text-center text-white font-bold text-sm p-0 border-none focus:ring-0 appearance-none leading-none"
                                    oninput="updateHiddenTime('pickup')">
-                            
-                            {{-- Minutes --}}
-                            <span class="text-white font-bold text-sm pb-0.5 -ml-1">:00</span>
 
-                            {{-- AM/PM --}}
-                            <select id="pickup_ampm" class="bg-transparent text-white font-bold text-xs border-none p-0 focus:ring-0 cursor-pointer ml-1"
+                            <span class="text-white font-bold text-sm leading-none">:00</span>
+
+                            <select id="pickup_ampm"
+                                    class="bg-transparent text-white font-bold text-sm border-none p-0 focus:ring-0 cursor-pointer ml-1 leading-none"
                                     onchange="updateHiddenTime('pickup')">
                                 <option value="AM" class="text-black">AM</option>
                                 <option value="PM" class="text-black" selected>PM</option>
@@ -90,29 +88,26 @@
                 <div class="px-6 py-2 w-full md:w-auto">
                     <label class="block text-[10px] font-bold text-gray-300 uppercase tracking-wider mb-1">RETURN DATE</label>
                     <div class="flex items-center bg-white/5 rounded-lg px-3 py-1 hover:bg-white/10 transition h-[42px]">
-                        
+
                         {{-- Date Input --}}
-                        <input type="date" name="return_date" min="{{ date('Y-m-d') }}" value="{{ date('Y-m-d', strtotime('+1 day')) }}" 
+                        <input type="date" name="return_date" min="{{ date('Y-m-d') }}" value="{{ date('Y-m-d', strtotime('+1 day')) }}"
                                class="bg-transparent border-none p-0 text-sm font-bold text-white focus:ring-0 [color-scheme:dark] cursor-pointer w-[110px]">
-                        
+
                         {{-- Divider --}}
                         <div class="w-px h-5 bg-white/20 mx-3"></div>
-                        
+
                         {{-- Time Input Group --}}
                         <div class="flex items-center">
-                            {{-- Hidden Input --}}
                             <input type="hidden" name="return_time" id="return_time_hidden" value="10:00">
 
-                            {{-- Hour (Wider width: w-10) --}}
-                            <input type="number" id="return_hour" min="1" max="12" value="10" 
-                                   class="w-10 bg-transparent text-center text-white font-bold text-sm p-0 border-none focus:ring-0 appearance-none"
+                            <input type="number" id="return_hour" min="1" max="12" value="10"
+                                   class="w-10 bg-transparent text-center text-white font-bold text-sm p-0 border-none focus:ring-0 appearance-none leading-none"
                                    oninput="updateHiddenTime('return')">
-                            
-                            {{-- Minutes --}}
-                            <span class="text-white font-bold text-sm pb-0.5 -ml-1">:00</span>
 
-                            {{-- AM/PM --}}
-                            <select id="return_ampm" class="bg-transparent text-white font-bold text-xs border-none p-0 focus:ring-0 cursor-pointer ml-1"
+                            <span class="text-white font-bold text-sm leading-none">:00</span>
+
+                            <select id="return_ampm"
+                                    class="bg-transparent text-white font-bold text-sm border-none p-0 focus:ring-0 cursor-pointer ml-1 leading-none"
                                     onchange="updateHiddenTime('return')">
                                 <option value="AM" class="text-black">AM</option>
                                 <option value="PM" class="text-black" selected>PM</option>
@@ -122,7 +117,8 @@
                 </div>
 
                 <div class="p-1 w-full md:w-auto">
-                    <button type="submit" class="w-full md:w-16 h-14 bg-gradient-to-br from-orange-500 to-red-600 hover:to-red-700 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-orange-500/30 transition transform hover:scale-105 border border-white/10 group">
+                    <button type="submit"
+                            class="w-full md:w-16 h-14 bg-gradient-to-br from-orange-500 to-red-600 hover:to-red-700 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-orange-500/30 transition transform hover:scale-105 border border-white/10 group">
                         <i class="fas fa-search text-xl group-hover:scale-110 transition"></i>
                     </button>
                 </div>
@@ -132,34 +128,22 @@
     </div>
 </div>
 
-{{-- JAVASCRIPT: Converts 12H input to 24H for the backend --}}
+{{-- JAVASCRIPT --}}
 <script>
-    function updateHiddenTime(type) {
-        // 1. Get Values
-        let hour = parseInt(document.getElementById(type + '_hour').value) || 10; // Default to 10 if empty
-        let ampm = document.getElementById(type + '_ampm').value;
-        const hiddenInput = document.getElementById(type + '_time_hidden');
+function updateHiddenTime(type) {
+    let hour = parseInt(document.getElementById(type + '_hour').value) || 10;
+    let ampm = document.getElementById(type + '_ampm').value;
+    const hiddenInput = document.getElementById(type + '_time_hidden');
 
-        // 2. Validate Range (1-12)
-        if (hour < 1) hour = 1;
-        if (hour > 12) hour = 12;
+    if (hour < 1) hour = 1;
+    if (hour > 12) hour = 12;
 
-        // 3. Convert to 24-Hour Format
-        let hour24 = hour;
-        
-        if (ampm === 'PM' && hour < 12) {
-            hour24 = hour + 12; // 2 PM becomes 14
-        }
-        if (ampm === 'AM' && hour === 12) {
-            hour24 = 0; // 12 AM becomes 00
-        }
+    let hour24 = hour;
+    if (ampm === 'PM' && hour < 12) hour24 += 12;
+    if (ampm === 'AM' && hour === 12) hour24 = 0;
 
-        // 4. Format string "14:00"
-        const formattedTime = (hour24 < 10 ? '0' + hour24 : hour24) + ':00';
-        
-        // 5. Update Hidden Input
-        hiddenInput.value = formattedTime;
-    }
+    hiddenInput.value = (hour24 < 10 ? '0' + hour24 : hour24) + ':00';
+}
 </script>
 
 {{-- Spacing --}}

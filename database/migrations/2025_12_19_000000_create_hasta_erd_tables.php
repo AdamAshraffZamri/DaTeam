@@ -217,7 +217,7 @@ return new class extends Migration
         Schema::create('inspections', function (Blueprint $table) {
             $table->id('inspectionID'); // PK
             $table->unsignedBigInteger('bookingID');
-            $table->unsignedBigInteger('staffID');
+            $table->unsignedBigInteger('staffID')->nullable();
 
             $table->string('inspectionType');
             $table->dateTime('inspectionDate');

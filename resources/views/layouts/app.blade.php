@@ -89,7 +89,7 @@
         </div>
     @endif
 
-    <main class="flex-grow relative z-30">
+    <main class="flex-grow relative">
         <div class="container mx-auto px-4">
             @if(session('success'))
                 <div class="mt-4 bg-green-50 border-l-4 border-green-500 text-green-700 p-4 rounded shadow-sm flex items-center" role="alert">
