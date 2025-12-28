@@ -11,7 +11,7 @@
 <div class="relative z-10 min-h-screen py-10">
     <div class="container mx-auto px-4 max-w-5xl">
 
-        {{-- ACTION REQUIRED ALERT (Only shows if redirected from a booking attempt) --}}
+        {{-- ALERTS --}}
         @if(session('error'))
         <div class="bg-red-500/20 backdrop-blur-md border-l-4 border-red-500 text-red-200 p-4 mb-6 rounded shadow-lg flex items-center" role="alert">
             <i class="fas fa-exclamation-circle mr-3 text-xl text-red-500"></i>
@@ -22,12 +22,31 @@
         </div>
         @endif
 
-        {{-- THE PROFILE HEADER --}}
+        @if(session('warning'))
+        <div class="bg-orange-500/20 backdrop-blur-md border-l-4 border-orange-500 text-orange-200 p-4 mb-6 rounded shadow-lg flex items-center" role="alert">
+            <i class="fas fa-user-edit mr-3 text-xl text-orange-500"></i>
+            <div>
+                <p class="font-bold text-orange-400">Welcome to HASTA!</p>
+                <p>{{ session('warning') }}</p>
+            </div>
+        </div>
+        @endif
+
+        @if(session('status'))
+        <div class="bg-green-500/20 backdrop-blur-md border-l-4 border-green-500 text-green-200 p-4 mb-6 rounded shadow-lg flex items-center animate-pulse" role="alert">
+            <i class="fas fa-check-circle mr-3 text-xl text-green-500"></i>
+            <div>
+                <p class="font-bold text-green-400">Success</p>
+                <p>{{ session('status') }}</p>
+            </div>
+        </div>
+        @endif
+
+        {{-- PROFILE HEADER --}}
         <div class="text-center mb-8 relative">
             <h1 class="text-3xl font-black text-white drop-shadow-md">Complete Your Profile</h1>
             <p class="text-gray-400 mt-2">These details are required for insurance and refunds.</p>
 
-            {{-- PROFILE PICTURE UI --}}
             <div class="relative mt-6 inline-block">
                 <div class="w-32 h-32 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center border-4 border-white/20 shadow-2xl overflow-hidden">
                     @if($user->avatar)
@@ -40,14 +59,15 @@
                 <button type="button" onclick="document.getElementById('avatar_input').click()" class="absolute bottom-0 right-0 bg-[#ea580c] hover:bg-orange-600 text-white p-2 rounded-full w-8 h-8 flex items-center justify-center transition shadow-lg cursor-pointer">
                     <i class="fas fa-pencil-alt text-xs"></i>
                 </button>
-                <input type="file" name="avatar" id="avatar_input" class="hidden" accept="image/*" onchange="previewAvatar(this)">
+                <form action="{{ route('profile.update') }}" method="POST" enctype="multipart/form-data" id="avatar-form">
+                     @csrf
+                     @method('PUT')
+                     <input type="file" name="avatar" id="avatar_input" class="hidden" accept="image/*" onchange="previewAvatar(this)">
+                </form>
             </div>
         </div>
 
-        {{-- 
-           IMPORTANT: If you see errors at the very top of your screen, 
-           delete the block below. Your layouts.app is already handling them.
-        --}}
+        {{-- VALIDATION ERRORS --}}
         @if ($errors->any())
             <div class="bg-red-500/10 backdrop-blur-md border border-red-500/30 text-red-200 px-6 py-4 rounded-2xl relative mb-6 shadow-lg">
                 <strong class="font-bold block mb-2">Please fix the following:</strong>
@@ -59,14 +79,13 @@
             </div>
         @endif
         
-        {{-- MAIN FORM (Glassmorphism Style) --}}
-        <form action="{{ route('profile.update') }}" method="POST" enctype="multipart/form-data" class="bg-black/25 backdrop-blur-xl border border-white/10 rounded-[2.5rem] shadow-2xl p-8 md:p-12">
+        {{-- ================= FORM 1: PROFILE INFO ================= --}}
+        <form action="{{ route('profile.update') }}" method="POST" enctype="multipart/form-data" class="bg-black/25 backdrop-blur-xl border border-white/10 rounded-[2.5rem] shadow-2xl p-8 md:p-12 mb-8">
             @csrf
             @method('PUT')
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6">
-
-                {{-- LEFT COLUMN: Personal Info --}}
+                {{-- LEFT: Personal Info --}}
                 <div class="space-y-6">
                     <h3 class="text-lg font-bold text-orange-500 border-b border-white/10 pb-2">Personal Information</h3>
                     
@@ -101,7 +120,7 @@
                     </div>
                 </div>
 
-                {{-- RIGHT COLUMN: Documents & Address --}}
+                {{-- RIGHT: Documents & Address --}}
                 <div class="space-y-6">
                     <h3 class="text-lg font-bold text-orange-500 border-b border-white/10 pb-2">Documents & Address</h3>
 
@@ -155,7 +174,7 @@
                 </div>
             </div>
             
-            {{-- BOTTOM: BANK DETAILS --}}
+            {{-- BANK DETAILS --}}
             <div class="mt-10 pt-8 border-t border-white/10">
                  <h3 class="text-lg font-bold text-orange-500 mb-4">Refund Information (Bank Details)</h3>
                  <p class="text-sm text-gray-400 mb-4">Required for refunding your deposit securely.</p>
@@ -181,16 +200,82 @@
                  </div>
             </div>
 
-            <div class="flex justify-end items-center mt-12 space-x-4">
-                <a href="{{ route('home') }}" class="text-gray-400 underline font-medium hover:text-white transition">Back Home</a>
-                <button type="submit" class="bg-[#ea580c] hover:bg-orange-600 text-white font-bold py-3 px-10 rounded-xl shadow-lg transition transform hover:scale-[1.02]">Save Changes</button>
+            {{-- FORM 1 SUBMIT BUTTON --}}
+            <div class="flex justify-end items-center mt-8 pt-4 border-t border-white/10">
+                <button type="submit" class="bg-[#ea580c] hover:bg-orange-600 text-white font-bold py-3 px-10 rounded-xl shadow-lg transition transform hover:scale-[1.02]">
+                    Save Profile Information
+                </button>
             </div>
         </form>
+
+        {{-- ================= FORM 2: PASSWORD UPDATE ================= --}}
+        <form action="{{ route('profile.password') }}" method="POST" class="bg-black/25 backdrop-blur-xl border border-white/10 rounded-[2.5rem] shadow-2xl p-8 md:p-12">
+            @csrf
+            @method('PUT')
+            
+            <h3 class="text-lg font-bold text-orange-500 mb-4">Edit Password</h3>
+            <p class="text-sm text-gray-400 mb-4">Update your password securely here.</p>
+             
+             <div>
+                 {{-- 1. Current Password --}}
+                 <div class="mb-6 max-w-md"> 
+                    <label class="block text-gray-400 mb-2 font-bold text-xs uppercase tracking-wider">Current Password</label>
+                    <div>
+                        <input type="text" name="current_password" id="current_password" placeholder="Enter current password to confirm" 
+                            class="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white focus:outline-none focus:border-orange-500 focus:bg-white/10 transition placeholder-gray-500">
+                    </div>
+                 </div>
+
+                 {{-- 2. GRID ROW FOR NEW PASS, CONFIRM PASS, AND BUTTON --}}
+                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6 items-end">
+                     
+                     {{-- New Password --}}
+                     <div>
+                        <label class="block text-gray-400 mb-2 font-bold text-xs uppercase tracking-wider">New Password</label>
+                        <div class="relative">
+                            <input type="password" name="password" id="password" placeholder="Min. 8 characters" 
+                                class="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white focus:outline-none focus:border-orange-500 focus:bg-white/10 transition placeholder-gray-500 pr-10">
+                            
+                            <button type="button" onclick="togglePassword('password', 'icon_pass')" class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-white">
+                                <i class="fas fa-eye" id="icon_pass"></i>
+                            </button>
+                        </div>
+                     </div>
+
+                     {{-- Confirm Password --}}
+                     <div>
+                        <label class="block text-gray-400 mb-2 font-bold text-xs uppercase tracking-wider">Confirm Password</label>
+                        <div class="relative">
+                            <input type="password" name="password_confirmation" id="password_confirmation" placeholder="Retype new password" 
+                                class="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white focus:outline-none focus:border-orange-500 focus:bg-white/10 transition placeholder-gray-500 pr-10">
+                            
+                            <button type="button" onclick="togglePassword('password_confirmation', 'icon_confirm')" class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-white">
+                                <i class="fas fa-eye" id="icon_confirm"></i>
+                            </button>
+                        </div>
+                     </div>
+
+                     {{-- FORM 2 SUBMIT BUTTON --}}
+                     <div>
+                        <button type="submit" class="bg-gray-700 hover:bg-gray-600 border border-gray-600 text-white font-bold py-2 px-4 rounded-lg text-sm shadow-md transition transform hover:scale-[1.02] flex items-center justify-center">
+                            <i class="fas fa-key mr-2"></i> Update Password
+                        </button>
+                     </div>
+
+                 </div>
+             </div>
+        </form>
+
+        {{-- BACK HOME LINK --}}
+        <div class="flex justify-center mt-12">
+            <a href="{{ route('home') }}" class="text-gray-400 underline font-medium hover:text-white transition">Back to Home</a>
+        </div>
 
     </div>
 </div>
 
 <script>
+    // 1. File Upload Preview Logic
     function fileSelected(type) {
         const input = document.getElementById(type + '_file');
         const icon = document.getElementById('icon_' + type);
@@ -206,8 +291,12 @@
         }
     }
 
+    // 2. Avatar Preview Logic
     function previewAvatar(input) {
         if (input.files && input.files[0]) {
+            // Check if we need to submit the specific avatar form if it's detached
+            // But since the input is now part of Form 1, standard submission works.
+            // Just preview it here:
             var reader = new FileReader();
             reader.onload = function(e) {
                 const icon = document.getElementById('avatar_icon');
@@ -218,6 +307,22 @@
                 img.classList.remove('hidden');
             }
             reader.readAsDataURL(input.files[0]);
+        }
+    }
+
+    // 3. Password Toggle Logic
+    function togglePassword(inputId, iconId) {
+        const input = document.getElementById(inputId);
+        const icon = document.getElementById(iconId);
+        
+        if (input.type === "password") {
+            input.type = "text";
+            icon.classList.remove('fa-eye');
+            icon.classList.add('fa-eye-slash');
+        } else {
+            input.type = "password";
+            icon.classList.remove('fa-eye-slash');
+            icon.classList.add('fa-eye');
         }
     }
 </script>

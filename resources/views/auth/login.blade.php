@@ -3,8 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - HASTA</title>
+    <title>{{ ucfirst($type ?? 'Customer') }} Login - HASTA</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
         body { font-family: 'Inter', sans-serif; }
@@ -12,47 +13,52 @@
 </head>
 <body class="bg-gray-900">
 
-    <div class="bg-[#d32f2f] h-16 w-full fixed top-0 z-50 flex items-center px-8 justify-between shadow-md">
-        <h1 class="text-white text-2xl font-black tracking-wide">HASTA</h1>
-        <div class="text-white text-sm font-medium space-x-6">
-            <a href="#" class="hover:text-gray-200">Home</a>
-            <a href="#" class="hover:text-gray-200">About Us</a>
-            <a href="#" class="hover:text-gray-200">FAQ</a>
-            <a href="#" class="hover:text-gray-200">Contact Us</a>
-        </div>
-        <div class="flex items-center space-x-4">
-            <i class="fas fa-bell text-white"></i>
-            <i class="fas fa-user-circle text-white text-xl"></i>
-        </div>
-    </div>
+    <nav class="bg-gradient-to-r from-[#ea580c] to-red-600 text-white p-4 shadow-lg fixed top-0 w-full z-50">
+        <div class="container mx-auto flex justify-between items-center">
+            <a href="{{ route('home') }}" class="flex items-center">
+                <img src="{{ asset('hasta.jpeg') }}" alt="HASTA Logo" class="h-10 w-auto object-contain drop-shadow-sm hover:scale-105 transition transform">
+            </a>
 
-    <div class="relative min-h-screen flex items-center justify-center bg-cover bg-center" style="background-image: url('https://images.unsplash.com/photo-1449965408869-eaa3f722e40d?q=80&w=1470&auto=format&fit=crop');">
+            <div class="hidden md:flex space-x-8 text-sm font-bold tracking-wide">
+                <a href="{{ route('home') }}" class="hover:text-orange-100 transition border-b-2 border-transparent hover:border-white pb-1">Home</a>
+                <a href="{{ route('pages.about') }}" class="hover:text-orange-100 transition border-b-2 border-transparent hover:border-white pb-1">About Us</a>
+                <a href="{{ route('pages.faq') }}" class="hover:text-orange-100 transition border-b-2 border-transparent hover:border-white pb-1">FAQ</a>
+                <a href="{{ route('pages.contact') }}" class="hover:text-orange-100 transition border-b-2 border-transparent hover:border-white pb-1">Contact Us</a>
+            </div>
+
+            <div class="flex items-center space-x-5">
+                <div class="relative cursor-pointer hover:scale-110 transition">
+                    <i class="fas fa-bell text-xl"></i>
+                    <span class="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full border border-white">2</span>
+                </div>
+                
+                <a href="{{ route('login') }}" class="bg-white text-orange-600 px-5 py-2 rounded-full font-bold text-sm hover:bg-orange-50 transition shadow-md">
+                    Login
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="relative min-h-screen flex items-center justify-center bg-cover bg-center" 
+         style="background-image: url('https://images.unsplash.com/photo-1449965408869-eaa3f722e40d?q=80&w=1470&auto=format&fit=crop');">
         
         <div class="absolute inset-0 bg-black/50 backdrop-blur-sm"></div>
 
-        <div class="relative z-10 w-full max-w-md p-6">
+        <div class="relative z-10 w-full max-w-md p-6 mt-16">
             
-            <div class="bg-white w-32 mx-auto py-2 rounded shadow-lg text-center mb-6">
-                <span class="text-orange-600 text-2xl font-black tracking-widest">HASTA</span>
-            </div>
+            <img src="{{ asset('hasta.jpeg') }}" alt="HASTA Logo" class="w-32 mx-auto rounded shadow-lg mb-6 block">
 
-            <h2 class="text-center text-white text-2xl font-bold mb-6">Welcome back!</h2>
+            <h2 class="text-center text-white text-2xl font-bold mb-6">
+                @if(($type ?? '') === 'staff')
+                    Staff Portal
+                @else
+                    Welcome back!
+                @endif
+            </h2>
 
             <form action="{{ route('login') }}" method="POST">
                 @csrf
-                
-                <input type="hidden" name="login_type" id="login_type" value="customer">
-
-                <div class="flex justify-center mb-8">
-                    <div class="bg-white/20 p-1 rounded-full flex relative">
-                        <button type="button" onclick="setRole('customer')" id="btn-customer" class="px-6 py-2 rounded-full text-sm font-bold transition-all duration-300 bg-orange-500 text-white shadow-md">
-                            Customer
-                        </button>
-                        <button type="button" onclick="setRole('staff')" id="btn-staff" class="px-6 py-2 rounded-full text-sm font-bold transition-all duration-300 text-white hover:bg-white/10">
-                            Staff
-                        </button>
-                    </div>
-                </div>
+                <input type="hidden" name="login_type" value="{{ $type ?? 'customer' }}">
 
                 <div class="space-y-4">
                     <div class="relative">
@@ -66,53 +72,34 @@
                     </div>
 
                     <div class="text-right">
-                        <a href="{{ route('password.request') }}" class="text-xs text-gray-300 hover:text-white">Forgot password?</a>                    </div>
+                        @if(($type ?? '') === 'customer')
+                            <a href="{{ route('password.request') }}" class="text-xs text-gray-300 hover:text-white">Forgot password?</a>
+                        @endif
+                    </div>
                 </div>
 
                 <button type="submit" class="w-full mt-8 bg-orange-600 hover:bg-orange-700 text-white font-bold py-3 rounded-lg shadow-lg transition transform hover:scale-[1.02]">
                     Log in
                 </button>
                 
-                <div class="text-center mt-6" id="register-section">
-                    <p class="text-gray-300 text-sm">Don't have an account? <a href="{{ route('register') }}" class="text-orange-400 font-bold hover:underline">Register</a></p>
+                <div class="text-center mt-6 space-y-2">
+                    @if(($type ?? '') === 'customer')
+                        <p class="text-gray-300 text-sm">
+                            Don't have an account? 
+                            <a href="{{ route('register') }}" class="text-orange-400 font-bold hover:underline">Register</a>
+                        </p>
+                    @endif
+
+                    <p class="text-gray-400 text-xs">
+                        @if(($type ?? '') === 'customer')
+                            Are you a staff member? <a href="{{ route('staff.login') }}" class="text-gray-200 hover:text-white underline">Login here</a>
+                        @else
+                            Not a staff member? <a href="{{ route('login') }}" class="text-gray-200 hover:text-white underline">Customer Login</a>
+                        @endif
+                    </p>
                 </div>
             </form>
         </div>
     </div>
-
-    <script>
-        function setRole(role) {
-            // Update Hidden Input
-            document.getElementById('login_type').value = role;
-
-            // Visual Updates
-            const btnCustomer = document.getElementById('btn-customer');
-            const btnStaff = document.getElementById('btn-staff');
-            
-            // Get the register section
-            const registerSection = document.getElementById('register-section');
-
-            if(role === 'customer') {
-                btnCustomer.classList.add('bg-orange-500', 'text-white', 'shadow-md');
-                btnCustomer.classList.remove('text-gray-300', 'hover:bg-white/10');
-                
-                btnStaff.classList.remove('bg-orange-500', 'text-white', 'shadow-md');
-                btnStaff.classList.add('text-white', 'hover:bg-white/10');
-
-                // SHOW registration link
-                registerSection.style.display = 'block';
-
-            } else {
-                btnStaff.classList.add('bg-orange-500', 'text-white', 'shadow-md');
-                btnStaff.classList.remove('text-gray-300', 'hover:bg-white/10');
-
-                btnCustomer.classList.remove('bg-orange-500', 'text-white', 'shadow-md');
-                btnCustomer.classList.add('text-white', 'hover:bg-white/10');
-                
-                // HIDE registration link
-                registerSection.style.display = 'none';
-            }
-        }
-    </script>
 </body>
 </html>
