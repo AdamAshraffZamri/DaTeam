@@ -78,22 +78,63 @@ class BookingController extends Controller
 
     // --- 5. PAYMENT PAGE ---
     public function payment(Request $request, $id)
-    {
-        $vehicle = Vehicle::findOrFail($id);
-        
-        $pickupDate = $request->query('pickup_date', now()->format('Y-m-d'));
-        $returnDate = $request->query('return_date', now()->addDay()->format('Y-m-d'));
-        $pickupLoc = $request->query('pickup_location', 'Student Mall');
-        $returnLoc = $request->query('return_location', 'Student Mall');
-        
-        $pickup = Carbon::parse($pickupDate);
-        $dropoff = Carbon::parse($returnDate);
-        $days = $pickup->diffInDays($dropoff) ?: 1;
-        
-        $total = ($vehicle->priceHour * 24 * $days) + $vehicle->baseDepo;
-
-        return view('bookings.payment', compact('vehicle', 'days', 'total', 'pickupDate', 'returnDate', 'pickupLoc', 'returnLoc'));
+{
+    $vehicle = Vehicle::findOrFail($id);
+    
+    // 1. Parse Dates
+    $pickup = \Carbon\Carbon::parse($request->pickup_date . ' ' . $request->pickup_time);
+    $return = \Carbon\Carbon::parse($request->return_date . ' ' . $request->return_time);
+    
+    // 2. Calculate Total Duration
+    // We use ceil() on minutes to ensure 25 hours 1 min becomes 26 hours (standard rental practice)
+    $totalHours = $pickup->diffInHours($return);
+    if ($pickup->diffInMinutes($return) > $totalHours * 60) {
+        $totalHours++;
     }
+
+    // 3. Decode Hourly Rates (Safely)
+    $rates = is_array($vehicle->hourly_rates) 
+             ? $vehicle->hourly_rates 
+             : json_decode($vehicle->hourly_rates, true);
+
+    // 4. Calculate Price (Mixed Logic: Days + Remaining Hours)
+    $days = floor($totalHours / 24);      // e.g., 61 hours = 2 Days
+    $balanceHours = $totalHours % 24;     // Remaining 13 hours
+
+    $dailyRate = $rates[24] ?? 0;         // Rate for 24H
+    
+    // Calculate Remainder Cost using Tiers (1, 3, 5, 7, 9, 12)
+    $remainderCost = 0;
+    if ($balanceHours > 0) {
+        $tiers = [1, 3, 5, 7, 9, 12, 24]; // Standard Tiers
+        $selectedTier = 24; // Default cap
+        
+        foreach ($tiers as $tier) {
+            if ($balanceHours <= $tier) {
+                $selectedTier = $tier;
+                break;
+            }
+        }
+        $remainderCost = $rates[$selectedTier] ?? 0;
+    }
+
+    // 5. Final Calculations
+    $rentalCharge = ($days * $dailyRate) + $remainderCost;
+    $grandTotal = $rentalCharge + $vehicle->baseDepo;
+
+    return view('bookings.payment', [
+        'vehicle' => $vehicle,
+        'total' => $grandTotal,           // The final price to pay
+        'rentalCharge' => $rentalCharge,  // Pure rental cost (no deposit)
+        'days' => $days,                  // Integer (e.g., 2)
+        'extraHours' => $balanceHours,    // Integer (e.g., 13)
+        'totalHours' => $totalHours,      // Total duration in hours
+        'pickupDate' => $request->pickup_date,
+        'returnDate' => $request->return_date,
+        'pickupLoc' => $request->pickup_location,
+        'returnLoc' => $request->return_location
+    ]);
+}
 
     // --- 6. SUBMIT BOOKING (Handles Full/Deposit & Vouchers) ---
     public function submitPayment(Request $request, $id)

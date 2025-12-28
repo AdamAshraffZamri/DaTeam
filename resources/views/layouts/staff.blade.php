@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Hasta Staff Portal</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
@@ -34,7 +35,9 @@
                         <i class="fas fa-file-invoice w-5 mr-3"></i> Manage Bookings
                     </a>
 
-                    <a href="#" class="flex items-center px-4 py-3 rounded-xl transition font-bold text-sm text-gray-500 hover:bg-orange-50 hover:text-orange-600">
+                    <a href="{{ route('staff.fleet.index') }}" 
+                        class="flex items-center px-4 py-3 rounded-xl transition font-bold text-sm
+                       {{ request()->routeIs('staff.fleet.index') ? 'bg-orange-600 text-white shadow-lg shadow-orange-500/30' : 'text-gray-500 hover:bg-orange-50 hover:text-orange-600' }}">
                         <i class="fas fa-car w-5 mr-3"></i> Fleet Management
                     </a>
 

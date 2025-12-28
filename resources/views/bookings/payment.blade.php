@@ -42,8 +42,16 @@
                         <h3 class="text-lg font-bold text-white flex items-center">
                             <i class="far fa-calendar-alt text-orange-500 mr-3"></i> Rental Itinerary
                         </h3>
+                        
+                        {{-- DYNAMIC DURATION BADGE --}}
                         <span class="bg-orange-500/20 text-orange-300 text-xs font-bold px-3 py-1 rounded-full border border-orange-500/30">
-                            {{ $days }} Days Duration
+                            @if($days > 0 && $extraHours > 0)
+                                {{ $days }} Day(s) + {{ $extraHours }} Hour(s)
+                            @elseif($days > 0)
+                                {{ $days }} Day(s)
+                            @else
+                                {{ $totalHours }} Hour(s)
+                            @endif
                         </span>
                     </div>
 
@@ -94,8 +102,18 @@
                     
                     <div class="space-y-4 text-sm">
                         <div class="flex justify-between items-center text-gray-300">
-                            <span>Rental Rate (RM {{ number_format($vehicle->priceHour * 24, 0) }} / day)</span>
-                            <span class="font-bold text-white">MYR {{ number_format(($vehicle->priceHour * 24) * $days, 2) }}</span>
+                            {{-- Detailed Breakdown of Calculation --}}
+                            <span>
+                                Rental Charges
+                                <span class="block text-[10px] text-gray-500 mt-0.5">
+                                    @if($days > 0) {{ $days }} Day(s) @endif
+                                    @if($days > 0 && $extraHours > 0) + @endif
+                                    @if($extraHours > 0) {{ $extraHours }} Hour(s) Tier @endif
+                                </span>
+                            </span>
+                            
+                            {{-- USE PRE-CALCULATED VARIABLE (No Blade Math) --}}
+                            <span class="font-bold text-white">MYR {{ number_format($rentalCharge, 2) }}</span>
                         </div>
                         
                         <div class="flex justify-between items-center">
@@ -109,7 +127,7 @@
                         </div>
                     </div>
 
-                    {{-- NEW: PAYMENT OPTIONS (RADIO BUTTONS) --}}
+                    {{-- PAYMENT OPTIONS --}}
                     <div class="mt-6 pt-6 border-t border-dashed border-white/10">
                         <p class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-3">Choose Payment Option</p>
                         
@@ -117,7 +135,7 @@
                             {{-- Option 1: Full Payment --}}
                             <label class="cursor-pointer group relative">
                                 <input type="radio" name="payment_choice" value="full" class="peer sr-only" checked onchange="updatePaymentMode('full')">
-                                <div class="bg-white/5 border border-white/10 rounded-xl p-4 peer-checked:bg-orange-500/10 peer-checked:border-orange-500 transition">
+                                <div class="bg-white/5 border border-white/10 rounded-xl p-4 peer-checked:bg-orange-500/10 peer-checked:border-orange-500 transition h-full">
                                     <div class="flex items-center justify-between mb-1">
                                         <span class="text-sm font-bold text-white">Full Payment</span>
                                         <i class="fas fa-check-circle text-orange-500 opacity-0 peer-checked:opacity-100 transition"></i>
@@ -129,7 +147,7 @@
                             {{-- Option 2: Deposit Only --}}
                             <label class="cursor-pointer group relative">
                                 <input type="radio" name="payment_choice" value="deposit" class="peer sr-only" onchange="updatePaymentMode('deposit')">
-                                <div class="bg-white/5 border border-white/10 rounded-xl p-4 peer-checked:bg-orange-500/10 peer-checked:border-orange-500 transition">
+                                <div class="bg-white/5 border border-white/10 rounded-xl p-4 peer-checked:bg-orange-500/10 peer-checked:border-orange-500 transition h-full">
                                     <div class="flex items-center justify-between mb-1">
                                         <span class="text-sm font-bold text-white">Pay Deposit</span>
                                         <i class="fas fa-check-circle text-orange-500 opacity-0 peer-checked:opacity-100 transition"></i>
@@ -144,7 +162,7 @@
                     <div class="mt-6 pt-4 border-t border-dashed border-white/10">
                          <label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2 block">Have a Voucher?</label>
                          <div class="flex gap-2">
-                             <input type="text" id="voucher_code" class="bg-white/5 border border-white/10 text-white text-sm rounded-lg px-4 py-3 w-full focus:outline-none focus:border-orange-500 focus:bg-white/10 uppercase transition placeholder-gray-600 font-bold" placeholder="Enter Code">
+                             <input type="text" id="voucher_code" class="bg-white/5 border border-white/10 text-white text-sm rounded-lg px-4 py-3 w-full focus:outline-none focus:border-orange-500 transition uppercase font-bold" placeholder="Enter Code">
                              <button type="button" onclick="applyVoucher()" id="btn_apply_voucher" class="bg-gray-700 hover:bg-gray-600 text-white text-xs font-bold px-5 py-2 rounded-lg transition border border-white/10 whitespace-nowrap">
                                  APPLY
                              </button>
@@ -178,21 +196,18 @@
                     
                     {{-- DYNAMIC HIDDEN FIELDS --}}
                     <input type="hidden" name="total" id="hidden_total" value="{{ $total }}">
-                    <input type="hidden" name="payment_type" id="hidden_payment_type" value="full"> {{-- 'full' or 'deposit' --}}
+                    <input type="hidden" name="payment_type" id="hidden_payment_type" value="full">
                     <input type="hidden" name="voucher_id" id="hidden_voucher_id" value="">
 
                     <div class="bg-white/10 backdrop-blur-xl border border-white/20 rounded-[2rem] p-8 shadow-2xl text-center space-y-8">
                         
-                        {{-- NEW: AGREEMENT SECTION --}}
+                        {{-- AGREEMENT SECTION --}}
                         <div class="bg-white/5 rounded-xl p-4 border border-white/10 text-left">
                             <h4 class="text-white font-bold flex items-center mb-2">
                                 <i class="fas fa-file-signature text-orange-500 mr-2"></i> Rental Agreement
                             </h4>
-                            <p class="text-xs text-gray-400 mb-4">
-                                Please download the agreement, sign it, and upload it below before proceeding.
-                            </p>
+                            <p class="text-xs text-gray-400 mb-4">Please download, sign, and upload agreement form.</p>
                             
-                            {{-- Download Button (Updated to use Preview Route) --}}
                             <a href="{{ route('book.agreement.preview', [
                                 'vehicle_id' => $vehicle->VehicleID, 
                                 'pickup_location' => $pickupLoc,
@@ -203,7 +218,6 @@
                                 <i class="fas fa-download mr-1"></i> Download Agreement PDF
                             </a>
 
-                            {{-- Upload Signed Agreement --}}
                             <label class="block w-full h-24 border-2 border-dashed border-white/20 rounded-xl flex flex-col items-center justify-center cursor-pointer hover:border-orange-500 hover:bg-white/5 transition group">
                                 <i class="fas fa-pen-nib text-gray-500 group-hover:text-orange-500 mb-1 transition"></i>
                                 <span class="text-xs font-bold text-gray-400 group-hover:text-white">Upload Signed Form</span>
@@ -217,7 +231,6 @@
                             <div class="bg-white rounded-2xl p-3 w-48 h-48 flex items-center justify-center overflow-hidden mx-auto mb-4 shadow-2xl border-4 border-white/10">
                                 <img src="{{ asset('qr.JPG') }}" alt="Payment QR Code" class="w-full h-full object-contain">
                             </div>
-                            
                             <div class="mt-4">
                                 <p class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Bank Account (HASTA)</p>
                                 <div class="flex items-center justify-center space-x-2 mt-1">
@@ -234,19 +247,13 @@
                                     <i class="fas fa-cloud-upload-alt text-orange-500 text-lg"></i>
                                 </div>
                                 <span class="text-sm font-bold text-gray-300 group-hover:text-white">Click to upload receipt</span>
-                                <span class="text-[10px] text-gray-500 mt-1 uppercase">JPG, PNG or PDF (Max 2MB)</span>
-                                
-                                <input type="file" id="proof_upload" name="payment_proof" class="hidden" onchange="document.getElementById('file-name').innerText = 'Selected: ' + this.files[0].name">
+                                <input type="file" id="proof_upload" name="payment_proof" class="hidden" required onchange="document.getElementById('file-name').innerText = 'Selected: ' + this.files[0].name">
                             </label>
                             <p id="file-name" class="text-xs text-orange-400 mt-2 font-bold"></p>
                         </div>
 
                         <div class="space-y-4">
-                            <p class="text-[10px] text-center text-gray-500 leading-relaxed px-4 uppercase font-bold">
-                                Verification usually takes 15-30 minutes.
-                            </p>
-                            
-                            <button type="submit" class="block w-full bg-[#ea580c] hover:bg-orange-600 text-white font-bold py-4 rounded-xl shadow-xl hover:shadow-orange-500/40 transition-all transform hover:scale-[1.02] text-center text-lg">
+                            <button type="submit" class="block w-full bg-[#ea580c] hover:bg-orange-600 text-white font-bold py-4 rounded-xl shadow-xl transition-all transform hover:scale-[1.02] text-center text-lg">
                                 Confirm & Submit
                             </button>
                         </div>
@@ -260,10 +267,11 @@
 
 <script>
     // 1. STATE MANAGEMENT
-    let fullTotal = {{ $total }}; // The original total (Rent + Deposit)
-    let depositAmount = {{ $vehicle->baseDepo }}; // The Deposit only amount
-    let currentVoucherDiscount = 0; // Tracks applied discount
-    let activeMode = 'full'; // 'full' or 'deposit'
+    // Using simple values passed from controller - NO MATH here
+    let fullTotal = {{ $total }}; 
+    let depositAmount = {{ $vehicle->baseDepo }}; 
+    let currentVoucherDiscount = 0; 
+    let activeMode = 'full'; 
 
     // 2. TOGGLE PAYMENT MODE
     function updatePaymentMode(mode) {
@@ -279,18 +287,14 @@
         let hiddenTotalInput = document.getElementById('hidden_total');
 
         if (activeMode === 'full') {
-            // Full Amount = (Original Total - Voucher)
             displayAmount = fullTotal - currentVoucherDiscount;
             if(displayAmount < 0) displayAmount = 0;
         } else {
-            // Deposit Amount = Fixed Deposit (Vouchers usually don't discount the security deposit itself)
+            // Deposit Mode: Voucher does not apply to security deposit
             displayAmount = depositAmount; 
         }
 
-        // Update UI (Format to 2 decimals)
         displayTotalElement.innerText = displayAmount.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
-        
-        // Update Hidden Input
         hiddenTotalInput.value = displayAmount.toFixed(2);
     }
 
@@ -306,7 +310,6 @@
             return;
         }
 
-        // Loading
         btn.innerText = "...";
         btn.disabled = true;
         msg.innerText = "";
@@ -319,7 +322,7 @@
             },
             body: JSON.stringify({
                 code: code,
-                total_amount: fullTotal // Send full amount to check validity
+                total_amount: fullTotal 
             })
         })
         .then(response => response.json())
@@ -328,30 +331,22 @@
             btn.disabled = false;
 
             if (data.success) {
-                // Success State
                 msg.innerText = data.message;
                 msg.className = "text-xs mt-2 font-bold text-green-400";
-
-                // Update Discount Tracking
-                // Note: The backend sends 'discount_amount' as string formatted, convert to float
-                currentVoucherDiscount = parseFloat(data.discount_amount.replace(/,/g, ''));
                 
-                // Show Discount Row
+                currentVoucherDiscount = parseFloat(data.discount_amount.toString().replace(/,/g, ''));
+                
                 document.getElementById('discount_row').classList.remove('hidden');
                 document.getElementById('discount_amount').innerText = data.discount_amount;
-
-                // Store Voucher ID
                 document.getElementById('hidden_voucher_id').value = data.voucher_id;
                 
-                // Lock Input
+                // Lock input after success
                 document.getElementById('voucher_code').disabled = true;
                 document.getElementById('voucher_code').classList.add('opacity-50', 'cursor-not-allowed');
-                btn.classList.add('hidden'); 
+                btn.classList.add('hidden');
 
-                // Re-render Total
                 renderTotal();
             } else {
-                // Error State
                 msg.innerText = data.message;
                 msg.className = "text-xs mt-2 font-bold text-red-500";
             }

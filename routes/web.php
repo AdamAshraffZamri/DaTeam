@@ -84,7 +84,7 @@ Route::middleware('auth')->group(function () {
 
 // --- Staff / Admin Routes ---
 Route::prefix('staff')->middleware(['auth:staff'])->group(function () {
-    
+
     // Dashboard
     Route::get('/dashboard', [StaffBookingController::class, 'dashboard'])->name('staff.dashboard');
     
@@ -113,10 +113,14 @@ Route::prefix('staff')->middleware(['auth:staff'])->group(function () {
     Route::post('/inspections/{id}/store', [StaffBookingController::class, 'storeInspection'])->name('staff.inspections.store');
 
     // --- FLEET MANAGEMENT ---
-    Route::get('/fleet', [FleetController::class, 'index']);
-    Route::get('/fleet/create', [FleetController::class, 'create']);
-    Route::post('/fleet/store', [FleetController::class, 'store']);
-    Route::post('/fleet/status/{vehicle}', [FleetController::class, 'updateStatus']);
+    Route::get('/fleet', [FleetController::class, 'index'])->name('staff.fleet.index');
+    Route::get('/fleet/create', [FleetController::class, 'create'])->name('staff.fleet.create');
+    Route::post('/fleet/store', [FleetController::class, 'store'])->name('staff.fleet.store');
+    Route::get('/fleet/{vehicle}', [FleetController::class, 'show'])->name('staff.fleet.show');
+    Route::get('/fleet/{vehicle}/edit', [FleetController::class, 'edit'])->name('staff.fleet.edit');
+    Route::put('/fleet/{vehicle}', [FleetController::class, 'update'])->name('staff.fleet.update');
+    Route::delete('/fleet/{vehicle}', [FleetController::class, 'destroy'])->name('staff.fleet.destroy');
+    Route::post('/fleet/status/{vehicle}', [FleetController::class, 'updateStatus'])->name('staff.fleet.update_status');
 
     // --- SEPARATE INSPECTION MODE (If needed for dedicated page) ---
     // Renamed to avoid conflict with 'storeInspection' above
