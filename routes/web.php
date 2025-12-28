@@ -24,6 +24,7 @@ Route::get('/', [HomeController::class, 'index'])->name('home');
 
 // Login & Register
 Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
+Route::get('/staff/login', [AuthController::class, 'showStaffLogin'])->name('staff.login');
 Route::post('/login', [AuthController::class, 'login']);
 Route::get('/register', [AuthController::class, 'showRegister'])->name('register');
 Route::post('/register', [AuthController::class, 'register']);
@@ -45,6 +46,8 @@ Route::middleware('auth')->group(function () {
     // 1. Profile & Auth
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    // [NEW] Separate route for password update
+    Route::put('/profile/password', [ProfileController::class, 'updatePassword'])->name('profile.password'); 
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
     // 2. Booking Process

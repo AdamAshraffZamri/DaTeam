@@ -6,10 +6,10 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\ValidationException;
 
 class ProfileController extends Controller
 {
-    // Show the profile form
     public function edit()
     {
         return view('profile.edit', [
@@ -17,56 +17,46 @@ class ProfileController extends Controller
         ]);
     }
 
-    // Handle the update request
+    // FORM 1: Update Profile Info ONLY
     public function update(Request $request)
     {
         $user = auth()->user();
 
-        // 1. Validate the incoming data
+        // 1. Validate Profile Fields (Removed Password Validation)
         $validated = $request->validate([
-            // ALL FIELDS SET TO REQUIRED
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'max:255', Rule::unique('customers', 'email')->ignore($user->customerID, 'customerID')],
-            
             'phone' => ['required', 'string', 'max:20'],
             'emergency_contact_no' => ['required', 'string', 'max:20'],
             'home_address' => ['required', 'string', 'max:500'],
             'college_address' => ['required', 'string', 'max:500'],
-            
             'student_staff_id' => ['required', 'string', 'max:50'],
             'ic_passport' => ['required', 'string', 'max:50'],
             'driving_license_no' => ['required', 'string', 'max:50'],
-            
             'nationality' => ['required', 'string', 'max:100'],
             'dob' => ['required', 'date'],
             'faculty' => ['required', 'string', 'max:255'],
-            
             'bank_name' => ['required', 'string', 'max:100'],
             'bank_account_no' => ['required', 'string', 'max:50'],
-
-            // Images can remain nullable if you don't want to force re-upload on every edit
+            
             'avatar' => ['nullable', 'image', 'max:2048'], 
             'student_card_image' => ['nullable', 'image', 'max:2048'],
             'ic_passport_image' => ['nullable', 'image', 'max:2048'],
             'driving_license_image' => ['nullable', 'image', 'max:2048'],
         ]);
 
-        // 2. Handle Image Uploads
+        // 2. Handle Images
         $fileFields = ['avatar', 'student_card_image', 'ic_passport_image', 'driving_license_image'];
-
         foreach ($fileFields as $field) {
             if ($request->hasFile($field)) {
-                // Delete old file if exists
                 if ($user->$field && Storage::disk('public')->exists($user->$field)) {
                     Storage::disk('public')->delete($user->$field);
                 }
-                // Store new file
-                $path = $request->file($field)->store('uploads', 'public');
-                $user->$field = $path;
+                $user->$field = $request->file($field)->store('uploads', 'public');
             }
         }
 
-        // 3. Update Database Fields
+        // 3. Update Info
         $user->fullName = $request->name;       
         $user->email = $request->email;
         $user->homeAddress = $request->home_address;
@@ -79,20 +69,33 @@ class ProfileController extends Controller
         $user->drivingNo = $request->driving_license_no; 
         $user->emergency_contact_no = $request->emergency_contact_no;
         $user->faculty = $request->faculty;
-
-        // Save New Bank Details
         $user->bankName = $request->bank_name;
         $user->bankAccountNo = $request->bank_account_no;
 
-        // 4. Handle Password Update
-        if ($request->filled('password')) {
-            $user->password = Hash::make($request->password);
-        }
-
-        // 5. Save changes
         $user->save();
 
-        // Redirect back to profile view (edit) instead of show
-        return redirect()->route('profile.edit')->with('status', 'Profile updated successfully!');
+        return redirect()->route('profile.edit')->with('status', 'Profile information updated successfully!');
+    }
+
+    // FORM 2: Update Password ONLY
+    public function updatePassword(Request $request)
+    {
+        $user = auth()->user();
+
+        $request->validate([
+            'current_password' => ['required', 'string'],
+            'password' => ['required', 'string', 'min:6', 'confirmed'],
+        ]);
+
+        if (!Hash::check($request->current_password, $user->password)) {
+             throw ValidationException::withMessages([
+                'current_password' => ['The provided password does not match your current password.'],
+            ]);
+        }
+
+        $user->password = Hash::make($request->password);
+        $user->save();
+
+        return redirect()->route('profile.edit')->with('status', 'Password updated successfully!');
     }
 }
