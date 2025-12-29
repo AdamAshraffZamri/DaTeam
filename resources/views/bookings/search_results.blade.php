@@ -122,50 +122,57 @@
                     
                     {{-- Plate Tag --}}
                     <div class="absolute top-5 right-5 z-10">
-                        <span class="bg-black/60 text-gray-300 text-[10px] font-bold px-3 py-1 rounded-full border border-white/10 uppercase tracking-tighter backdrop-blur-md">
+                        <span class="bg-black/60 text-gray-300 text-[10px] font-black px-3 py-1 rounded-full border border-white/10 uppercase tracking-widest backdrop-blur-md">
                             {{ $vehicle->plateNo }}
                         </span>
                     </div>
 
-                    {{-- Image Area --}}
+                    {{-- Image Area: Displays Actual Vehicle Photo --}}
                     <div class="h-48 flex items-center justify-center mb-4 relative overflow-hidden rounded-2xl bg-black/30 border border-white/5">
                         <div class="absolute inset-0 bg-gradient-to-tr from-orange-500/10 to-transparent opacity-50"></div>
-                        <i class="fas fa-car-side text-6xl text-white/10 group-hover:text-white/20 transition-colors"></i>
+                        
+                        @if($vehicle->image)
+                            <img src="{{ asset('storage/' . $vehicle->image) }}" alt="{{ $vehicle->model }}" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">
+                        @else
+                            <i class="fas fa-{{ $vehicle->vehicle_category == 'bike' ? 'motorcycle' : 'car-side' }} text-6xl text-white/10 group-hover:text-white/20 transition-colors"></i>
+                        @endif
                     </div>
 
                     <div class="space-y-3 flex-grow">
                         <div>
-                            <h3 class="text-xl font-black text-white">{{ $vehicle->model }}</h3>
-                            <div class="flex items-center space-x-1 text-yellow-500 text-sm mt-1">
+                            <h3 class="text-xl font-black text-white leading-tight">{{ $vehicle->brand }} {{ $vehicle->model }}</h3>
+                            <div class="flex items-center space-x-1 text-yellow-500 text-[10px] mt-1">
                                 <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
-                                <span class="text-gray-500 font-medium ml-1">(5.0)</span>
+                                <span class="text-gray-500 font-bold ml-1">5.0</span>
                             </div>
                         </div>
 
-                        {{-- Specs (Brief) --}}
-                        <div class="grid grid-cols-2 gap-2 text-xs text-gray-400">
-                            <div class="flex items-center"><i class="fas fa-chair w-6 text-center text-orange-500"></i> 5 Seats</div>
-                            <div class="flex items-center"><i class="fas fa-cogs w-6 text-center text-orange-500"></i> Auto</div>
-                            <div class="flex items-center"><i class="fas fa-gas-pump w-6 text-center text-orange-500"></i> {{ $vehicle->fuelType ?? 'Petrol' }}</div>
-                            <div class="flex items-center"><i class="fas fa-snowflake w-6 text-center text-orange-500"></i> A/C</div>
+                        {{-- Specs (Brief): Dynamic based on category --}}
+                        <div class="grid grid-cols-2 gap-2 text-[10px] font-bold text-gray-400 uppercase tracking-tight">
+                            <div class="flex items-center"><i class="fas fa-{{ $vehicle->vehicle_category == 'bike' ? 'user' : 'chair' }} w-5 text-orange-500"></i> {{ $vehicle->vehicle_category == 'bike' ? '1-2' : '5' }} Seats</div>
+                            <div class="flex items-center"><i class="fas fa-cog w-5 text-orange-500"></i> Auto</div>
+                            <div class="flex items-center"><i class="fas fa-gas-pump w-5 text-orange-500"></i> {{ $vehicle->fuelType ?? 'RON95' }}</div>
+                            <div class="flex items-center"><i class="fas fa-{{ $vehicle->vehicle_category == 'bike' ? 'helmet-safety' : 'snowflake' }} w-5 text-orange-500"></i> {{ $vehicle->vehicle_category == 'bike' ? 'Helmet' : 'A/C' }}</div>
                         </div>
                     </div>
 
                     {{-- Action Footer --}}
                     <div class="pt-4 mt-4 border-t border-white/10 flex items-center justify-between">
                         <div>
-                            <span class="block text-[10px] text-gray-500 font-bold uppercase tracking-widest">Daily Rate</span>
-                            <span class="text-xl font-black text-white">RM {{ number_format($vehicle->priceHour * 24, 0) }}</span>
+                            <span class="block text-[10px] text-gray-500 font-black uppercase tracking-widest">Daily Rate</span>
+                            @php
+                                $rates = is_array($vehicle->hourly_rates) ? $vehicle->hourly_rates : json_decode($vehicle->hourly_rates, true);
+                                $dailyRate = $rates[24] ?? ($vehicle->priceHour * 24);
+                            @endphp
+                            <span class="text-xl font-black text-white tracking-tighter">RM {{ number_format($dailyRate, 0) }}</span>
                         </div>
                         
                         <div class="flex items-center space-x-2">
-                            {{-- VIEW DETAILS BUTTON --}}
                             <button onclick="document.getElementById('details-modal-{{ $vehicle->VehicleID }}').classList.remove('hidden')" 
-                                class="bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-xl font-bold text-sm transition-all border border-white/10">
+                                class="bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-xl font-bold text-xs transition-all border border-white/10">
                                 Details
                             </button>
 
-                            {{-- NEW CODE: Added 'select-btn' class --}}
                             <a href="{{ route('book.payment', [
                                 'id' => $vehicle->VehicleID, 
                                 'pickup_date' => request('pickup_date'), 
@@ -174,7 +181,7 @@
                                 'return_time' => request('return_time'),
                                 'pickup_location' => request('pickup_location'),
                                 'return_location' => request('return_location')
-                            ]) }}" class="select-btn bg-[#ea580c] hover:bg-orange-600 text-white px-5 py-2 rounded-xl font-bold text-sm shadow-lg transition-all transform hover:scale-105 border border-white/10">
+                            ]) }}" class="bg-[#ea580c] hover:bg-orange-600 text-white px-5 py-2 rounded-xl font-bold text-xs shadow-lg transition-all transform hover:scale-105">
                                 Select
                             </a>
                         </div>
@@ -182,18 +189,12 @@
                 </div>
                 @empty
                 <div class="col-span-full py-24 text-center">
-                    <div class="bg-white/5 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-4 border border-white/10">
-                        <i class="fas fa-car-crash text-3xl text-gray-600"></i>
-                    </div>
-                    <h3 class="text-xl font-bold text-white">No cars available</h3>
-                    <p class="text-gray-400">Try changing your dates or location.</p>
+                    <i class="fas fa-car-crash text-5xl text-white/10 mb-4"></i>
+                    <h3 class="text-xl font-black text-white uppercase tracking-widest">No matching fleet</h3>
+                    <p class="text-gray-500 text-sm mt-2">Try adjusting your filters or search terms.</p>
                 </div>
                 @endforelse
             </div>
-
-        </div>
-    </div>
-</div>
 
 {{-- 3. VEHICLE DETAILS MODALS (Loop) --}}
 @foreach($vehicles as $vehicle)
@@ -203,68 +204,98 @@
          onclick="document.getElementById('details-modal-{{ $vehicle->VehicleID }}').classList.add('hidden')"></div>
 
     <div class="relative z-10 flex items-center justify-center min-h-screen p-4 pointer-events-none">
-        <div class="bg-[#151515] border border-white/10 w-full max-w-3xl rounded-[2.5rem] shadow-2xl overflow-hidden pointer-events-auto flex flex-col md:flex-row max-h-[85vh] md:max-h-[600px]">
+        <div class="bg-[#151515] border border-white/10 w-full max-w-4xl rounded-[2.5rem] shadow-2xl overflow-hidden pointer-events-auto flex flex-col md:flex-row max-h-[90vh]">
             
-            {{-- Left: Image & Stats --}}
-            <div class="w-full md:w-5/12 bg-white/5 relative flex flex-col justify-between p-6">
+            {{-- Left: Image & Technical Specs --}}
+            <div class="w-full md:w-5/12 bg-white/5 relative flex flex-col p-8 border-r border-white/5">
                 <div class="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-20"></div>
                 
-                <div class="relative z-10">
-                    <div class="h-40 md:h-56 flex items-center justify-center bg-black/20 rounded-2xl mb-6 border border-white/5">
-                         <i class="fas fa-car text-8xl text-white/10"></i>
+                <div class="relative z-10 space-y-6">
+                    {{-- Storage Linked Image --}}
+                    <div class="h-56 md:h-64 flex items-center justify-center bg-black/40 rounded-[2rem] overflow-hidden border border-white/10 shadow-inner">
+                        @if($vehicle->image)
+                            <img src="{{ asset('storage/' . $vehicle->image) }}" class="w-full h-full object-cover">
+                        @else
+                            <i class="fas fa-{{ $vehicle->vehicle_category == 'bike' ? 'motorcycle' : 'car' }} text-7xl text-white/5"></i>
+                        @endif
                     </div>
                     
+                    {{-- Tech Grid --}}
                     <div class="grid grid-cols-2 gap-3">
-                        <div class="bg-black/40 rounded-xl p-3 border border-white/5 text-center">
-                            <i class="fas fa-tachometer-alt text-orange-500 mb-1"></i>
-                            <p class="text-[10px] text-gray-400">Mileage</p>
-                            <p class="text-white font-bold text-sm">Unlimited</p>
+                        <div class="bg-black/40 rounded-2xl p-4 border border-white/5 text-center">
+                            <i class="fas fa-tachometer-alt text-orange-500 mb-1 text-xs"></i>
+                            <p class="text-[9px] text-gray-500 uppercase font-black">Mileage</p>
+                            <p class="text-white font-bold text-xs">{{ number_format($vehicle->mileage) }} KM</p>
                         </div>
-                        <div class="bg-black/40 rounded-xl p-3 border border-white/5 text-center">
-                            <i class="fas fa-gas-pump text-orange-500 mb-1"></i>
-                            <p class="text-[10px] text-gray-400">Fuel</p>
-                            <p class="text-white font-bold text-sm">{{ $vehicle->fuelType ?? 'Petrol' }}</p>
+                        <div class="bg-black/40 rounded-2xl p-4 border border-white/5 text-center">
+                            <i class="fas fa-gas-pump text-orange-500 mb-1 text-xs"></i>
+                            <p class="text-[9px] text-gray-500 uppercase font-black">Fuel</p>
+                            <p class="text-white font-bold text-xs">{{ $vehicle->fuelType ?? 'RON95' }}</p>
+                        </div>
+                        <div class="bg-black/40 rounded-2xl p-4 border border-white/5 text-center">
+                            <i class="fas fa-calendar-alt text-orange-500 mb-1 text-xs"></i>
+                            <p class="text-[9px] text-gray-500 uppercase font-black">Year</p>
+                            <p class="text-white font-bold text-xs">{{ $vehicle->year }}</p>
+                        </div>
+                        <div class="bg-black/40 rounded-2xl p-4 border border-white/5 text-center">
+                            <i class="fas fa-palette text-orange-500 mb-1 text-xs"></i>
+                            <p class="text-[9px] text-gray-500 uppercase font-black">Color</p>
+                            <p class="text-white font-bold text-xs">{{ $vehicle->color }}</p>
                         </div>
                     </div>
                 </div>
             </div>
 
-            {{-- Right: Description & Action --}}
-            <div class="w-full md:w-7/12 p-8 flex flex-col bg-gradient-to-br from-[#1a1a1a] to-black">
-                <div class="flex justify-between items-start mb-6">
+            {{-- Right: Information & Pricing Architecture --}}
+            <div class="w-full md:w-7/12 p-10 flex flex-col bg-gradient-to-br from-[#1a1a1a] to-black overflow-y-auto custom-scrollbar">
+                <div class="flex justify-between items-start mb-8">
                     <div>
-                        <h2 class="text-3xl font-black text-white tracking-tight">{{ $vehicle->model }}</h2>
-                        <div class="flex items-center space-x-2 mt-1">
-                            <span class="bg-green-500/20 text-green-400 text-[10px] font-bold px-2 py-0.5 rounded border border-green-500/30">AVAILABLE</span>
-                            <span class="text-gray-500 text-xs">{{ $vehicle->plateNo }}</span>
+                        <p class="text-orange-500 text-[10px] font-black uppercase tracking-[0.3em] mb-1">{{ $vehicle->brand }}</p>
+                        <h2 class="text-4xl font-black text-white tracking-tighter">{{ $vehicle->model }}</h2>
+                        <div class="flex items-center space-x-2 mt-2">
+                            <span class="bg-green-500/10 text-green-500 text-[9px] font-black px-2 py-0.5 rounded border border-green-500/20 uppercase">Available</span>
+                            <span class="text-gray-600 text-[10px] font-bold tracking-widest uppercase">{{ $vehicle->plateNo }}</span>
                         </div>
                     </div>
-                    <button onclick="document.getElementById('details-modal-{{ $vehicle->VehicleID }}').classList.add('hidden')" class="text-gray-500 hover:text-white transition">
-                        <i class="fas fa-times text-xl"></i>
+                    <button onclick="document.getElementById('details-modal-{{ $vehicle->VehicleID }}').classList.add('hidden')" class="bg-white/5 hover:bg-white/10 w-10 h-10 rounded-full flex items-center justify-center text-gray-500 hover:text-white transition-all">
+                        <i class="fas fa-times"></i>
                     </button>
                 </div>
 
-                <div class="flex-grow overflow-y-auto pr-2 mb-6 custom-scrollbar">
-                    <h3 class="text-sm font-bold text-gray-300 mb-2 uppercase tracking-wide">Description</h3>
-                    <p class="text-gray-400 text-sm leading-relaxed">
-                        Experience the comfort and performance of the {{ $vehicle->model }}. 
-                        Perfect for students and staff needing reliable transportation around UTM. 
-                        Features modern amenities, fuel efficiency, and a clean interior.
-                    </p>
-
-                    <h3 class="text-sm font-bold text-gray-300 mt-6 mb-3 uppercase tracking-wide">Features</h3>
-                    <div class="grid grid-cols-2 gap-y-2 gap-x-4 text-sm text-gray-400">
-                        <div class="flex items-center"><i class="fas fa-check text-green-500 mr-2 text-xs"></i> Air Conditioning</div>
-                        <div class="flex items-center"><i class="fas fa-check text-green-500 mr-2 text-xs"></i> Power Steering</div>
-                        <div class="flex items-center"><i class="fas fa-check text-green-500 mr-2 text-xs"></i> Bluetooth Audio</div>
-                        <div class="flex items-center"><i class="fas fa-check text-green-500 mr-2 text-xs"></i> 5-Star Safety</div>
+                {{-- HOURLY RATE ARCHITECTURE (NEW SECTION) --}}
+                <div class="mb-10">
+                    <h4 class="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] mb-4">Rate Architecture (RM)</h4>
+                    <div class="grid grid-cols-4 sm:grid-cols-7 gap-2">
+                        @php
+                            $rates = is_array($vehicle->hourly_rates) ? $vehicle->hourly_rates : json_decode($vehicle->hourly_rates ?? '[]', true);
+                            $tiers = [1, 3, 5, 7, 9, 12, 24];
+                        @endphp
+                        @foreach($tiers as $h)
+                        <div class="bg-white/5 border border-white/10 rounded-xl p-2 text-center">
+                            <p class="text-[8px] text-gray-500 uppercase font-black">{{ $h }}H</p>
+                            <p class="text-white font-black text-xs">{{ $rates[$h] ?? '-' }}</p>
+                        </div>
+                        @endforeach
                     </div>
                 </div>
 
-                <div class="pt-6 border-t border-white/10 flex items-center justify-between">
+                <div class="space-y-6 mb-10">
                     <div>
-                        <p class="text-[10px] text-gray-500 font-bold uppercase">Total for 1 Day</p>
-                        <p class="text-2xl font-black text-white">RM {{ number_format($vehicle->priceHour * 24, 0) }}</p>
+                        <h3 class="text-xs font-black text-gray-400 mb-3 uppercase tracking-widest">Key Features</h3>
+                        <div class="grid grid-cols-2 gap-y-3 gap-x-4 text-xs text-gray-500">
+                            <div class="flex items-center"><i class="fas fa-check text-orange-500 mr-2"></i> {{ $vehicle->vehicle_category == 'bike' ? 'Safety Helmet' : 'Air Conditioning' }}</div>
+                            <div class="flex items-center"><i class="fas fa-check text-orange-500 mr-2"></i> {{ $vehicle->vehicle_category == 'bike' ? 'Fuel Efficient' : 'Power Steering' }}</div>
+                            <div class="flex items-center"><i class="fas fa-check text-orange-500 mr-2"></i> Bluetooth Audio</div>
+                            <div class="flex items-center"><i class="fas fa-check text-orange-500 mr-2"></i> 5-Star Safety</div>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Action Footer --}}
+                <div class="pt-8 border-t border-white/10 flex items-center justify-between mt-auto">
+                    <div>
+                        <p class="text-[9px] text-gray-500 font-black uppercase tracking-widest">Full Day (24H)</p>
+                        <p class="text-3xl font-black text-white tracking-tighter">RM {{ number_format($rates[24] ?? 0, 0) }}</p>
                     </div>
                     <a href="{{ route('book.payment', [
                         'id' => $vehicle->VehicleID, 
@@ -274,7 +305,7 @@
                         'return_time' => request('return_time'),
                         'pickup_location' => request('pickup_location'),
                         'return_location' => request('return_location')
-                    ]) }}" class="bg-[#ea580c] hover:bg-orange-600 text-white px-8 py-3 rounded-xl font-bold shadow-lg transition-all transform hover:scale-105">
+                    ]) }}" class="bg-[#ea580c] hover:bg-orange-600 text-white px-10 py-4 rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl shadow-orange-500/20 transition-all transform hover:scale-105">
                         Book Now
                     </a>
                 </div>

@@ -4,8 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Booking;
 use App\Models\Payment;
-use App\Models\Inspection;
-use App\Models\Staff; // Added Staff model
+use App\Models\Staff; 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -15,7 +14,10 @@ class StaffBookingController extends Controller
     public function dashboard()
     {
         $activeRentals = Booking::where('bookingStatus', 'Active')->count(); 
-        $pendingCount = Booking::where('bookingStatus', 'Submitted')->count();
+        
+        // Count anything that needs attention
+        $pendingCount = Booking::whereIn('bookingStatus', ['Submitted', 'Deposit Paid'])->count();
+        
         $revenue = Payment::sum('amount'); 
         
         $overdueCount = Booking::where('bookingStatus', 'Active')
@@ -34,142 +36,107 @@ class StaffBookingController extends Controller
     // --- 2. LIST ALL BOOKINGS ---
     public function index()
     {
-        $bookings = Booking::with(['customer', 'vehicle', 'payment'])
+        $bookings = Booking::with(['customer', 'vehicle', 'payment']) 
                            ->orderBy('created_at', 'desc')
                            ->get();
 
         return view('staff.bookings.index', compact('bookings'));
     }
 
-    // --- 3. VIEW DETAILS (CONSOLIDATED) ---
-    public function show($id)
-    {
-        // Eager load inspections, payment, and currently assigned staff
-        $booking = Booking::with(['customer', 'vehicle', 'payment', 'inspections', 'staff'])->findOrFail($id);
-        
-        // Get all staff for the assignment dropdown
-        $allStaff = Staff::all();
-
-        return view('staff.bookings.show', compact('booking', 'allStaff'));
-    }
-
-    // --- 4. STEP 1: VERIFY PAYMENT ---
+    // --- 3. VERIFY PAYMENT (Handles Balance Payment too) ---
     public function verifyPayment($id)
     {
         $booking = Booking::findOrFail($id);
         
-        if ($booking->payment) {
-            $booking->payment->update(['paymentStatus' => 'Verified']);
-            return back()->with('success', 'Payment verified. Agreement is now released for approval.');
+        // Find the latest pending payment (This catches the new balance receipt)
+        $payment = Payment::where('bookingID', $id)
+                          ->where('paymentStatus', 'Pending Verification')
+                          ->latest()
+                          ->first();
+
+        if ($payment) {
+            $payment->update(['paymentStatus' => 'Verified']);
+            return back()->with('success', 'Payment verified. You can now Approve/Confirm the booking.');
         }
 
-        return back()->with('error', 'No payment record found.');
+        return back()->with('error', 'No pending payment found.');
     }
 
-    // --- 5. STEP 2: APPROVE AGREEMENT & CONFIRM ---
+    // --- 4. APPROVE / CONFIRM ---
     public function approveAgreement($id)
     {
         $booking = Booking::findOrFail($id);
 
-        if (!$booking->payment || $booking->payment->paymentStatus !== 'Verified') {
-            return back()->with('error', 'Please verify the payment proof first.');
+        // Check if there are any unverified payments
+        $pendingPayments = Payment::where('bookingID', $id)
+                                  ->where('paymentStatus', 'Pending Verification')
+                                  ->exists();
+
+        if ($pendingPayments) {
+            return back()->with('error', 'Please verify all pending payments first.');
         }
 
+        // Set status to Confirmed (This is what you wanted)
         $booking->update([
-            'bookingStatus' => 'Confirmed', // Ready for pickup
-            // Auto-assign current staff if not already assigned
+            'bookingStatus' => 'Confirmed', 
             'staffID' => $booking->staffID ?? Auth::guard('staff')->id(), 
             'aggreementDate' => now(),
         ]);
 
-        return back()->with('success', 'Agreement approved. Booking is CONFIRMED.');
+        return back()->with('success', 'Booking is CONFIRMED.');
     }
 
-    // --- 6. STEP 3: VEHICLE PICKUP (Handover) ---
-    public function pickup(Request $request, $id)
-    {
+    // ... pickup, processReturn, processRefund, storeInspection, assignStaff, show ...
+    public function show($id) {
+        $booking = Booking::with(['customer', 'vehicle', 'payment', 'inspections', 'staff'])->findOrFail($id);
+        $allStaff = Staff::all();
+        return view('staff.bookings.show', compact('booking', 'allStaff'));
+    }
+    public function pickup(Request $request, $id) {
         $booking = Booking::findOrFail($id);
         $booking->update(['bookingStatus' => 'Active']);
-
-        return back()->with('success', 'Vehicle collected. Booking is now ACTIVE.');
+        return back()->with('success', 'Vehicle collected.');
     }
-
-    // --- 7. STEP 4: VEHICLE RETURN (Settlement) ---
-    public function processReturn(Request $request, $id)
-    {
+    public function processReturn(Request $request, $id) {
         $booking = Booking::findOrFail($id);
-
-        // 1. Mark as Completed
         $booking->update([
             'bookingStatus' => 'Completed',
             'actualReturnDate' => now()->toDateString(),
             'actualReturnTime' => now()->toTimeString(),
         ]);
-
-        // 2. Process Deposit Refund Logic
         if ($booking->payment) {
-            $booking->payment->update([
-                'depoStatus' => 'Refunded', 
-                'paymentStatus' => 'Completed'
-            ]);
+            $booking->payment->update(['depoStatus' => 'Refunded', 'paymentStatus' => 'Completed']);
         }
-
-        return back()->with('success', 'Vehicle returned. Booking settled and deposit released.');
+        return back()->with('success', 'Vehicle returned.');
     }
-
-    // --- 8. MANUAL REFUND PROCESSING (For Cancelled Bookings) ---
-    public function processRefund($id)
-    {
+    public function processRefund($id) {
         $booking = Booking::findOrFail($id);
-
         if ($booking->payment && $booking->payment->depoStatus == 'Requested') {
-            $booking->payment->update([
-                'depoStatus' => 'Refunded',
-                'paymentStatus' => 'Refund Completed'
-            ]);
-            return back()->with('success', 'Refund has been issued to the customer.');
+            $booking->payment->update(['depoStatus' => 'Refunded', 'paymentStatus' => 'Refund Completed']);
+            return back()->with('success', 'Refund issued.');
         }
-
-        return back()->with('error', 'Refund cannot be processed (Status mismatch).');
+        return back()->with('error', 'Error processing refund.');
     }
-
-    // --- 9. STAFF INSPECTION UPLOAD ---
-    public function storeInspection(Request $request, $id)
-    {
+    public function storeInspection(Request $request, $id) {
         $request->validate(['photos' => 'required', 'type' => 'required']);
         $booking = Booking::findOrFail($id);
-
         $photoPaths = [];
         if ($request->hasFile('photos')) {
-            foreach ($request->file('photos') as $photo) {
-                $photoPaths[] = $photo->store('inspections', 'public');
-            }
+            foreach ($request->file('photos') as $photo) $photoPaths[] = $photo->store('inspections', 'public');
         }
-
         \App\Models\Inspection::create([
             'bookingID' => $booking->bookingID,
-            'staffID' => Auth::guard('staff')->id(), // Tracks WHICH staff verified
+            'staffID' => Auth::guard('staff')->id(), 
             'inspectionType' => $request->type,
             'inspectionDate' => now(),
             'photosBefore' => $request->type == 'Pickup' ? json_encode($photoPaths) : null,
             'photosAfter' => $request->type == 'Return' ? json_encode($photoPaths) : null,
         ]);
-
-        return back()->with('success', 'Staff inspection photos uploaded.');
+        return back()->with('success', 'Inspection uploaded.');
     }
-
-    // --- 10. MANUAL STAFF ASSIGNMENT ---
-    public function assignStaff(Request $request, $id)
-    {
-        $request->validate([
-            'staff_id' => 'required|exists:staff,staffID'
-        ]);
-
-        $booking = Booking::findOrFail($id);
-        $booking->update(['staffID' => $request->staff_id]);
-
-        $staffName = Staff::find($request->staff_id)->fullName ?? 'Staff Member';
-
-        return back()->with('success', "Booking assigned to Agent: $staffName");
+    public function assignStaff(Request $request, $id) {
+        $request->validate(['staff_id' => 'required']);
+        Booking::findOrFail($id)->update(['staffID' => $request->staff_id]);
+        return back()->with('success', "Agent assigned.");
     }
 }
