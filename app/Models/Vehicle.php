@@ -86,4 +86,10 @@ class Vehicle extends Model
     {
         return $query->where('availability', true);
     }
+
+    //availability checking function
+    public function bookings()
+    {
+        return $this->hasMany(Booking::class, 'vehicleID', 'VehicleID');
+    }
 }
