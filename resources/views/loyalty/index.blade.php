@@ -118,11 +118,11 @@
                 <div class="bg-black/30 rounded-3xl p-6 border border-white/5 mb-6">
                     <div class="flex justify-between items-end mb-4">
                         <p class="text-gray-300 text-sm font-bold">Progress to Next Voucher</p>
-                        <span class="text-white font-black text-xl">{{ $voucherProgress }}/3</span>
+                        <span class="text-white font-black text-xl">{{ $progressPercent }}/3</span>
                     </div>
                     <div class="w-full bg-white/10 rounded-full h-4 p-1">
                         <div class="bg-gradient-to-r from-orange-500 to-yellow-400 h-full rounded-full transition-all duration-1000" 
-                             style="width: {{ ($voucherProgress / 3) * 100 }}%"></div>
+                             style="width: {{ ($progressPercent / 3) * 100 }}%"></div>
                     </div>
                     <p class="text-gray-400 text-xs mt-4">
                         Book <span class="text-white font-bold">{{ $bookingsUntilVoucher }}</span> more times to get an automatic discount voucher!
