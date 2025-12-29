@@ -66,7 +66,8 @@
 
                         {{-- Time Input Group --}}
                         <div class="flex items-center">
-                            <input type="hidden" name="pickup_time" id="pickup_time_hidden" value="10:00">
+                            {{-- Initial Value empty; JS will fill it --}}
+                            <input type="hidden" name="pickup_time" id="pickup_time_hidden" value="">
 
                             <input type="number" id="pickup_hour" min="1" max="12" value="10"
                                    class="w-10 bg-transparent text-center text-white font-bold text-sm p-0 border-none focus:ring-0 appearance-none leading-none"
@@ -98,7 +99,8 @@
 
                         {{-- Time Input Group --}}
                         <div class="flex items-center">
-                            <input type="hidden" name="return_time" id="return_time_hidden" value="10:00">
+                            {{-- Initial Value empty; JS will fill it --}}
+                            <input type="hidden" name="return_time" id="return_time_hidden" value="">
 
                             <input type="number" id="return_hour" min="1" max="12" value="10"
                                    class="w-10 bg-transparent text-center text-white font-bold text-sm p-0 border-none focus:ring-0 appearance-none leading-none"
@@ -130,20 +132,99 @@
 
 {{-- JAVASCRIPT --}}
 <script>
-function updateHiddenTime(type) {
-    let hour = parseInt(document.getElementById(type + '_hour').value) || 10;
-    let ampm = document.getElementById(type + '_ampm').value;
-    const hiddenInput = document.getElementById(type + '_time_hidden');
+    // --- 1. TIME UPDATER (Converts 12h to 24h for Backend) ---
+    function updateHiddenTime(type) {
+        let hour = parseInt(document.getElementById(type + '_hour').value) || 10;
+        let ampm = document.getElementById(type + '_ampm').value;
+        const hiddenInput = document.getElementById(type + '_time_hidden');
 
-    if (hour < 1) hour = 1;
-    if (hour > 12) hour = 12;
+        if (hour < 1) hour = 1;
+        if (hour > 12) hour = 12;
 
-    let hour24 = hour;
-    if (ampm === 'PM' && hour < 12) hour24 += 12;
-    if (ampm === 'AM' && hour === 12) hour24 = 0;
+        let hour24 = hour;
+        if (ampm === 'PM' && hour < 12) hour24 += 12;
+        if (ampm === 'AM' && hour === 12) hour24 = 0;
 
-    hiddenInput.value = (hour24 < 10 ? '0' + hour24 : hour24) + ':00';
-}
+        // Format as HH:00:00
+        hiddenInput.value = (hour24 < 10 ? '0' + hour24 : hour24) + ':00';
+    }
+
+    // --- 2. DATE SYNC (Ensures Return Date is never before Pickup Date) ---
+    function syncDates() {
+        const pickupInput = document.querySelector('input[name="pickup_date"]');
+        const returnInput = document.querySelector('input[name="return_date"]');
+        
+        // 1. Set the minimum allowed return date to the pickup date
+        returnInput.min = pickupInput.value;
+
+        // 2. If the current return date is strictly BEFORE pickup date, reset it
+        if (returnInput.value < pickupInput.value) {
+            returnInput.value = pickupInput.value;
+        }
+    }
+
+    // --- 3. FINAL SUBMISSION CHECK (Enforces 1 Hour Minimum) ---
+    function validateForm(e) {
+        // A. Ensure times are fresh
+        updateHiddenTime('pickup');
+        updateHiddenTime('return');
+
+        // B. Get Values
+        const pDate = document.querySelector('input[name="pickup_date"]').value;
+        const rDate = document.querySelector('input[name="return_date"]').value;
+        
+        // Use the visible hour/ampm values for calculation to be 100% accurate to what user sees
+        const pHour = parseInt(document.getElementById('pickup_hour').value);
+        const pAmPm = document.getElementById('pickup_ampm').value;
+        const rHour = parseInt(document.getElementById('return_hour').value);
+        const rAmPm = document.getElementById('return_ampm').value;
+
+        // C. Convert to 24H for Calculation
+        let p24 = (pAmPm === 'PM' && pHour < 12) ? pHour + 12 : (pAmPm === 'AM' && pHour === 12 ? 0 : pHour);
+        let r24 = (rAmPm === 'PM' && rHour < 12) ? rHour + 12 : (rAmPm === 'AM' && rHour === 12 ? 0 : rHour);
+
+        // D. Create Date Objects
+        const start = new Date(pDate);
+        start.setHours(p24, 0, 0, 0);
+
+        const end = new Date(rDate);
+        end.setHours(r24, 0, 0, 0);
+
+        // E. Calculate Difference in Hours
+        const diffMs = end - start;
+        const diffHours = diffMs / (1000 * 60 * 60);
+
+        // F. LOGIC: If difference is less than 1 hour (e.g. 0 or negative)
+        if (diffHours < 1) {
+            e.preventDefault(); // STOP FORM SUBMISSION
+            alert("⚠️ Invalid Duration!\n\nThe return time must be at least 1 hour after the pickup time.");
+            return false;
+        }
+
+        // Allow Submit
+        return true;
+    }
+
+    // --- 4. INITIALIZATION ---
+    window.addEventListener('DOMContentLoaded', (event) => {
+        // Attach listeners
+        const pDateInput = document.querySelector('input[name="pickup_date"]');
+        const rDateInput = document.querySelector('input[name="return_date"]');
+        
+        pDateInput.addEventListener('change', syncDates);
+        rDateInput.addEventListener('change', syncDates);
+
+        // Attach Form Submit Listener
+        const form = document.getElementById('searchForm');
+        if (form) {
+            form.addEventListener('submit', validateForm);
+        }
+
+        // Run once on load to set defaults
+        updateHiddenTime('pickup');
+        updateHiddenTime('return');
+        syncDates();
+    });
 </script>
 
 {{-- Spacing --}}

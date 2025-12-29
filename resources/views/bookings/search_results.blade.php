@@ -13,12 +13,11 @@
 {{-- 2. SCROLLABLE CONTENT --}}
 <div class="relative z-10 min-h-[calc(100vh-64px)] pb-20">
     
-    {{-- STICKY SEARCH BAR --}}
+    {{-- STICKY SEARCH BAR (Z-INDEX 30) --}}
     <div class="bg-black/25 backdrop-blur-xl border-b border-white/15 sticky top-0 z-30 shadow-2xl">
         <div class="container mx-auto px-4 py-4">
-            <form action="{{ route('book.search') }}" method="GET">
+            <form action="{{ route('book.search') }}" method="GET" id="search-form">
                 
-                {{-- Flex container with 'justify-center' to fix alignment --}}
                 <div class="flex flex-col lg:flex-row items-center justify-center gap-4">
                     
                     {{-- Locations --}}
@@ -103,9 +102,15 @@
                     <div class="space-y-3">
                         @foreach(['Compact', 'Sedan', 'SUV', 'MPV'] as $type)
                         <label class="flex items-center space-x-3 cursor-pointer group">
-                            <div class="w-5 h-5 rounded border border-white/20 flex items-center justify-center group-hover:border-orange-500 transition">
-                                <input type="checkbox" class="hidden">
-                                <div class="w-2.5 h-2.5 rounded-sm bg-orange-500 opacity-0 group-hover:opacity-100 transition"></div>
+                            <div class="w-5 h-5 rounded border border-white/20 flex items-center justify-center group-hover:border-orange-500 transition relative">
+                                <input type="checkbox" 
+                                       form="search-form"
+                                       name="types[]" 
+                                       value="{{ $type }}" 
+                                       class="peer appearance-none absolute inset-0 w-full h-full cursor-pointer z-10"
+                                       onchange="document.getElementById('search-form').submit()"
+                                       {{ in_array($type, request('types', [])) ? 'checked' : '' }}>
+                                <div class="w-2.5 h-2.5 rounded-sm bg-orange-500 opacity-0 peer-checked:opacity-100 transition"></div>
                             </div>
                             <span class="font-medium text-gray-300 group-hover:text-white transition">{{ $type }}</span>
                         </label>
@@ -127,10 +132,9 @@
                         </span>
                     </div>
 
-                    {{-- Image Area: Displays Actual Vehicle Photo --}}
+                    {{-- Image Area --}}
                     <div class="h-48 flex items-center justify-center mb-4 relative overflow-hidden rounded-2xl bg-black/30 border border-white/5">
                         <div class="absolute inset-0 bg-gradient-to-tr from-orange-500/10 to-transparent opacity-50"></div>
-                        
                         @if($vehicle->image)
                             <img src="{{ asset('storage/' . $vehicle->image) }}" alt="{{ $vehicle->model }}" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">
                         @else
@@ -147,7 +151,7 @@
                             </div>
                         </div>
 
-                        {{-- Specs (Brief): Dynamic based on category --}}
+                        {{-- Specs --}}
                         <div class="grid grid-cols-2 gap-2 text-[10px] font-bold text-gray-400 uppercase tracking-tight">
                             <div class="flex items-center"><i class="fas fa-{{ $vehicle->vehicle_category == 'bike' ? 'user' : 'chair' }} w-5 text-orange-500"></i> {{ $vehicle->vehicle_category == 'bike' ? '1-2' : '5' }} Seats</div>
                             <div class="flex items-center"><i class="fas fa-cog w-5 text-orange-500"></i> Auto</div>
@@ -195,10 +199,13 @@
                 </div>
                 @endforelse
             </div>
+        </div>
+    </div>
+</div>
 
-{{-- 3. VEHICLE DETAILS MODALS (Loop) --}}
+{{-- 3. VEHICLE DETAILS MODALS (MOVED OUTSIDE SCROLL CONTAINER) --}}
 @foreach($vehicles as $vehicle)
-<div id="details-modal-{{ $vehicle->VehicleID }}" class="fixed inset-0 z-[60] hidden" role="dialog" aria-modal="true">
+<div id="details-modal-{{ $vehicle->VehicleID }}" class="fixed inset-0 z-50 hidden" style="z-index: 100;" role="dialog" aria-modal="true">
     {{-- Backdrop --}}
     <div class="absolute inset-0 bg-black/90 backdrop-blur-md transition-opacity" 
          onclick="document.getElementById('details-modal-{{ $vehicle->VehicleID }}').classList.add('hidden')"></div>
@@ -211,7 +218,6 @@
                 <div class="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-20"></div>
                 
                 <div class="relative z-10 space-y-6">
-                    {{-- Storage Linked Image --}}
                     <div class="h-56 md:h-64 flex items-center justify-center bg-black/40 rounded-[2rem] overflow-hidden border border-white/10 shadow-inner">
                         @if($vehicle->image)
                             <img src="{{ asset('storage/' . $vehicle->image) }}" class="w-full h-full object-cover">
@@ -262,7 +268,7 @@
                     </button>
                 </div>
 
-                {{-- HOURLY RATE ARCHITECTURE (NEW SECTION) --}}
+                {{-- HOURLY RATE ARCHITECTURE --}}
                 <div class="mb-10">
                     <h4 class="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] mb-4">Rate Architecture (RM)</h4>
                     <div class="grid grid-cols-4 sm:grid-cols-7 gap-2">
@@ -315,8 +321,8 @@
 </div>
 @endforeach
 
-{{-- 4. MAP MODAL --}}
-<div id="mapModal" class="fixed inset-0 z-[60] hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+{{-- 4. MAP MODAL (MOVED OUTSIDE SCROLL CONTAINER) --}}
+<div id="mapModal" class="fixed inset-0 z-50 hidden" style="z-index: 100;" aria-labelledby="modal-title" role="dialog" aria-modal="true">
     <div class="absolute inset-0 bg-black/80 backdrop-blur-sm transition-opacity" onclick="closeMapModal()"></div>
     <div class="relative z-10 flex items-center justify-center min-h-screen p-4 pointer-events-none">
         <div class="bg-[#1a1a1a] border border-white/10 w-full max-w-4xl rounded-[2.5rem] shadow-2xl overflow-hidden pointer-events-auto flex flex-col h-[80vh]">
@@ -352,21 +358,18 @@
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 
+{{-- JAVASCRIPT --}}
 <script>
-    // --- 1. LIVE LINK UPDATER (The Fix) ---
+    // --- 1. LIVE LINK UPDATER ---
     function updateAllSelectLinks() {
-        // Get current values from the visible inputs
         const pLoc = document.querySelector('input[name="pickup_location"]').value;
         const rLoc = document.querySelector('input[name="return_location"]').value;
         const pDate = document.querySelector('input[name="pickup_date"]').value;
         const rDate = document.querySelector('input[name="return_date"]').value;
-        
-        // Get hidden time values (e.g. "14:00")
         const pTime = document.getElementById('pickup_time_search_hidden').value;
         const rTime = document.getElementById('return_time_search_hidden').value;
 
-        // Loop through every "Select" button and update its URL
-        document.querySelectorAll('.select-btn').forEach(btn => {
+        document.querySelectorAll('a[href*="payment"]').forEach(btn => {
             try {
                 let url = new URL(btn.href);
                 url.searchParams.set('pickup_location', pLoc);
@@ -376,9 +379,7 @@
                 url.searchParams.set('pickup_time', pTime);
                 url.searchParams.set('return_time', rTime);
                 btn.href = url.toString();
-            } catch (e) {
-                console.error("Error updating link:", e);
-            }
+            } catch (e) { console.error("Link Error", e); }
         });
     }
 
@@ -395,21 +396,14 @@
         if (ampm === 'PM' && hour < 12) hour24 = hour + 12;
         if (ampm === 'AM' && hour === 12) hour24 = 0;
 
-        const formattedTime = (hour24 < 10 ? '0' + hour24 : hour24) + ':00';
-        hiddenInput.value = formattedTime;
-
-        // TRIGGER UPDATE
+        hiddenInput.value = (hour24 < 10 ? '0' + hour24 : hour24) + ':00';
         updateAllSelectLinks();
     }
 
-    // --- 3. INIT & EVENT LISTENERS ---
     window.onload = function() {
         initSearchTime('pickup');
         initSearchTime('return');
-        
-        // Add listeners to text/date inputs so typing updates links immediately
-        const inputs = document.querySelectorAll('input[name="pickup_location"], input[name="return_location"], input[name="pickup_date"], input[name="return_date"]');
-        inputs.forEach(input => {
+        document.querySelectorAll('input').forEach(input => {
             input.addEventListener('input', updateAllSelectLinks);
             input.addEventListener('change', updateAllSelectLinks);
         });
@@ -426,17 +420,14 @@
                 ampm = 'PM';
                 if (hour24 > 12) hour12 = hour24 - 12;
             }
-            if (hour24 === 0) {
-                hour12 = 12;
-                ampm = 'AM';
-            }
+            if (hour24 === 0) { hour12 = 12; ampm = 'AM'; }
 
             document.getElementById(type + '_hour_search').value = hour12;
             document.getElementById(type + '_ampm_search').value = ampm;
         }
     }
 
-    // --- 4. MAP MODAL LOGIC ---
+    // --- 3. MAP MODAL ---
     let map = null;
     let marker = null;
     let activeInputId = null; 
@@ -445,8 +436,7 @@
 
     function openMapModal(type) {
         activeInputId = type;
-        const modal = document.getElementById('mapModal');
-        modal.classList.remove('hidden');
+        document.getElementById('mapModal').classList.remove('hidden');
 
         if (!map) {
             if(!document.getElementById('map')) return;
@@ -468,7 +458,6 @@
                 fetchAddress(e.latlng);
             });
         }
-
         setTimeout(() => { map.invalidateSize(); }, 100);
         if(marker) fetchAddress(marker.getLatLng());
     }
@@ -498,7 +487,6 @@
             const input = document.querySelector(`input[name="${activeInputId}_location"]`);
             if (input) {
                 input.value = address;
-                // TRIGGER UPDATE IMMEDIATELY AFTER MAP SELECTION
                 updateAllSelectLinks(); 
             }
         }
