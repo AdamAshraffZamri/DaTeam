@@ -141,7 +141,7 @@
 
                         <td class="px-6 py-4 text-right">
                             <div class="flex justify-end gap-2">
-                                {{-- VIEW DETAILS (Always visible) --}}
+                                {{-- VIEW DETAILS (Always visible ) --}}
                                 <a href="{{ route('staff.bookings.show', $booking->bookingID) }}" 
                                    class="bg-gray-100 text-gray-600 px-3 py-2 rounded-lg text-xs font-bold hover:bg-gray-200 transition" title="View Details">
                                     <i class="fas fa-eye"></i>
