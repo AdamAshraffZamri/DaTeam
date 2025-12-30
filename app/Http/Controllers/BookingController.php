@@ -122,6 +122,13 @@ class BookingController extends Controller
     $rentalCharge = ($days * $dailyRate) + $remainderCost;
     $grandTotal = $rentalCharge + $vehicle->baseDepo;
 
+    // 6. Get User's Available Rental Discount Vouchers
+    $rentalVouchers = Voucher::where('user_id', Auth::id())
+        ->where('voucherType', 'Rental Discount')
+        ->where('isUsed', false)
+        ->whereDate('validUntil', '>=', now())
+        ->get();
+
     return view('bookings.payment', [
         'vehicle' => $vehicle,
         'total' => $grandTotal,           // The final price to pay
@@ -132,7 +139,8 @@ class BookingController extends Controller
         'pickupDate' => $request->pickup_date,
         'returnDate' => $request->return_date,
         'pickupLoc' => $request->pickup_location,
-        'returnLoc' => $request->return_location
+        'returnLoc' => $request->return_location,
+        'rentalVouchers' => $rentalVouchers  // Available rental discounts
     ]);
 }
 

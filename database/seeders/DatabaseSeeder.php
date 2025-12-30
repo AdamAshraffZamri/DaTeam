@@ -226,5 +226,8 @@ class DatabaseSeeder extends Seeder
                 'priceHour' => $v['hourly_rates']['1']
             ]));
         }
+
+        // Call LoyaltySeeder to populate loyalty points data
+        $this->call(\Database\Seeders\LoyaltySeeder::class);
     }
 }

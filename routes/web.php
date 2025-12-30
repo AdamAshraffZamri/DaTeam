@@ -77,11 +77,13 @@ Route::middleware('auth')->group(function () {
     Route::post('/finance/pay-fine/{id}', [FinanceController::class, 'submitFine'])->name('finance.submit_fine');
 
     Route::resource('loyalty', LoyaltyController::class);
+    Route::post('/loyalty/redeem', [LoyaltyController::class, 'redeemReward'])->name('loyalty.redeem');
     Route::resource('penalties', PenaltyController::class);
     Route::post('/voucher/apply', [VoucherController::class, 'apply'])->name('voucher.apply');
 
     // Feedback / Review Route
     Route::post('/bookings/{id}/feedback', [App\Http\Controllers\FeedbackController::class, 'store'])->name('feedback.store');
+    Route::post('loyalty/redeem', [LoyaltyController::class, 'redeemReward'])->name('loyalty.redeem');
 });
 
 
