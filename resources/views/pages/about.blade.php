@@ -1,9 +1,9 @@
-{{-- resources/views/pages/about.blade.php --}}
 @extends('layouts.app')
 
 @section('content')
 {{-- SECTION 1: HERO --}}
-<div class="relative min-h-[90vh] flex items-center justify-center bg-gray-900 overflow-hidden pt-48 pb-20 -mt-32 z-0">
+{{-- Updated to match Home Page exact structure (h-screen, justify-center) --}}
+<div class="relative h-screen min-h-[600px] flex flex-col justify-center bg-gray-900 overflow-hidden">
     
     {{-- Abstract Background Shapes --}}
     <div class="absolute top-0 left-0 w-full h-full overflow-hidden opacity-20">
@@ -11,14 +11,36 @@
         <div class="absolute top-[40%] -right-[10%] w-[40%] h-[60%] bg-red-600 rounded-full blur-[100px]"></div>
     </div>
 
-    {{-- Content --}}
-    <div class="relative z-10 container mx-auto px-4 text-center">
-        <h1 class="text-5xl md:text-8xl font-black text-white mb-8 tracking-tight drop-shadow-2xl">
-            Moving <span class="text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-red-500">UTM Forward.</span>
-        </h1>
-        <p class="text-xl md:text-2xl text-gray-300 max-w-3xl mx-auto leading-relaxed font-medium drop-shadow-md">
-            HASTA is more than just a car rental service. We are a student-driven initiative dedicated to making campus mobility safe, affordable, and accessible for everyone.
-        </p>
+    {{-- Content Container: Exact match with Home for alignment --}}
+    <div class="relative z-10 container mx-auto px-6 md:px-12 flex flex-col h-full justify-center items-center gap-10 pt-10 pb-20">
+        
+        {{-- Navigation Pill (Identical to Home) --}}
+        <div class="flex justify-center animate-fade-in-up">
+            <div class="bg-white/10 backdrop-blur-md border border-white/20 rounded-full p-1.5 flex flex-wrap justify-center md:flex-nowrap items-center shadow-2xl">
+                <a href="{{ route('book.create') }}" class="px-6 md:px-8 py-2.5 text-white/90 font-bold hover:bg-white/10 rounded-full transition text-sm md:text-base">
+                    Book a Car
+                </a>
+                <a href="{{ route('book.index') }}" class="px-6 md:px-8 py-2.5 text-white/90 font-bold hover:bg-white/10 rounded-full transition text-sm md:text-base">
+                    My Bookings
+                </a>
+                <a href="{{ route('loyalty.index') }}" class="px-6 md:px-8 py-2.5 text-white/90 font-bold hover:bg-white/10 rounded-full transition text-sm md:text-base">
+                    Loyalty
+                </a>
+                <a href="{{ route('finance.index') }}" class="px-6 md:px-8 py-2.5 text-white/90 font-bold hover:bg-white/10 rounded-full transition text-sm md:text-base">
+                    Payments
+                </a>
+            </div>
+        </div>
+
+        {{-- Hero Text --}}
+        <div class="text-center max-w-4xl mx-auto animate-fade-in-up delay-100">
+            <h1 class="text-5xl md:text-8xl font-black text-white mb-8 tracking-tight drop-shadow-2xl">
+                Moving <span class="text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-red-500">UTM Forward.</span>
+            </h1>
+            <p class="text-xl md:text-2xl text-gray-300 max-w-3xl mx-auto leading-relaxed font-medium drop-shadow-md">
+                HASTA is more than just a car rental service. We are a student-driven initiative dedicated to making campus mobility safe, affordable, and accessible for everyone.
+            </p>
+        </div>
     </div>
 </div>
 
@@ -110,4 +132,17 @@
         </a>
     </div>
 </div>
+
+<style>
+    @keyframes fade-in-up {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-fade-in-up {
+        animation: fade-in-up 1s ease-out forwards;
+    }
+    .delay-100 {
+        animation-delay: 100ms;
+    }
+</style>
 @endsection
