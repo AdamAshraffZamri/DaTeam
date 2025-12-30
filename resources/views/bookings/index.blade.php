@@ -231,7 +231,19 @@
 
                 {{-- Body --}}
                 <div class="p-7 sm:p-8 space-y-7">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-7">
+                @if($booking->bookingStatus == 'Rejected' && $booking->remarks)
+                    <div class="bg-red-500/10 border border-red-500/50 rounded-2xl p-4 flex items-start gap-4">
+                        <div class="bg-red-500 text-white rounded-full p-2 mt-1">
+                            <i class="fas fa-exclamation-triangle"></i>
+                        </div>
+                        <div>
+                            <h4 class="text-red-400 font-bold uppercase text-xs tracking-wider mb-1">Booking Rejected</h4>
+                            <p class="text-gray-300 text-sm">{{ $booking->remarks }}</p>
+                        </div>
+                    </div>
+                    @endif    
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-7">
                         {{-- Dates --}}
                         <div class="space-y-5">
                             <div class="relative pl-5 border-l-2 border-dashed border-white/25 space-y-5">

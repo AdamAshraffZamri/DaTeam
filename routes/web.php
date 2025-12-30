@@ -111,6 +111,9 @@ Route::prefix('staff')->middleware(['auth:staff'])->group(function () {
     // 5. Refund (For Cancelled Bookings) - FIX: Removed double 'staff' prefix
     Route::post('/bookings/{id}/refund', [StaffBookingController::class, 'processRefund'])->name('staff.bookings.refund');
 
+    // [NEW] Reject Booking Route
+    Route::post('/bookings/{id}/reject', [StaffBookingController::class, 'reject'])->name('staff.bookings.reject');
+
     // --- INSPECTIONS ---
     // Used for the "Staff Upload" modal in Booking Details
     Route::post('/inspections/{id}/store', [StaffBookingController::class, 'storeInspection'])->name('staff.inspections.store');

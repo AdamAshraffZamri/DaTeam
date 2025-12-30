@@ -202,6 +202,7 @@ class BookingController extends Controller
             'aggreementLink' => $agreementPath,
             'bookingStatus' => ($request->input('payment_type') == 'deposit') ? 'Deposit Paid' : 'Submitted',
             'bookingType' => 'Standard',
+            'remarks' => $request->input('remarks'),
         ]);
 
         // 5. Create Payment Record (Using the now-defined $proofPath)

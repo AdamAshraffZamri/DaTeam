@@ -128,6 +128,15 @@
                                     <div class="mt-1 text-[10px] font-bold text-green-500 uppercase">Refunded</div>
                                 @endif
                             @endif
+
+                            @if($booking->remarks)
+                                <div class="mt-2 p-2 bg-gray-50 border border-gray-200 rounded-lg max-w-[200px]">
+                                    <p class="text-[10px] font-bold text-gray-400 uppercase">Remarks:</p>
+                                    <p class="text-xs text-gray-600 leading-tight line-clamp-2" title="{{ $booking->remarks }}">
+                                        {{ $booking->remarks }}
+                                    </p>
+                                </div>
+                            @endif
                         </td>
 
                         <td class="px-6 py-4 text-right">
