@@ -128,11 +128,20 @@
                                     <div class="mt-1 text-[10px] font-bold text-green-500 uppercase">Refunded</div>
                                 @endif
                             @endif
+
+                            @if($booking->remarks)
+                                <div class="mt-2 p-2 bg-gray-50 border border-gray-200 rounded-lg max-w-[200px]">
+                                    <p class="text-[10px] font-bold text-gray-400 uppercase">Remarks:</p>
+                                    <p class="text-xs text-gray-600 leading-tight line-clamp-2" title="{{ $booking->remarks }}">
+                                        {{ $booking->remarks }}
+                                    </p>
+                                </div>
+                            @endif
                         </td>
 
                         <td class="px-6 py-4 text-right">
                             <div class="flex justify-end gap-2">
-                                {{-- VIEW DETAILS (Always visible) --}}
+                                {{-- VIEW DETAILS (Always visible ) --}}
                                 <a href="{{ route('staff.bookings.show', $booking->bookingID) }}" 
                                    class="bg-gray-100 text-gray-600 px-3 py-2 rounded-lg text-xs font-bold hover:bg-gray-200 transition" title="View Details">
                                     <i class="fas fa-eye"></i>

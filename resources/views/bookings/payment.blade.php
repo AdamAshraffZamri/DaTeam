@@ -13,6 +13,9 @@
     <div class="container mx-auto px-4 py-12 max-w-6xl">
         
         {{-- HEADER SECTION --}}
+        <a href="{{ url()->previous() }}" class="inline-flex items-center text-gray-400 hover:text-white mb-4 transition">
+            <i class="fas fa-arrow-left mr-2"></i> Back to Vehicle Details
+        </a>
         <div class="flex flex-col md:flex-row justify-between items-end mb-8 text-white">
             <div>
                 <h1 class="text-3xl font-extrabold tracking-tight drop-shadow-lg">Complete Payment</h1>
@@ -251,7 +254,24 @@
                             </label>
                             <p id="file-name" class="text-xs text-orange-400 mt-2 font-bold"></p>
                         </div>
+                                {{-- REMARKS FIELD --}}
+                                    <div class="mb-6">
+                                        <label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2 block">
+                                            Additional Requests (Optional)
+                                        </label>
+                                        <textarea name="remarks" rows="2" 
+                                            class="bg-white/5 border border-white/10 text-white text-sm rounded-lg px-4 py-3 w-full focus:outline-none focus:border-orange-500 transition" 
+                                            placeholder="e.g. Baby seat needed, picking up late..."></textarea>
+                                    </div>
 
+                                    <div class="bg-yellow-500/20 border border-yellow-500/50 rounded-xl p-4 mb-6 flex items-start gap-3">                                        <div>
+                                            <p class="text-sm font-bold text-yellow-400">Notice</p>
+                                            <p class="text-xs text-gray-300">
+                                                Please complete your payment <span class="font-bold text-white">ASAP</span>. 
+                                                Bookings are not secured until proof of payment is uploaded.
+                                            </p>
+                                        </div>
+                                    </div>
                         <div class="space-y-4">
                             <button type="submit" class="block w-full bg-[#ea580c] hover:bg-orange-600 text-white font-bold py-4 rounded-xl shadow-xl transition-all transform hover:scale-[1.02] text-center text-lg">
                                 Confirm & Submit

@@ -66,7 +66,8 @@
         </div>
     </nav>
 
-    @if(!request()->routeIs('home'))
+    {{-- Updated Condition: Hide this Layout Pill Bar on Home AND About pages (since they have their own) --}}
+    @if(!request()->routeIs('home') && !request()->routeIs('pages.about'))
         <div class="w-full flex justify-center py-6 relative z-40">
             <div class="bg-white/10 backdrop-blur-md border border-white/20 rounded-full p-1.5 flex items-center shadow-2xl">
                 <a href="{{ route('book.create') }}" 
@@ -88,7 +89,37 @@
             </div>
         </div>
     @endif
+        <button onclick="document.getElementById('help-modal').classList.remove('hidden')" class="fixed bottom-6 right-6 bg-blue-600 text-white p-4 rounded-full shadow-2xl hover:bg-blue-700 transition z-50">
+    <i class="fas fa-question text-xl"></i>
+</button>
 
+<div id="help-modal" class="fixed inset-0 z-[9999] hidden bg-black/90 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-gray-900 border border-white/10 rounded-2xl max-w-lg w-full p-6 relative">
+        <button onclick="document.getElementById('help-modal').classList.add('hidden')" class="absolute top-4 right-4 text-gray-400 hover:text-white">
+            <i class="fas fa-times"></i>
+        </button>
+        
+        <h3 class="text-xl font-bold text-white mb-4">How to Rent</h3>
+        <ul class="space-y-4 text-sm text-gray-300">
+            <li class="flex gap-3">
+                <span class="bg-orange-500 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0">1</span>
+                <span>Complete your profile with a valid driving license.</span>
+            </li>
+            <li class="flex gap-3">
+                <span class="bg-orange-500 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0">2</span>
+                <span>Select a vehicle and dates. (Min 24h gap between rentals).</span>
+            </li>
+            <li class="flex gap-3">
+                <span class="bg-orange-500 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0">3</span>
+                <span>Make payment (Deposit or Full) within 30 minutes.</span>
+            </li>
+            <li class="flex gap-3">
+                <span class="bg-orange-500 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0">4</span>
+                <span>Wait for Admin Approval ("Approved" status).</span>
+            </li>
+        </ul>
+    </div>
+</div>
     <main class="flex-grow relative">
         <div class="container mx-auto px-4">
             @if(session('success'))

@@ -55,7 +55,21 @@
                         </div>
                     </div>
                 </div>
-
+                @if($booking->remarks)
+                <div class="bg-yellow-50 rounded-2xl shadow-sm border border-yellow-200 p-6 relative overflow-hidden">
+                    <div class="absolute top-0 right-0 p-4 opacity-10">
+                        <i class="fas fa-comment-dots text-6xl text-yellow-600"></i>
+                    </div>
+                    <h3 class="text-xs font-bold text-yellow-700 uppercase tracking-wider mb-3 flex items-center relative z-10">
+                        <i class="fas fa-bullhorn mr-2"></i> Customer Request
+                    </h3>
+                    <div class="bg-white/50 rounded-xl p-3 border border-yellow-100 relative z-10">
+                        <p class="text-sm text-gray-800 font-medium italic leading-relaxed">
+                            "{{ $booking->remarks }}"
+                        </p>
+                    </div>
+                </div>
+                @endif
                 {{-- 2. VEHICLE DETAILS --}}
                 <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
                     <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4 border-b border-gray-100 pb-2">
@@ -236,6 +250,11 @@
                                         1. Verify Payment
                                     </button>
                                 </form>
+
+                                {{-- [NEW] REJECT BUTTON (For Fraud/Issues) --}}
+                                <button onclick="document.getElementById('reject-modal').classList.remove('hidden')" type="button" class="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-xl font-bold transition shadow-lg shadow-red-500/20 flex items-center">
+                                    <i class="fas fa-ban mr-2"></i> Reject
+                                </button>
                             @else
                                 {{-- Step 2: Approve Agreement --}}
                                 <form action="{{ route('staff.bookings.approve_agreement', $booking->bookingID) }}" method="POST">@csrf
@@ -243,6 +262,11 @@
                                         2. Approve Agreement
                                     </button>
                                 </form>
+
+                                {{-- [NEW] REJECT BUTTON (Even if verified, maybe car unavailable) --}}
+                                <button onclick="document.getElementById('reject-modal').classList.remove('hidden')" type="button" class="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-xl font-bold transition shadow-lg shadow-red-500/20 flex items-center">
+                                    <i class="fas fa-ban mr-2"></i> Reject
+                                </button>
                             @endif
 
                         @elseif($booking->bookingStatus == 'Confirmed')
@@ -303,6 +327,52 @@
 
             <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl shadow-lg transition">
                 Upload Verification
+            </button>
+        </form>
+    </div>
+</div>
+
+{{-- REJECT MODAL --}}
+<div id="reject-modal" class="fixed inset-0 z-50 hidden bg-black/80 flex items-center justify-center p-4 backdrop-blur-sm">
+    <div class="bg-white rounded-2xl w-full max-w-md p-6 shadow-2xl border-2 border-red-100">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="font-bold text-gray-900 text-lg flex items-center">
+                <i class="fas fa-exclamation-triangle text-red-500 mr-2"></i> Reject Booking
+            </h3>
+            <button onclick="document.getElementById('reject-modal').classList.add('hidden')" class="text-gray-400 hover:text-gray-900"><i class="fas fa-times"></i></button>
+        </div>
+        
+        <form action="{{ route('staff.bookings.reject', $booking->bookingID) }}" method="POST">
+            @csrf
+            
+            <div class="mb-4">
+                <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Rejection Reason</label>
+                <textarea name="reason" rows="3" class="w-full border border-gray-300 rounded-lg p-3 text-sm focus:border-red-500 focus:ring-1 focus:ring-red-500 outline-none" placeholder="e.g., Fake receipt uploaded OR Vehicle unavailable..." required></textarea>
+            </div>
+
+            <div class="mb-6">
+                <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Action Type</label>
+                <div class="grid grid-cols-1 gap-3">
+                    <label class="flex items-start p-3 border rounded-xl cursor-pointer hover:bg-red-50 transition border-gray-200 has-[:checked]:border-red-500 has-[:checked]:bg-red-50">
+                        <input type="radio" name="reject_action" value="fraud" class="mt-1 text-red-600 focus:ring-red-500" required>
+                        <div class="ml-3">
+                            <span class="block text-sm font-bold text-gray-900">Fraud / Invalid Receipt</span>
+                            <span class="block text-xs text-gray-500">User is cheating. Reject payment & booking. <br><span class="text-red-600 font-bold">NO REFUND.</span></span>
+                        </div>
+                    </label>
+
+                    <label class="flex items-start p-3 border rounded-xl cursor-pointer hover:bg-green-50 transition border-gray-200 has-[:checked]:border-green-500 has-[:checked]:bg-green-50">
+                        <input type="radio" name="reject_action" value="refund" class="mt-1 text-green-600 focus:ring-green-500">
+                        <div class="ml-3">
+                            <span class="block text-sm font-bold text-gray-900">Valid Payment (Issue Refund)</span>
+                            <span class="block text-xs text-gray-500">Payment is real but we cannot fulfill. <br><span class="text-green-600 font-bold">ISSUE REFUND.</span></span>
+                        </div>
+                    </label>
+                </div>
+            </div>
+
+            <button type="submit" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded-xl shadow-lg transition">
+                Confirm Rejection
             </button>
         </form>
     </div>

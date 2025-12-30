@@ -17,7 +17,7 @@ class Booking extends Model
         'returnDate', 'returnTime', 'actualReturnDate', 'actualReturnTime',
         'pickupLocation', 'returnLocation', 'totalCost',
         'aggreementDate', 'aggreementLink',
-        'bookingStatus', 'bookingType'
+        'bookingStatus', 'bookingType','remarks'
     ];
 
     // --- RELATIONSHIPS ---
@@ -71,4 +71,10 @@ class Booking extends Model
         // A booking has one feedback
         return $this->hasOne(Feedback::class, 'bookingID', 'bookingID');
     }   
+    public function getRemainingBalanceAttribute()
+    {
+        // Ensure this matches exactly how you define "Paid" in your database
+        $totalPaid = $this->payments()->where('paymentStatus', 'Verified')->sum('amount');
+        return max(0, $this->totalCost - $totalPaid);
+    }
 }

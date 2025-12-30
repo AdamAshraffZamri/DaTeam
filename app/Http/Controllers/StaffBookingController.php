@@ -144,4 +144,59 @@ class StaffBookingController extends Controller
         Booking::findOrFail($id)->update(['staffID' => $request->staff_id]);
         return back()->with('success', "Agent assigned.");
     }
+
+    // [NEW] REJECT BOOKING (Handle Fraud vs Refund)
+    public function reject(Request $request, $id)
+    {
+        $request->validate([
+            'reject_action' => 'required|in:fraud,refund',
+            'reason' => 'required|string|max:255',
+        ]);
+
+        $booking = Booking::with('payment')->findOrFail($id);
+        $payment = $booking->payment;
+
+        // 1. Prepare the new Remarks string
+        // We keep the old remarks (if any) and add the Rejection Reason on a new line
+        $oldRemarks = $booking->remarks ? $booking->remarks . "\n\n" : "";
+        $rejectionNote = "[REJECTED]: " . $request->reason;
+        
+        $finalRemarks = $oldRemarks . $rejectionNote;
+
+        $statusMessage = "";
+
+        if ($request->reject_action === 'fraud') {
+            // CASE 1: FRAUD
+            $booking->update([
+                'bookingStatus' => 'Rejected',
+                'remarks' => $finalRemarks // <--- Uses the combined string
+            ]);
+
+            if ($payment) {
+                $payment->update([
+                    'paymentStatus' => 'Rejected',
+                    'depoStatus' => 'Void',
+                ]);
+            }
+            $statusMessage = "Booking rejected as Fraud.";
+
+        } elseif ($request->reject_action === 'refund') {
+            // CASE 2: REFUND
+            $booking->update([
+                'bookingStatus' => 'Rejected',
+                'remarks' => $finalRemarks // <--- Uses the combined string
+            ]);
+
+            if ($payment) {
+                $payment->update([
+                    'paymentStatus' => 'Refund Completed',
+                    'depoStatus' => 'Refunded',
+                    'depoRefundedDate' => now(),
+                ]);
+            }
+            $statusMessage = "Booking rejected & Refunded.";
+        }
+
+        return back()->with('success', $statusMessage);
+    }
 }

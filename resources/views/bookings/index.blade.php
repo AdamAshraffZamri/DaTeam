@@ -18,35 +18,55 @@
                 <p class="text-gray-300 mt-2">Manage your active and past rentals.</p>
             </div>
 
-            {{-- FILTER BAR --}}
-            <div class="flex overflow-x-auto pb-2 md:pb-0 gap-2 no-scrollbar">
-                <button onclick="filterBookings('all')" class="filter-btn active-filter px-5 py-2 rounded-full text-xs font-bold border border-white/20 transition-all whitespace-nowrap bg-white text-black">All</button>
-                <button onclick="filterBookings('Submitted')" class="filter-btn px-5 py-2 rounded-full text-xs font-bold border border-white/20 text-gray-300 hover:bg-white/10 transition-all whitespace-nowrap">Submitted</button>
-                <button onclick="filterBookings('Deposit Paid')" class="filter-btn px-5 py-2 rounded-full text-xs font-bold border border-white/20 text-gray-300 hover:bg-white/10 transition-all whitespace-nowrap">Deposit Paid</button>
-                <button onclick="filterBookings('Approved')" class="filter-btn px-5 py-2 rounded-full text-xs font-bold border border-white/20 text-gray-300 hover:bg-white/10 transition-all whitespace-nowrap">Approved</button>
-                <button onclick="filterBookings('Active')" class="filter-btn px-5 py-2 rounded-full text-xs font-bold border border-white/20 text-gray-300 hover:bg-white/10 transition-all whitespace-nowrap">Active</button>
-                <button onclick="filterBookings('Completed')" class="filter-btn px-5 py-2 rounded-full text-xs font-bold border border-white/20 text-gray-300 hover:bg-white/10 transition-all whitespace-nowrap">Completed</button>
-                <button onclick="filterBookings('Cancelled')" class="filter-btn px-5 py-2 rounded-full text-xs font-bold border border-white/20 text-gray-300 hover:bg-white/10 transition-all whitespace-nowrap">Cancelled</button>
-            </div>
+            {{-- SERVER-SIDE FILTER BAR (UPDATED) --}}
+            {{-- We use a GET form so buttons act as links with parameters --}}
+            <form action="{{ route('book.index') }}" method="GET" class="flex overflow-x-auto pb-1 md:pb-0 gap-1 no-scrollbar">
+                
+                @php
+                    $currentStatus = request('status', 'all');
+                    $statuses = [
+                        'all' => 'All',
+                        'Submitted' => 'Submitted', 
+                        
+                        'Approved' => 'Approved',
+                        'Active' => 'Active',
+                        'Completed' => 'Completed',
+                        'Cancelled' => 'Cancelled'
+                    ];
+                @endphp
+
+                @foreach($statuses as $value => $label)
+                    <button type="submit" name="status" value="{{ $value }}" 
+                        class="px-5 py-2 rounded-full text-xs font-bold border transition-all whitespace-nowrap 
+                        {{ $currentStatus == $value ? 'bg-white text-black border-white' : 'border-white/20 text-gray-300 hover:bg-white/10' }}">
+                        {{ $label }}
+                    </button>
+                @endforeach
+            </form>
         </div>
 
-        <div class="space-y-7 min-h-[300px]" id="bookings-container">
+        <div class="space-y-7 min-h-[300px]">
             {{-- LOOP: CARDS --}}
             @forelse($bookings as $booking)
-                <div 
-                    data-status="{{ $booking->bookingStatus }}"
-                    class="booking-card group bg-black/50 backdrop-blur-[2px] border border-white/15 rounded-3xl p-6 shadow-xl hover:shadow-orange-500/10 hover:bg-white/15 transition-all duration-300 relative overflow-hidden animate-fade-in"
-                >
+                <div class="group bg-black/50 backdrop-blur-[2px] border border-white/15 rounded-3xl p-6 shadow-xl hover:shadow-orange-500/10 hover:bg-white/15 transition-all duration-300 relative overflow-hidden animate-fade-in">
                     <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/2 to-transparent opacity-0 group-hover:opacity-10 transition-opacity duration-500 pointer-events-none"></div>
                     
                     {{-- Clickable Area for Details --}}
                     <div onclick="document.getElementById('modal-{{ $booking->bookingID }}').classList.remove('hidden')" class="cursor-pointer">
                         {{-- Card Header --}}
                         <div class="flex justify-between items-start mb-4">
-                            <div>
-                                <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Booking ID</span>
-                                <p class="text-white font-black text-lg tracking-tight">#{{ $booking->bookingID }}</p>
+                            <div class="flex items-center gap-3">
+                                {{-- Numbering Badge (Dynamic) --}}
+                                <div class="bg-orange-500 text-white font-bold w-8 h-8 rounded-full flex items-center justify-center text-sm shadow-lg">
+                                    {{ $loop->iteration }}
+                                </div>
+                                <!-- <div>
+                                    <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Booking ID</span>
+                                    <p class="text-white font-black text-lg">#{{ $booking->bookingID }}</p>
+                                </div> -->
                             </div>
+
+                            {{-- Status Badge --}}
                             <span class="px-3 py-1.5 rounded-full text-[11px] font-bold border uppercase tracking-wide
                                 {{ $booking->bookingStatus == 'Submitted' ? 'bg-blue-500/15 text-blue-300 border-blue-500/30' : 
                                   ($booking->bookingStatus == 'Cancelled' ? 'bg-red-500/15 text-red-300 border-red-500/30' : 
@@ -93,54 +113,48 @@
 
                 </div>
             @empty
+                {{-- Empty State (Handled by Server Logic Now) --}}
                 <div class="text-center py-24 bg-white/8 backdrop-blur-sm rounded-3xl border border-white/15">
                     <div class="bg-white/10 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-5">
-                        <i class="fas fa-calendar-times text-3xl text-gray-500"></i>
+                        <i class="fas fa-filter text-3xl text-gray-500"></i>
                     </div>
                     <h3 class="text-xl font-black text-white mb-2">No bookings found</h3>
-                    <p class="text-gray-400 max-w-md mx-auto mb-7">You haven't rented any cars yet.</p>
+                    <p class="text-gray-400 max-w-md mx-auto mb-7">
+                        @if(request('status') && request('status') != 'all')
+                            No {{ request('status') }} bookings found.
+                        @else
+                            You haven't rented any cars yet.
+                        @endif
+                    </p>
+                    @if(request('status') && request('status') != 'all')
+                        <a href="{{ route('book.index') }}" class="inline-block px-6 py-2 bg-white/10 hover:bg-white/20 rounded-full text-white text-xs font-bold transition">Clear Filter</a>
+                    @endif
                 </div>
             @endforelse
-
-            {{-- Empty State for Filtering --}}
-            <div id="no-filter-results" class="hidden text-center py-24">
-                <div class="bg-white/5 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 border border-white/10">
-                    <i class="fas fa-filter text-2xl text-gray-500"></i>
-                </div>
-                <p class="text-gray-400 font-bold">No bookings in this category.</p>
-            </div>
         </div>
     </div>
 </div>
 
 {{-- 3. INSPECTION MODALS (LOOP 2) --}}
 @foreach($bookings as $booking)
-    {{-- Only generate modal if needed --}}
     @if($booking->bookingStatus == 'Confirmed' || $booking->bookingStatus == 'Active')
     <div id="inspection-modal-{{ $booking->bookingID }}" class="fixed inset-0 z-[10000] hidden bg-black/90 backdrop-blur-md flex items-center justify-center p-4">
         <div class="bg-[#1a1a1a] border border-white/15 rounded-2xl w-full max-w-md p-6 relative shadow-2xl">
-            
             <button onclick="document.getElementById('inspection-modal-{{ $booking->bookingID }}').classList.add('hidden')" class="absolute top-4 right-4 text-gray-400 hover:text-white">
                 <i class="fas fa-times text-xl"></i>
             </button>
-
             <h3 class="text-xl font-bold text-white mb-2">
                 {{ $booking->bookingStatus == 'Confirmed' ? 'Pre-Rental Inspection' : 'Post-Rental Inspection' }}
             </h3>
             <p class="text-xs text-gray-400 mb-6">Upload clear photos of the vehicle to document its condition.</p>
-
             <form action="{{ route('book.inspection.upload', $booking->bookingID) }}" method="POST" enctype="multipart/form-data">
                 @csrf
-                
-                {{-- File Input --}}
                 <label class="block w-full h-32 border-2 border-dashed border-white/20 rounded-xl flex flex-col items-center justify-center cursor-pointer hover:border-orange-500 hover:bg-white/5 transition mb-4 group">
                     <i class="fas fa-images text-2xl text-gray-500 group-hover:text-orange-500 mb-2 transition"></i>
                     <span class="text-sm text-gray-300 group-hover:text-white">Tap to Select Photos</span>
                     <span class="text-[10px] text-gray-500 uppercase mt-1">(Max 4 photos)</span>
                     <input type="file" name="photos[]" multiple class="hidden" required onchange="this.parentElement.querySelector('span').innerText = this.files.length + ' files selected'">
                 </label>
-
-                {{-- Optional Fields --}}
                 <div class="grid grid-cols-2 gap-4 mb-6">
                     <div>
                         <label class="text-[10px] text-gray-500 uppercase font-bold">Fuel Level</label>
@@ -157,7 +171,6 @@
                         <input type="number" name="mileage" class="w-full bg-white/10 border border-white/20 rounded-lg text-white text-sm p-2 mt-1 focus:border-orange-500 focus:outline-none" placeholder="e.g. 12345">
                     </div>
                 </div>
-
                 <button type="submit" class="w-full bg-[#ea580c] hover:bg-orange-600 text-white font-bold py-3.5 rounded-xl shadow-lg transition transform hover:scale-[1.02]">
                     Submit Inspection
                 </button>
@@ -172,18 +185,13 @@
     @if($booking->bookingStatus == 'Completed' && !$booking->feedback)
     <div id="feedback-modal-{{ $booking->bookingID }}" class="fixed inset-0 z-[10000] hidden bg-black/90 backdrop-blur-md flex items-center justify-center p-4">
         <div class="bg-[#1a1a1a] border border-white/15 rounded-2xl w-full max-w-md p-6 relative shadow-2xl">
-            
             <button onclick="document.getElementById('feedback-modal-{{ $booking->bookingID }}').classList.add('hidden')" class="absolute top-4 right-4 text-gray-400 hover:text-white">
                 <i class="fas fa-times text-xl"></i>
             </button>
-            
             <h3 class="text-xl font-bold text-white mb-2">Rate Your Experience</h3>
             <p class="text-xs text-gray-400 mb-6">How was your ride with the {{ $booking->vehicle->model }}?</p>
-
             <form action="{{ route('feedback.store', $booking->bookingID) }}" method="POST">
                 @csrf
-                
-                {{-- Stars --}}
                 <div class="flex flex-row-reverse justify-center gap-2 mb-6 group">
                     @for($i=5; $i>=1; $i--)
                         <input type="radio" id="star{{ $i }}-{{ $booking->bookingID }}" name="rating" value="{{ $i }}" class="hidden peer" required>
@@ -192,13 +200,10 @@
                         </label>
                     @endfor
                 </div>
-                
-                {{-- Comment --}}
                 <div class="mb-6">
                     <label class="text-[10px] text-gray-500 uppercase font-bold mb-2 block">Comment (Optional)</label>
                     <textarea name="comment" rows="3" class="w-full bg-white/10 border border-white/20 rounded-xl text-white text-sm p-3 focus:border-yellow-500 focus:outline-none placeholder-gray-500" placeholder="Share your feedback..."></textarea>
                 </div>
-
                 <button type="submit" class="w-full bg-yellow-500 hover:bg-yellow-600 text-black font-bold py-3.5 rounded-xl shadow-lg transition transform hover:scale-[1.02]">
                     Submit Feedback
                 </button>
@@ -226,7 +231,19 @@
 
                 {{-- Body --}}
                 <div class="p-7 sm:p-8 space-y-7">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-7">
+                @if($booking->bookingStatus == 'Rejected' && $booking->remarks)
+                    <div class="bg-red-500/10 border border-red-500/50 rounded-2xl p-4 flex items-start gap-4">
+                        <div class="bg-red-500 text-white rounded-full p-2 mt-1">
+                            <i class="fas fa-exclamation-triangle"></i>
+                        </div>
+                        <div>
+                            <h4 class="text-red-400 font-bold uppercase text-xs tracking-wider mb-1">Booking Rejected</h4>
+                            <p class="text-gray-300 text-sm">{{ $booking->remarks }}</p>
+                        </div>
+                    </div>
+                    @endif    
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-7">
                         {{-- Dates --}}
                         <div class="space-y-5">
                             <div class="relative pl-5 border-l-2 border-dashed border-white/25 space-y-5">
@@ -322,38 +339,5 @@
 }
 </style>
 
-{{-- SCRIPTS --}}
-<script>
-    function filterBookings(status) {
-        const buttons = document.querySelectorAll('.filter-btn');
-        buttons.forEach(btn => {
-            if (btn.innerText.trim() === status || (status === 'all' && btn.innerText.trim() === 'All')) {
-                btn.classList.remove('text-gray-300', 'hover:bg-white/10');
-                btn.classList.add('bg-white', 'text-black', 'active-filter');
-            } else {
-                btn.classList.add('text-gray-300', 'hover:bg-white/10');
-                btn.classList.remove('bg-white', 'text-black', 'active-filter');
-            }
-        });
-
-        const cards = document.querySelectorAll('.booking-card');
-        let visibleCount = 0;
-        cards.forEach(card => {
-            const cardStatus = card.getAttribute('data-status');
-            if (status === 'all' || cardStatus === status) {
-                card.classList.remove('hidden');
-                visibleCount++;
-            } else {
-                card.classList.add('hidden');
-            }
-        });
-
-        const emptyState = document.getElementById('no-filter-results');
-        if (visibleCount === 0) {
-            emptyState.classList.remove('hidden');
-        } else {
-            emptyState.classList.add('hidden');
-        }
-    }
-</script>
+{{-- Note: JS Logic for filtering removed as it is now handled by the server --}}
 @endsection
