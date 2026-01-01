@@ -178,8 +178,10 @@
                 {{-- 4. INSPECTION GALLERY --}}
                 <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
                     <div class="flex justify-between items-center mb-6">
-                        <h3 class="text-lg font-bold text-gray-900">Inspection Gallery</h3>
-                        {{-- STAFF UPLOAD BUTTON --}}
+                        <div>
+                            <h3 class="text-lg font-bold text-gray-900">Inspection Gallery</h3>
+                            <p class="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Pickup: 5 Photos | Return: 6 Photos</p>
+                        </div>
                         <button onclick="document.getElementById('staff-upload-modal').classList.remove('hidden')" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-xs font-bold hover:bg-blue-700 transition shadow-lg shadow-blue-500/20">
                             <i class="fas fa-camera mr-1"></i> Staff Upload
                         </button>
@@ -237,64 +239,88 @@
                 </div>
 
                 {{-- 5. WORKFLOW ACTIONS --}}
-                <div class="bg-gray-900 rounded-2xl shadow-lg p-6 text-white">
-                    <h3 class="text-lg font-bold mb-4">Manage Booking Status</h3>
-                    <p class="text-sm text-gray-400 mb-6">Current Status: <span class="text-white font-bold">{{ $booking->bookingStatus }}</span></p>
+<div class="bg-gray-900 rounded-2xl shadow-lg p-6 text-white">
+    <h3 class="text-lg font-bold mb-4">Manage Booking Status</h3>
+    
+    <div class="flex justify-between items-center mb-6 border-b border-gray-700 pb-4">
+        <p class="text-sm text-gray-400">Current Status: <span class="text-white font-bold">{{ $booking->bookingStatus }}</span></p>
+        
+        {{-- GLOBAL VERIFY BUTTON: Shows if ANY payment is pending (Deposit OR Balance) --}}
+        @php
+            $pendingPayments = $booking->payments->where('paymentStatus', 'Pending Verification');
+        @endphp
+        
+        @if($pendingPayments->count() > 0)
+            <div class="flex items-center gap-3 bg-orange-500/10 border border-orange-500/50 p-2 pr-4 rounded-lg animate-pulse">
+                <i class="fas fa-bell text-orange-500 ml-2"></i>
+                <span class="text-xs font-bold text-orange-400">New Payment Received!</span>
+                <form action="{{ route('staff.bookings.verify_payment', $booking->bookingID) }}" method="POST">
+                    @csrf
+                    <button class="bg-orange-500 hover:bg-orange-600 text-white px-4 py-1.5 rounded text-xs font-bold transition">
+                        Verify Now
+                    </button>
+                </form>
+            </div>
+        @endif
+    </div>
 
-                    <div class="flex flex-wrap gap-3">
-                        @if($booking->bookingStatus == 'Submitted')
-                            {{-- Step 1: Verify Payment --}}
-                            @if(!$booking->payment || $booking->payment->paymentStatus !== 'Verified')
-                                <form action="{{ route('staff.bookings.verify_payment', $booking->bookingID) }}" method="POST">@csrf
-                                    <button class="bg-orange-500 hover:bg-orange-600 text-white px-6 py-3 rounded-xl font-bold transition shadow-lg shadow-orange-500/20">
-                                        1. Verify Payment
-                                    </button>
-                                </form>
+    <div class="flex flex-wrap gap-3">
+        
+        {{-- ACTION BUTTONS BASED ON STATUS --}}
+        
+        {{-- STEP 1: INITIAL PROCESSING (Submitted OR Deposit Paid) --}}
+        @if(in_array($booking->bookingStatus, ['Submitted', 'Deposit Paid']))
+            
+            {{-- If there are pending payments, force verification first --}}
+            @if($pendingPayments->count() > 0)
+                <button disabled class="bg-gray-700 text-gray-400 px-6 py-3 rounded-xl font-bold cursor-not-allowed flex items-center">
+                    <i class="fas fa-lock mr-2"></i> Approve Agreement
+                </button>
+                <p class="w-full text-[10px] text-red-400 mt-1">* Verify payment above to unlock approval.</p>
+                
+                {{-- Reject Button --}}
+                <button onclick="document.getElementById('reject-modal').classList.remove('hidden')" type="button" class="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-xl font-bold transition shadow-lg shadow-red-500/20 flex items-center">
+                    <i class="fas fa-ban mr-2"></i> Reject
+                </button>
+            @else
+                {{-- Payment Verified: Allow Approval --}}
+                <form action="{{ route('staff.bookings.approve_agreement', $booking->bookingID) }}" method="POST">@csrf
+                    <button class="bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-xl font-bold transition shadow-lg shadow-green-500/20">
+                        2. Approve Agreement
+                    </button>
+                </form>
 
-                                {{-- [NEW] REJECT BUTTON (For Fraud/Issues) --}}
-                                <button onclick="document.getElementById('reject-modal').classList.remove('hidden')" type="button" class="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-xl font-bold transition shadow-lg shadow-red-500/20 flex items-center">
-                                    <i class="fas fa-ban mr-2"></i> Reject
-                                </button>
-                            @else
-                                {{-- Step 2: Approve Agreement --}}
-                                <form action="{{ route('staff.bookings.approve_agreement', $booking->bookingID) }}" method="POST">@csrf
-                                    <button class="bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-xl font-bold transition shadow-lg shadow-green-500/20">
-                                        2. Approve Agreement
-                                    </button>
-                                </form>
+                <button onclick="document.getElementById('reject-modal').classList.remove('hidden')" type="button" class="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-xl font-bold transition shadow-lg shadow-red-500/20 flex items-center">
+                    <i class="fas fa-ban mr-2"></i> Reject
+                </button>
+            @endif
 
-                                {{-- [NEW] REJECT BUTTON (Even if verified, maybe car unavailable) --}}
-                                <button onclick="document.getElementById('reject-modal').classList.remove('hidden')" type="button" class="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-xl font-bold transition shadow-lg shadow-red-500/20 flex items-center">
-                                    <i class="fas fa-ban mr-2"></i> Reject
-                                </button>
-                            @endif
+        {{-- STEP 2: CONFIRMED (Ready for Pickup) --}}
+        @elseif($booking->bookingStatus == 'Confirmed')
+            <form action="{{ route('staff.bookings.pickup', $booking->bookingID) }}" method="POST">@csrf
+                <button class="bg-purple-500 hover:bg-purple-600 text-white px-6 py-3 rounded-xl font-bold transition shadow-lg shadow-purple-500/20">
+                    3. Vehicle Pickup (Handover)
+                </button>
+            </form>
 
-                        @elseif($booking->bookingStatus == 'Confirmed')
-                            {{-- Step 3: Pickup --}}
-                            <form action="{{ route('staff.bookings.pickup', $booking->bookingID) }}" method="POST">@csrf
-                                <button class="bg-purple-500 hover:bg-purple-600 text-white px-6 py-3 rounded-xl font-bold transition shadow-lg shadow-purple-500/20">
-                                    3. Vehicle Pickup (Handover)
-                                </button>
-                            </form>
+        {{-- STEP 3: ACTIVE (On Rental) --}}
+        @elseif($booking->bookingStatus == 'Active')
+            <form action="{{ route('staff.bookings.return', $booking->bookingID) }}" method="POST" onsubmit="return confirm('Complete rental & release deposit?');">@csrf
+                <button class="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-xl font-bold transition shadow-lg shadow-blue-500/20">
+                    4. Process Return (Complete)
+                </button>
+            </form>
 
-                        @elseif($booking->bookingStatus == 'Active')
-                            {{-- Step 4: Return --}}
-                            <form action="{{ route('staff.bookings.return', $booking->bookingID) }}" method="POST" onsubmit="return confirm('Complete rental & release deposit?');">@csrf
-                                <button class="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-xl font-bold transition shadow-lg shadow-blue-500/20">
-                                    4. Process Return (Complete)
-                                </button>
-                            </form>
-
-                        @elseif($booking->bookingStatus == 'Cancelled' && $booking->payment && $booking->payment->depoStatus == 'Requested')
-                            {{-- Refund --}}
-                            <form action="{{ route('staff.bookings.refund', $booking->bookingID) }}" method="POST" onsubmit="return confirm('Issue refund to customer?');">@csrf
-                                <button class="bg-red-500 hover:bg-red-600 text-white px-6 py-3 rounded-xl font-bold transition shadow-lg shadow-red-500/20 flex items-center">
-                                    <i class="fas fa-hand-holding-usd mr-2"></i> Approve Refund
-                                </button>
-                            </form>
-                        @endif
-                    </div>
-                </div>
+        {{-- STEP 4: CANCELLATIONS (Refunds) --}}
+        @elseif($booking->bookingStatus == 'Cancelled' && $booking->payment && $booking->payment->depoStatus == 'Requested')
+            <form action="{{ route('staff.bookings.refund', $booking->bookingID) }}" method="POST" onsubmit="return confirm('Issue refund to customer?');">@csrf
+                <button class="bg-red-500 hover:bg-red-600 text-white px-6 py-3 rounded-xl font-bold transition shadow-lg shadow-red-500/20 flex items-center">
+                    <i class="fas fa-hand-holding-usd mr-2"></i> Approve Refund
+                </button>
+            </form>
+        @endif
+    </div>
+</div>
 
             </div>
         </div>
@@ -302,32 +328,30 @@
 </div>
 
 {{-- STAFF UPLOAD MODAL --}}
-<div id="staff-upload-modal" class="fixed inset-0 z-50 hidden bg-black/80 flex items-center justify-center p-4 backdrop-blur-sm">
-    <div class="bg-white rounded-2xl w-full max-w-md p-6 shadow-2xl">
-        <div class="flex justify-between items-center mb-4">
-            <h3 class="font-bold text-gray-900 text-lg">Staff Inspection Upload</h3>
-            <button onclick="document.getElementById('staff-upload-modal').classList.add('hidden')" class="text-gray-400 hover:text-gray-900"><i class="fas fa-times"></i></button>
-        </div>
-        
-        <form action="{{ route('staff.inspections.store', $booking->bookingID) }}" method="POST" enctype="multipart/form-data">
-            @csrf
-            <div class="mb-4">
-                <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Inspection Stage</label>
-                <select name="type" class="w-full border border-gray-300 rounded-lg p-2.5 text-sm bg-gray-50 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none">
-                    <option value="Pickup">Pickup (Pre-Rental)</option>
-                    <option value="Return">Return (Post-Rental)</option>
-                </select>
+<div id="staff-upload-modal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl">
+        <h3 class="text-lg font-bold mb-4">Staff Verification Upload</h3>
+        <form action="{{ route('staff.inspections.store', $booking->bookingID) }}" method="POST" enctype="multipart/form-data">            @csrf
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-gray-400 uppercase mb-2">Inspection Type</label>
+                    <select name="type" id="staff-ins-type" class="w-full border-gray-200 rounded-lg text-sm" onchange="updateHint(this.value)">
+                        <option value="Pickup">Pickup (5 Photos)</option>
+                        <option value="Return">Return (6 Photos)</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-400 uppercase mb-2">Photos</label>
+                    <input type="file" name="photos[]" multiple required class="text-sm">
+                    <p id="ins-hint" class="mt-2 text-[10px] text-gray-500 italic">
+                        Required: Front, Back, Left, Right, Dashboard.
+                    </p>
+                </div>
+                <div class="flex justify-end gap-2 pt-4">
+                    <button type="button" onclick="this.closest('#staff-upload-modal').classList.add('hidden')" class="px-4 py-2 text-sm font-bold text-gray-500">Cancel</button>
+                    <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded-lg text-sm font-bold">Upload</button>
+                </div>
             </div>
-
-            <label class="block w-full h-32 border-2 border-dashed border-gray-300 rounded-xl flex flex-col items-center justify-center cursor-pointer hover:border-blue-500 hover:bg-blue-50 transition mb-6">
-                <i class="fas fa-camera text-2xl text-gray-400 mb-2"></i>
-                <span class="text-sm text-gray-500">Tap to Select Photos</span>
-                <input type="file" name="photos[]" multiple class="hidden" required onchange="this.previousElementSibling.innerText = this.files.length + ' files selected'">
-            </label>
-
-            <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl shadow-lg transition">
-                Upload Verification
-            </button>
         </form>
     </div>
 </div>
@@ -377,4 +401,15 @@
         </form>
     </div>
 </div>
+
+<script>
+function updateHint(val) {
+    const hint = document.getElementById('ins-hint');
+    if(val === 'Return') {
+        hint.innerText = "Required: Front, Back, Left, Right, Dashboard + Car Key Location.";
+    } else {
+        hint.innerText = "Required: Front, Back, Left, Right, Dashboard.";
+    }
+}
+</script>
 @endsection

@@ -42,9 +42,30 @@
             </div>
 
             <div class="flex items-center space-x-5">
-                <div class="relative cursor-pointer hover:scale-110 transition">
-                    <i class="fas fa-bell text-xl"></i>
-                    <span class="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full border border-white">2</span>
+                <div class="relative group">
+                    <button class="flex items-center text-white-600 hover:text-blue-600 focus:outline-none relative">
+                        <i class="fas fa-bell"></i>
+                        @php $count = auth()->user()->unreadNotifications->count(); @endphp
+                        @if($count > 0)
+                            <span class="absolute -top-2 -right-2 bg-blue-600 text-white text-[10px] px-1.5 rounded-full">
+                                {{ $count }}
+                            </span>
+                        @endif
+                    </button>
+
+                    <div class="absolute right-0 mt-2 w-72 bg-white shadow-xl rounded-lg hidden group-hover:block z-50 border border-gray-100">
+                        <div class="p-3 border-b text-xs font-bold text-gray-400 uppercase">Notifications</div>
+                        <div class="max-h-60 overflow-y-auto">
+                            @forelse(auth()->user()->unreadNotifications as $notification)
+                                <div class="p-4 border-b hover:bg-gray-50">
+                                    <p class="text-sm text-gray-800">{{ $notification->data['message'] }}</p>
+                                    <p class="text-[10px] text-gray-400 mt-1">{{ $notification->created_at->diffForHumans() }}</p>
+                                </div>
+                            @empty
+                                <p class="p-4 text-center text-xs text-gray-400">No new updates</p>
+                            @endforelse
+                        </div>
+                    </div>
                 </div>
                 
                 @auth
@@ -89,33 +110,82 @@
             </div>
         </div>
     @endif
-        <button onclick="document.getElementById('help-modal').classList.remove('hidden')" class="fixed bottom-6 right-6 bg-blue-600 text-white p-4 rounded-full shadow-2xl hover:bg-blue-700 transition z-50">
-    <i class="fas fa-question text-xl"></i>
-</button>
+        <button onclick="document.getElementById('help-modal').classList.remove('hidden')" class="fixed bottom-6 right-6 bg-gradient-to-r from-blue-600 to-blue-500 text-white p-4 rounded-full shadow-[0_0_20px_rgba(37,99,235,0.5)] hover:scale-110 transition z-50 border border-white/20">
+            <i class="fas fa-question text-xl animate-bounce"></i>
+        </button>
 
 <div id="help-modal" class="fixed inset-0 z-[9999] hidden bg-black/90 backdrop-blur-sm flex items-center justify-center p-4">
-    <div class="bg-gray-900 border border-white/10 rounded-2xl max-w-lg w-full p-6 relative">
-        <button onclick="document.getElementById('help-modal').classList.add('hidden')" class="absolute top-4 right-4 text-gray-400 hover:text-white">
-            <i class="fas fa-times"></i>
+    <div class="bg-gray-900 border border-white/10 rounded-2xl max-w-lg w-full p-6 relative shadow-2xl">
+        <button onclick="document.getElementById('help-modal').classList.add('hidden')" class="absolute top-4 right-4 text-gray-400 hover:text-white transition">
+            <i class="fas fa-times text-xl"></i>
         </button>
         
-        <h3 class="text-xl font-bold text-white mb-4">How to Rent</h3>
-        <ul class="space-y-4 text-sm text-gray-300">
-            <li class="flex gap-3">
-                <span class="bg-orange-500 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0">1</span>
-                <span>Complete your profile with a valid driving license.</span>
+        <h3 class="text-xl font-bold text-white mb-6 flex items-center gap-2">
+            <i class="fas fa-info-circle text-orange-500"></i> How to Rent
+        </h3>
+        
+        <ul class="space-y-5 text-sm text-gray-300 max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar">
+            {{-- Step 1 --}}
+            <li class="flex gap-4">
+                <span class="bg-orange-500 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">1</span>
+                <div>
+                    <span class="block font-bold text-white">Complete Profile</span>
+                    <span class="text-xs text-gray-400">Update your details with a valid driving license and ID/Passport.</span>
+                </div>
             </li>
-            <li class="flex gap-3">
-                <span class="bg-orange-500 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0">2</span>
-                <span>Select a vehicle and dates. (Min 24h gap between rentals).</span>
+            
+            {{-- Step 2 --}}
+            <li class="flex gap-4">
+                <span class="bg-orange-500 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">2</span>
+                <div>
+                    <span class="block font-bold text-white">Book a Vehicle</span>
+                    <span class="text-xs text-gray-400">Select dates and car. (every car will have 1 day cooldown time for each booking).</span>
+                </div>
             </li>
-            <li class="flex gap-3">
-                <span class="bg-orange-500 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0">3</span>
-                <span>Make payment (Deposit or Full) within 30 minutes.</span>
+
+            {{-- Step 3 --}}
+            <li class="flex gap-4">
+                <span class="bg-orange-500 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">3</span>
+                <div>
+                    <span class="block font-bold text-white">Make Payment</span>
+                    <span class="text-xs text-gray-400">Pay the Deposit or Full Amount within 30 minutes to secure your slot.</span>
+                </div>
             </li>
-            <li class="flex gap-3">
-                <span class="bg-orange-500 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0">4</span>
-                <span>Wait for Admin Approval ("Approved" status).</span>
+
+            {{-- Step 4 --}}
+            <li class="flex gap-4">
+                <span class="bg-orange-500 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">4</span>
+                <div>
+                    <span class="block font-bold text-white">Wait for Approval</span>
+                    <span class="text-xs text-gray-400">Staff will verify your payment and documents. Status changes to "Confirmed".</span>
+                </div>
+            </li>
+
+            {{-- NEW: Step 5 --}}
+            <li class="flex gap-4">
+                <span class="bg-blue-600 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">5</span>
+                <div>
+                    <span class="block font-bold text-white">Pickup & Inspection</span>
+                    <span class="text-xs text-gray-400">Meet staff at location. Upload <strong>5 photos</strong> (Front, Back, Left, Right, Dashboard) to start rental.</span>
+                </div>
+            </li>
+
+            {{-- NEW: Step 6 --}}
+            <li class="flex gap-4">
+                <span class="bg-blue-600 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">6</span>
+                <div>
+                    <span class="block font-bold text-white">Return Vehicle</span>
+                    <span class="text-xs text-gray-400">Return on time. Upload <strong>6 photos</strong> (Views + Key Location). Staff verifies condition.</span>
+                </div>
+            </li>
+
+            {{-- NEW: Step 7 --}}
+            <li class="flex gap-4">
+                <span class="bg-green-600 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">7</span>
+                <div>
+                    <span class="block font-bold text-white">Completion & Refund</span>
+                    <span class="text-xs text-gray-400">Once returned, your deposit (if applicable) will be processed for refund.</span>
+                </div>
             </li>
         </ul>
     </div>

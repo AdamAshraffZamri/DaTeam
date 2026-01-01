@@ -73,14 +73,45 @@
                 <h2 class="text-2xl font-bold text-gray-800">@yield('title', 'Overview')</h2>
                 
                 <div class="flex items-center space-x-6">
-                    <div class="relative hidden md:block">
-                        <i class="fas fa-search absolute left-3 top-3 text-gray-400 text-sm"></i>
-                        <input type="text" placeholder="Search anything..." class="bg-gray-50 rounded-full pl-10 pr-4 py-2.5 text-sm w-64 focus:outline-none focus:ring-2 focus:ring-orange-100 text-gray-600 transition">
-                    </div>
 
-                    <div class="relative cursor-pointer">
-                        <i class="fas fa-bell text-gray-400 text-xl"></i>
-                        <span class="absolute top-0 right-0 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white"></span>
+                    {{-- Example notification bell/dropdown --}}
+                    <div class="relative">
+                        <button id="notif-bell" class="flex items-center text-gray-500 hover:text-gray-700 focus:outline-none relative p-2">
+                            <i class="fas fa-bell text-xl"></i>
+                            @php $unreadCount = Auth::guard('staff')->user()->unreadNotifications->count(); @endphp
+                            @if($unreadCount > 0)
+                                <span class="absolute top-1 right-1 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full border-2 border-white">
+                                    {{ $unreadCount }}
+                                </span>
+                            @endif
+                        </button>
+
+                        <div id="notif-dropdown" class="absolute right-0 mt-2 w-80 bg-white border border-gray-100 rounded-xl shadow-xl hidden z-50 overflow-hidden">
+                            <div class="p-4 border-b border-gray-50 flex justify-between items-center">
+                                <h4 class="text-xs font-black uppercase text-gray-400 tracking-wider">Notifications</h4>
+                                @if($unreadCount > 0)
+                                    <span class="text-[10px] bg-orange-100 text-orange-600 px-2 py-0.5 rounded-full font-bold">{{ $unreadCount }} NEW</span>
+                                @endif
+                            </div>
+                            
+                            <div class="max-h-80 overflow-y-auto">
+                                @forelse(Auth::guard('staff')->user()->unreadNotifications as $notification)
+                                    <a href="{{ route('staff.bookings.show', $notification->data['booking_id']) }}" class="block p-4 hover:bg-gray-50 transition border-b border-gray-50 group">
+                                        <p class="text-sm font-bold text-gray-800 group-hover:text-blue-600">{{ $notification->data['message'] }}</p>
+                                        <p class="text-[10px] text-gray-400 mt-1 flex items-center">
+                                            <i class="far fa-clock mr-1"></i> {{ $notification->created_at->diffForHumans() }}
+                                        </p>
+                                    </a>
+                                @empty
+                                    <div class="p-8 text-center">
+                                        <div class="bg-gray-50 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3">
+                                            <i class="fas fa-check text-gray-300"></i>
+                                        </div>
+                                        <p class="text-xs text-gray-400">All caught up!</p>
+                                    </div>
+                                @endforelse
+                            </div>
+                        </div>
                     </div>
 
                     <div class="flex items-center space-x-3 border-l border-gray-100 pl-6">
@@ -101,6 +132,20 @@
 
         </div>
     </div>
+<script>
+    // Toggle dropdown on click
+    const bell = document.getElementById('notif-bell');
+    const dropdown = document.getElementById('notif-dropdown');
 
+    bell.addEventListener('click', (e) => {
+        e.stopPropagation();
+        dropdown.classList.toggle('hidden');
+    });
+
+    // Close dropdown if clicking anywhere else
+    window.addEventListener('click', () => {
+        dropdown.classList.add('hidden');
+    });
+</script>
 </body>
 </html>

@@ -11,6 +11,9 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Carbon\Carbon;
+use App\Notifications\NewBookingSubmitted;
+use App\Models\Staff;
+use Illuminate\Support\Facades\Notification;
 
 class BookingController extends Controller
 {
@@ -61,7 +64,7 @@ class BookingController extends Controller
             return redirect()->route('profile.edit')
                 ->with('error', '⚠️ Action Required: You must complete ALL profile details (including Bank Info, Addresses, and IDs) before you can book a car.');
         }
-
+        
         // If checks pass, proceed to booking page
         return view('bookings.create'); 
     }
@@ -219,6 +222,19 @@ class BookingController extends Controller
             'depoRequestDate' => now(),
             'installmentDetails' => $proofPath // ✅ This will now work correctly
         ]);
+        
+        // === NEW: NOTIFICATION LOGIC ===
+        try {
+            // Fetch all staff members who should be notified
+            $staff = Staff::all(); 
+            
+            // Send the notification defined in Step 2
+            Notification::send($staff, new NewBookingSubmitted($booking));
+        } catch (\Exception $e) {
+            // Log error if mail fails, but allow the user to proceed
+            \Log::error("Notification failed: " . $e->getMessage());
+        }
+        // ===============================
 
         return redirect()->route('book.index')->with('show_thank_you', true);
     }
@@ -282,9 +298,16 @@ class BookingController extends Controller
     {
         $booking = Booking::where('customerID', Auth::id())->findOrFail($id);
 
+        // Determine expected count based on stage
+        $isPickup = ($booking->bookingStatus != 'Active' && $booking->bookingStatus != 'Completed');
+        $requiredCount = $isPickup ? 5 : 6;
+        $typeName = $isPickup ? 'Pickup' : 'Return';
+
         $request->validate([
-            'photos' => 'required',
-            'photos.*' => 'image|max:4048', // Allow multiple images
+            'photos' => "required|array|size:$requiredCount", // Enforces exact count
+            'photos.*' => 'image|mimes:jpeg,png,jpg|max:2048',
+        ], [
+            'photos.size' => "You must upload exactly $requiredCount photos for $typeName."
         ]);
 
         // Determine Inspection Stage
@@ -360,5 +383,11 @@ class BookingController extends Controller
         // Sum all payments for this booking that are already verified or completed
         $totalPaid = $this->payments()->where('paymentStatus', 'Verified')->sum('amount');
         return max(0, $this->totalCost - $totalPaid); // Ensure balance never goes below 0
+    }
+
+    public function markNotificationsRead()
+    {
+        auth()->user()->unreadNotifications->markAsRead();
+        return back();
     }
 }

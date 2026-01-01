@@ -82,6 +82,8 @@ Route::middleware('auth')->group(function () {
 
     // Feedback / Review Route
     Route::post('/bookings/{id}/feedback', [App\Http\Controllers\FeedbackController::class, 'store'])->name('feedback.store');
+
+    Route::post('/notifications/mark-read', [App\Http\Controllers\BookingController::class, 'markNotificationsRead'])->name('notifications.markRead');
 });
 
 
@@ -136,4 +138,5 @@ Route::prefix('staff')->middleware(['auth:staff'])->group(function () {
 
     // Staff Assignment
     Route::post('/bookings/{id}/assign', [StaffBookingController::class, 'assignStaff'])->name('staff.bookings.assign');
+
 });
