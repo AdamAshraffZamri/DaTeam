@@ -64,6 +64,7 @@
                         <th class="px-6 py-4">ID</th>
                         <th class="px-6 py-4">Customer</th>
                         <th class="px-6 py-4">Vehicle</th>
+                        <th class="px-6 py-4">Price</th>
                         <th class="px-6 py-4">Documents</th> 
                         <th class="px-6 py-4">Status</th>
                         <th class="px-6 py-4 text-right">Action</th>
@@ -83,7 +84,15 @@
                             <p class="font-bold text-gray-800">{{ $booking->vehicle->model ?? 'Unknown' }}</p>
                             <span class="text-gray-400 text-xs uppercase tracking-wide">{{ $booking->vehicle->plateNo ?? '-' }}</span>
                         </td>
-
+                        <td class="px-6 py-4 text-sm">
+                            <div class="flex flex-col">
+                                <span class="font-bold text-gray-900">RM {{ number_format($booking->totalCost, 2) }}</span>
+                                
+                                <span class="text-xs text-gray-400">
+                                    ({{ $booking->days }} Days + Deposit)
+                                </span>
+                            </div>
+                        </td>
                         {{-- DOCUMENTS COLUMN --}}
                         <td class="px-6 py-4 text-sm space-y-1">
                             {{-- 1. Receipt --}}

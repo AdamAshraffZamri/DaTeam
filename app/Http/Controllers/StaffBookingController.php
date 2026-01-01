@@ -7,6 +7,7 @@ use App\Models\Payment;
 use App\Models\Staff; 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use App\Notifications\BookingStatusUpdated;
 
 class StaffBookingController extends Controller
 {
@@ -36,7 +37,7 @@ class StaffBookingController extends Controller
     // --- 2. LIST ALL BOOKINGS ---
     public function index()
     {
-        $bookings = Booking::with(['customer', 'vehicle', 'payment']) 
+        $bookings = Booking::with(['customer', 'vehicle', 'payment', 'payments']) 
                            ->orderBy('created_at', 'desc')
                            ->get();
 
@@ -82,7 +83,9 @@ class StaffBookingController extends Controller
             'staffID' => $booking->staffID ?? Auth::guard('staff')->id(), 
             'aggreementDate' => now(),
         ]);
-
+        // Notify Customer
+        $booking->customer->notify(new BookingStatusUpdated($booking, "Your booking #{$booking->bookingID} has been CONFIRMED!"));
+        
         return back()->with('success', 'Booking is CONFIRMED.');
     }
 
@@ -118,7 +121,14 @@ class StaffBookingController extends Controller
         return back()->with('error', 'Error processing refund.');
     }
     public function storeInspection(Request $request, $id) {
-        $request->validate(['photos' => 'required', 'type' => 'required']);
+        $requiredCount = ($request->type == 'Pickup') ? 5 : 6;
+        $request->validate([
+                'type' => 'required',
+                'photos' => "required|array|size:$requiredCount",
+                'photos.*' => 'image|max:4048',
+            ], [
+                'photos.size' => "Exactly $requiredCount photos are required for $request->type inspection."
+            ]);        
         $booking = Booking::findOrFail($id);
         $photoPaths = [];
         if ($request->hasFile('photos')) {
@@ -192,6 +202,16 @@ class StaffBookingController extends Controller
             $statusMessage = "Booking rejected & Refunded.";
         }
 
+        // Notify Customer
+        $booking->customer->notify(new BookingStatusUpdated($booking, "Your booking #{$booking->bookingID} was rejected. Reason: " . $request->reason));
+
         return back()->with('success', $statusMessage);
+    }
+
+    // mark notification as read
+    public function markAsRead($id) {
+        $notification = auth()->guard('staff')->user()->notifications()->findOrFail($id);
+        $notification->markAsRead();
+        return back();
     }
 }

@@ -143,18 +143,38 @@
             <button onclick="document.getElementById('inspection-modal-{{ $booking->bookingID }}').classList.add('hidden')" class="absolute top-4 right-4 text-gray-400 hover:text-white">
                 <i class="fas fa-times text-xl"></i>
             </button>
+            
             <h3 class="text-xl font-bold text-white mb-2">
                 {{ $booking->bookingStatus == 'Confirmed' ? 'Pre-Rental Inspection' : 'Post-Rental Inspection' }}
             </h3>
-            <p class="text-xs text-gray-400 mb-6">Upload clear photos of the vehicle to document its condition.</p>
+
+            {{-- Photo Requirement Instructions --}}
+            <div class="p-3 bg-white/5 rounded-xl border border-white/10 mb-6">
+                <p class="text-[10px] text-orange-500 font-black uppercase tracking-widest mb-1">Requirements:</p>
+                <ul class="text-[11px] text-gray-300 space-y-1">
+                    <li class="flex items-center gap-2"><i class="fas fa-check-circle text-[8px]"></i> 4 External Views (Front, Back, Left, Right)</li>
+                    <li class="flex items-center gap-2"><i class="fas fa-check-circle text-[8px]"></i> 1 Dashboard View (Mileage & Fuel)</li>
+                    @if($booking->bookingStatus == 'Active')
+                        <li class="flex items-center gap-2 text-orange-400"><i class="fas fa-key text-[8px]"></i> 1 Car Key Location (Required for Return)</li>
+                    @endif
+                </ul>
+            </div>
+
             <form action="{{ route('book.inspection.upload', $booking->bookingID) }}" method="POST" enctype="multipart/form-data">
                 @csrf
                 <label class="block w-full h-32 border-2 border-dashed border-white/20 rounded-xl flex flex-col items-center justify-center cursor-pointer hover:border-orange-500 hover:bg-white/5 transition mb-4 group">
                     <i class="fas fa-images text-2xl text-gray-500 group-hover:text-orange-500 mb-2 transition"></i>
                     <span class="text-sm text-gray-300 group-hover:text-white">Tap to Select Photos</span>
-                    <span class="text-[10px] text-gray-500 uppercase mt-1">(Max 4 photos)</span>
-                    <input type="file" name="photos[]" multiple class="hidden" required onchange="this.parentElement.querySelector('span').innerText = this.files.length + ' files selected'">
+                    
+                    {{-- Updated Label showing exact requirements --}}
+                    <span class="text-[10px] text-orange-500 font-bold uppercase mt-1">
+                        (Upload Exactly {{ $booking->bookingStatus == 'Confirmed' ? '5' : '6' }} Photos)
+                    </span>
+                    
+                    <input type="file" name="photos[]" multiple class="hidden" required 
+                           onchange="this.parentElement.querySelector('.text-sm').innerText = this.files.length + ' files selected'">
                 </label>
+
                 <div class="grid grid-cols-2 gap-4 mb-6">
                     <div>
                         <label class="text-[10px] text-gray-500 uppercase font-bold">Fuel Level</label>
@@ -171,8 +191,9 @@
                         <input type="number" name="mileage" class="w-full bg-white/10 border border-white/20 rounded-lg text-white text-sm p-2 mt-1 focus:border-orange-500 focus:outline-none" placeholder="e.g. 12345">
                     </div>
                 </div>
+
                 <button type="submit" class="w-full bg-[#ea580c] hover:bg-orange-600 text-white font-bold py-3.5 rounded-xl shadow-lg transition transform hover:scale-[1.02]">
-                    Submit Inspection
+                    Submit {{ $booking->bookingStatus == 'Confirmed' ? 'Pickup' : 'Return' }} Inspection
                 </button>
             </form>
         </div>
