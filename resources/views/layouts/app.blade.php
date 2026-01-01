@@ -42,7 +42,8 @@
             </div>
 
             <div class="flex items-center space-x-5">
-                <div class="relative group">
+                @auth
+            <div class="relative group">
                     <button class="flex items-center text-white-600 hover:text-blue-600 focus:outline-none relative">
                         <i class="fas fa-bell"></i>
                         @php $count = auth()->user()->unreadNotifications->count(); @endphp
@@ -67,7 +68,7 @@
                         </div>
                     </div>
                 </div>
-                
+                @endauth
                 @auth
                     <div class="flex items-center gap-3 bg-white/10 px-3 py-1.5 rounded-full border border-white/20 backdrop-blur-md">
                         <a href="{{ route('profile.edit') }}" class="flex items-center gap-2">
