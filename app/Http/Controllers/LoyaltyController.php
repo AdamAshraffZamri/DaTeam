@@ -6,9 +6,11 @@ use App\Models\LoyaltyPoint;
 use App\Models\Voucher;
 use App\Models\Booking;
 use App\Models\LoyaltyHistory;
+use App\Services\RentalRewardService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
+use Carbon\Carbon;
 
 class LoyaltyController extends Controller
 {
@@ -38,25 +40,12 @@ class LoyaltyController extends Controller
             ->whereDate('validUntil', '>=', now())
             ->get();
         
-        // 4. Calculate Progress (Cycle of 6: 3 for 10%, 6 for 30%)
-        $completedBookings = Booking::where('customerID', $userId)
-            ->where('bookingStatus', 'Completed')
-            ->count();
-            
-        $cyclePosition = $completedBookings % 6; 
-        // Logic: 
-        // 0, 1, 2 -> Aiming for 3 (10%)
-        // 3, 4, 5 -> Aiming for 6 (30%)
-        
-        if ($cyclePosition < 3) {
-            $nextReward = "10% OFF Voucher";
-            $bookingsNeeded = 3 - $cyclePosition;
-            $progressPercent = ($cyclePosition / 3) * 100;
-        } else {
-            $nextReward = "30% OFF Voucher";
-            $bookingsNeeded = 6 - $cyclePosition;
-            $progressPercent = (($cyclePosition - 3) / 3) * 100;
-        }
+        // 4. Calculate Progress for Rental Reward (9+ hour bookings)
+        // Track: Every 3 bookings >= 9 hours = 1 voucher
+        $rentalBookingProgress = $loyalty->rental_bookings_count ?? 0;
+        $bookingsNeeded = max(0, 3 - $rentalBookingProgress);
+        $progressPercent = ($rentalBookingProgress / 3) * 100;
+        $nextReward = "10% OFF Rental Discount Voucher";
 
         // 5. Rankings
         $rankings = LoyaltyPoint::with('customer')
@@ -112,49 +101,247 @@ class LoyaltyController extends Controller
         ];
         
         return view('loyalty.index', compact(
-            'loyalty', 'vouchers', 'nextReward', 'bookingsNeeded', 
+            'loyalty', 'vouchers', 'nextReward', 'bookingsNeeded', 'rentalBookingProgress',
             'progressPercent', 'rankings', 'userRank', 'totalUsers', 'rewards'
         ));
     }
 
+    // --- STAFF DASHBOARD: VIEW LOYALTY & REWARDS ---
+    public function staffIndex()
+    {
+        // 1. Get all loyalty data
+        $loyaltyStats = LoyaltyPoint::with('customer')
+            ->orderByDesc('points')
+            ->get();
+
+        // 2. Total points distributed
+        $totalPointsDistributed = LoyaltyHistory::where('points_change', '>', 0)->sum('points_change');
+        $totalPointsRedeemed = abs(LoyaltyHistory::where('points_change', '<', 0)->sum('points_change'));
+
+        // 3. Recent loyalty activities
+        $recentActivities = LoyaltyHistory::with('customer')
+            ->orderByDesc('created_at')
+            ->take(20)
+            ->get();
+
+        // 4. All active vouchers (split by type)
+        $rentalVouchers = Voucher::where('voucherType', 'Rental Discount')
+            ->with('customer')
+            ->orderByDesc('created_at')
+            ->get();
+        
+        $merchantVouchers = Voucher::where('voucherType', 'Merchant Reward')
+            ->with('customer')
+            ->orderByDesc('created_at')
+            ->get();
+
+        // 5. Tier breakdown
+        $tierBreakdown = [
+            'Bronze' => LoyaltyPoint::where('tier', 'Bronze')->count(),
+            'Silver' => LoyaltyPoint::where('tier', 'Silver')->count(),
+            'Gold' => LoyaltyPoint::where('tier', 'Gold')->count(),
+            'Platinum' => LoyaltyPoint::where('tier', 'Platinum')->count(),
+        ];
+
+        // 6. Top performers
+        $topPerformers = LoyaltyPoint::with('customer')
+            ->orderByDesc('points')
+            ->take(10)
+            ->get();
+
+        return view('staff.loyalty.index', compact(
+            'loyaltyStats', 'totalPointsDistributed', 'totalPointsRedeemed',
+            'recentActivities', 'rentalVouchers', 'merchantVouchers', 'tierBreakdown', 'topPerformers'
+        ));
+    }
+
+    // --- STAFF: VIEW CUSTOMER LOYALTY DETAILS ---
+    public function staffShowCustomer($customerId)
+    {
+        // Get customer loyalty data
+        $loyalty = LoyaltyPoint::where('user_id', $customerId)->firstOrFail();
+        $customer = $loyalty->customer;
+
+        // Get loyalty history
+        $history = LoyaltyHistory::where('user_id', $customerId)
+            ->orderByDesc('created_at')
+            ->get();
+
+        // Get customer vouchers
+        $vouchers = Voucher::where('customerID', $customerId)
+            ->orderByDesc('created_at')
+            ->get();
+
+        // Get booking count and stats
+        $bookingCount = Booking::where('customerID', $customerId)
+            ->where('bookingStatus', 'Completed')
+            ->count();
+
+        $totalSpent = Booking::where('customerID', $customerId)
+            ->where('bookingStatus', 'Completed')
+            ->sum('totalCost');
+
+        return view('staff.loyalty.show-customer', compact(
+            'loyalty', 'customer', 'history', 'vouchers', 'bookingCount', 'totalSpent'
+        ));
+    }
+
+    // --- STAFF: STORE NEW VOUCHER ---
+    public function staffStoreVoucher(Request $request)
+    {
+        $request->validate([
+            'code' => 'required|unique:vouchers,voucherCode',
+            'amount' => 'required|numeric|min:0',
+            'type' => 'required|in:Rental Discount,Merchant Reward',
+            'valid_from' => 'required|date',
+            'valid_until' => 'required|date|after:valid_from',
+            'description' => 'nullable|string|max:255',
+        ]);
+
+        Voucher::create([
+            'voucherCode' => $request->code,
+            'code' => $request->code,
+            'voucherAmount' => $request->amount,
+            'voucherType' => $request->type,
+            'validFrom' => $request->valid_from,
+            'validUntil' => $request->valid_until,
+            'conditions' => $request->description,
+            'isUsed' => false,
+            'status' => 'active'
+        ]);
+
+        return back()->with('success', 'Voucher created successfully!');
+    }
+
+    // --- STAFF: GET VOUCHER FOR EDITING (JSON) ---
+    public function staffEditVoucher($voucherId)
+    {
+        $voucher = Voucher::findOrFail($voucherId);
+        
+        return response()->json([
+            'voucherID' => $voucher->voucherID,
+            'voucherCode' => $voucher->voucherCode,
+            'voucherAmount' => $voucher->voucherAmount,
+            'voucherType' => $voucher->voucherType,
+            'validFrom' => $voucher->validFrom,
+            'validUntil' => $voucher->validUntil,
+            'conditions' => $voucher->conditions,
+        ]);
+    }
+
+    // --- STAFF: UPDATE VOUCHER ---
+    public function staffUpdateVoucher(Request $request, $voucherId)
+    {
+        $request->validate([
+            'code' => 'required|unique:vouchers,voucherCode,' . $voucherId . ',voucherID',
+            'amount' => 'required|numeric|min:0',
+            'type' => 'required|in:Rental Discount,Merchant Reward',
+            'valid_from' => 'required|date',
+            'valid_until' => 'required|date|after:valid_from',
+            'description' => 'nullable|string|max:255',
+        ]);
+
+        $voucher = Voucher::findOrFail($voucherId);
+        $voucher->update([
+            'voucherCode' => $request->code,
+            'code' => $request->code,
+            'voucherAmount' => $request->amount,
+            'voucherType' => $request->type,
+            'validFrom' => $request->valid_from,
+            'validUntil' => $request->valid_until,
+            'conditions' => $request->description,
+        ]);
+
+        return back()->with('success', 'Voucher updated successfully!');
+    }
+
+    // --- STAFF: DELETE VOUCHER ---
+    public function staffDeleteVoucher($voucherId)
+    {
+        $voucher = Voucher::findOrFail($voucherId);
+        $voucher->delete();
+
+        return back()->with('success', 'Voucher deleted successfully!');
+    }
+
     // --- LOGIC: BOOKING COMPLETED ---
     // CALL THIS from StaffBookingController when status -> 'Completed'
+    // --- GET AVAILABLE VOUCHERS FOR CUSTOMER (JSON) ---
+    public function getAvailableVouchers()
+    {
+        try {
+            // Get active vouchers that are not expired
+            $vouchers = Voucher::whereIn('status', ['active', 'Active'])
+                ->orWhere('isUsed', false)
+                ->get();
+
+            // Filter in PHP for better control
+            $filtered = $vouchers->filter(function($voucher) {
+                // Check if valid until is greater than or equal to today
+                $validUntil = $voucher->validUntil ?? $voucher->expires_at;
+                if ($validUntil && $validUntil < now()) {
+                    return false;
+                }
+                return true;
+            })->map(function($voucher) {
+                $code = $voucher->code ?? $voucher->voucherCode ?? 'N/A';
+                $amount = $voucher->voucherAmount ?? $voucher->discount_percent ?? 0;
+                $type = $voucher->voucherType ?? 'Voucher';
+                $expires = $voucher->validUntil ?? $voucher->expires_at;
+                
+                return [
+                    'id' => $voucher->voucherID ?? $voucher->id ?? 0,
+                    'code' => $code,
+                    'amount' => $amount,
+                    'type' => $type,
+                    'expires' => $expires ? $expires->format('d M Y') : 'No expiry',
+                ];
+            })->values();
+
+            return response()->json($filtered);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
+
+    // --- BOOKING COMPLETED ---
     public function bookingCompleted($bookingId)
     {
         $booking = Booking::findOrFail($bookingId);
         $userId = $booking->customerID;
 
-        // 1. AWARD POINTS (Based on Total Cost: RM1 = 1 Point)
+        // CHECK IF ALREADY PROCESSED: Don't process the same booking twice
+        $alreadyProcessed = LoyaltyHistory::where('user_id', $userId)
+            ->where('reason', 'like', "%Booking #$bookingId%")
+            ->exists();
+        
+        if ($alreadyProcessed) {
+            \Log::warning("Booking $bookingId already processed for customer $userId - skipping duplicate");
+            return false;
+        }
+
+        // 1. AWARD LOYALTY POINTS (Based on Total Cost: RM1 = 1 Point)
         $pointsEarned = (int) $booking->totalCost;
         
         $loyalty = LoyaltyPoint::firstOrCreate(
             ['user_id' => $userId],
-            ['points' => 0, 'tier' => 'Bronze']
+            ['points' => 0, 'tier' => 'Bronze', 'rental_bookings_count' => 0]
         );
 
         $loyalty->points += $pointsEarned;
-        $this->updateTier($loyalty); // Update Tier Logic
+        $this->updateTier($loyalty);
         $loyalty->save();
 
+        // 2. LOG POINTS EARNED
         LoyaltyHistory::create([
             'user_id' => $userId,
             'points_change' => $pointsEarned,
             'reason' => "Rental Reward (Booking #{$booking->bookingID})"
         ]);
 
-        // 2. CHECK VOUCHER CYCLE
-        $completedCount = Booking::where('customerID', $userId)
-            ->where('bookingStatus', 'Completed')
-            ->count(); // This count includes the one just completed
-
-        // Cycle Logic: 3rd, 9th, 15th... -> 10%
-        // Cycle Logic: 6th, 12th, 18th... -> 30%
-        
-        if ($completedCount > 0 && $completedCount % 6 == 3) {
-            $this->issueRentalVoucher($userId, 10, 12, 'Hours'); // 10% Off, Min 12 Hours
-        } elseif ($completedCount > 0 && $completedCount % 6 == 0) {
-            $this->issueRentalVoucher($userId, 30, 1, 'Days');   // 30% Off, Min 1 Day
-        }
+        // 3. PROCESS RENTAL REWARD (Service handles 9-hour tracking & voucher generation)
+        $rewardService = new RentalRewardService();
+        $rewardService->processBookingCompletion($booking);
 
         return true;
     }

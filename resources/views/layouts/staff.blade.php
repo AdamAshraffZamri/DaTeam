@@ -49,7 +49,7 @@
                         <i class="fas fa-chart-bar w-5 mr-3"></i> Reporting & Analysis
                     </a>
 
-                    <a href="#" class="flex items-center px-4 py-3 rounded-xl transition font-bold text-sm text-gray-500 hover:bg-orange-50 hover:text-orange-600">
+                    <a href="{{ route('staff.loyalty.index') }}" class="flex items-center px-4 py-3 rounded-xl transition font-bold text-sm {{ request()->routeIs('staff.loyalty.index') ? 'bg-orange-100 text-orange-600' : 'text-gray-500 hover:bg-orange-50 hover:text-orange-600' }}">
                         <i class="fas fa-medal w-5 mr-3"></i> Loyalty & Rewards
                     </a>
                 </nav>

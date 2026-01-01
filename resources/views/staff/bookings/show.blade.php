@@ -134,6 +134,7 @@
                         @endif
                     </div>
                 </div>
+
             </div>
 
             {{-- RIGHT COLUMN: INSPECTIONS & ACTIONS --}}
@@ -377,4 +378,7 @@
         </form>
     </div>
 </div>
+
+
+
 @endsection

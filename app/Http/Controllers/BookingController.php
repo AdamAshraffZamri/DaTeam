@@ -355,5 +355,6 @@ class BookingController extends Controller
         return ($days * $dailyRate) + $remainderCost;
     }
 
-    
+
+
 }

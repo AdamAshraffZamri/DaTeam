@@ -107,12 +107,9 @@ class StaffBookingController extends Controller
         if ($booking->payment) {
             $booking->payment->update(['depoStatus' => 'Refunded', 'paymentStatus' => 'Completed']);
         }
-        
-        // Trigger loyalty rewards (points & rental vouchers)
-        $loyaltyController = new LoyaltyController();
+        $loyaltyController = new \App\Http\Controllers\LoyaltyController();
         $loyaltyController->bookingCompleted($id);
-        
-        return back()->with('success', 'Vehicle returned.');
+        return back()->with('success', 'Vehicle returned & Loyalty Points Awarded.');
     }
     public function processRefund($id) {
         $booking = Booking::findOrFail($id);

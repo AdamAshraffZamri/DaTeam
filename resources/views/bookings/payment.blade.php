@@ -164,8 +164,15 @@
                     {{-- VOUCHER INPUT --}}
                     <div class="mt-6 pt-4 border-t border-dashed border-white/10">
                          <label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2 block">Have a Voucher?</label>
-                         <div class="flex gap-2">
-                             <input type="text" id="voucher_code" class="bg-white/5 border border-white/10 text-white text-sm rounded-lg px-4 py-3 w-full focus:outline-none focus:border-orange-500 transition uppercase font-bold" placeholder="Enter Code">
+                         <div class="relative flex gap-2">
+                             <div class="relative flex-1">
+                                 <input type="text" id="voucher_code" class="bg-white/5 border border-white/10 text-white text-sm rounded-lg px-4 py-3 w-full focus:outline-none focus:border-orange-500 transition uppercase font-bold" placeholder="Enter Code" autocomplete="off">
+                                 
+                                 {{-- VOUCHER DROPDOWN --}}
+                                 <div id="voucherDropdown" class="hidden absolute top-full left-0 right-0 mt-1 bg-gray-800 border border-white/20 rounded-lg shadow-2xl z-50 max-h-64 overflow-y-auto">
+                                     <!-- Voucher suggestions will be populated here -->
+                                 </div>
+                             </div>
                              <button type="button" onclick="applyVoucher()" id="btn_apply_voucher" class="bg-gray-700 hover:bg-gray-600 text-white text-xs font-bold px-5 py-2 rounded-lg transition border border-white/10 whitespace-nowrap">
                                  APPLY
                              </button>
@@ -379,5 +386,106 @@
             btn.disabled = false;
         });
     }
+
+    // 5. VOUCHER DROPDOWN FUNCTIONALITY
+    const voucherInput = document.getElementById('voucher_code');
+    const voucherDropdown = document.getElementById('voucherDropdown');
+    let allVouchers = [];
+
+    // Fetch available vouchers on page load
+    fetch("{{ route('voucher.available') }}")
+        .then(response => response.json())
+        .then(data => {
+            allVouchers = data;
+            if (allVouchers.length === 0) {
+                console.log('No vouchers available');
+            }
+        })
+        .catch(error => {
+            console.error('Error fetching vouchers:', error);
+            allVouchers = [];
+        });
+
+    // Show dropdown on focus
+    voucherInput.addEventListener('focus', () => {
+        if (allVouchers.length > 0) {
+            displaySuggestions(allVouchers);
+        } else {
+            showNoVouchersMessage();
+        }
+    });
+
+    // Filter and show suggestions as user types
+    voucherInput.addEventListener('input', (e) => {
+        const value = e.target.value.toUpperCase();
+        if (value.length === 0) {
+            if (allVouchers.length > 0) {
+                displaySuggestions(allVouchers);
+            } else {
+                showNoVouchersMessage();
+            }
+        } else {
+            const filtered = allVouchers.filter(v => 
+                v.code.toUpperCase().includes(value)
+            );
+            if (filtered.length > 0) {
+                displaySuggestions(filtered);
+            } else {
+                showNoVouchersMessage();
+            }
+        }
+    });
+
+    function displaySuggestions(vouchers) {
+        if (vouchers.length === 0) {
+            showNoVouchersMessage();
+            return;
+        }
+
+        voucherDropdown.innerHTML = vouchers.map(voucher => `
+            <div class="p-3 hover:bg-white/10 cursor-pointer border-b border-white/5 last:border-b-0 transition"
+                 onclick="selectVoucher('${voucher.code}')">
+                <div class="flex justify-between items-center">
+                    <div class="flex-1">
+                        <p class="font-bold text-white text-sm">${voucher.code}</p>
+                        <p class="text-xs text-gray-400 mt-1">
+                            <i class="fas fa-tag mr-1"></i> ${voucher.type}
+                        </p>
+                    </div>
+                    <div class="text-right">
+                        ${voucher.discount_percent ? 
+                            `<p class="font-bold text-orange-400 text-sm">${voucher.discount_percent}% OFF</p>` : 
+                            `<p class="font-bold text-orange-400 text-sm">RM ${parseFloat(voucher.amount).toFixed(2)}</p>`
+                        }
+                        <p class="text-xs text-gray-500 mt-1">Exp: ${voucher.expires}</p>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+        voucherDropdown.classList.remove('hidden');
+    }
+
+    function showNoVouchersMessage() {
+        voucherDropdown.innerHTML = `
+            <div class="p-4 text-center">
+                <p class="text-sm text-gray-400">Tiada voucher tersedia</p>
+            </div>
+        `;
+        voucherDropdown.classList.remove('hidden');
+    }
+
+    function selectVoucher(code) {
+        voucherInput.value = code;
+        voucherDropdown.classList.add('hidden');
+        // Auto-apply voucher when selected
+        applyVoucher();
+    }
+
+    // Hide dropdown when clicking outside
+    document.addEventListener('click', (e) => {
+        if (e.target !== voucherInput && !voucherDropdown.contains(e.target)) {
+            voucherDropdown.classList.add('hidden');
+        }
+    });
 </script>
 @endsection
