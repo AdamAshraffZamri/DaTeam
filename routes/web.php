@@ -12,6 +12,7 @@ use App\Http\Controllers\FinanceController;
 use App\Http\Controllers\VoucherController;
 use App\Http\Controllers\FleetController; // Ensure this is imported
 use App\Http\Controllers\InspectionController; // Ensure this is imported
+use App\Http\Controllers\StaffCustomerController;
 
 /*
 |--------------------------------------------------------------------------
@@ -127,6 +128,13 @@ Route::prefix('staff')->middleware(['auth:staff'])->group(function () {
     Route::put('/fleet/{vehicle}', [FleetController::class, 'update'])->name('staff.fleet.update');
     Route::delete('/fleet/{vehicle}', [FleetController::class, 'destroy'])->name('staff.fleet.destroy');
     Route::post('/fleet/status/{vehicle}', [FleetController::class, 'updateStatus'])->name('staff.fleet.update_status');
+
+    // Customer Management
+    Route::get('/customers', [App\Http\Controllers\StaffCustomerController::class, 'index'])->name('staff.customers.index');
+    Route::get('/customers/{id}', [App\Http\Controllers\StaffCustomerController::class, 'show'])->name('staff.customers.show');
+    Route::post('/customers/{id}/approve', [App\Http\Controllers\StaffCustomerController::class, 'approve'])->name('staff.customers.approve');
+    Route::post('/customers/{id}/reject', [App\Http\Controllers\StaffCustomerController::class, 'reject'])->name('staff.customers.reject');
+    Route::post('/customers/{id}/blacklist', [App\Http\Controllers\StaffCustomerController::class, 'toggleBlacklist'])->name('staff.customers.blacklist');
 
     // --- SEPARATE INSPECTION MODE (If needed for dedicated page) ---
     // Renamed to avoid conflict with 'storeInspection' above

@@ -11,10 +11,6 @@ return new class extends Migration
     {
         Schema::table('customers', function (Blueprint $table) {
             $table->text('rejection_reason')->nullable()->after('accountStat');
-            // Ensure these exist if they weren't in previous migrations
-            // $table->string('ic_passport')->nullable();
-            // $table->string('bankName')->nullable();
-            // $table->string('bankAccountNo')->nullable();
         });
     }
 

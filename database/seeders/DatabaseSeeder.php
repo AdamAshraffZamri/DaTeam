@@ -33,7 +33,7 @@ class DatabaseSeeder extends Seeder
             'drivingNo' => 'D-88213491',
             'homeAddress' => 'Kolej Tun Dr Ismail, UTM',
             'collegeAddress' => 'KTDI, UTM Skudai',
-            'accountStat' => 'active'
+            'accountStat' => 'unverified'
         ]);
 
         // 3. Insert 12 Hasta Travel & Tours Vehicles
@@ -221,7 +221,7 @@ class DatabaseSeeder extends Seeder
     ];
 
         foreach ($vehicles as $v) {
-            \App\Models\Vehicle::create(array_merge($v, [
+            Vehicle::create(array_merge($v, [
                 'availability' => 1, 
                 'priceHour' => $v['hourly_rates']['1']
             ]));

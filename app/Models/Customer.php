@@ -18,24 +18,34 @@ class Customer extends Authenticatable
 
     // 3. Map the columns that match your Database Migration
     protected $fillable = [
-        'fullName',       // was 'name'
-        'email',
-        'password',
-        'phoneNo',        // was 'phone'
-        'stustaffID',     // was 'student_staff_id'
-        'drivingNo',      // was 'driving_license_no'
-        'homeAddress',
-        'collegeAddress',
-        'accountStat',
-        'blacklisted',
-        'nationality',
-        'dob',
-        'emergencyContactNo',
-        'faculty',
-    ];
-
+    'fullName',
+    'email',
+    'password',
+    'phoneNo',
+    'stustaffID',
+    'drivingNo',
+    'homeAddress',
+    'collegeAddress',
+    'accountStat',
+    'blacklisted',
+    'nationality',
+    'dob',
+    'emergency_contact_no',
+    'emergency_contact_name',
+    'faculty',
+    'bankName',
+    'bankAccountNo',
+    'ic_passport',
+    'rejection_reason',
+    'blacklist_reason',
+    'previous_account_stat',
+    'avatar',
+    'student_card_image',
+    'ic_passport_image',
+    'driving_license_image'
+];
     protected $casts = [
-        'dob' => 'date', // This ensures Carbon handles the date format correctly
+        'dob' => 'date',
         'password' => 'hashed',
     ];
 

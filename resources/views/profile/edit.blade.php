@@ -11,38 +11,75 @@
 <div class="relative z-10 min-h-screen py-10">
     <div class="container mx-auto px-4 max-w-5xl">
 
-        {{-- ALERTS --}}
+        {{-- ALERTS (Flash Messages) --}}
         @if(session('error'))
         <div class="bg-red-500/20 backdrop-blur-md border-l-4 border-red-500 text-red-200 p-4 mb-6 rounded shadow-lg flex items-center" role="alert">
             <i class="fas fa-exclamation-circle mr-3 text-xl text-red-500"></i>
-            <div>
-                <p class="font-bold text-red-400">Action Required</p>
-                <p>{{ session('error') }}</p>
-            </div>
-        </div>
-        @endif
-
-        @if(session('warning'))
-        <div class="bg-orange-500/20 backdrop-blur-md border-l-4 border-orange-500 text-orange-200 p-4 mb-6 rounded shadow-lg flex items-center" role="alert">
-            <i class="fas fa-user-edit mr-3 text-xl text-orange-500"></i>
-            <div>
-                <p class="font-bold text-orange-400">Welcome to HASTA!</p>
-                <p>{{ session('warning') }}</p>
-            </div>
+            <div><p class="font-bold text-red-400">Action Required</p><p>{{ session('error') }}</p></div>
         </div>
         @endif
 
         @if(session('status'))
         <div class="bg-green-500/20 backdrop-blur-md border-l-4 border-green-500 text-green-200 p-4 mb-6 rounded shadow-lg flex items-center animate-pulse" role="alert">
             <i class="fas fa-check-circle mr-3 text-xl text-green-500"></i>
-            <div>
-                <p class="font-bold text-green-400">Success</p>
-                <p>{{ session('status') }}</p>
-            </div>
+            <div><p class="font-bold text-green-400">Success</p><p>{{ session('status') }}</p></div>
         </div>
         @endif
 
-        {{-- PROFILE HEADER --}}
+        {{-- ==================== NEW STATUS SECTION ==================== --}}
+        <div class="flex flex-col items-center mb-10">
+            
+            {{-- 1. BLACKLISTED --}}
+            @if($user->blacklisted)
+                <div class="px-8 py-3 rounded-2xl bg-black/60 border border-red-500 text-red-500 font-black uppercase tracking-[0.2em] shadow-[0_0_20px_rgba(239,68,68,0.4)] flex items-center gap-4 text-lg">
+                    <i class="fas fa-ban text-2xl"></i> Account Blacklisted
+                </div>
+                @if($user->blacklist_reason)
+                    <div class="mt-4 bg-gray-900/80 border border-red-500/30 p-4 rounded-xl max-w-lg text-center backdrop-blur-md">
+                        <p class="text-[10px] text-red-400 uppercase font-bold mb-1 tracking-widest">Reason for suspension</p>
+                        <p class="text-white font-medium">{{ $user->blacklist_reason }}</p>
+                    </div>
+                @endif
+
+            {{-- 2. APPROVED --}}
+            @elseif($user->accountStat == 'approved' || $user->accountStat == 'active')
+                <div class="px-8 py-3 rounded-2xl bg-green-500/20 border border-green-500 text-green-400 font-black uppercase tracking-[0.2em] shadow-[0_0_20px_rgba(34,197,94,0.3)] flex items-center gap-4">
+                    <i class="fas fa-check-circle text-2xl"></i> Account Verified
+                </div>
+
+            {{-- 3. PENDING --}}
+            @elseif($user->accountStat == 'pending')
+                <div class="px-8 py-3 rounded-2xl bg-yellow-500/20 border border-yellow-500 text-yellow-400 font-black uppercase tracking-[0.2em] shadow-[0_0_20px_rgba(234,179,8,0.3)] animate-pulse flex items-center gap-4">
+                    <i class="fas fa-clock text-2xl"></i> Pending Verification
+                </div>
+                <p class="text-gray-400 text-xs mt-3">Staff is reviewing your details. This usually takes 24 hours.</p>
+
+            {{-- 4. REJECTED --}}
+            @elseif($user->accountStat == 'rejected')
+                <div class="px-8 py-3 rounded-2xl bg-red-600/20 border border-red-500 text-red-400 font-black uppercase tracking-[0.2em] shadow-[0_0_20px_rgba(220,38,38,0.3)] flex items-center gap-4">
+                    <i class="fas fa-times-circle text-2xl"></i> Verification Rejected
+                </div>
+                @if($user->rejection_reason)
+                    <div class="mt-4 bg-red-900/40 border border-red-500/50 p-6 rounded-2xl max-w-lg text-center backdrop-blur-md shadow-xl">
+                        <div class="flex justify-center mb-2"><i class="fas fa-exclamation-triangle text-red-400 text-xl"></i></div>
+                        <p class="text-xs text-red-300 uppercase font-bold mb-2 tracking-widest">Please fix the following:</p>
+                        <p class="text-white font-bold text-lg leading-relaxed">"{{ $user->rejection_reason }}"</p>
+                        <p class="text-xs text-red-300/70 mt-4">Update your information below to re-submit.</p>
+                    </div>
+                @endif
+
+            {{-- 5. UNVERIFIED (Default) --}}
+            @else
+                <div class="px-8 py-3 rounded-2xl bg-white/10 border border-white/20 text-gray-300 font-black uppercase tracking-[0.2em] flex items-center gap-4">
+                    <i class="fas fa-user-shield text-2xl"></i> Unverified
+                </div>
+                <p class="text-gray-400 text-xs mt-3">Please complete your profile to verify your account.</p>
+            @endif
+        </div>
+        {{-- ============================================================ --}}
+
+
+        {{-- PROFILE HEADER (Avatar) --}}
         <div class="text-center mb-8 relative">
             <h1 class="text-3xl font-black text-white drop-shadow-md">Complete Your Profile</h1>
             <p class="text-gray-400 mt-2">These details are required for insurance and refunds.</p>
@@ -104,9 +141,26 @@
                         <input type="text" name="phone" value="{{ old('phone', $user->phoneNo) }}" class="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white focus:outline-none focus:border-orange-500 focus:bg-white/10 transition placeholder-gray-500">
                     </div>
                     
-                    <div>
-                        <label class="block text-gray-400 mb-2 font-bold text-xs uppercase tracking-wider">Emergency Contact No. <span class="text-red-500">*</span></label>
-                        <input type="text" name="emergency_contact_no" value="{{ old('emergency_contact_no', $user->emergency_contact_no) }}" class="w-full bg-red-500/10 border border-red-500/30 rounded-xl p-3 text-white focus:outline-none focus:border-red-500 transition placeholder-red-300/50" placeholder="Family or close friend">
+                    <div class="col-span-1 md:col-span-2 mt-2 mb-2">
+                        <h4 class="text-sm font-bold text-gray-500 uppercase tracking-widest mb-4 border-b border-white/10 pb-2">Emergency Contact</h4>
+    
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            
+                            <div>
+                                <label class="block text-gray-400 mb-2 font-bold text-xs uppercase tracking-wider">Name <span class="text-red-500">*</span></label>
+                                <input type="text" name="emergency_contact_name" value="{{ old('emergency_contact_name', $user->emergency_contact_name) }}" 
+                                    class="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white focus:outline-none focus:border-orange-500 focus:bg-white/10 transition placeholder-gray-500" 
+                                    placeholder="e.g. Parent Name">
+                            </div>
+
+                            <div>
+                                <label class="block text-gray-400 mb-2 font-bold text-xs uppercase tracking-wider">Phone No. <span class="text-red-500">*</span></label>
+                                <input type="text" name="emergency_contact_no" value="{{ old('emergency_contact_no', $user->emergency_contact_no) }}" 
+                                    class="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white focus:outline-none focus:border-orange-500 focus:bg-white/10 transition placeholder-gray-500" 
+                                    placeholder="e.g. +6012...">
+                            </div>
+                            
+                        </div>
                     </div>
 
                     <div>
@@ -294,9 +348,6 @@
     // 2. Avatar Preview Logic
     function previewAvatar(input) {
         if (input.files && input.files[0]) {
-            // Check if we need to submit the specific avatar form if it's detached
-            // But since the input is now part of Form 1, standard submission works.
-            // Just preview it here:
             var reader = new FileReader();
             reader.onload = function(e) {
                 const icon = document.getElementById('avatar_icon');

@@ -59,7 +59,7 @@ class AuthController extends Controller
         // 1. Validate
         $request->validate([
             'email' => 'required|email|unique:customers,email',
-            'password' => 'required|confirmed|min:6',
+            'password' => 'required|confirmed|min:8',
             'phone' => 'nullable|string',
         ]);
 
@@ -69,7 +69,8 @@ class AuthController extends Controller
             'email' => $request->email,
             'phoneNo' => $request->phone,
             'password' => Hash::make($request->password),
-            'accountStat' => 'active',
+            'accountStat' => 'unverified',
+            'blacklisted' => false,
         ]);
 
         // 3. Auto Login

@@ -41,7 +41,9 @@
                         <i class="fas fa-car w-5 mr-3"></i> Fleet Management
                     </a>
 
-                    <a href="#" class="flex items-center px-4 py-3 rounded-xl transition font-bold text-sm text-gray-500 hover:bg-orange-50 hover:text-orange-600">
+                    <a href="{{ route('staff.customers.index') }}"
+                        class="flex items-center px-4 py-3 rounded-xl transition font-bold text-sm
+                        {{ request()->routeIs('staff.customers.*') ? 'bg-orange-600 text-white shadow-lg shadow-orange-500/30' : 'text-gray-500 hover:bg-orange-50 hover:text-orange-600' }}">
                         <i class="fas fa-user w-5 mr-3"></i> Customer Management
                     </a>
 

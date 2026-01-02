@@ -3,7 +3,7 @@
 @section('title', 'Customer Details')
 
 @section('content')
-<div x-data="{ showRejectModal: false }" class="min-h-screen bg-gray-100 p-8">
+<div x-data="{ showRejectModal: false, showBlacklistModal: false }" class="min-h-screen bg-gray-100 p-8">
     <div class="max-w-6xl mx-auto">
         
         <div class="flex justify-between items-center mb-6">
@@ -13,9 +13,14 @@
 
             <div class="flex items-center gap-3">
                 <span class="text-xs font-bold text-gray-400 uppercase tracking-widest">Current Status:</span>
-                @if($customer->accountStat == 'active')
+                
+                @if($customer->blacklisted)
+                    <span class="bg-gray-900 text-white px-4 py-2 rounded-xl font-black text-xs uppercase tracking-widest shadow-lg shadow-gray-900/20">
+                        <i class="fas fa-ban mr-2"></i> Blacklisted
+                    </span>
+                @elseif($customer->accountStat == 'approved' || $customer->accountStat == 'active')
                     <span class="bg-green-100 text-green-700 px-4 py-2 rounded-xl font-black text-xs uppercase tracking-widest shadow-sm border border-green-200">
-                        <i class="fas fa-check-circle mr-2"></i> Verified
+                        <i class="fas fa-check-circle mr-2"></i> Approved
                     </span>
                 @elseif($customer->accountStat == 'pending')
                     <span class="bg-yellow-100 text-yellow-700 px-4 py-2 rounded-xl font-black text-xs uppercase tracking-widest shadow-sm border border-yellow-200 animate-pulse">
@@ -25,39 +30,85 @@
                     <span class="bg-red-100 text-red-700 px-4 py-2 rounded-xl font-black text-xs uppercase tracking-widest shadow-sm border border-red-200">
                         <i class="fas fa-times-circle mr-2"></i> Rejected
                     </span>
+                @else
+                    <span class="bg-gray-200 text-gray-600 px-4 py-2 rounded-xl font-black text-xs uppercase tracking-widest shadow-sm border border-gray-300">
+                        <i class="fas fa-user-clock mr-2"></i> Unverified
+                    </span>
                 @endif
             </div>
         </div>
 
-        <div class="bg-gray-900 rounded-[1.5rem] p-6 mb-8 shadow-xl flex justify-between items-center text-white">
-            <div>
-                <h3 class="font-bold text-lg">Verification Actions</h3>
-                <p class="text-gray-400 text-xs mt-1">Review the details below and decide.</p>
-            </div>
-            <div class="flex gap-3">
-                <button @click="showRejectModal = true" type="button" class="bg-gray-800 hover:bg-red-600 text-white px-6 py-3 rounded-xl font-bold text-xs uppercase tracking-widest transition border border-gray-700 hover:border-red-500">
-                    <i class="fas fa-times mr-2"></i> Reject
-                </button>
-
-                <form action="{{ route('staff.customers.approve', $customer->customerID) }}" method="POST">
-                    @csrf
-                    <button type="submit" onclick="return confirm('Confirm details are correct?')" class="bg-white text-gray-900 hover:bg-green-500 hover:text-white px-8 py-3 rounded-xl font-bold text-xs uppercase tracking-widest transition shadow-lg">
-                        <i class="fas fa-check mr-2"></i> Verify & Approve
-                    </button>
-                </form>
-            </div>
-        </div>
-
-        @if($customer->rejection_reason)
-        <div class="bg-red-50 border border-red-100 rounded-[1.5rem] p-6 mb-8">
-            <h4 class="text-red-800 font-bold text-sm uppercase tracking-widest mb-2"><i class="fas fa-exclamation-triangle mr-2"></i> Previous Rejection Reason</h4>
-            <p class="text-red-600 text-sm font-medium">{{ $customer->rejection_reason }}</p>
+        @if($customer->blacklisted && $customer->blacklist_reason)
+        <div class="bg-gray-800 border border-gray-700 rounded-[1.5rem] p-6 mb-8 text-white shadow-xl">
+            <h4 class="text-gray-400 font-bold text-[10px] uppercase tracking-widest mb-2"><i class="fas fa-ban mr-2"></i> Reason for Blacklisting</h4>
+            <p class="text-sm font-bold">{{ $customer->blacklist_reason }}</p>
         </div>
         @endif
+
+        @if(!$customer->blacklisted && $customer->accountStat == 'rejected' && $customer->rejection_reason)
+        <div class="bg-red-50 border border-red-100 rounded-[1.5rem] p-6 mb-8">
+            <h4 class="text-red-800 font-bold text-[10px] uppercase tracking-widest mb-2"><i class="fas fa-exclamation-triangle mr-2"></i> Previous Rejection Reason</h4>
+            <p class="text-red-600 text-sm font-bold">{{ $customer->rejection_reason }}</p>
+        </div>
+        @endif
+
+        @if ($errors->any())
+            <div class="bg-red-50 border-l-4 border-red-500 p-4 mb-6 rounded-r shadow-sm">
+                <div class="flex">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-exclamation-circle text-red-500"></i>
+                    </div>
+                    <div class="ml-3">
+                        <h3 class="text-sm font-bold text-red-800">Action Failed</h3>
+                        <div class="mt-2 text-sm text-red-700">
+                            <ul class="list-disc pl-5 space-y-1">
+                                @foreach ($errors->all() as $error)
+                                    <li>{{ $error }}</li>
+                                @endforeach
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            @endif
+
+        <div class="bg-white rounded-[1.5rem] p-6 mb-8 shadow-sm border border-gray-100 flex justify-between items-center">
+            <div>
+                <h3 class="font-bold text-lg text-gray-900">Account Actions</h3>
+                <p class="text-gray-400 text-xs mt-1">Review details and manage access.</p>
+            </div>
+            <div class="flex gap-3">
+                
+                @if($customer->blacklisted)
+                    <form action="{{ route('staff.customers.blacklist', $customer->customerID) }}" method="POST" onsubmit="return confirm('Restore this user account?');">
+                        @csrf
+                        <button type="submit" class="bg-gray-900 text-white px-6 py-3 rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-gray-800 transition shadow-lg shadow-gray-900/20">
+                            <i class="fas fa-unlock mr-2"></i> Remove Blacklist
+                        </button>
+                    </form>
+                @else
+                    <button @click="showBlacklistModal = true" type="button" class="bg-gray-100 text-gray-600 px-6 py-3 rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-gray-200 transition">
+                        <i class="fas fa-ban mr-2"></i> Blacklist
+                    </button>
+
+                    <button @click="showRejectModal = true" type="button" class="bg-red-50 text-red-600 px-6 py-3 rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-red-100 transition border border-red-100">
+                        <i class="fas fa-times mr-2"></i> Reject
+                    </button>
+
+                    <form action="{{ route('staff.customers.approve', $customer->customerID) }}" method="POST">
+                        @csrf
+                        <button type="submit" onclick="return confirm('Confirm all details are correct?')" class="bg-green-500 text-white px-8 py-3 rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-green-600 transition shadow-lg shadow-green-500/30">
+                            <i class="fas fa-check mr-2"></i> Approve User
+                        </button>
+                    </form>
+                @endif
+            </div>
+        </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
             
             <div class="lg:col-span-1 space-y-6">
+                
                 <div class="bg-white rounded-[2rem] p-8 shadow-sm border border-gray-100 text-center relative overflow-hidden">
                     <div class="absolute top-0 left-0 w-full h-24 bg-gradient-to-r from-orange-500 to-orange-600"></div>
                     <div class="relative mt-8 mb-4">
@@ -67,41 +118,67 @@
                             </div>
                         </div>
                     </div>
+
                     <h2 class="text-xl font-black text-gray-900">{{ $customer->fullName }}</h2>
                     <p class="text-sm font-medium text-gray-500 mb-6">{{ $customer->email }}</p>
-                    
-                    <form action="{{ route('staff.customers.blacklist', $customer->customerID) }}" method="POST">
-                        @csrf
-                        <button type="submit" class="w-full py-3 rounded-xl text-xs font-bold uppercase tracking-widest transition-all
-                            {{ $customer->blacklisted ? 'bg-gray-900 text-white hover:bg-gray-800' : 'bg-red-50 text-red-600 hover:bg-red-100' }}">
-                            {{ $customer->blacklisted ? 'Remove Blacklist' : 'Blacklist User' }}
-                        </button>
-                    </form>
+
+                    <div class="flex justify-center">
+                         <span class="px-4 py-1.5 bg-gray-50 text-gray-600 rounded-full text-[10px] font-bold uppercase tracking-wider border border-gray-100">
+                            Joined {{ $customer->created_at->format('M Y') }}
+                         </span>
+                    </div>
                 </div>
 
                 <div class="bg-white rounded-[2rem] p-8 shadow-sm border border-gray-100">
-                    <h3 class="text-xs font-black text-gray-400 uppercase tracking-widest mb-6">Contact Information</h3>
-                    <div class="space-y-4">
+                    <h3 class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-6">Contact Information</h3>
+                    <div class="space-y-6">
                         <div class="flex items-start">
                             <div class="w-8 flex-shrink-0 text-center"><i class="fas fa-phone text-gray-300"></i></div>
                             <div>
-                                <p class="text-xs text-gray-400 uppercase font-bold">Phone Number</p>
-                                <p class="text-sm font-bold text-gray-900">{{ $customer->phoneNo }}</p>
+                                <p class="text-[10px] text-gray-400 uppercase font-bold">Phone Number</p>
+                                <p class="text-sm font-bold text-gray-900">{{ $customer->phoneNo ?? 'Not Provided' }}</p>
                             </div>
                         </div>
                         <div class="flex items-start">
                             <div class="w-8 flex-shrink-0 text-center"><i class="fas fa-university text-gray-300"></i></div>
                             <div>
-                                <p class="text-xs text-gray-400 uppercase font-bold">Faculty</p>
-                                <p class="text-sm font-bold text-gray-900">{{ $customer->faculty }}</p>
+                                <p class="text-[10px] text-gray-400 uppercase font-bold">Faculty</p>
+                                <p class="text-sm font-bold text-gray-900">{{ $customer->faculty ?? 'N/A' }}</p>
                             </div>
                         </div>
                          <div class="flex items-start">
                             <div class="w-8 flex-shrink-0 text-center"><i class="fas fa-map-marker-alt text-gray-300"></i></div>
                             <div>
-                                <p class="text-xs text-gray-400 uppercase font-bold">Addresses</p>
-                                <p class="text-xs font-medium text-gray-600 mb-1"><span class="font-bold">Home:</span> {{ $customer->homeAddress }}</p>
-                                <p class="text-xs font-medium text-gray-600"><span class="font-bold">College:</span> {{ $customer->collegeAddress }}</p>
+                                <p class="text-[10px] text-gray-400 uppercase font-bold">Addresses</p>
+                                <div class="mt-1 space-y-2">
+                                    <div>
+                                        <span class="text-[10px] font-bold text-orange-500 bg-orange-50 px-2 py-0.5 rounded">Home</span>
+                                        <p class="text-xs font-medium text-gray-600 mt-0.5">{{ $customer->homeAddress ?? 'N/A' }}</p>
+                                    </div>
+                                    <div>
+                                        <span class="text-[10px] font-bold text-blue-500 bg-blue-50 px-2 py-0.5 rounded">College</span>
+                                        <p class="text-xs font-medium text-gray-600 mt-0.5">{{ $customer->collegeAddress ?? 'N/A' }}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                         <div class="flex items-start">
+                            <div class="w-8 flex-shrink-0 text-center">
+                                <i class="fas fa-heartbeat text-gray-300"></i>
+                            </div>
+                            <div>
+                                <p class="text-[10px] text-gray-400 uppercase font-bold">Emergency Contact</p>
+                                
+                                {{-- 1. CONTACT NAME (New) --}}
+                                <p class="text-sm font-black text-gray-900">
+                                    {{ $customer->emergency_contact_name ?? 'Name Not Provided' }}
+                                </p>
+                                
+                                {{-- 2. CONTACT NUMBER --}}
+                                {{-- Updated variable to match database: emergency_contact_no --}}
+                                <p class="text-xs font-medium text-gray-500 mt-0.5">
+                                    {{ $customer->emergency_contact_no ?? 'N/A' }}
+                                </p>
                             </div>
                         </div>
                     </div>
@@ -112,25 +189,25 @@
                 
                 <div class="bg-white rounded-[2rem] p-8 shadow-sm border border-gray-100">
                     <div class="flex justify-between items-start mb-6">
-                         <h3 class="text-xs font-black text-gray-400 uppercase tracking-widest">Identity & License</h3>
+                         <h3 class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Identity Verification</h3>
                          <span class="text-orange-500 text-xl"><i class="fas fa-id-card"></i></span>
                     </div>
                     
-                    <div class="grid grid-cols-2 gap-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div class="p-4 bg-gray-50 rounded-2xl border border-gray-100">
-                            <p class="text-xs text-gray-400 uppercase font-bold mb-1">IC / Passport No</p>
+                            <p class="text-[10px] text-gray-400 uppercase font-bold mb-1">IC / Passport No</p>
                             <p class="text-lg font-black text-gray-900">{{ $customer->ic_passport ?? 'Not Provided' }}</p>
                         </div>
                         <div class="p-4 bg-gray-50 rounded-2xl border border-gray-100">
-                            <p class="text-xs text-gray-400 uppercase font-bold mb-1">Driving License No</p>
-                            <p class="text-lg font-black text-gray-900">{{ $customer->drivingNo }}</p>
+                            <p class="text-[10px] text-gray-400 uppercase font-bold mb-1">Driving License No</p>
+                            <p class="text-lg font-black text-gray-900">{{ $customer->drivingNo ?? 'Not Provided' }}</p>
                         </div>
                         <div class="p-4 bg-gray-50 rounded-2xl border border-gray-100">
-                            <p class="text-xs text-gray-400 uppercase font-bold mb-1">Student / Staff ID</p>
-                            <p class="text-base font-bold text-gray-900">{{ $customer->stustaffID }}</p>
+                            <p class="text-[10px] text-gray-400 uppercase font-bold mb-1">Student / Staff ID</p>
+                            <p class="text-base font-bold text-gray-900">{{ $customer->stustaffID ?? 'N/A' }}</p>
                         </div>
                         <div class="p-4 bg-gray-50 rounded-2xl border border-gray-100">
-                            <p class="text-xs text-gray-400 uppercase font-bold mb-1">Date of Birth</p>
+                            <p class="text-[10px] text-gray-400 uppercase font-bold mb-1">Date of Birth</p>
                             <p class="text-base font-bold text-gray-900">{{ $customer->dob ? \Carbon\Carbon::parse($customer->dob)->format('d M Y') : 'N/A' }}</p>
                         </div>
                     </div>
@@ -138,23 +215,23 @@
 
                 <div class="bg-white rounded-[2rem] p-8 shadow-sm border border-gray-100">
                     <div class="flex justify-between items-start mb-6">
-                         <h3 class="text-xs font-black text-gray-400 uppercase tracking-widest">Bank Details</h3>
+                         <h3 class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Bank Details</h3>
                          <span class="text-blue-500 text-xl"><i class="fas fa-university"></i></span>
                     </div>
-                    <div class="grid grid-cols-2 gap-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div class="p-4 bg-blue-50 rounded-2xl border border-blue-100">
-                            <p class="text-xs text-blue-400 uppercase font-bold mb-1">Bank Name</p>
+                            <p class="text-[10px] text-blue-400 uppercase font-bold mb-1">Bank Name</p>
                             <p class="text-lg font-black text-blue-900">{{ $customer->bankName ?? 'Not Provided' }}</p>
                         </div>
                         <div class="p-4 bg-blue-50 rounded-2xl border border-blue-100">
-                            <p class="text-xs text-blue-400 uppercase font-bold mb-1">Account Number</p>
+                            <p class="text-[10px] text-blue-400 uppercase font-bold mb-1">Account Number</p>
                             <p class="text-lg font-black text-blue-900">{{ $customer->bankAccountNo ?? 'Not Provided' }}</p>
                         </div>
                     </div>
                 </div>
 
                 <div class="bg-white rounded-[2rem] p-8 shadow-sm border border-gray-100">
-                    <h3 class="text-xs font-black text-gray-400 uppercase tracking-widest mb-6">Uploaded Documents</h3>
+                    <h3 class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-6">Uploaded Documents</h3>
                     <div class="grid grid-cols-2 lg:grid-cols-3 gap-4">
                         <a href="{{ $customer->driving_license_image ? asset('storage/'.$customer->driving_license_image) : '#' }}" target="_blank" class="group block relative h-32 rounded-xl overflow-hidden bg-gray-100 border border-gray-200">
                              <img src="{{ $customer->driving_license_image ? asset('storage/'.$customer->driving_license_image) : asset('images/placeholder.png') }}" class="w-full h-full object-cover group-hover:opacity-75 transition">
@@ -189,13 +266,33 @@
             <form action="{{ route('staff.customers.reject', $customer->customerID) }}" method="POST">
                 @csrf
                 <div class="mb-6">
-                    <label class="block text-xs font-bold text-gray-700 uppercase tracking-widest mb-2">Rejection Reason</label>
-                    <textarea name="rejection_reason" rows="4" class="w-full bg-gray-50 border border-gray-200 rounded-xl p-4 text-sm font-medium focus:ring-2 focus:ring-red-500 focus:outline-none" placeholder="e.g., Driving license image is blurry, Bank account name does not match..."></textarea>
+                    <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Rejection Reason</label>
+                    <textarea name="rejection_reason" rows="4" class="w-full bg-gray-50 border border-gray-200 rounded-xl p-4 text-sm font-medium focus:ring-2 focus:ring-red-500 focus:outline-none" placeholder="e.g., Driving license image is blurry..."></textarea>
                 </div>
                 
                 <div class="flex justify-end gap-3">
                     <button type="button" @click="showRejectModal = false" class="px-6 py-3 rounded-xl font-bold text-xs uppercase tracking-widest text-gray-500 hover:bg-gray-100 transition">Cancel</button>
                     <button type="submit" class="bg-red-600 text-white px-8 py-3 rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-red-700 shadow-lg shadow-red-500/30 transition">Confirm Reject</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div x-show="showBlacklistModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md" style="display: none;">
+        <div @click.away="showBlacklistModal = false" class="bg-gray-900 border border-gray-700 rounded-[2rem] p-8 max-w-lg w-full shadow-2xl">
+            <h3 class="text-2xl font-black text-white mb-2"><i class="fas fa-ban text-red-500 mr-2"></i> Blacklist Customer</h3>
+            <p class="text-gray-400 text-sm mb-6">This will immediately disable the account. A valid reason is required.</p>
+            
+            <form action="{{ route('staff.customers.blacklist', $customer->customerID) }}" method="POST">
+                @csrf
+                <div class="mb-6">
+                    <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">Reason for Blacklisting</label>
+                    <textarea name="blacklist_reason" rows="4" class="w-full bg-gray-800 border border-gray-600 rounded-xl p-4 text-sm font-medium text-white focus:ring-2 focus:ring-red-500 focus:outline-none" placeholder="e.g., Repeated violation of rental terms..."></textarea>
+                </div>
+                
+                <div class="flex justify-end gap-3">
+                    <button type="button" @click="showBlacklistModal = false" class="px-6 py-3 rounded-xl font-bold text-xs uppercase tracking-widest text-gray-400 hover:bg-gray-800 transition">Cancel</button>
+                    <button type="submit" class="bg-white text-black px-8 py-3 rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-gray-200 shadow-lg transition">Confirm Blacklist</button>
                 </div>
             </form>
         </div>

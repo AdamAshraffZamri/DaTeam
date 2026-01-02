@@ -22,57 +22,75 @@ class ProfileController extends Controller
     {
         $user = auth()->user();
 
-        // 1. Validate Profile Fields (Removed Password Validation)
-        $validated = $request->validate([
+        // 1. VALIDATION
+        $request->validate([
             'name' => ['required', 'string', 'max:255'],
+            // Unique Check: Ignore current user's ID
             'email' => ['required', 'email', 'max:255', Rule::unique('customers', 'email')->ignore($user->customerID, 'customerID')],
             'phone' => ['required', 'string', 'max:20'],
             'emergency_contact_no' => ['required', 'string', 'max:20'],
+            'emergency_contact_name' => ['required', 'string', 'max:255'],
             'home_address' => ['required', 'string', 'max:500'],
             'college_address' => ['required', 'string', 'max:500'],
-            'student_staff_id' => ['required', 'string', 'max:50'],
-            'ic_passport' => ['required', 'string', 'max:50'],
-            'driving_license_no' => ['required', 'string', 'max:50'],
+            
+            // UNIQUE CHECKS FOR IDs
+            'student_staff_id' => ['required', 'string', 'max:50', Rule::unique('customers', 'stustaffID')->ignore($user->customerID, 'customerID')],
+            'ic_passport' => ['required', 'string', 'max:50', Rule::unique('customers', 'ic_passport')->ignore($user->customerID, 'customerID')],
+            'driving_license_no' => ['required', 'string', 'max:50', Rule::unique('customers', 'drivingNo')->ignore($user->customerID, 'customerID')],
+            
             'nationality' => ['required', 'string', 'max:100'],
             'dob' => ['required', 'date'],
             'faculty' => ['required', 'string', 'max:255'],
             'bank_name' => ['required', 'string', 'max:100'],
             'bank_account_no' => ['required', 'string', 'max:50'],
             
+            // IMAGES
             'avatar' => ['nullable', 'image', 'max:2048'], 
             'student_card_image' => ['nullable', 'image', 'max:2048'],
             'ic_passport_image' => ['nullable', 'image', 'max:2048'],
             'driving_license_image' => ['nullable', 'image', 'max:2048'],
         ]);
 
-        // 2. Handle Images
+        // 2. IMAGE UPLOAD HANDLING
         $fileFields = ['avatar', 'student_card_image', 'ic_passport_image', 'driving_license_image'];
         foreach ($fileFields as $field) {
             if ($request->hasFile($field)) {
+                // Delete old image if exists
                 if ($user->$field && Storage::disk('public')->exists($user->$field)) {
                     Storage::disk('public')->delete($user->$field);
                 }
+                // Save new image
                 $user->$field = $request->file($field)->store('uploads', 'public');
             }
         }
 
-        // 3. Update Info
+        // 3. MANUAL MAPPING (Fixes the Saving Issue)
+        // Left Side = Database Column
+        // Right Side = Form Input Name
+        
         $user->fullName = $request->name;       
         $user->email = $request->email;
+        $user->phoneNo = $request->phone;
+        $user->stustaffID = $request->student_staff_id; 
+        $user->ic_passport = $request->ic_passport;     
+        $user->drivingNo = $request->driving_license_no; 
         $user->homeAddress = $request->home_address;
-        $user->stustaffID = $request->student_staff_id;
-        $user->ic_passport = $request->ic_passport;
         $user->collegeAddress = $request->college_address;
         $user->nationality = $request->nationality;
         $user->dob = $request->dob;
-        $user->phoneNo = $request->phone;       
-        $user->drivingNo = $request->driving_license_no; 
         $user->emergency_contact_no = $request->emergency_contact_no;
+        $user->emergency_contact_name = $request->emergency_contact_name;
         $user->faculty = $request->faculty;
         $user->bankName = $request->bank_name;
         $user->bankAccountNo = $request->bank_account_no;
 
-        $user->save();
+        // 4. RESET STATUS (If not blacklisted)
+        if (!$user->blacklisted) {
+            $user->accountStat = 'pending';
+            $user->rejection_reason = null; 
+        }
+
+        $user->save(); // <--- IMPORTANT: Actually save to DB
 
         return redirect()->route('profile.edit')->with('status', 'Profile information updated successfully!');
     }
