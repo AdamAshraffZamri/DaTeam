@@ -78,7 +78,7 @@
                 <p class="text-gray-400 text-xs mt-1">Review details and manage access.</p>
             </div>
             <div class="flex gap-3">
-                
+    
                 @if($customer->blacklisted)
                     <form action="{{ route('staff.customers.blacklist', $customer->customerID) }}" method="POST" onsubmit="return confirm('Restore this user account?');">
                         @csrf
@@ -91,16 +91,23 @@
                         <i class="fas fa-ban mr-2"></i> Blacklist
                     </button>
 
-                    <button @click="showRejectModal = true" type="button" class="bg-red-50 text-red-600 px-6 py-3 rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-red-100 transition border border-red-100">
-                        <i class="fas fa-times mr-2"></i> Reject
-                    </button>
-
-                    <form action="{{ route('staff.customers.approve', $customer->customerID) }}" method="POST">
-                        @csrf
-                        <button type="submit" onclick="return confirm('Confirm all details are correct?')" class="bg-green-500 text-white px-8 py-3 rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-green-600 transition shadow-lg shadow-green-500/30">
-                            <i class="fas fa-check mr-2"></i> Approve User
+                    {{-- REJECT BUTTON: Hide if Verified OR Already Rejected --}}
+                    @if($customer->accountStat !== 'active' && $customer->accountStat !== 'approved' && $customer->accountStat !== 'rejected')
+                        <button @click="showRejectModal = true" type="button" class="bg-red-50 text-red-600 px-6 py-3 rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-red-100 transition border border-red-100">
+                            <i class="fas fa-times mr-2"></i> Reject
                         </button>
-                    </form>
+                    @endif
+
+                    {{-- APPROVE BUTTON: Hide if already Verified (But KEEP if Rejected, so you can change your mind) --}}
+                    @if($customer->accountStat !== 'active' && $customer->accountStat !== 'approved')
+                        <form action="{{ route('staff.customers.approve', $customer->customerID) }}" method="POST">
+                            @csrf
+                            <button type="submit" onclick="return confirm('Confirm all details are correct?')" class="bg-green-500 text-white px-8 py-3 rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-green-600 transition shadow-lg shadow-green-500/30">
+                                <i class="fas fa-check mr-2"></i> Approve User
+                            </button>
+                        </form>
+                    @endif
+                    
                 @endif
             </div>
         </div>
@@ -258,41 +265,111 @@
         </div>
     </div>
 
-    <div x-show="showRejectModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" style="display: none;">
-        <div @click.away="showRejectModal = false" class="bg-white rounded-[2rem] p-8 max-w-lg w-full shadow-2xl transform transition-all">
-            <h3 class="text-2xl font-black text-gray-900 mb-2">Reject Customer</h3>
-            <p class="text-gray-500 text-sm mb-6">Please specify which details are incorrect. This message will be sent to the customer.</p>
+    <div x-show="showRejectModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" style="display: none;">
+        <div @click.away="showRejectModal = false" class="bg-white border border-red-100 rounded-[2rem] p-8 max-w-lg w-full shadow-2xl overflow-hidden">
+            
+            <div class="mb-6 border-b border-gray-100 pb-4">
+                <h3 class="text-2xl font-black text-gray-900 flex items-center">
+                    <i class="fas fa-times-circle text-red-600 mr-3"></i> Reject Application
+                </h3>
+                <p class="text-gray-500 text-sm mt-1">Select all reasons that apply.</p>
+            </div>
             
             <form action="{{ route('staff.customers.reject', $customer->customerID) }}" method="POST">
                 @csrf
+                
+                <div class="mb-6 max-h-60 overflow-y-auto custom-scrollbar p-1">
+                    <label class="block text-[10px] font-bold text-gray-900 uppercase tracking-widest mb-3">Common Reasons</label>
+                    
+                    <div class="space-y-3">
+                        <label class="flex items-center p-3 border border-gray-200 rounded-xl hover:bg-red-50 hover:border-red-200 transition cursor-pointer group">
+                            <input type="checkbox" name="rejection_reason[]" value="Unclear ID/Passport Photo" class="w-5 h-5 text-red-600 border-gray-300 rounded focus:ring-red-500">
+                            <span class="ml-3 text-sm font-bold text-gray-700 group-hover:text-red-900">Unclear ID/Passport Photo</span>
+                        </label>
+
+                        <label class="flex items-center p-3 border border-gray-200 rounded-xl hover:bg-red-50 hover:border-red-200 transition cursor-pointer group">
+                            <input type="checkbox" name="rejection_reason[]" value="Driving License Expired" class="w-5 h-5 text-red-600 border-gray-300 rounded focus:ring-red-500">
+                            <span class="ml-3 text-sm font-bold text-gray-700 group-hover:text-red-900">Driving License Expired</span>
+                        </label>
+
+                        <label class="flex items-center p-3 border border-gray-200 rounded-xl hover:bg-red-50 hover:border-red-200 transition cursor-pointer group">
+                            <input type="checkbox" name="rejection_reason[]" value="Selfie Verification Failed" class="w-5 h-5 text-red-600 border-gray-300 rounded focus:ring-red-500">
+                            <span class="ml-3 text-sm font-bold text-gray-700 group-hover:text-red-900">Selfie Verification Failed</span>
+                        </label>
+
+                        <label class="flex items-center p-3 border border-gray-200 rounded-xl hover:bg-red-50 hover:border-red-200 transition cursor-pointer group">
+                            <input type="checkbox" name="rejection_reason[]" value="Incomplete Profile Address" class="w-5 h-5 text-red-600 border-gray-300 rounded focus:ring-red-500">
+                            <span class="ml-3 text-sm font-bold text-gray-700 group-hover:text-red-900">Incomplete Profile Address</span>
+                        </label>
+
+                        <label class="flex items-center p-3 border border-gray-200 rounded-xl hover:bg-red-50 hover:border-red-200 transition cursor-pointer group">
+                            <input type="checkbox" name="rejection_reason[]" value="Invalid Bank Account Details" class="w-5 h-5 text-red-600 border-gray-300 rounded focus:ring-red-500">
+                            <span class="ml-3 text-sm font-bold text-gray-700 group-hover:text-red-900">Invalid Bank Account Details</span>
+                        </label>
+
+                        <label class="flex items-center p-3 border border-gray-200 rounded-xl hover:bg-red-50 hover:border-red-200 transition cursor-pointer group">
+                            <input type="checkbox" name="rejection_reason[]" value="Document Names Do Not Match" class="w-5 h-5 text-red-600 border-gray-300 rounded focus:ring-red-500">
+                            <span class="ml-3 text-sm font-bold text-gray-700 group-hover:text-red-900">Document Names Do Not Match</span>
+                        </label>
+                        
+                        <label class="flex items-center p-3 border border-gray-200 rounded-xl hover:bg-red-50 hover:border-red-200 transition cursor-pointer group">
+                            <input type="checkbox" name="rejection_reason[]" value="Blurry Documents" class="w-5 h-5 text-red-600 border-gray-300 rounded focus:ring-red-500">
+                            <span class="ml-3 text-sm font-bold text-gray-700 group-hover:text-red-900">Blurry Documents</span>
+                        </label>
+
+                        <label class="flex items-center p-3 border border-gray-200 rounded-xl hover:bg-red-50 hover:border-red-200 transition cursor-pointer group">
+                            <input type="checkbox" name="rejection_reason[]" value="Other" class="w-5 h-5 text-red-600 border-gray-300 rounded focus:ring-red-500">
+                            <span class="ml-3 text-sm font-bold text-gray-700 group-hover:text-red-900">Other</span>
+                        </label>
+                    </div>
+                </div>
+
                 <div class="mb-6">
-                    <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Rejection Reason</label>
-                    <textarea name="rejection_reason" rows="4" class="w-full bg-gray-50 border border-gray-200 rounded-xl p-4 text-sm font-medium focus:ring-2 focus:ring-red-500 focus:outline-none" placeholder="e.g., Driving license image is blurry..."></textarea>
+                    <label class="block text-[10px] font-bold text-gray-900 uppercase tracking-widest mb-2">Specific Details (Optional)</label>
+                    <textarea name="rejection_custom" rows="2" class="w-full bg-gray-50 border border-gray-200 rounded-xl p-4 text-sm font-medium text-gray-900 focus:ring-2 focus:ring-red-500 focus:outline-none placeholder-gray-400" placeholder="e.g., 'License expires tomorrow' or 'Address mismatch'"></textarea>
                 </div>
                 
-                <div class="flex justify-end gap-3">
+                <div class="flex justify-end gap-3 pt-4 border-t border-gray-100">
                     <button type="button" @click="showRejectModal = false" class="px-6 py-3 rounded-xl font-bold text-xs uppercase tracking-widest text-gray-500 hover:bg-gray-100 transition">Cancel</button>
-                    <button type="submit" class="bg-red-600 text-white px-8 py-3 rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-red-700 shadow-lg shadow-red-500/30 transition">Confirm Reject</button>
+                    <button type="submit" class="bg-red-600 text-white px-8 py-3 rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-red-700 shadow-lg shadow-red-600/20 transition transform active:scale-95">Confirm Reject</button>
                 </div>
             </form>
         </div>
     </div>
 
-    <div x-show="showBlacklistModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md" style="display: none;">
-        <div @click.away="showBlacklistModal = false" class="bg-gray-900 border border-gray-700 rounded-[2rem] p-8 max-w-lg w-full shadow-2xl">
-            <h3 class="text-2xl font-black text-white mb-2"><i class="fas fa-ban text-red-500 mr-2"></i> Blacklist Customer</h3>
-            <p class="text-gray-400 text-sm mb-6">This will immediately disable the account. A valid reason is required.</p>
+    <div x-show="showBlacklistModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" style="display: none;">
+        <div @click.away="showBlacklistModal = false" class="bg-white border border-gray-200 rounded-[2rem] p-8 max-w-lg w-full shadow-2xl">
+            <h3 class="text-2xl font-black text-gray-900 mb-2">
+                <i class="fas fa-ban text-gray-900 mr-2"></i> Blacklist Customer
+            </h3>
+            <p class="text-gray-500 mb-6 text-sm">Block this user from making future bookings.</p>
             
             <form action="{{ route('staff.customers.blacklist', $customer->customerID) }}" method="POST">
                 @csrf
+                
+                <div class="mb-4">
+                    <label class="block text-[10px] font-bold text-gray-900 uppercase tracking-widest mb-2">Select Main Reason</label>
+                    {{-- CHANGED: bg-gray-50, text-gray-900 (Dark/Strong) --}}
+                    <select name="blacklist_reason" class="w-full bg-gray-50 border border-gray-300 rounded-xl p-4 text-sm font-bold text-gray-900 focus:ring-2 focus:ring-black focus:outline-none appearance-none">
+                        <option value="" disabled selected>-- Choose a Reason --</option>
+                        <option value="Violation of Terms & Conditions">Violation of Terms & Conditions</option>
+                        <option value="Severe Vehicle Damage">Severe Vehicle Damage</option>
+                        <option value="Non-Payment / Outstanding Debt">Non-Payment / Outstanding Debt</option>
+                        <option value="Abusive Behavior towards Staff">Abusive Behavior towards Staff</option>
+                        <option value="Illegal Activity / Police Case">Illegal Activity / Police Case</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+
                 <div class="mb-6">
-                    <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">Reason for Blacklisting</label>
-                    <textarea name="blacklist_reason" rows="4" class="w-full bg-gray-800 border border-gray-600 rounded-xl p-4 text-sm font-medium text-white focus:ring-2 focus:ring-red-500 focus:outline-none" placeholder="e.g., Repeated violation of rental terms..."></textarea>
+                    <label class="block text-[10px] font-bold text-gray-900 uppercase tracking-widest mb-2">Additional Remarks (Optional)</label>
+                    {{-- CHANGED: bg-white, text-gray-900 --}}
+                    <textarea name="blacklist_custom" rows="2" class="w-full bg-white border border-gray-300 rounded-xl p-4 text-sm font-medium text-gray-900 focus:ring-2 focus:ring-black focus:outline-none placeholder-gray-400" placeholder="Type specific details here..."></textarea>
                 </div>
                 
                 <div class="flex justify-end gap-3">
-                    <button type="button" @click="showBlacklistModal = false" class="px-6 py-3 rounded-xl font-bold text-xs uppercase tracking-widest text-gray-400 hover:bg-gray-800 transition">Cancel</button>
-                    <button type="submit" class="bg-white text-black px-8 py-3 rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-gray-200 shadow-lg transition">Confirm Blacklist</button>
+                    <button type="button" @click="showBlacklistModal = false" class="px-6 py-3 rounded-xl font-bold text-xs uppercase tracking-widest text-gray-500 hover:bg-gray-100 transition">Cancel</button>
+                    <button type="submit" class="bg-gray-900 text-white px-8 py-3 rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-black shadow-lg shadow-gray-900/20 transition">Confirm Blacklist</button>
                 </div>
             </form>
         </div>
