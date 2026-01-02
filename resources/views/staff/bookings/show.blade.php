@@ -22,10 +22,12 @@
                     
                     <div class="flex items-center gap-4 mb-6">
                         <div class="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 text-xl font-bold">
-                            {{ substr($booking->customer->name ?? 'G', 0, 1) }}
+                            {{-- Fixed: Changed name to fullName --}}
+                            {{ substr($booking->customer->fullName ?? 'G', 0, 1) }}
                         </div>
                         <div>
-                            <h4 class="font-bold text-gray-900">{{ $booking->customer->name ?? 'Guest User' }}</h4>
+                            {{-- Fixed: Changed name to fullName --}}
+                            <h4 class="font-bold text-gray-900">{{ $booking->customer->fullName ?? 'Guest User' }}</h4>
                             <p class="text-xs text-gray-500">Joined {{ optional($booking->customer->created_at)->format('M Y') ?? 'N/A' }}</p>
                         </div>
                     </div>
@@ -143,15 +145,16 @@
                 <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 flex flex-col md:flex-row justify-between items-center gap-4">
                     
                     <div class="flex items-center gap-4">
+                        {{-- Fixed: Changed fullName to name --}}
                         <div class="w-12 h-12 rounded-full flex items-center justify-center text-white font-bold text-lg shadow-md
                             {{ $booking->staff ? 'bg-indigo-600' : 'bg-gray-300' }}">
-                            {{ $booking->staff ? substr($booking->staff->fullName, 0, 1) : '?' }}
+                            {{ $booking->staff ? substr($booking->staff->name, 0, 1) : '?' }}
                         </div>
                         <div>
                             <h4 class="text-xs font-bold text-gray-400 uppercase tracking-wider">Staff In Charge</h4>
                             @if($booking->staff)
-                                <p class="text-lg font-bold text-gray-900">{{ $booking->staff->fullName }}</p>
-                                <p class="text-xs text-indigo-600 font-medium">ID: #{{ $booking->staff->staffID }}</p>
+                                {{-- Fixed: Changed fullName to name --}}
+                                <p class="text-lg font-bold text-gray-900">{{ $booking->staff->name }}</p>
                             @else
                                 <p class="text-lg font-bold text-gray-400 italic">Unassigned</p>
                             @endif
@@ -164,8 +167,9 @@
                         <select name="staff_id" class="bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-lg p-2.5 focus:ring-indigo-500 focus:border-indigo-500 block w-full md:w-48">
                             <option value="" disabled selected>Select Staff...</option>
                             @foreach($allStaff as $staffMember)
+                                {{-- Fixed: Changed fullName to name --}}
                                 <option value="{{ $staffMember->staffID }}" {{ $booking->staffID == $staffMember->staffID ? 'selected' : '' }}>
-                                    {{ $staffMember->fullName }}
+                                    {{ $staffMember->name }}
                                 </option>
                             @endforeach
                         </select>
@@ -188,28 +192,48 @@
                     </div>
 
                     <div class="space-y-8">
+                        {{-- Find the "Customer Uploads" section inside the Inspection Gallery --}}
+
                         {{-- Customer Uploads --}}
                         <div>
                             <h4 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Customer Uploads</h4>
-                            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                                @forelse($booking->inspections->whereNull('staffID') as $inspection)
-                                    @php $photos = json_decode($inspection->photosBefore ?? $inspection->photosAfter); @endphp
-                                    @if($photos)
-                                        @foreach($photos as $photo)
-                                            <a href="{{ asset('storage/'.$photo) }}" target="_blank" class="block relative group overflow-hidden rounded-lg border border-gray-200 aspect-square">
-                                                <img src="{{ asset('storage/'.$photo) }}" class="w-full h-full object-cover transition transform group-hover:scale-110">
-                                                <div class="absolute bottom-0 left-0 right-0 bg-black/60 text-white text-[10px] p-1 text-center truncate">
-                                                    {{ $inspection->inspectionType }}
-                                                </div>
-                                            </a>
-                                        @endforeach
-                                    @endif
-                                @empty
-                                    <div class="col-span-full text-center py-4 bg-gray-50 rounded-lg text-gray-400 text-xs italic">
-                                        No photos uploaded by customer.
+                            
+                            {{-- Loop through inspections --}}
+                            @forelse($booking->inspections->whereNull('staffID') as $inspection)
+                                <div class="mb-6 bg-gray-50 rounded-xl p-4 border border-gray-100">
+                                    
+                                    {{-- [NEW] DATA DISPLAY HEADER --}}
+                                    <div class="flex justify-between items-center mb-3 border-b border-gray-200 pb-2">
+                                        <span class="text-xs font-bold uppercase text-gray-500">{{ $inspection->inspectionType }} Inspection</span>
+                                        <div class="flex gap-4 text-xs">
+                                            <span class="text-gray-600">
+                                                <i class="fas fa-tachometer-alt text-orange-500 mr-1"></i> 
+                                                <strong>{{ $inspection->mileageBefore ?? $inspection->mileageAfter }}</strong> km
+                                            </span>
+                                            <span class="text-gray-600">
+                                                <i class="fas fa-gas-pump text-orange-500 mr-1"></i> 
+                                                <strong>{{ $inspection->fuelBefore ?? $inspection->fuelAfter }}</strong>
+                                            </span>
+                                        </div>
                                     </div>
-                                @endforelse
-                            </div>
+
+                                    {{-- Photos Grid --}}
+                                    <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
+                                        @php $photos = json_decode($inspection->photosBefore ?? $inspection->photosAfter); @endphp
+                                        @if($photos)
+                                            @foreach($photos as $photo)
+                                                <a href="{{ asset('storage/'.$photo) }}" target="_blank" class="block relative group overflow-hidden rounded-lg border border-gray-200 aspect-square">
+                                                    <img src="{{ asset('storage/'.$photo) }}" class="w-full h-full object-cover transition transform group-hover:scale-110">
+                                                </a>
+                                            @endforeach
+                                        @endif
+                                    </div>
+                                </div>
+                            @empty
+                                <div class="col-span-full text-center py-4 bg-gray-50 rounded-lg text-gray-400 text-xs italic">
+                                    No photos uploaded by customer.
+                                </div>
+                            @endforelse
                         </div>
 
                         {{-- Staff Uploads --}}

@@ -139,4 +139,13 @@ Route::prefix('staff')->middleware(['auth:staff'])->group(function () {
     // Staff Assignment
     Route::post('/bookings/{id}/assign', [StaffBookingController::class, 'assignStaff'])->name('staff.bookings.assign');
 
+    // --- STAFF MANAGEMENT (Admin Only) ---
+    Route::middleware(['staff.admin'])->group(function () {
+        Route::get('/management', [App\Http\Controllers\StaffManagementController::class, 'index'])->name('staff.management.index');
+        Route::get('/management/create', [App\Http\Controllers\StaffManagementController::class, 'create'])->name('staff.management.create');
+        Route::post('/management', [App\Http\Controllers\StaffManagementController::class, 'store'])->name('staff.management.store');
+        Route::get('/management/{id}/edit', [App\Http\Controllers\StaffManagementController::class, 'edit'])->name('staff.management.edit');
+        Route::put('/management/{id}', [App\Http\Controllers\StaffManagementController::class, 'update'])->name('staff.management.update');
+        Route::delete('/management/{id}', [App\Http\Controllers\StaffManagementController::class, 'destroy'])->name('staff.management.destroy');
+    });
 });

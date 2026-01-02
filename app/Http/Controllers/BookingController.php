@@ -21,8 +21,8 @@ class BookingController extends Controller
     public function index(Request $request)
 {
     $query = Booking::where('customerID', Auth::id())
-                    ->with(['vehicle', 'payments', 'penalties']);
-
+                ->with(['vehicle', 'payments', 'penalties', 'inspections']); // Added 'inspections'
+                
     // Filter by Status
     if ($request->filled('status') && $request->status != 'all') {
         $query->where('bookingStatus', $request->status);
@@ -298,23 +298,37 @@ class BookingController extends Controller
     {
         $booking = Booking::where('customerID', Auth::id())->findOrFail($id);
 
+        // 1. Determine Inspection Type EARLY
+        // If status is Active or Completed, it's a "Return" inspection. Otherwise "Pickup".
+        $type = ($booking->bookingStatus == 'Active' || $booking->bookingStatus == 'Completed') 
+                ? 'Return' 
+                : 'Pickup';
+
+        // 2. [NEW] STRICT CHECK: Stop if inspection already exists
+        // We check for an inspection of this Booking ID, this Type, and where staffID is null (Customer)
+        $exists = \App\Models\Inspection::where('bookingID', $booking->bookingID)
+                                        ->where('inspectionType', $type)
+                                        ->whereNull('staffID') // Ensures we check customer's submission
+                                        ->exists();
+
+        if ($exists) {
+            return back()->with('error', "Action Failed: You have already submitted the $type inspection.");
+        }
+
+        // --- EXISTING LOGIC STARTS HERE ---
+
         // Determine expected count based on stage
-        $isPickup = ($booking->bookingStatus != 'Active' && $booking->bookingStatus != 'Completed');
-        $requiredCount = $isPickup ? 5 : 6;
-        $typeName = $isPickup ? 'Pickup' : 'Return';
+        $requiredCount = ($type == 'Pickup') ? 5 : 6;
+        $typeName = $type;
 
         $request->validate([
-            'photos' => "required|array|size:$requiredCount", // Enforces exact count
+            'photos' => "required|array|size:$requiredCount",
             'photos.*' => 'image|mimes:jpeg,png,jpg|max:2048',
+            'fuel_level' => 'required',
+            'mileage' => 'required|numeric',
         ], [
             'photos.size' => "You must upload exactly $requiredCount photos for $typeName."
         ]);
-
-        // Determine Inspection Stage
-        $type = 'Pickup';
-        if ($booking->bookingStatus == 'Active' || $booking->bookingStatus == 'Completed') {
-            $type = 'Return';
-        }
 
         // Store Photos
         $photoPaths = [];
@@ -324,17 +338,20 @@ class BookingController extends Controller
             }
         }
 
-        // Create Inspection Record (No Staff ID)
+        // Create Inspection Record
         \App\Models\Inspection::create([
             'bookingID' => $booking->bookingID,
             'staffID' => null, // Indicates Customer Submission
             'inspectionType' => $type,
             'inspectionDate' => now(),
-            // Save as JSON array
+            
+            // Dynamic Columns
             'photosBefore' => $type == 'Pickup' ? json_encode($photoPaths) : null,
             'photosAfter' => $type == 'Return' ? json_encode($photoPaths) : null,
-            'fuelBefore' => $request->input('fuel_level'), // Optional
-            'mileageBefore' => $request->input('mileage'), // Optional
+            'fuelBefore' => $type == 'Pickup' ? $request->input('fuel_level') : null,
+            'fuelAfter' => $type == 'Return' ? $request->input('fuel_level') : null,
+            'mileageBefore' => $type == 'Pickup' ? $request->input('mileage') : null,
+            'mileageAfter' => $type == 'Return' ? $request->input('mileage') : null,
         ]);
 
         return back()->with('success', 'Inspection photos uploaded successfully!');

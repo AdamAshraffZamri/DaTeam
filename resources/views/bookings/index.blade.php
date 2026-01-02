@@ -18,8 +18,7 @@
                 <p class="text-gray-300 mt-2">Manage your active and past rentals.</p>
             </div>
 
-            {{-- SERVER-SIDE FILTER BAR (UPDATED) --}}
-            {{-- We use a GET form so buttons act as links with parameters --}}
+            {{-- SERVER-SIDE FILTER BAR --}}
             <form action="{{ route('book.index') }}" method="GET" class="flex overflow-x-auto pb-1 md:pb-0 gap-1 no-scrollbar">
                 
                 @php
@@ -27,7 +26,6 @@
                     $statuses = [
                         'all' => 'All',
                         'Submitted' => 'Submitted', 
-                        
                         'Approved' => 'Approved',
                         'Active' => 'Active',
                         'Completed' => 'Completed',
@@ -55,15 +53,19 @@
                     <div onclick="document.getElementById('modal-{{ $booking->bookingID }}').classList.remove('hidden')" class="cursor-pointer">
                         {{-- Card Header --}}
                         <div class="flex justify-between items-start mb-4">
-                            <div class="flex items-center gap-3">
-                                {{-- Numbering Badge (Dynamic) --}}
-                                <div class="bg-orange-500 text-white font-bold w-8 h-8 rounded-full flex items-center justify-center text-sm shadow-lg">
+                            <div class="flex items-center gap-4">
+                                {{-- Numbering Badge --}}
+                                <div class="bg-orange-500 text-white font-bold w-10 h-10 rounded-full flex items-center justify-center text-sm shadow-lg shrink-0">
                                     {{ $loop->iteration }}
                                 </div>
-                                <!-- <div>
-                                    <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Booking ID</span>
-                                    <p class="text-white font-black text-lg">#{{ $booking->bookingID }}</p>
-                                </div> -->
+
+                                {{-- BOOKING DATE --}}
+                                <div>
+                                    <p class="text-[10px] text-gray-400 font-bold uppercase tracking-wider leading-none mb-1">Your booking starts:</p>
+                                    <p class="text-white text-sm font-bold leading-none">
+                                        {{ \Carbon\Carbon::parse($booking->bookingDate)->format('d M Y') }}
+                                    </p>
+                                </div>
                             </div>
 
                             {{-- Status Badge --}}
@@ -75,23 +77,55 @@
                             </span>
                         </div>
 
-                        {{-- Vehicle Info --}}
-                        <div class="flex items-center space-x-4 mb-4">
-                            <div class="h-12 w-12 rounded-xl bg-black/30 flex items-center justify-center border border-white/10">
-                                <i class="fas fa-car text-xl text-gray-300 group-hover:text-orange-400 transition-colors duration-200"></i>
+                        {{-- [UPDATED] Vehicle Info with IMAGE --}}
+                        <div class="flex items-center gap-4 mb-4">
+                            {{-- Car Image Container --}}
+                            <div class="h-16 w-24 rounded-xl bg-gray-800 overflow-hidden border border-white/10 shrink-0 relative shadow-md">
+                                @if($booking->vehicle->image)
+                                    <img src="{{ asset('storage/' . $booking->vehicle->image) }}" 
+                                         alt="{{ $booking->vehicle->model }}" 
+                                         class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500">
+                                @else
+                                    <div class="w-full h-full flex items-center justify-center">
+                                        <i class="fas fa-car text-2xl text-gray-600"></i>
+                                    </div>
+                                @endif
                             </div>
+
                             <div>
                                 <h3 class="text-xl font-black text-white leading-tight">{{ $booking->vehicle->model }}</h3>
                                 <p class="text-xs text-orange-400 font-bold mt-1 tracking-wide">{{ $booking->vehicle->plateNo }}</p>
                             </div>
                         </div>
+
+                        {{-- AGENT INFO ON CARD --}}
+                        @if($booking->staff)
+                        <div class="flex items-center gap-2 mb-2 pb-2 border-b border-white/5">
+                            <div class="w-5 h-5 rounded-full bg-orange-500/20 flex items-center justify-center text-orange-500 text-[10px]">
+                                <i class="fas fa-user-tie"></i>
+                            </div>
+                            <p class="text-xs text-gray-400">Agent: <span class="text-gray-200 font-bold">{{ $booking->staff->name }}</span></p>
+                        </div>
+                        @endif
+
                         <div class="text-[11px] text-gray-400 font-medium text-center mt-2 opacity-90 mb-4">Click to view full details</div>
                     </div>
 
                     {{-- ACTIONS: INSPECTION & FEEDBACK --}}
                     
-                    {{-- 1. INSPECTION BUTTON (Confirmed/Active Only) --}}
-                    @if($booking->bookingStatus == 'Confirmed' || $booking->bookingStatus == 'Active')
+                    {{-- 1. INSPECTION BUTTON --}}
+                    @php
+                        // Check if customer has already uploaded for the current stage
+                        $isReturn = ($booking->bookingStatus == 'Active');
+                        $typeCheck = $isReturn ? 'Return' : 'Pickup';
+
+                        $alreadySubmitted = $booking->inspections
+                            ->where('inspectionType', $typeCheck)
+                            ->whereNull('staffID')
+                            ->isNotEmpty();
+                    @endphp
+
+                    @if(($booking->bookingStatus == 'Confirmed' || $booking->bookingStatus == 'Active') && !$alreadySubmitted)
                         <div class="border-t border-white/10 pt-4 mt-2">
                             <button onclick="document.getElementById('inspection-modal-{{ $booking->bookingID }}').classList.remove('hidden')" 
                                     class="w-full bg-[#ea580c] hover:bg-orange-600 text-white py-3 rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 shadow-lg">
@@ -99,9 +133,16 @@
                                 {{ $booking->bookingStatus == 'Confirmed' ? 'Upload Pickup Photos' : 'Upload Return Photos' }}
                             </button>
                         </div>
+                    @elseif($alreadySubmitted)
+                        <div class="border-t border-white/10 pt-4 mt-2">
+                            <div class="w-full bg-green-500/20 text-green-400 py-3 rounded-xl text-xs font-bold flex items-center justify-center gap-2 border border-green-500/30">
+                                <i class="fas fa-check-circle"></i> 
+                                {{ $typeCheck }} Inspection Submitted
+                            </div>
+                        </div>
                     @endif
 
-                    {{-- 2. FEEDBACK BUTTON (Completed Only & No Prior Feedback) --}}
+                    {{-- 2. FEEDBACK BUTTON --}}
                     @if($booking->bookingStatus == 'Completed' && !$booking->feedback)
                         <div class="border-t border-white/10 pt-4 mt-2">
                             <button onclick="document.getElementById('feedback-modal-{{ $booking->bookingID }}').classList.remove('hidden')" 
@@ -113,7 +154,7 @@
 
                 </div>
             @empty
-                {{-- Empty State (Handled by Server Logic Now) --}}
+                {{-- Empty State --}}
                 <div class="text-center py-24 bg-white/8 backdrop-blur-sm rounded-3xl border border-white/15">
                     <div class="bg-white/10 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-5">
                         <i class="fas fa-filter text-3xl text-gray-500"></i>
@@ -138,6 +179,12 @@
 {{-- 3. INSPECTION MODALS (LOOP 2) --}}
 @foreach($bookings as $booking)
     @if($booking->bookingStatus == 'Confirmed' || $booking->bookingStatus == 'Active')
+    
+    {{-- Determine Required Count --}}
+    @php
+        $requiredCount = ($booking->bookingStatus == 'Confirmed') ? 5 : 6;
+    @endphp
+
     <div id="inspection-modal-{{ $booking->bookingID }}" class="fixed inset-0 z-[10000] hidden bg-black/90 backdrop-blur-md flex items-center justify-center p-4">
         <div class="bg-[#1a1a1a] border border-white/15 rounded-2xl w-full max-w-md p-6 relative shadow-2xl">
             <button onclick="document.getElementById('inspection-modal-{{ $booking->bookingID }}').classList.add('hidden')" class="absolute top-4 right-4 text-gray-400 hover:text-white">
@@ -162,37 +209,55 @@
 
             <form action="{{ route('book.inspection.upload', $booking->bookingID) }}" method="POST" enctype="multipart/form-data">
                 @csrf
-                <label class="block w-full h-32 border-2 border-dashed border-white/20 rounded-xl flex flex-col items-center justify-center cursor-pointer hover:border-orange-500 hover:bg-white/5 transition mb-4 group">
+                
+                {{-- FILE INPUT LABEL --}}
+                <label class="block w-full h-32 border-2 border-dashed border-white/20 rounded-xl flex flex-col items-center justify-center cursor-pointer hover:border-orange-500 hover:bg-white/5 transition mb-4 group relative">
                     <i class="fas fa-images text-2xl text-gray-500 group-hover:text-orange-500 mb-2 transition"></i>
-                    <span class="text-sm text-gray-300 group-hover:text-white">Tap to Select Photos</span>
                     
-                    {{-- Updated Label showing exact requirements --}}
-                    <span class="text-[10px] text-orange-500 font-bold uppercase mt-1">
-                        (Upload Exactly {{ $booking->bookingStatus == 'Confirmed' ? '5' : '6' }} Photos)
+                    {{-- Dynamic Text Span --}}
+                    <span id="file-text-{{ $booking->bookingID }}" class="text-sm text-gray-300 group-hover:text-white font-medium transition-colors">
+                        Tap to Select Photos
                     </span>
                     
-                    <input type="file" name="photos[]" multiple class="hidden" required 
-                           onchange="this.parentElement.querySelector('.text-sm').innerText = this.files.length + ' files selected'">
+                    <span class="text-[10px] text-orange-500 font-bold uppercase mt-1">
+                        (Upload Exactly {{ $requiredCount }} Photos)
+                    </span>
+
+                    {{-- FILE INPUT --}}
+                    {{-- Added 'id' and 'onchange' to trigger validation --}}
+                    <input type="file" 
+                           name="photos[]" 
+                           multiple 
+                           class="hidden" 
+                           required 
+                           id="file-input-{{ $booking->bookingID }}"
+                           accept="image/*"
+                           onchange="validateFiles({{ $booking->bookingID }}, {{ $requiredCount }})">
                 </label>
 
                 <div class="grid grid-cols-2 gap-4 mb-6">
                     <div>
                         <label class="text-[10px] text-gray-500 uppercase font-bold">Fuel Level</label>
                         <select name="fuel_level" class="w-full bg-white/10 border border-white/20 rounded-lg text-white text-sm p-2 mt-1 focus:border-orange-500 focus:outline-none">
-                            <option value="Full">Full</option>
-                            <option value="3/4">3/4</option>
-                            <option value="1/2">1/2</option>
-                            <option value="1/4">1/4</option>
-                            <option value="E">Empty</option>
+                            <option value="Full" class="text-gray-900">Full</option>
+                            <option value="3/4" class="text-gray-900">3/4</option>
+                            <option value="1/2" class="text-gray-900">1/2</option>
+                            <option value="1/4" class="text-gray-900">1/4</option>
+                            <option value="E" class="text-gray-900">Empty</option>
                         </select>
                     </div>
                     <div>
                         <label class="text-[10px] text-gray-500 uppercase font-bold">Mileage (km)</label>
-                        <input type="number" name="mileage" class="w-full bg-white/10 border border-white/20 rounded-lg text-white text-sm p-2 mt-1 focus:border-orange-500 focus:outline-none" placeholder="e.g. 12345">
+                        <input type="number" name="mileage" class="w-full bg-white/10 border border-white/20 rounded-lg text-white text-sm p-2 mt-1 focus:border-orange-500 focus:outline-none" placeholder="e.g. 12345" required>
                     </div>
                 </div>
 
-                <button type="submit" class="w-full bg-[#ea580c] hover:bg-orange-600 text-white font-bold py-3.5 rounded-xl shadow-lg transition transform hover:scale-[1.02]">
+                {{-- SUBMIT BUTTON --}}
+                {{-- Added 'id', 'disabled' state, and opacity classes --}}
+                <button type="submit" 
+                        id="submit-btn-{{ $booking->bookingID }}"
+                        class="w-full bg-[#ea580c] hover:bg-orange-600 text-white font-bold py-3.5 rounded-xl shadow-lg transition transform hover:scale-[1.02] opacity-50 cursor-not-allowed"
+                        disabled>
                     Submit {{ $booking->bookingStatus == 'Confirmed' ? 'Pickup' : 'Return' }} Inspection
                 </button>
             </form>
@@ -262,11 +327,12 @@
                             <p class="text-gray-300 text-sm">{{ $booking->remarks }}</p>
                         </div>
                     </div>
-                    @endif    
+                @endif    
                 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-7">
-                        {{-- Dates --}}
-                        <div class="space-y-5">
+                        {{-- LEFT COLUMN: Dates & Person In Charge --}}
+                        <div class="space-y-6">
+                            {{-- Dates Timeline --}}
                             <div class="relative pl-5 border-l-2 border-dashed border-white/25 space-y-5">
                                 <div>
                                     <p class="text-[10px] text-gray-400 uppercase font-bold tracking-wider">Pickup</p>
@@ -279,48 +345,83 @@
                                     <p class="text-sm text-gray-300 mt-1">{{ $booking->returnLocation }}</p>
                                 </div>
                             </div>
+
+                            {{-- PERSON IN CHARGE SECTION --}}
+                            <div>
+                                <p class="text-[10px] text-gray-400 uppercase font-bold tracking-wider mb-2">Person In Charge</p>
+                                @if($booking->staff)
+                                    <div class="flex items-center gap-3 bg-white/5 p-3 rounded-xl border border-white/10">
+                                        <div class="w-10 h-10 rounded-full bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center text-white font-bold text-sm shadow-lg">
+                                            {{ substr($booking->staff->name, 0, 1) }}
+                                        </div>
+                                        <div>
+                                            <p class="text-white font-bold text-sm leading-tight">{{ $booking->staff->name }}</p>
+                                            @if($booking->staff->phoneNo)
+                                                <a href="tel:{{ $booking->staff->phoneNo }}" class="text-xs text-orange-400 hover:text-orange-300 transition flex items-center mt-0.5">
+                                                    <i class="fas fa-phone-alt mr-1.5"></i> {{ $booking->staff->phoneNo }}
+                                                </a>
+                                            @else
+                                                <p class="text-xs text-gray-500 mt-0.5">Staff Member</p>
+                                            @endif
+                                        </div>
+                                    </div>
+                                @else
+                                    <div class="bg-white/5 p-3 rounded-xl border border-white/10 flex items-center gap-3">
+                                         <div class="w-10 h-10 rounded-full bg-gray-700 flex items-center justify-center text-gray-400 text-sm">
+                                            <i class="fas fa-user-clock"></i>
+                                        </div>
+                                        <div>
+                                            <p class="text-gray-400 text-sm font-medium italic">Pending Assignment</p>
+                                            <p class="text-[10px] text-gray-600">Our team will assign an agent shortly.</p>
+                                        </div>
+                                    </div>
+                                @endif
+                            </div>
                         </div>
                         
-                        {{-- Financials --}}
-                        <div class="bg-white/8 rounded-2xl p-5 border border-white/10">
-                            <p class="text-[10px] text-gray-400 uppercase font-bold mb-3 tracking-wider">Financial Summary</p>
-                            <div class="flex justify-between text-gray-300 text-sm mb-3">
-                                <span>Total Rent</span>
-                                <span class="font-black text-white tracking-tight">RM {{ number_format($booking->totalCost, 2) }}</span>
-                            </div>
-                            @if($booking->penalties && $booking->penalties->count() > 0)
-                            <div class="border-t border-white/15 pt-3 mt-2">
-                                @foreach($booking->penalties as $penalty)
-                                <div class="flex justify-between text-xs text-red-400 mb-1 last:mb-0">
-                                    <span>
-                                        @if($penalty->lateReturnHour > 0) Late ({{ $penalty->lateReturnHour }}h) @endif
-                                        @if($penalty->fuelSurcharge > 0) + Fuel @endif
-                                        @if($penalty->mileageSurcharge > 0) + Mileage @endif
-                                    </span>
-                                    <span>+ RM {{ number_format($penalty->penaltyFees + $penalty->fuelSurcharge + $penalty->mileageSurcharge, 2) }}</span>
+                        {{-- RIGHT COLUMN: Financials & Docs --}}
+                        <div class="space-y-6">
+                            {{-- Financials --}}
+                            <div class="bg-white/8 rounded-2xl p-5 border border-white/10">
+                                <p class="text-[10px] text-gray-400 uppercase font-bold mb-3 tracking-wider">Financial Summary</p>
+                                <div class="flex justify-between text-gray-300 text-sm mb-3">
+                                    <span>Total Rent</span>
+                                    <span class="font-black text-white tracking-tight">RM {{ number_format($booking->totalCost, 2) }}</span>
                                 </div>
-                                @endforeach
+                                @if($booking->penalties && $booking->penalties->count() > 0)
+                                <div class="border-t border-white/15 pt-3 mt-2">
+                                    @foreach($booking->penalties as $penalty)
+                                    <div class="flex justify-between text-xs text-red-400 mb-1 last:mb-0">
+                                        <span>
+                                            @if($penalty->lateReturnHour > 0) Late ({{ $penalty->lateReturnHour }}h) @endif
+                                            @if($penalty->fuelSurcharge > 0) + Fuel @endif
+                                            @if($penalty->mileageSurcharge > 0) + Mileage @endif
+                                        </span>
+                                        <span>+ RM {{ number_format($penalty->penaltyFees + $penalty->fuelSurcharge + $penalty->mileageSurcharge, 2) }}</span>
+                                    </div>
+                                    @endforeach
+                                </div>
+                                @endif
                             </div>
-                            @endif
-                        </div>
-                    </div>
 
-                    {{-- Documents --}}
-                    <div>
-                        <p class="text-[10px] text-gray-400 uppercase font-bold mb-3 tracking-wider">Documents</p>
-                        <div class="grid grid-cols-2 gap-3">
-                            <a href="{{ asset('storage/' . $booking->aggreementLink) }}" target="_blank" class="flex items-center justify-center gap-2 p-3.5 bg-blue-500/10 rounded-xl border border-blue-500/20 hover:bg-blue-500 hover:text-white text-blue-300 text-sm transition-all duration-200">
-                                <i class="fas fa-file-signature"></i> <span>View Agreement</span>
-                            </a>
-                            @if($booking->payments && $booking->payments->count() > 0)
-                                <a href="{{ asset('storage/'.$booking->payments->last()->installmentDetails) }}" target="_blank" class="flex items-center justify-center gap-2 p-3.5 bg-black/25 rounded-xl border border-dashed border-white/20 hover:border-orange-500 hover:text-orange-400 text-gray-300 text-sm transition-colors duration-200">
-                                    <i class="fas fa-receipt"></i> <span>View Receipt</span>
-                                </a>
-                            @else
-                                <div class="flex items-center justify-center gap-2 p-3.5 bg-red-500/10 rounded-xl border border-red-500/20 text-red-400 text-xs font-bold">
-                                    <i class="fas fa-times-circle"></i> No Receipt
+                            {{-- Documents --}}
+                            <div>
+                                <p class="text-[10px] text-gray-400 uppercase font-bold mb-3 tracking-wider">Documents</p>
+                                <div class="grid grid-cols-2 gap-3">
+                                    <a href="{{ asset('storage/' . $booking->aggreementLink) }}" target="_blank" class="flex items-center justify-center gap-2 p-3.5 bg-blue-500/10 rounded-xl border border-blue-500/20 hover:bg-blue-500 hover:text-white text-blue-300 text-sm transition-all duration-200">
+                                        <i class="fas fa-file-signature"></i> <span>View Agreement</span>
+                                    </a>
+                                    @if($booking->payments && $booking->payments->count() > 0)
+                                        <a href="{{ asset('storage/'.$booking->payments->last()->installmentDetails) }}" target="_blank" class="flex items-center justify-center gap-2 p-3.5 bg-black/25 rounded-xl border border-dashed border-white/20 hover:border-orange-500 hover:text-orange-400 text-gray-300 text-sm transition-colors duration-200">
+                                            <i class="fas fa-receipt"></i> <span>View Receipt</span>
+                                        </a>
+                                    @else
+                                        <div class="flex items-center justify-center gap-2 p-3.5 bg-red-500/10 rounded-xl border border-red-500/20 text-red-400 text-xs font-bold">
+                                            <i class="fas fa-times-circle"></i> No Receipt
+                                        </div>
+                                    @endif
                                 </div>
-                            @endif
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -360,5 +461,40 @@
 }
 </style>
 
-{{-- Note: JS Logic for filtering removed as it is now handled by the server --}}
+<script>
+    function validateFiles(bookingID, requiredCount) {
+        const input = document.getElementById('file-input-' + bookingID);
+        const textSpan = document.getElementById('file-text-' + bookingID);
+        const submitBtn = document.getElementById('submit-btn-' + bookingID);
+        const fileCount = input.files.length;
+
+        // Update text
+        if (fileCount === 0) {
+            textSpan.innerText = 'Tap to Select Photos';
+            textSpan.classList.remove('text-green-400', 'text-red-400');
+            textSpan.classList.add('text-gray-300');
+        } else {
+            textSpan.innerText = fileCount + ' files selected';
+        }
+
+        // Validate Count
+        if (fileCount === requiredCount) {
+            // Success State
+            submitBtn.disabled = false;
+            submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+            
+            textSpan.classList.remove('text-red-400', 'text-gray-300');
+            textSpan.classList.add('text-green-400');
+            textSpan.innerHTML = '<i class="fas fa-check-circle mr-1"></i> ' + fileCount + ' photos selected (Ready)';
+        } else {
+            // Error State
+            submitBtn.disabled = true;
+            submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            
+            textSpan.classList.remove('text-green-400', 'text-gray-300');
+            textSpan.classList.add('text-red-400');
+            textSpan.innerHTML = '<i class="fas fa-times-circle mr-1"></i> Selected ' + fileCount + ' (Need ' + requiredCount + ')';
+        }
+    }
+</script>
 @endsection
