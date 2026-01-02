@@ -119,14 +119,29 @@ Route::prefix('staff')->middleware(['auth:staff'])->group(function () {
     Route::post('/inspections/{id}/store', [StaffBookingController::class, 'storeInspection'])->name('staff.inspections.store');
 
     // --- FLEET MANAGEMENT ---
+    // List Vehicles
     Route::get('/fleet', [FleetController::class, 'index'])->name('staff.fleet.index');
+    
+    // Create
     Route::get('/fleet/create', [FleetController::class, 'create'])->name('staff.fleet.create');
     Route::post('/fleet/store', [FleetController::class, 'store'])->name('staff.fleet.store');
-    Route::get('/fleet/{vehicle}', [FleetController::class, 'show'])->name('staff.fleet.show');
-    Route::get('/fleet/{vehicle}/edit', [FleetController::class, 'edit'])->name('staff.fleet.edit');
-    Route::put('/fleet/{vehicle}', [FleetController::class, 'update'])->name('staff.fleet.update');
-    Route::delete('/fleet/{vehicle}', [FleetController::class, 'destroy'])->name('staff.fleet.destroy');
-    Route::post('/fleet/status/{vehicle}', [FleetController::class, 'updateStatus'])->name('staff.fleet.update_status');
+    
+    // SHOW DETAILS (The new page)
+    Route::get('/fleet/{id}', [FleetController::class, 'show'])->name('staff.fleet.show');
+    
+    // Edit/Update
+    Route::get('/fleet/{id}/edit', [FleetController::class, 'edit'])->name('staff.fleet.edit');
+    Route::put('/fleet/{id}', [FleetController::class, 'update'])->name('staff.fleet.update');
+    
+    // Status & Delete
+    Route::post('/fleet/status/{id}', [FleetController::class, 'updateStatus'])->name('staff.fleet.status');
+    Route::delete('/fleet/{id}', [FleetController::class, 'destroy'])->name('staff.fleet.destroy');
+
+    // BLOCK DATE (Add to JSON)
+    Route::post('/fleet/{id}/block', [FleetController::class, 'blockDate'])->name('staff.fleet.block');
+    
+    // UNBLOCK DATE (Remove from JSON)
+    Route::post('/fleet/{id}/unblock', [FleetController::class, 'unblockDate'])->name('staff.fleet.unblock');
 
     // --- SEPARATE INSPECTION MODE (If needed for dedicated page) ---
     // Renamed to avoid conflict with 'storeInspection' above
