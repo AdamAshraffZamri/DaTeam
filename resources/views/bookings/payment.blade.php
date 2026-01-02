@@ -103,63 +103,44 @@
                         <i class="fas fa-file-invoice-dollar text-orange-500 mr-3"></i> Payment Summary
                     </h3>
                     
-                    <div class="space-y-4 text-sm">
-                        <div class="flex justify-between items-center text-gray-300">
-                            {{-- Detailed Breakdown of Calculation --}}
-                            <span>
-                                Rental Charges
-                                <span class="block text-[10px] text-gray-500 mt-0.5">
-                                    @if($days > 0) {{ $days }} Day(s) @endif
-                                    @if($days > 0 && $extraHours > 0) + @endif
-                                    @if($extraHours > 0) {{ $extraHours }} Hour(s) Tier @endif
-                                </span>
-                            </span>
-                            
-                            {{-- USE PRE-CALCULATED VARIABLE (No Blade Math) --}}
-                            <span class="font-bold text-white">MYR {{ number_format($rentalCharge, 2) }}</span>
+                    <div class="card p-4 mb-4">
+                        <h3>Booking Summary</h3>
+                        <div class="flex justify-between">
+                            <span>Rental Charges:</span>
+                            <span>RM {{ number_format($rentalCharge, 2) }}</span>
                         </div>
-                        
-                        <div class="flex justify-between items-center">
-                            <span class="text-gray-400">Security Deposit <span class="text-[10px] text-gray-500 uppercase ml-1">(Refundable)</span></span>
-                            <span class="font-bold text-white">MYR {{ number_format($vehicle->baseDepo, 2) }}</span>
+                        <div class="flex justify-between text-muted">
+                            <span>Security Deposit (Refundable):</span>
+                            <span>RM {{ number_format($vehicle->baseDepo, 2) }}</span>
                         </div>
-
-                        <div id="discount_row" class="flex justify-between items-center hidden text-green-400">
-                            <span class="font-bold">Voucher Discount</span>
-                            <span class="font-bold">- MYR <span id="discount_amount">0.00</span></span>
+                        <div class="flex justify-between font-bold text-xl mt-2 border-t pt-2">
+                            <span>TOTAL BOOKING COST:</span>
+                            <span>RM <span id="total_booking_cost_display">{{ number_format($total, 2) }}</span></span> 
                         </div>
                     </div>
 
-                    {{-- PAYMENT OPTIONS --}}
-                    <div class="mt-6 pt-6 border-t border-dashed border-white/10">
-                        <p class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-3">Choose Payment Option</p>
+                    <div class="card p-4">
+                        <h3>Select Payment Option</h3>
                         
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            {{-- Option 1: Full Payment --}}
-                            <label class="cursor-pointer group relative">
-                                <input type="radio" name="payment_choice" value="full" class="peer sr-only" checked onchange="updatePaymentMode('full')">
-                                <div class="bg-white/5 border border-white/10 rounded-xl p-4 peer-checked:bg-orange-500/10 peer-checked:border-orange-500 transition h-full">
-                                    <div class="flex items-center justify-between mb-1">
-                                        <span class="text-sm font-bold text-white">Full Payment</span>
-                                        <i class="fas fa-check-circle text-orange-500 opacity-0 peer-checked:opacity-100 transition"></i>
-                                    </div>
-                                    <p class="text-[10px] text-gray-400">Pay everything now.</p>
-                                </div>
-                            </label>
+                        <label class="block border p-3 rounded mb-2 cursor-pointer">
+                            <input type="radio" name="payment_type" value="full" checked onchange="updatePaymentMode('full')">
+                            <span class="font-bold">Pay Full Amount</span>
+                            <div class="text-sm">Pay RM {{ number_format($total, 2) }} now. Balance: RM 0.00</div>
+                        </label>
 
-                            {{-- Option 2: Deposit Only --}}
-                            <label class="cursor-pointer group relative">
-                                <input type="radio" name="payment_choice" value="deposit" class="peer sr-only" onchange="updatePaymentMode('deposit')">
-                                <div class="bg-white/5 border border-white/10 rounded-xl p-4 peer-checked:bg-orange-500/10 peer-checked:border-orange-500 transition h-full">
-                                    <div class="flex items-center justify-between mb-1">
-                                        <span class="text-sm font-bold text-white">Pay Deposit</span>
-                                        <i class="fas fa-check-circle text-orange-500 opacity-0 peer-checked:opacity-100 transition"></i>
-                                    </div>
-                                    <p class="text-[10px] text-gray-400">Pay RM {{ number_format($vehicle->baseDepo, 0) }} now. Balance later.</p>
-                                </div>
-                            </label>
-                        </div>
+                        <label class="block border p-3 rounded mb-2 cursor-pointer">
+                            <input type="radio" name="payment_type" value="deposit" onchange="updatePaymentMode('deposit')">
+                            <span class="font-bold">Pay Deposit Only</span>
+                            <div class="text-sm">
+                                Pay RM {{ number_format($vehicle->baseDepo, 2) }} now. 
+                                Balance RM {{ number_format($total - $vehicle->baseDepo, 2) }} due later.
+                            </div>
+                        </label>
                     </div>
+
+                    <button type="submit" class="btn btn-primary w-full mt-4">
+                        Pay RM <span id="payAmountDisplay">{{ number_format($total, 2) }}</span>
+                    </button>
 
                     {{-- VOUCHER INPUT --}}
                     <div class="mt-6 pt-4 border-t border-dashed border-white/10">
@@ -294,38 +275,80 @@
 
 <script>
     // 1. STATE MANAGEMENT
-    // Using simple values passed from controller - NO MATH here
     let fullTotal = {{ $total }}; 
     let depositAmount = {{ $vehicle->baseDepo }}; 
-    let currentVoucherDiscount = 0; 
+    let currentVoucherDiscount = 0; // <--- ADD THIS LINE BACK
     let activeMode = 'full'; 
 
-    // 2. TOGGLE PAYMENT MODE
     function updatePaymentMode(mode) {
         activeMode = mode;
-        document.getElementById('hidden_payment_type').value = mode;
+        document.getElementById('hidden_payment_type').value = mode; 
         renderTotal();
     }
 
-    // 3. RENDER LOGIC
     function renderTotal() {
-        let displayAmount = 0;
-        let displayTotalElement = document.getElementById('grand_total_display');
-        let hiddenTotalInput = document.getElementById('hidden_total');
+        let payNowAmount = 0;
+        let balanceAmount = 0;
 
+        // 1. Calculate Discounted Total
+        let finalTotalCost = fullTotal - currentVoucherDiscount;
+        if (finalTotalCost < 0) finalTotalCost = 0;
+
+        // 2. Determine "Pay Now" vs "Balance"
         if (activeMode === 'full') {
-            displayAmount = fullTotal - currentVoucherDiscount;
-            if(displayAmount < 0) displayAmount = 0;
+            payNowAmount = finalTotalCost;
+            balanceAmount = 0;
         } else {
-            // Deposit Mode: Voucher does not apply to security deposit
-            displayAmount = depositAmount; 
+            // Deposit Mode
+            payNowAmount = depositAmount;
+            
+            // Safety: If discount makes total less than deposit, force full payment
+            if(finalTotalCost < depositAmount) {
+                 payNowAmount = finalTotalCost;
+                 balanceAmount = 0;
+            } else {
+                 balanceAmount = finalTotalCost - depositAmount;
+            }
         }
 
-        displayTotalElement.innerText = displayAmount.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
-        hiddenTotalInput.value = displayAmount.toFixed(2);
+        // 3. Update Display Elements
+        const displayString = formatMoney(payNowAmount);
+
+        // Update the big orange number
+        const grandTotalEl = document.getElementById('grand_total_display');
+        if(grandTotalEl) grandTotalEl.innerText = displayString;
+        
+        // Update the Submit Button Text
+        const btnDisplayEl = document.getElementById('payAmountDisplay');
+        if(btnDisplayEl) btnDisplayEl.innerText = displayString;
+
+        // Update Balance Warning Text
+        const balanceUi = document.getElementById('balance_warning_ui');
+        if(balanceUi) {
+             if(balanceAmount > 0) {
+                 balanceUi.innerText = `Balance to pay later: RM ${formatMoney(balanceAmount)}`;
+                 balanceUi.classList.remove('hidden');
+             } else {
+                 balanceUi.classList.add('hidden');
+             }
+        }
+        
+        // Update Total Cost Summary Line
+        const summaryTotalEl = document.getElementById('total_booking_cost_display');
+        if(summaryTotalEl) {
+            summaryTotalEl.innerText = formatMoney(finalTotalCost);
+        }
+    
+        // 4. Update Hidden Input (Safe if backend recalculates, but good for form submission)
+        document.getElementById('hidden_total').value = payNowAmount.toFixed(2);
     }
 
-    // 4. APPLY VOUCHER
+    // 2. HELPER: FORMAT MONEY
+    function formatMoney(amount) {
+        return amount.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+    }
+
+    // 3. APPLY VOUCHER
     function applyVoucher() {
         const code = document.getElementById('voucher_code').value;
         const btn = document.getElementById('btn_apply_voucher');
@@ -361,13 +384,13 @@
                 msg.innerText = data.message;
                 msg.className = "text-xs mt-2 font-bold text-green-400";
                 
+                // Update the missing variable here
                 currentVoucherDiscount = parseFloat(data.discount_amount.toString().replace(/,/g, ''));
                 
                 document.getElementById('discount_row').classList.remove('hidden');
                 document.getElementById('discount_amount').innerText = data.discount_amount;
                 document.getElementById('hidden_voucher_id').value = data.voucher_id;
                 
-                // Lock input after success
                 document.getElementById('voucher_code').disabled = true;
                 document.getElementById('voucher_code').classList.add('opacity-50', 'cursor-not-allowed');
                 btn.classList.add('hidden');
@@ -387,52 +410,34 @@
         });
     }
 
-    // 5. VOUCHER DROPDOWN FUNCTIONALITY
+    // 4. VOUCHER DROPDOWN FUNCTIONALITY
     const voucherInput = document.getElementById('voucher_code');
     const voucherDropdown = document.getElementById('voucherDropdown');
     let allVouchers = [];
 
-    // Fetch available vouchers on page load
     fetch("{{ route('voucher.available') }}")
         .then(response => response.json())
         .then(data => {
             allVouchers = data;
-            if (allVouchers.length === 0) {
-                console.log('No vouchers available');
-            }
         })
         .catch(error => {
-            console.error('Error fetching vouchers:', error);
             allVouchers = [];
         });
 
-    // Show dropdown on focus
     voucherInput.addEventListener('focus', () => {
-        if (allVouchers.length > 0) {
-            displaySuggestions(allVouchers);
-        } else {
-            showNoVouchersMessage();
-        }
+        if (allVouchers.length > 0) displaySuggestions(allVouchers);
+        else showNoVouchersMessage();
     });
 
-    // Filter and show suggestions as user types
     voucherInput.addEventListener('input', (e) => {
         const value = e.target.value.toUpperCase();
         if (value.length === 0) {
-            if (allVouchers.length > 0) {
-                displaySuggestions(allVouchers);
-            } else {
-                showNoVouchersMessage();
-            }
+            if (allVouchers.length > 0) displaySuggestions(allVouchers);
+            else showNoVouchersMessage();
         } else {
-            const filtered = allVouchers.filter(v => 
-                v.code.toUpperCase().includes(value)
-            );
-            if (filtered.length > 0) {
-                displaySuggestions(filtered);
-            } else {
-                showNoVouchersMessage();
-            }
+            const filtered = allVouchers.filter(v => v.code.toUpperCase().includes(value));
+            if (filtered.length > 0) displaySuggestions(filtered);
+            else showNoVouchersMessage();
         }
     });
 
@@ -441,16 +446,13 @@
             showNoVouchersMessage();
             return;
         }
-
         voucherDropdown.innerHTML = vouchers.map(voucher => `
             <div class="p-3 hover:bg-white/10 cursor-pointer border-b border-white/5 last:border-b-0 transition"
                  onclick="selectVoucher('${voucher.code}')">
                 <div class="flex justify-between items-center">
                     <div class="flex-1">
                         <p class="font-bold text-white text-sm">${voucher.code}</p>
-                        <p class="text-xs text-gray-400 mt-1">
-                            <i class="fas fa-tag mr-1"></i> ${voucher.type}
-                        </p>
+                        <p class="text-xs text-gray-400 mt-1"><i class="fas fa-tag mr-1"></i> ${voucher.type}</p>
                     </div>
                     <div class="text-right">
                         ${voucher.discount_percent ? 
@@ -466,26 +468,19 @@
     }
 
     function showNoVouchersMessage() {
-        voucherDropdown.innerHTML = `
-            <div class="p-4 text-center">
-                <p class="text-sm text-gray-400">Tiada voucher tersedia</p>
-            </div>
-        `;
+        voucherDropdown.innerHTML = `<div class="p-4 text-center"><p class="text-sm text-gray-400">Tiada voucher tersedia</p></div>`;
         voucherDropdown.classList.remove('hidden');
     }
 
     function selectVoucher(code) {
         voucherInput.value = code;
         voucherDropdown.classList.add('hidden');
-        // Auto-apply voucher when selected
         applyVoucher();
     }
 
-    // Hide dropdown when clicking outside
     document.addEventListener('click', (e) => {
         if (e.target !== voucherInput && !voucherDropdown.contains(e.target)) {
             voucherDropdown.classList.add('hidden');
         }
     });
 </script>
-@endsection

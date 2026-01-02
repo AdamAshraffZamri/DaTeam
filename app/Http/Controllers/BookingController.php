@@ -172,82 +172,124 @@ class BookingController extends Controller
     }
 
     // --- 6. SUBMIT BOOKING (Handles Full/Deposit & Vouchers) ---
-    public function submitPayment(Request $request, $id)
-    {
-        // 1. Validation
-        $request->validate([
-            'payment_proof' => 'required|image|max:2048',
-            'agreement_proof' => 'required|file|mimes:pdf,jpg,jpeg,png|max:2048',
-            'payment_type' => 'required',
-        ]);
+    // In App\Http\Controllers\BookingController.php
 
-        $vehicle = Vehicle::findOrFail($id);
+public function submitPayment(Request $request, $id)
+{
+    // 1. Validation
+    $request->validate([
+        'payment_proof' => 'required|image|max:2048',
+        'agreement_proof' => 'required|file|mimes:pdf,jpg,jpeg,png|max:2048',
+        'payment_type' => 'required|in:full,deposit',
+    ]);
 
-        // 2. Upload Payment Receipt (Fixing the $proofPath variable)
-        $proofPath = null; // Initialize variable
-        if ($request->hasFile('payment_proof')) {
-            // Store the file and assign the path to $proofPath
-            $proofPath = $request->file('payment_proof')->store('receipts', 'public');
-        }
+    $vehicle = Vehicle::findOrFail($id);
 
-        // 3. Upload Agreement Form
-        $agreementPath = null;
-        if ($request->hasFile('agreement_proof')) {
-            $agreementPath = $request->file('agreement_proof')->store('agreements', 'public');
-        }
+    // 2. Calculate Base Rental Price
+    $rentalCharge = $this->calculateRentalPrice(
+        $vehicle, 
+        $request->input('pickup_date'), $request->input('pickup_time'), 
+        $request->input('return_date'), $request->input('return_time')
+    );
 
-        // ... (Your price calculation logic here) ...
-        $grandTotal = $request->input('total'); // Or use the recalculation helper discussed previously
+    $baseDepo = $vehicle->baseDepo;
+    $grossTotal = $rentalCharge + $baseDepo;
+    
+    // --- NEW: VOUCHER LOGIC START ---
+    $discountAmount = 0;
+    $voucherID = null;
 
-        // 4. Create Booking
-        $booking = Booking::create([
-            'customerID' => Auth::id(),
-            'vehicleID' => $id,
-            'bookingDate' => now(),
-            'originalDate' => $request->input('pickup_date'),
-            'bookingTime' => $request->input('pickup_time'),
-            'returnDate' => $request->input('return_date'),
-            'returnTime' => $request->input('return_time'),
-            'pickupLocation' => $request->input('pickup_location'),
-            'returnLocation' => $request->input('return_location'),
-            'totalCost' => $grandTotal,
-            'aggreementDate' => now(),
-            'aggreementLink' => $agreementPath,
-            'bookingStatus' => ($request->input('payment_type') == 'deposit') ? 'Deposit Paid' : 'Submitted',
-            'bookingType' => 'Standard',
-            'remarks' => $request->input('remarks'),
-        ]);
-
-        // 5. Create Payment Record (Using the now-defined $proofPath)
-        $amountPaid = ($request->input('payment_type') == 'deposit') ? $vehicle->baseDepo : $grandTotal;
-
-        Payment::create([
-            'bookingID' => $booking->bookingID,
-            'amount' => $amountPaid,
-            'depoAmount' => $vehicle->baseDepo,
-            'transactionDate' => now(),
-            'paymentMethod' => 'QR Transfer',
-            'paymentStatus' => 'Pending Verification',
-            'depoStatus' => 'Holding',
-            'depoRequestDate' => now(),
-            'installmentDetails' => $proofPath // ✅ This will now work correctly
-        ]);
+    if ($request->filled('voucher_id')) {
+        $voucher = Voucher::find($request->input('voucher_id'));
         
-        // === NEW: NOTIFICATION LOGIC ===
-        try {
-            // Fetch all staff members who should be notified
-            $staff = Staff::all(); 
+        // Basic validation to ensure voucher is still valid at moment of submission
+        if ($voucher) {
+            $voucherID = $voucher->id; // Save ID to link it later if needed
             
-            // Send the notification defined in Step 2
-            Notification::send($staff, new NewBookingSubmitted($booking));
-        } catch (\Exception $e) {
-            // Log error if mail fails, but allow the user to proceed
-            \Log::error("Notification failed: " . $e->getMessage());
+            if ($voucher->discount_percentage > 0) {
+                // Percentage based discount (usually on Rental Charge only, not Deposit)
+                // But matching your frontend logic:
+                $discountAmount = ($grossTotal * $voucher->discount_percentage) / 100;
+            } else {
+                // Fixed amount discount
+                $discountAmount = $voucher->discount_amount;
+            }
+            
+            // Optional: Mark voucher as used (if single-use)
+            // $voucher->decrement('usage_limit'); 
         }
-        // ===============================
-
-        return redirect()->route('book.index')->with('show_thank_you', true);
     }
+
+    // Calculate Final Total Cost after Discount
+    $finalTotalCost = max(0, $grossTotal - $discountAmount);
+    // --- NEW: VOUCHER LOGIC END ---
+
+    // 3. Determine Amount to Pay NOW
+    if ($request->input('payment_type') == 'deposit') {
+        $amountToPayNow = $baseDepo;
+        $bookingStatus = 'Deposit Paid';
+        
+        // Safety: If deposit is greater than total (e.g. huge discount), pay full
+        if ($amountToPayNow >= $finalTotalCost) {
+             $amountToPayNow = $finalTotalCost;
+             $bookingStatus = 'Submitted'; 
+        }
+    } else {
+        // Full Payment
+        $amountToPayNow = $finalTotalCost;
+        $bookingStatus = 'Submitted';
+    }
+
+    // 4. File Uploads
+    $proofPath = $request->file('payment_proof')->store('receipts', 'public');
+    $agreementPath = $request->file('agreement_proof')->store('agreements', 'public');
+
+    // 5. Create Booking
+    $booking = Booking::create([
+        'customerID' => Auth::id(),
+        'vehicleID' => $id,
+        'bookingDate' => now(),
+        'originalDate' => $request->input('pickup_date'),
+        'bookingTime' => $request->input('pickup_time'),
+        'returnDate' => $request->input('return_date'),
+        'returnTime' => $request->input('return_time'),
+        'pickupLocation' => $request->input('pickup_location'),
+        'returnLocation' => $request->input('return_location'),
+        
+        // SAVE THE DISCOUNTED TOTAL
+        'totalCost' => $finalTotalCost, 
+        'voucherID' => $voucherID, // Ensure you have this column in your table, or remove this line
+        
+        'aggreementDate' => now(),
+        'aggreementLink' => $agreementPath,
+        'bookingStatus' => $bookingStatus,
+        'bookingType' => 'Standard',
+        'remarks' => $request->input('remarks'),
+    ]);
+
+    // 6. Create Payment Record
+    Payment::create([
+        'bookingID' => $booking->bookingID,
+        'amount' => $amountToPayNow, 
+        'depoAmount' => $baseDepo,
+        'transactionDate' => now(),
+        'paymentMethod' => 'QR Transfer',
+        'paymentStatus' => 'Pending Verification',
+        'depoStatus' => 'Holding',
+        'depoRequestDate' => now(),
+        'installmentDetails' => $proofPath
+    ]);
+    
+    // 7. Notifications
+    try {
+        $staff = Staff::all(); 
+        Notification::send($staff, new NewBookingSubmitted($booking));
+    } catch (\Exception $e) {
+        \Log::error("Notification failed: " . $e->getMessage());
+    }
+
+    return redirect()->route('book.index')->with('show_thank_you', true);
+}
 
     // --- 7. CANCEL BOOKING (Updated Strategy) ---
     public function cancel($id)

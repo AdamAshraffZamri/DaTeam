@@ -91,7 +91,10 @@ class StaffBookingController extends Controller
 
     // ... pickup, processReturn, processRefund, storeInspection, assignStaff, show ...
     public function show($id) {
-        $booking = Booking::with(['customer', 'vehicle', 'payment', 'inspections', 'staff'])->findOrFail($id);
+        // FIX: Added 'feedback' to the with() list
+        $booking = Booking::with(['customer', 'vehicle', 'payment', 'inspections', 'staff', 'feedback'])
+                          ->findOrFail($id);
+                          
         $allStaff = Staff::all();
         return view('staff.bookings.show', compact('booking', 'allStaff'));
     }

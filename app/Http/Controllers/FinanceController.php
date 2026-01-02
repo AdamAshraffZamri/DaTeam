@@ -29,9 +29,9 @@ class FinanceController extends Controller
                  ->get();
 
         $balanceBookings = Booking::where('customerID', $user->customerID)
-                                  ->where('bookingStatus', 'Deposit Paid')
-                                  ->with(['vehicle', 'payments'])
-                                  ->get();
+                              ->whereIn('bookingStatus', ['Submitted', 'Deposit Paid', 'Approved', 'Active', 'Completed'])
+                              ->with(['vehicle', 'payments'])
+                              ->get();
 
         return view('finance.index', compact('claims', 'fines', 'balanceBookings'));
     }
@@ -79,6 +79,11 @@ class FinanceController extends Controller
         $totalPaid = $booking->payments->sum('amount');
         $balance = $booking->totalCost - $totalPaid;
 
+        // Prevent paying if already paid
+        if ($balance <= 0) {
+            return redirect()->route('finance.index')->with('success', 'Booking is already fully paid.');
+        }
+
         $path = $request->file('payment_proof')->store('receipts', 'public');
 
         \App\Models\Payment::create([
@@ -91,7 +96,9 @@ class FinanceController extends Controller
             'installmentDetails' => $path
         ]);
 
-        $booking->update(['bookingStatus' => 'Paid']);
+        if (in_array($booking->bookingStatus, ['Deposit Paid', 'Approved'])) {
+            $booking->update(['bookingStatus' => 'Paid']);
+        }
 
         return redirect()->route('finance.index')->with('success', 'Balance payment submitted successfully!');
     }
