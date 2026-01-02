@@ -48,16 +48,30 @@ class StaffCustomerController extends Controller
     // ACTION 2: Reject
     public function reject(Request $request, $id)
     {
-        $request->validate(['rejection_reason' => 'required|string|max:500']);
-
         $customer = Customer::findOrFail($id);
         
-        $customer->update([
-            'accountStat' => 'rejected',
-            'rejection_reason' => $request->rejection_reason
+        $request->validate([
+            'rejection_reason' => 'required|array|min:1',
+            'rejection_reason.*' => 'string',
+            'rejection_custom' => 'nullable|string|max:500' // New validation
+        ], [
+            'rejection_reason.required' => 'Please select at least one reason.'
         ]);
 
-        return back()->with('success', 'Customer rejected. Reason sent to user.');
+        // 1. Convert Array to String
+        $reasonString = implode(', ', $request->rejection_reason);
+
+        // 2. Append Custom Notes if they exist
+        if ($request->filled('rejection_custom')) {
+            $reasonString .= " (" . $request->rejection_custom . ")";
+        }
+
+        $customer->update([
+            'accountStat' => 'rejected',
+            'rejection_reason' => $reasonString 
+        ]);
+
+        return back()->with('success', 'Customer application rejected.');
     }
 
     // ACTION 3: Blacklist (Toggle)
@@ -81,19 +95,29 @@ class StaffCustomerController extends Controller
 
             return back()->with('success', 'Customer removed from blacklist. Status reverted to ' . ucfirst($newStatus) . '.');
 
-        } else {
+        } 
+        else {
             // === ACTION: ADD TO BLACKLIST ===
+            $request->validate([
+                'blacklist_reason' => 'required|string',
+                'blacklist_custom' => 'nullable|string|max:500' // New validation
+            ]);
             
-            $request->validate(['blacklist_reason' => 'required|string|max:500']);
-            
+            // Combine Reason + Custom Text
+            // Example: "Severe Vehicle Damage - Bumper completely destroyed"
+            $finalReason = $request->blacklist_reason;
+            if ($request->filled('blacklist_custom')) {
+                $finalReason .= " - " . $request->blacklist_custom;
+            }
+
             $customer->update([
                 'blacklisted' => true,
-                'blacklist_reason' => $request->blacklist_reason,
-                'previous_account_stat' => $customer->accountStat, // <--- SAVE CURRENT STATUS HERE
-                'accountStat' => 'rejected' // Set to rejected/blacklisted state
+                'blacklist_reason' => $finalReason,
+                'previous_account_stat' => $customer->accountStat, 
+                'accountStat' => 'rejected'
             ]);
 
             return back()->with('success', 'Customer has been blacklisted.');
-        }
+            }
     }
 }
