@@ -34,6 +34,7 @@
                 <tbody class="divide-y divide-gray-50">
                     @forelse($customers as $customer)
                     <tr class="hover:bg-gray-50/50 transition-colors group">
+                        
                         <td class="px-8 py-6">
                             <div class="flex items-center gap-4">
                                 <div class="w-12 h-12 rounded-full bg-gradient-to-br from-orange-100 to-orange-200 flex items-center justify-center text-orange-600 font-bold text-lg shadow-inner">
@@ -42,7 +43,7 @@
                                 <div>
                                     <p class="font-black text-gray-900 leading-none">{{ $customer->fullName }}</p>
                                     <p class="text-[10px] font-bold text-gray-400 mt-1 uppercase tracking-wider">
-                                        ID: {{ $customer->stustaffID }}
+                                        ID: {{ $customer->stustaffID ?? 'N/A' }}
                                     </p>
                                 </div>
                             </div>
@@ -60,23 +61,31 @@
                                     <i class="fas fa-envelope w-4 text-gray-300"></i> {{ $customer->email }}
                                 </div>
                                 <div class="flex items-center text-xs font-medium text-gray-600">
-                                    <i class="fas fa-phone w-4 text-gray-300"></i> {{ $customer->phoneNo }}
+                                    <i class="fas fa-phone w-4 text-gray-300"></i> {{ $customer->phoneNo ?? 'N/A' }}
                                 </div>
                             </div>
                         </td>
 
                         <td class="px-8 py-6">
                             @if($customer->blacklisted)
-                                <span class="bg-red-100 text-red-600 px-3 py-1 rounded-lg font-bold text-[10px] uppercase tracking-wider">
+                                <span class="bg-gray-900 text-white px-3 py-1 rounded-lg font-bold text-[10px] uppercase tracking-wider shadow-lg shadow-gray-900/20">
                                     Blacklisted
                                 </span>
-                            @elseif($customer->accountStat == 'active')
-                                <span class="bg-green-100 text-green-600 px-3 py-1 rounded-lg font-bold text-[10px] uppercase tracking-wider">
-                                    Active
+                            @elseif($customer->accountStat == 'approved' || $customer->accountStat == 'active')
+                                <span class="bg-green-100 text-green-600 px-3 py-1 rounded-lg font-bold text-[10px] uppercase tracking-wider border border-green-100">
+                                    Approved
+                                </span>
+                            @elseif($customer->accountStat == 'pending')
+                                <span class="bg-yellow-100 text-yellow-600 px-3 py-1 rounded-lg font-bold text-[10px] uppercase tracking-wider animate-pulse border border-yellow-100">
+                                    Pending
+                                </span>
+                            @elseif($customer->accountStat == 'rejected')
+                                <span class="bg-red-100 text-red-600 px-3 py-1 rounded-lg font-bold text-[10px] uppercase tracking-wider border border-red-100">
+                                    Rejected
                                 </span>
                             @else
-                                <span class="bg-gray-100 text-gray-500 px-3 py-1 rounded-lg font-bold text-[10px] uppercase tracking-wider">
-                                    Pending
+                                <span class="bg-gray-100 text-gray-500 px-3 py-1 rounded-lg font-bold text-[10px] uppercase tracking-wider border border-gray-200">
+                                    Unverified
                                 </span>
                             @endif
                         </td>
@@ -91,7 +100,7 @@
                     @empty
                     <tr>
                         <td colspan="5" class="px-8 py-12 text-center text-gray-400 font-medium">
-                            No customers found.
+                            No customers found matching your search.
                         </td>
                     </tr>
                     @endforelse

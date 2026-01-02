@@ -54,7 +54,7 @@ class DatabaseSeeder extends Seeder
             'drivingNo' => 'D-88213491',
             'homeAddress' => 'Kolej Tun Dr Ismail, UTM',
             'collegeAddress' => 'KTDI, UTM Skudai',
-            'accountStat' => 'active'
+            'accountStat' => 'unverified'
         ]);
 
         // Add loyalty points for main customer

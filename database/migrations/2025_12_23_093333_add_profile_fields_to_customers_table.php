@@ -12,10 +12,9 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('customers', function (Blueprint $table) {
-            // Add new columns (nullable so existing users don't break)
+            // Existing lines
             $table->string('bankName')->nullable()->after('password');
-            $table->string('bankAccountNo')->nullable()->after('bankName');            
-        
+            $table->string('bankAccountNo')->nullable()->after('bankName');
         });
     }
 
