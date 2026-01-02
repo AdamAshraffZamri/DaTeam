@@ -10,8 +10,8 @@ use App\Http\Controllers\LoyaltyController;
 use App\Http\Controllers\PenaltyController; 
 use App\Http\Controllers\FinanceController; 
 use App\Http\Controllers\VoucherController;
-use App\Http\Controllers\FleetController; // Ensure this is imported
-use App\Http\Controllers\InspectionController; // Ensure this is imported
+use App\Http\Controllers\FleetController;
+use App\Http\Controllers\InspectionController;
 
 /*
 |--------------------------------------------------------------------------
@@ -40,13 +40,14 @@ Route::get('/about', function() { return view('pages.about'); })->name('pages.ab
 Route::get('/faq', function() { return view('pages.faq'); })->name('pages.faq');
 Route::get('/contact', function() { return view('pages.contact'); })->name('pages.contact');
 
-// --- Protected Customer Routes ---
+// ====================================================
+//  CUSTOMER ROUTES (Middleware: auth)
+// ====================================================
 Route::middleware('auth')->group(function () {
     
     // 1. Profile & Auth
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
-    // [NEW] Separate route for password update
     Route::put('/profile/password', [ProfileController::class, 'updatePassword'])->name('profile.password'); 
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
@@ -66,7 +67,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/book/agreement/{id}', [BookingController::class, 'showAgreement'])->name('book.agreement');
     Route::post('/my-bookings/inspection/{id}', [BookingController::class, 'uploadInspection'])->name('book.inspection.upload');
 
-    // 4. Finance, Loyalty & Penalties
+    // 4. Finance
     Route::get('/finance', [FinanceController::class, 'index'])->name('finance.index');
     Route::post('/finance/claim/{id}', [FinanceController::class, 'requestRefund'])->name('finance.claim');
     
@@ -76,18 +77,28 @@ Route::middleware('auth')->group(function () {
     Route::get('/finance/pay-fine/{id}', [FinanceController::class, 'payFine'])->name('finance.pay_fine');
     Route::post('/finance/pay-fine/{id}', [FinanceController::class, 'submitFine'])->name('finance.submit_fine');
 
-    Route::resource('loyalty', LoyaltyController::class);
-    Route::resource('penalties', PenaltyController::class);
+    // 5. Loyalty & Vouchers (FIXED SECTION)
+    Route::get('/loyalty', [LoyaltyController::class, 'index'])->name('loyalty.index');
+    Route::post('/loyalty/redeem', [LoyaltyController::class, 'redeemReward'])->name('loyalty.redeem'); // Route PENTING ini
     Route::post('/voucher/apply', [VoucherController::class, 'apply'])->name('voucher.apply');
+    Route::get('/voucher/available', [VoucherController::class, 'getAvailableVouchers'])->name('voucher.available');
 
-    // Feedback / Review Route
+    Route::resource('penalties', PenaltyController::class);
+
+    // Feedback
     Route::post('/bookings/{id}/feedback', [App\Http\Controllers\FeedbackController::class, 'store'])->name('feedback.store');
+
 
     Route::post('/notifications/mark-read', [App\Http\Controllers\BookingController::class, 'markNotificationsRead'])->name('notifications.markRead');
 });
 
+ // <--- PENUTUP UNTUK CUSTOMER AUTH (JANGAN PADAM)
 
-// --- Staff / Admin Routes ---
+
+
+// ====================================================
+//  STAFF ROUTES (Middleware: auth:staff)
+// ====================================================
 Route::prefix('staff')->middleware(['auth:staff'])->group(function () {
 
     // Dashboard
@@ -97,30 +108,18 @@ Route::prefix('staff')->middleware(['auth:staff'])->group(function () {
     Route::get('/bookings', [StaffBookingController::class, 'index'])->name('staff.bookings.index');
     Route::get('/bookings/{id}', [StaffBookingController::class, 'show'])->name('staff.bookings.show');
 
-    // --- RENTAL WORKFLOW ACTIONS ---
-    // 1. Verify Payment
+    // Workflow
     Route::post('/bookings/{id}/verify-payment', [StaffBookingController::class, 'verifyPayment'])->name('staff.bookings.verify_payment');
-    
-    // 2. Approve Agreement
     Route::post('/bookings/{id}/approve-agreement', [StaffBookingController::class, 'approveAgreement'])->name('staff.bookings.approve_agreement');
-    
-    // 3. Pickup / Handover
     Route::post('/bookings/{id}/pickup', [StaffBookingController::class, 'pickup'])->name('staff.bookings.pickup');
-    
-    // 4. Return / Finalize (Complete Rental)
     Route::post('/bookings/{id}/return', [StaffBookingController::class, 'processReturn'])->name('staff.bookings.return');
-
-    // 5. Refund (For Cancelled Bookings) - FIX: Removed double 'staff' prefix
     Route::post('/bookings/{id}/refund', [StaffBookingController::class, 'processRefund'])->name('staff.bookings.refund');
-
-    // [NEW] Reject Booking Route
     Route::post('/bookings/{id}/reject', [StaffBookingController::class, 'reject'])->name('staff.bookings.reject');
 
-    // --- INSPECTIONS ---
-    // Used for the "Staff Upload" modal in Booking Details
+    // Inspections
     Route::post('/inspections/{id}/store', [StaffBookingController::class, 'storeInspection'])->name('staff.inspections.store');
 
-    // --- FLEET MANAGEMENT ---
+    // Fleet
     Route::get('/fleet', [FleetController::class, 'index'])->name('staff.fleet.index');
     Route::get('/fleet/create', [FleetController::class, 'create'])->name('staff.fleet.create');
     Route::post('/fleet/store', [FleetController::class, 'store'])->name('staff.fleet.store');
@@ -130,14 +129,14 @@ Route::prefix('staff')->middleware(['auth:staff'])->group(function () {
     Route::delete('/fleet/{vehicle}', [FleetController::class, 'destroy'])->name('staff.fleet.destroy');
     Route::post('/fleet/status/{vehicle}', [FleetController::class, 'updateStatus'])->name('staff.fleet.update_status');
 
-    // --- SEPARATE INSPECTION MODE (If needed for dedicated page) ---
-    // Renamed to avoid conflict with 'storeInspection' above
+    // Separate Inspection Mode
     Route::get('/inspections', [InspectionController::class, 'index'])->name('staff.inspections.index');
     Route::get('/inspections/{id}/create', [InspectionController::class, 'create'])->name('staff.inspections.create');
     Route::post('/inspections/{id}', [InspectionController::class, 'store'])->name('staff.inspections.create_record');
 
     // Staff Assignment
     Route::post('/bookings/{id}/assign', [StaffBookingController::class, 'assignStaff'])->name('staff.bookings.assign');
+
 
     // --- STAFF MANAGEMENT (Admin Only) ---
     Route::middleware(['staff.admin'])->group(function () {
@@ -148,4 +147,18 @@ Route::prefix('staff')->middleware(['auth:staff'])->group(function () {
         Route::put('/management/{id}', [App\Http\Controllers\StaffManagementController::class, 'update'])->name('staff.management.update');
         Route::delete('/management/{id}', [App\Http\Controllers\StaffManagementController::class, 'destroy'])->name('staff.management.destroy');
     });
+
+    // Penalty & Loyalty manual trigger
+    Route::post('/bookings/{id}/complete', [LoyaltyController::class, 'bookingCompleted'])->name('staff.bookings.complete');
+    Route::resource('penalty', PenaltyController::class);
+    
+    // Staff Loyalty & Rewards Management
+    Route::get('/loyalty', [LoyaltyController::class, 'staffIndex'])->name('staff.loyalty.index');
+    Route::get('/loyalty/customer/{customerId}', [LoyaltyController::class, 'staffShowCustomer'])->name('staff.loyalty.show_customer');
+    Route::post('/loyalty/voucher/store', [LoyaltyController::class, 'staffStoreVoucher'])->name('staff.loyalty.store_voucher');
+    Route::get('/loyalty/voucher/{voucherId}/edit', [LoyaltyController::class, 'staffEditVoucher'])->name('staff.loyalty.edit_voucher');
+    Route::put('/loyalty/voucher/{voucherId}', [LoyaltyController::class, 'staffUpdateVoucher'])->name('staff.loyalty.update_voucher');
+    Route::delete('/loyalty/voucher/{voucherId}', [LoyaltyController::class, 'staffDeleteVoucher'])->name('staff.loyalty.delete_voucher');
+    
+
 });

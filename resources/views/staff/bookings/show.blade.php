@@ -136,6 +136,7 @@
                         @endif
                     </div>
                 </div>
+
             </div>
 
             {{-- RIGHT COLUMN: INSPECTIONS & ACTIONS --}}

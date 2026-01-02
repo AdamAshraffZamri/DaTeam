@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Voucher;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Auth;
 
 class VoucherController extends Controller
 {
@@ -14,7 +15,7 @@ class VoucherController extends Controller
         $currentTotal = $request->input('total_amount');
 
         // 1. Find the Voucher
-        $voucher = Voucher::where('voucherCode', $code)->first();
+        $voucher = Voucher::where('voucherCode', $code)->orWhere('code', $code)->first();
 
         // 2. Validate Voucher Existence
         if (!$voucher) {
@@ -48,5 +49,42 @@ class VoucherController extends Controller
             'new_total' => number_format($newTotal, 2),
             'voucher_id' => $voucher->voucherID // Send back ID to store in hidden input
         ]);
+    }
+
+    // Get available vouchers for logged-in customer
+    public function getAvailableVouchers()
+    {
+        $userId = Auth::id();
+        
+        if (!$userId) {
+            return response()->json([]);
+        }
+
+        $vouchers = Voucher::where(function($query) use ($userId) {
+                $query->where('user_id', $userId)->orWhere('customerID', $userId);
+            })
+            ->where('isUsed', false)
+            ->where('voucherType', 'Rental Discount') // Only rental discount vouchers
+            ->whereDate('validUntil', '>=', now())
+            ->whereDate('validFrom', '<=', now())
+            ->get()
+            ->map(function($voucher) {
+                $code = $voucher->code ?? $voucher->voucherCode ?? 'N/A';
+                $amount = $voucher->voucherAmount ?? 0;
+                $discountPercent = $voucher->discount_percent ?? 0;
+                $type = $voucher->voucherType ?? 'Rental Discount';
+                $expires = $voucher->validUntil ?? $voucher->expires_at;
+                
+                return [
+                    'id' => $voucher->voucherID ?? $voucher->id ?? 0,
+                    'code' => $code,
+                    'amount' => $amount,
+                    'discount_percent' => $discountPercent,
+                    'type' => $type,
+                    'expires' => $expires ? $expires->format('d M Y') : 'No expiry',
+                ];
+            })->values();
+
+        return response()->json($vouchers);
     }
 }

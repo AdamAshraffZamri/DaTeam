@@ -395,6 +395,7 @@ class BookingController extends Controller
         return ($days * $dailyRate) + $remainderCost;
     }
 
+
     public function getRemainingBalanceAttribute()
     {
         // Sum all payments for this booking that are already verified or completed
@@ -407,4 +408,5 @@ class BookingController extends Controller
         auth()->user()->unreadNotifications->markAsRead();
         return back();
     }
+
 }

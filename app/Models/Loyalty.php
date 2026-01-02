@@ -2,20 +2,15 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
-class Loyalty extends Model
+/**
+ * Backwards-compatible alias model.
+ *
+ * The application now uses `LoyaltyPoint` (table: `loyalty_points`).
+ * Keep this class so any legacy references to `Loyalty` still work.
+ */
+class Loyalty extends LoyaltyPoint
 {
     use HasFactory;
-
-    protected $table = 'loyalties';
-    protected $primaryKey = 'loyaltyID';
-
-    protected $fillable = ['customerID', 'tier', 'pointsEarned', 'pointsRedeemed', 'totalPoints'];
-
-    public function customer()
-    {
-        return $this->belongsTo(Customer::class, 'customerID', 'customerID');
-    }
 }

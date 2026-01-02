@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use App\Models\Customer;
 use App\Models\Staff;
 use App\Models\Vehicle;
+use App\Models\LoyaltyPoint;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 
@@ -12,19 +13,39 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
-        // 1. Create a Test Staff (Admin)
+        // 1. Seed Staff
+        $this->seedStaff();
+
+        // 2. Seed Customers & Loyalty Points
+        $this->seedCustomersWithLoyalty();
+
+        // 3. Seed Vehicles
+        $this->seedVehicles();
+    }
+
+    /**
+     * Seed Test Staff (Admin)
+     */
+    private function seedStaff(): void
+    {
         Staff::firstOrCreate([
             'email' => 'admin@hasta.com'
         ], [
             'name' => 'Hasta Admin',
             'role' => 'admin',
             'phoneNo' => '011-10900700',
-            'password' => Hash::make('password'), // Login with this password
+            'password' => Hash::make('password'),
             'active' => true
         ]);
+    }
 
-        // 2. Create a Test Customer
-        Customer::firstOrCreate([
+    /**
+     * Seed Customers with Loyalty Points
+     */
+    private function seedCustomersWithLoyalty(): void
+    {
+        // Main test customer
+        $mainCustomer = Customer::firstOrCreate([
             'email' => 'student@utm.my'
         ], [
             'fullName' => 'Ali Bin Abu',
@@ -36,10 +57,44 @@ class DatabaseSeeder extends Seeder
             'accountStat' => 'active'
         ]);
 
-        // 3. Insert 12 Hasta Travel & Tours Vehicles
+        // Add loyalty points for main customer
+        LoyaltyPoint::firstOrCreate(
+            ['user_id' => $mainCustomer->customerID],
+            ['points' => 1000, 'tier' => 'Silver']
+        );
+
+        // Additional test customers with loyalty data
+        $additionalCustomers = [
+            ['name' => 'Ali Abu', 'email' => 'ali@example.com', 'phone' => '0199876543', 'points' => 2500, 'tier' => 'Gold'],
+            ['name' => 'Siti Nur', 'email' => 'siti@example.com', 'phone' => '0187654321', 'points' => 1500, 'tier' => 'Silver'],
+            ['name' => 'Ahmad Jais', 'email' => 'ahmad@example.com', 'phone' => '0176543210', 'points' => 500, 'tier' => 'Bronze'],
+        ];
+
+        foreach ($additionalCustomers as $customerData) {
+            $customer = Customer::firstOrCreate([
+                'email' => $customerData['email']
+            ], [
+                'fullName' => $customerData['name'],
+                'phoneNo' => $customerData['phone'],
+                'password' => Hash::make('password'),
+                'accountStat' => 'active'
+            ]);
+
+            LoyaltyPoint::firstOrCreate(
+                ['user_id' => $customer->customerID],
+                ['points' => $customerData['points'], 'tier' => $customerData['tier']]
+            );
+        }
+    }
+
+    /**
+     * Seed Vehicles
+     */
+    private function seedVehicles(): void
+    {
         $vehicles = [
-        [
-            'plateNo' => 'JWD9496', 
+            [
+                'plateNo' => 'JWD9496', 
             'brand' => 'Honda', 
             'model' => 'Vario 160 CC', 
             'vehicle_category' => 'bike', 
@@ -221,7 +276,7 @@ class DatabaseSeeder extends Seeder
     ];
 
         foreach ($vehicles as $v) {
-            \App\Models\Vehicle::create(array_merge($v, [
+            Vehicle::create(array_merge($v, [
                 'availability' => 1, 
                 'priceHour' => $v['hourly_rates']['1']
             ]));
