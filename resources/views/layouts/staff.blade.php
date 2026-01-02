@@ -52,6 +52,14 @@
                     <a href="#" class="flex items-center px-4 py-3 rounded-xl transition font-bold text-sm text-gray-500 hover:bg-orange-50 hover:text-orange-600">
                         <i class="fas fa-medal w-5 mr-3"></i> Loyalty & Rewards
                     </a>
+
+                    @if(Auth::guard('staff')->user()->role === 'admin')
+                        <a href="{{ route('staff.management.index') }}" 
+                        class="flex items-center px-4 py-3 rounded-xl transition font-bold text-sm
+                        {{ request()->routeIs('staff.management.*') ? 'bg-orange-600 text-white shadow-lg shadow-orange-500/30' : 'text-gray-500 hover:bg-orange-50 hover:text-orange-600' }}">
+                            <i class="fas fa-users-cog w-5 mr-3"></i> Staff Management
+                        </a>
+                    @endif
                 </nav>
             </div>
 
