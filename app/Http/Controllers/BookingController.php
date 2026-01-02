@@ -43,17 +43,27 @@ class BookingController extends Controller
     {
         $user = auth()->user();
 
-        // STRICT CHECK: Verify ALL profile fields are filled
+        // 1. BLACKLIST CHECK (NEW)
+        // If the user is blacklisted, block them immediately.
+        if ($user->blacklisted) {
+            $reason = $user->blacklist_reason ?? 'Violation of terms and conditions.';
+            
+            return redirect()->route('profile.edit')
+                ->with('error', '⛔ ACTION BLOCKED: Your account is blacklisted. You cannot make new bookings. Reason: ' . $reason);
+        }
+
+        // 2. STRICT CHECK: Verify ALL profile fields are filled
         if (
             empty($user->fullName) ||
             empty($user->email) ||
             empty($user->phoneNo) ||
             empty($user->emergency_contact_no) ||
+            empty($user->emergency_contact_name) || // Added this new field
             empty($user->homeAddress) ||
             empty($user->collegeAddress) ||
-            empty($user->stustaffID) || // Student/Staff ID
-            empty($user->ic_passport) || // IC or Passport
-            empty($user->drivingNo) || // License Number
+            empty($user->stustaffID) || 
+            empty($user->ic_passport) || 
+            empty($user->drivingNo) || 
             empty($user->nationality) ||
             empty($user->dob) ||
             empty($user->faculty) ||

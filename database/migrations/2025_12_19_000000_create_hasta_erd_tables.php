@@ -290,7 +290,6 @@ return new class extends Migration
             $table->id('MaintenanceID'); // PK
             $table->unsignedBigInteger('VehicleID');
             $table->unsignedBigInteger('StaffID')->nullable();
-
             $table->date('date')->nullable(); 
             $table->string('description')->nullable();
             $table->decimal('cost', 10, 2)->default(0.00);
