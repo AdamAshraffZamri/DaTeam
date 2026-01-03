@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Payment;
 use App\Models\Booking;
+use App\Models\Vehicle;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -22,13 +23,13 @@ class ReportController extends Controller
             DB::raw("DATE_FORMAT(transactionDate, '%Y-%m') as month"), 
             DB::raw('SUM(amount) as total')
         )
-        ->where('paymentStatus', 'Verified')
+        ->where('paymentStatus', 'Verified') 
         ->where('transactionDate', '>=', Carbon::now()->subMonths(6))
         ->groupBy('month')
         ->orderBy('month')
         ->get();
 
-        // 2. FLEET POPULARITY
+        // 2. FLEET POPULARITY (Top 5 Vehicles)
         $popularVehicles = Booking::select('vehicleID', DB::raw('count(*) as count'))
             ->whereIn('bookingStatus', ['Completed', 'Active'])
             ->with('vehicle')
@@ -37,7 +38,7 @@ class ReportController extends Controller
             ->limit(5)
             ->get();
 
-        // 3. BOOKING STATUS
+        // 3. BOOKING STATUS (Pie Chart Data)
         $statusStats = Booking::select('bookingStatus', DB::raw('count(*) as total'))
             ->groupBy('bookingStatus')
             ->get();
