@@ -4,7 +4,7 @@
 {{-- 1. FIXED BACKGROUND --}}
 <div class="fixed inset-0 z-0">
     <div class="absolute inset-0 bg-cover bg-center" style="background-image: url('{{ asset('hastabg.png') }}');"></div>
-    <div class="absolute inset-0 bg-gradient-to-b from-black/80 via-black/50 to-black/90"></div>
+    <div class="absolute inset-0 bg-gradient-to-r from-black/70 via-black/45 to-black/75"></div>
 </div>
 
 {{-- 2. SCROLLABLE CONTENT --}}

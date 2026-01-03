@@ -6,7 +6,7 @@
 <div class="relative h-screen min-h-[600px] flex flex-col justify-center bg-gray-900 overflow-hidden">
     
     {{-- Abstract Background Shapes --}}
-    <div class="absolute top-0 left-0 w-full h-full overflow-hidden opacity-20">
+    <div class="absolute top-0 left-0 w-full h-full bg-white/50 overflow-hidden opacity-20">
         <div class="absolute -top-[20%] -left-[10%] w-[50%] h-[50%] bg-orange-600 rounded-full blur-[100px]"></div>
         <div class="absolute top-[40%] -right-[10%] w-[40%] h-[60%] bg-red-600 rounded-full blur-[100px]"></div>
     </div>
@@ -51,7 +51,7 @@
             {{-- Image / Visual --}}
             <div class="w-full md:w-1/2 relative">
                 <div class="absolute inset-0 bg-orange-500 rounded-3xl transform rotate-3 opacity-20"></div>
-                <img src="{{ asset('hastabg.png') }}" alt="Our Journey" class="relative rounded-3xl shadow-2xl object-cover h-[400px] w-full transform -rotate-2 transition hover:rotate-0 duration-500">
+                <img src="{{ asset('hastabg1.png') }}" alt="Our Journey" class="relative rounded-3xl shadow-2xl object-cover h-[400px] w-full transform -rotate-2 transition hover:rotate-0 duration-500">
             </div>
 
             {{-- Text Content --}}

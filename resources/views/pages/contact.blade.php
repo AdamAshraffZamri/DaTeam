@@ -14,12 +14,12 @@
     {{-- 1. BACKGROUND IMAGE (Elegant Car/Rental Theme) --}}
     <div class="absolute inset-0 z-0">
         {{-- Image: Elegant Dashboard/Driving View --}}
-        <img src="https://images.unsplash.com/photo-1502877338535-766e1452684a?q=80&w=2072&auto=format&fit=crop" 
+        <img src="{{ asset('hastabg1.png') }}" 
              alt="Luxury Drive" 
              class="w-full h-full object-cover opacity-40">
         
         {{-- Dark Gradient Overlay for "Calm" Contrast --}}
-        <div class="absolute inset-0 bg-gradient-to-b from-gray-900/90 via-gray-900/60 to-gray-900"></div>
+        <div class="absolute inset-0 bg-gradient-to-b from-gray-900/40 via-gray-900/10 to-gray-900"></div>
     </div>
 
     {{-- 2. NAVIGATION PILL (Exact Match to Home Page) --}}
@@ -39,9 +39,6 @@
             {{-- LEFT: Text & Info --}}
             <div class="w-full lg:w-5/12 text-white space-y-8 animate-fade-in-up delay-100 pt-4">
                 <div>
-                    <span class="inline-block py-1 px-4 rounded-full bg-orange-500/20 border border-orange-500 text-orange-400 text-xs font-bold tracking-widest uppercase mb-6 backdrop-blur-sm">
-                        Contact Us
-                    </span>
                     <h1 class="text-5xl font-black leading-tight mb-6 drop-shadow-lg">
                         Drive with <br>
                         <span class="text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-amber-200">Confidence.</span>
@@ -87,7 +84,7 @@
 
             {{-- RIGHT: Glass Form --}}
             <div class="w-full lg:w-7/12 animate-fade-in-up delay-200">
-                <div class="bg-black/40 backdrop-blur-xl border border-white/10 p-8 md:p-10 rounded-[2rem] shadow-2xl relative overflow-hidden">
+                <div class="bg-black/50 backdrop-blur-xl border border-white/10 p-8 md:p-10 rounded-[2rem] shadow-2xl relative overflow-hidden">
                     
                     {{-- Soft Glow Effects for "Calm" feel --}}
                     <div class="absolute -top-32 -right-32 w-64 h-64 bg-orange-500 rounded-full blur-[100px] opacity-20 pointer-events-none"></div>
