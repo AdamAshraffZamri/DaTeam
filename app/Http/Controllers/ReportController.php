@@ -45,26 +45,29 @@ class ReportController extends Controller
 
     public function exportToDrive()
     {
-        // 1. Prepare Data for the PDF
-        $data = [
-            'date' => now()->format('d M Y'),
-            'total_revenue' => Payment::where('paymentStatus', 'Verified')->sum('amount'),
-            'total_bookings' => Booking::count(),
-            'bookings' => Booking::with(['customer', 'vehicle'])->latest()->take(20)->get()
-        ];
-
-        // 2. Generate PDF (Create this view file later)
-        $pdf = Pdf::loadView('staff.reports.pdf', $data);
-        
-        // 3. Define Filename
-        $filename = 'Monthly_Report_' . now()->format('F_Y') . '.pdf';
-
-        // 4. Upload to Google Drive
         try {
+            // 1. Prepare Data
+            $data = [
+                'date' => now()->format('d M Y'),
+                'total_revenue' => Payment::where('paymentStatus', 'Verified')->sum('amount'),
+                'total_bookings' => Booking::count(),
+                'bookings' => Booking::with(['customer', 'vehicle'])->latest()->take(20)->get()
+            ];
+
+            // 2. Generate PDF (Now inside the try block to catch errors)
+            $pdf = Pdf::loadView('staff.reports.pdf', $data);
+            
+            // 3. Define Filename
+            $filename = 'Monthly_Report_' . now()->format('F_Y') . '.pdf';
+
+            // 4. Upload to Google Drive
             Storage::disk('google')->put($filename, $pdf->output());
+
             return back()->with('success', 'Report successfully uploaded to Google Drive!');
+
         } catch (\Exception $e) {
-            return back()->with('error', 'Failed to upload to Drive: ' . $e->getMessage());
+            // This will now catch PDF errors AND Google Drive errors
+            return back()->with('error', 'Export Failed: ' . $e->getMessage());
         }
     }
 }
