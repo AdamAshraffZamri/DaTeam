@@ -13,6 +13,7 @@ use App\Http\Controllers\VoucherController;
 use App\Http\Controllers\FleetController;
 use App\Http\Controllers\InspectionController;
 use App\Http\Controllers\StaffCustomerController;
+use App\Http\Controllers\ReportController;
 
 
 /*

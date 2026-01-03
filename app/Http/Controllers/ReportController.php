@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Payment;
 use App\Models\Booking;
+use App\Models\Feedback;;
 use App\Models\Vehicle;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
@@ -18,95 +19,183 @@ class ReportController extends Controller
 {
     public function index()
     {
-        // 1. REVENUE (Last 6 Months)
-        $revenueData = Payment::select(
-            DB::raw("DATE_FORMAT(transactionDate, '%Y-%m') as month"), 
-            DB::raw('SUM(amount) as total')
-        )
-        ->where('paymentStatus', 'Verified') 
-        ->where('transactionDate', '>=', Carbon::now()->subMonths(6))
-        ->groupBy('month')
-        ->orderBy('month')
-        ->get();
+        // 1. Daily Income
+        $dailyIncome = Payment::whereDate('created_at', Carbon::today())->sum('amount');
 
-        // 2. FLEET POPULARITY (Top 5 Vehicles)
-        $popularVehicles = Booking::select('vehicleID', DB::raw('count(*) as count'))
-            ->whereIn('bookingStatus', ['Completed', 'Active'])
-            ->with('vehicle')
-            ->groupBy('vehicleID')
-            ->orderByDesc('count')
+        // 2. Monthly Income
+        $monthlyIncome = Payment::whereMonth('created_at', Carbon::now()->month)
+            ->whereYear('created_at', Carbon::now()->year)
+            ->sum('amount');
+
+        // 3. Booking Status
+        $statusRaw = Booking::select('bookingStatus', DB::raw('count(*) as count'))
+            ->groupBy('bookingStatus')
+            ->get();
+        $bookingStatus = $statusRaw->pluck('count', 'bookingStatus'); 
+
+        // 4. Booking Overview (Last 7 Days)
+        $startDate = Carbon::now()->subDays(6);
+        $bookingOverview = Booking::select(DB::raw('DATE(created_at) as date'), DB::raw('count(*) as count'))
+            ->where('created_at', '>=', $startDate)
+            ->groupBy('date')
+            ->orderBy('date', 'ASC')
+            ->get();
+
+        // 5. Revenue Data (for Chart)
+        $revenueData = Payment::select(DB::raw('DATE(created_at) as date'), DB::raw('sum(amount) as total'))
+            ->where('created_at', '>=', $startDate)
+            ->groupBy('date')
+            ->orderBy('date', 'ASC')
+            ->get();
+
+        // 6. (NEW) Top Rented Vehicles (Same logic as PDF)
+        $monthBookings = Booking::with('vehicle')
+            ->whereMonth('created_at', Carbon::now()->month)
+            ->whereYear('created_at', Carbon::now()->year)
+            ->get();
+
+        $topVehicles = $monthBookings->groupBy(function ($booking) {
+                return $booking->vehicle->model ?? 'Unknown Vehicle';
+            })
+            ->map(function ($group) {
+                return [
+                    'model' => $group->first()->vehicle->model ?? 'Unknown',
+                    'total_bookings' => $group->count()
+                ];
+            })
+            ->sortByDesc('total_bookings')
+            ->take(5);
+
+        // 7. Reviews
+        $reviews = Feedback::with(['booking.customer', 'booking.vehicle'])
+            ->latest()
             ->limit(5)
             ->get();
 
-        // 3. BOOKING STATUS (Pie Chart Data)
-        $statusStats = Booking::select('bookingStatus', DB::raw('count(*) as total'))
-            ->groupBy('bookingStatus')
-            ->get();
-
-        return view('staff.reports.index', compact('revenueData', 'popularVehicles', 'statusStats'));
+        return view('staff.reports.index', compact(
+            'dailyIncome', 
+            'monthlyIncome', 
+            'bookingStatus', 
+            'statusRaw', 
+            'bookingOverview', 
+            'revenueData', 
+            'topVehicles', // <--- Pass the new data
+            'reviews'
+        ));
     }
 
     public function exportToDrive()
     {
         try {
-            // 1. Prepare Data
-            $data = [
-                'date' => now()->format('d M Y'),
-                'total_revenue' => Payment::where('paymentStatus', 'Verified')->sum('amount'),
-                'total_bookings' => Booking::count(),
-                'bookings' => Booking::with(['customer', 'vehicle'])->latest()->take(20)->get()
-            ];
+            // --- 1. PREPARE DATA ---
 
-            // 2. Generate PDF
-            $pdf = Pdf::loadView('staff.reports.pdf', $data);
+            // A. KPI Cards
+            $dailyIncome = Payment::whereDate('created_at', Carbon::today())->sum('amount');
+            $monthlyIncome = Payment::whereMonth('created_at', Carbon::now()->month)
+                ->whereYear('created_at', Carbon::now()->year)
+                ->sum('amount');
+
+            // B. Booking Status Summary
+            $bookingStatus = Booking::select('bookingStatus', DB::raw('count(*) as count'))
+                ->groupBy('bookingStatus')
+                ->pluck('count', 'bookingStatus');
+
+            // C. Booking Overview (Last 7 Days)
+            $startDate = Carbon::now()->subDays(6);
+            $bookingOverview = Booking::select(DB::raw('DATE(created_at) as date'), DB::raw('count(*) as count'))
+                ->where('created_at', '>=', $startDate)
+                ->groupBy('date')
+                ->orderBy('date', 'ASC')
+                ->get();
+
+            // D. (FIXED) Top Rented Vehicles (Collection Method)
+            // 1. Fetch all bookings for this month with the vehicle data
+            $monthBookings = Booking::with('vehicle')
+                ->whereMonth('created_at', Carbon::now()->month)
+                ->whereYear('created_at', Carbon::now()->year)
+                ->get();
+
+            // 2. Group by Vehicle Model and Count in PHP (Bypasses the "Unknown Column" error)
+            $topVehicles = $monthBookings->groupBy(function ($booking) {
+                    // Get the vehicle model name safely
+                    return $booking->vehicle->model ?? 'Unknown Vehicle';
+                })
+                ->map(function ($group) {
+                    // Count how many bookings in this group
+                    return [
+                        'model' => $group->first()->vehicle->model ?? 'Unknown', // Car Name
+                        'total_bookings' => $group->count() // Total Count
+                    ];
+                })
+                ->sortByDesc('total_bookings') // Sort Highest to Lowest
+                ->take(5); // Take Top 5
+
+            // E. Detailed Breakdowns
+            $dailyBreakdown = Payment::select(DB::raw('DATE(created_at) as date'), DB::raw('sum(amount) as total'))
+                ->whereMonth('created_at', Carbon::now()->month)
+                ->whereYear('created_at', Carbon::now()->year)
+                ->groupBy('date')
+                ->orderBy('date', 'ASC')
+                ->get();
+
+            $monthlyBreakdown = Payment::select(DB::raw('MONTH(created_at) as month'), DB::raw('sum(amount) as total'))
+                ->whereYear('created_at', Carbon::now()->year)
+                ->groupBy('month')
+                ->orderBy('month', 'ASC')
+                ->get();
+
+            // F. Reviews
+            $reviews = Feedback::with(['booking.customer', 'booking.vehicle'])
+                ->latest()
+                ->limit(10)
+                ->get();
+
+            // --- 2. GENERATE PDF ---
+            $pdf = Pdf::loadView('staff.reports.pdf', compact(
+                'dailyIncome', 
+                'monthlyIncome', 
+                'bookingStatus', 
+                'bookingOverview',
+                'topVehicles',    
+                'dailyBreakdown', 
+                'monthlyBreakdown', 
+                'reviews'
+            ));
+            
             $pdfContent = $pdf->output();
-            
-            $filename = 'Monthly_Report_' . now()->format('F_Y') . '_' . time() . '.pdf';
+            $filename = 'Management_Report_' . now()->format('Y-m-d_H-i') . '.pdf';
 
-            // ---------------------------------------------------------
-            // DIRECT GOOGLE UPLOAD (Deep SSL Fix)
-            // ---------------------------------------------------------
-            
-            // A. Initialize Client
+            // --- 3. GOOGLE DRIVE UPLOAD ---
             $client = new Client();
-
-            // B. FIX: Override the broken 'php.ini' certificate path
-            // We point CURLOPT_CAINFO to THIS file (__FILE__) because we know it exists.
-            // Then we disable verification so it doesn't matter that it's not a real cert.
             $httpClient = new GuzzleClient([
                 'verify' => false,
                 'curl' => [
-                    CURLOPT_CAINFO => __FILE__, // Override the missing system file
+                    CURLOPT_CAINFO => __FILE__, 
                     CURLOPT_SSL_VERIFYPEER => false,
                 ]
             ]);
             $client->setHttpClient($httpClient);
-
-            // C. Set Credentials
             $client->setClientId(env('GOOGLE_DRIVE_CLIENT_ID'));
             $client->setClientSecret(env('GOOGLE_DRIVE_CLIENT_SECRET'));
             $client->refreshToken(env('GOOGLE_DRIVE_REFRESH_TOKEN'));
             
             $service = new Drive($client);
-
-            // D. Define File Metadata
             $folderId = env('GOOGLE_DRIVE_FOLDER_ID');
             $fileMetadata = new DriveFile([
                 'name' => $filename,
                 'parents' => [$folderId] 
             ]);
 
-            // E. Upload File
             $service->files->create($fileMetadata, [
                 'data' => $pdfContent,
                 'mimeType' => 'application/pdf',
                 'uploadType' => 'multipart'
             ]);
 
-            return back()->with('success', 'Report uploaded successfully! (User Mode)');
+            return back()->with('success', 'Report successfully generated and saved to Google Drive!');
 
         } catch (\Exception $e) {
-            return back()->with('error', 'Upload Failed: ' . $e->getMessage());
+            return back()->with('error', 'Drive Upload Failed: ' . $e->getMessage());
         }
     }
 }
