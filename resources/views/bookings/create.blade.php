@@ -128,6 +128,91 @@
             </div>
         </form>
     </div>
+
+{{-- NEW SECTION: AVAILABLE TODAY --}}
+    <div class="w-full max-w-7xl mt-16 mb-20">
+        <div class="flex items-end justify-between mb-8 px-4">
+            <div>
+                <h2 class="text-3xl font-black text-white drop-shadow-md">Available Today</h2>
+                <p class="text-gray-300 text-sm mt-1">Grab a car instantly for today's journey.</p>
+            </div>
+            
+            {{-- Navigation Buttons --}}
+            <div class="hidden md:flex gap-2">
+                <button id="slidePrev" class="w-10 h-10 rounded-full bg-white/10 hover:bg-orange-600 text-white flex items-center justify-center transition border border-white/10">
+                    <i class="fas fa-chevron-left"></i>
+                </button>
+                <button id="slideNext" class="w-10 h-10 rounded-full bg-white/10 hover:bg-orange-600 text-white flex items-center justify-center transition border border-white/10">
+                    <i class="fas fa-chevron-right"></i>
+                </button>
+            </div>
+        </div>
+
+        {{-- SCROLLABLE LIST --}}
+        <div class="relative w-full">
+            @if(isset($vehicles) && $vehicles->count() > 0)
+            <div class="flex overflow-x-auto gap-5 px-4 pb-8 scroll-smooth no-scrollbar" id="carouselTrack">
+                @foreach($vehicles as $vehicle)
+                <div class="min-w-[280px] md:min-w-[320px] bg-black/40 backdrop-blur-md rounded-3xl overflow-hidden border border-white/15 shadow-xl relative group hover:-translate-y-2 transition duration-300 flex-shrink-0">
+                    
+                    {{-- Image --}}
+                    <div class="h-48 overflow-hidden relative">
+                        {{-- Use specific asset logic based on your system, assuming public/storage --}}
+                        <img src="{{ asset('storage/' . $vehicle->image) }}" alt="{{ $vehicle->model }}" 
+                             class="w-full h-full object-cover transform group-hover:scale-110 transition duration-700">
+                        <div class="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-80"></div>
+                        
+                        <div class="absolute top-3 right-3 bg-black/50 backdrop-blur border border-white/20 text-white px-3 py-1 rounded-full text-[10px] font-bold uppercase">
+                            {{ $vehicle->type }}
+                        </div>
+                    </div>
+
+                    {{-- Details --}}
+                    <div class="p-5">
+                        <div class="flex justify-between items-start mb-3">
+                            <div>
+                                <p class="text-orange-500 text-[10px] font-bold uppercase tracking-wider">{{ $vehicle->brand }}</p>
+                                <h3 class="text-xl font-bold text-white truncate">{{ $vehicle->model }}</h3>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-white font-bold text-lg">RM {{ $vehicle->priceHour }}</p>
+                                <p class="text-gray-400 text-[10px]">/ hour</p>
+                            </div>
+                        </div>
+
+                        {{-- Features --}}
+                        <div class="flex gap-3 text-gray-400 mb-5 text-xs border-t border-white/10 pt-3">
+                            <span class="flex items-center gap-1"><i class="fas fa-gas-pump text-orange-500"></i> {{ $vehicle->fuelType }}</span>
+                            <span class="flex items-center gap-1"><i class="fas fa-palette text-orange-500"></i> {{ $vehicle->color }}</span>
+                        </div>
+
+                        {{-- Quick Book Button (Auto-fills date to today) --}}
+                        <a href="{{ route('book.search', [
+                                'pickup_location' => 'Student Mall, UTM',
+                                'return_location' => 'Student Mall, UTM',
+                                'pickup_date' => date('Y-m-d'),
+                                'return_date' => date('Y-m-d', strtotime('+1 day')),
+                                'pickup_time' => '10:00', // Default
+                                'return_time' => '10:00', // Default
+                                'types[]' => $vehicle->type 
+                            ]) }}" 
+                           class="block w-full py-2.5 bg-white text-black font-bold text-center rounded-xl hover:bg-orange-500 hover:text-white transition text-sm">
+                            Book This Car
+                        </a>
+                    </div>
+                </div>
+                @endforeach
+            </div>
+            @else
+            <div class="text-center py-10 bg-white/5 rounded-3xl border border-white/10 mx-4">
+                <i class="fas fa-car-side text-4xl text-gray-600 mb-3"></i>
+                <p class="text-gray-300">All cars are fully booked for today.</p>
+                <p class="text-xs text-gray-500 mt-1">Try searching for a future date above.</p>
+            </div>
+            @endif
+        </div>
+    </div>
+
 </div>
 
 {{-- JAVASCRIPT --}}
@@ -226,7 +311,22 @@
         syncDates();
     });
 </script>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const track = document.getElementById('carouselTrack');
+        const nextBtn = document.getElementById('slideNext');
+        const prevBtn = document.getElementById('slidePrev');
 
+        if(track && nextBtn && prevBtn) {
+            nextBtn.addEventListener('click', () => {
+                track.scrollBy({ left: 320, behavior: 'smooth' });
+            });
+            prevBtn.addEventListener('click', () => {
+                track.scrollBy({ left: -320, behavior: 'smooth' });
+            });
+        }
+    });
+</script>
 {{-- Spacing --}}
 <div class="col-span-1 md:col-span-2 lg:col-span-3 flex flex-col items-center justify-center py-24 text-center"></div>
 <div class="h-24 bg-gray-50"></div>

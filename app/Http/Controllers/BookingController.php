@@ -75,9 +75,23 @@ class BookingController extends Controller
                 ->with('error', '⚠️ Action Required: You must complete ALL profile details (including Bank Info, Addresses, and IDs) before you can book a car.');
         }
         
-        // If checks pass, proceed to booking page
-        return view('bookings.create'); 
-    }
+        $today = Carbon::today();
+    
+        $vehicles = Vehicle::where('availability', true)
+            ->whereDoesntHave('bookings', function ($q) use ($today) {
+                // Exclude cars that have active bookings overlapping with "today"
+                $q->whereIn('bookingStatus', ['Submitted', 'Deposit Paid', 'Paid', 'Approved', 'Active'])
+                ->where(function ($sub) use ($today) {
+                    $sub->whereDate('originalDate', '<=', $today)
+                        ->whereDate('returnDate', '>=', $today);
+                });
+            })
+            ->orderBy('priceHour', 'asc')
+            ->get();
+
+        // Pass $vehicles to the view
+        return view('bookings.create', compact('vehicles'));
+        }
 
     // --- 3. SEARCH RESULTS ---
     public function search(Request $request)
