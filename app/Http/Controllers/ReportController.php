@@ -11,7 +11,7 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use Google\Client; 
 use Google\Service\Drive;
 use Google\Service\Drive\DriveFile;
-use GuzzleHttp\Client as GuzzleClient; // Import Guzzle
+use GuzzleHttp\Client as GuzzleClient; 
 
 class ReportController extends Controller
 {
@@ -66,13 +66,14 @@ class ReportController extends Controller
             // DIRECT GOOGLE UPLOAD (OAuth + SSL Fix)
             // ---------------------------------------------------------
             
-            // A. Setup Client using REFRESH TOKEN
+            // A. Setup Client using REFRESH TOKEN from .env
             $client = new Client();
             $client->setClientId(env('GOOGLE_DRIVE_CLIENT_ID'));
             $client->setClientSecret(env('GOOGLE_DRIVE_CLIENT_SECRET'));
             $client->refreshToken(env('GOOGLE_DRIVE_REFRESH_TOKEN'));
             
             // B. FIX: Disable SSL Verify to prevent cURL Error 77
+            // This tells the system to ignore the missing Laragon certificate
             $httpClient = new GuzzleClient(['verify' => false]);
             $client->setHttpClient($httpClient);
 
