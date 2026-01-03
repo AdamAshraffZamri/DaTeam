@@ -42,32 +42,40 @@
             </div>
 
             <div class="flex items-center space-x-5">
-                @auth
-            <div class="relative group">
-                    <button class="flex items-center text-white-600 hover:text-blue-600 focus:outline-none relative">
-                        <i class="fas fa-bell"></i>
-                        @php $count = auth()->user()->unreadNotifications->count(); @endphp
-                        @if($count > 0)
-                            <span class="absolute -top-2 -right-2 bg-blue-600 text-white text-[10px] px-1.5 rounded-full">
-                                {{ $count }}
-                            </span>
-                        @endif
-                    </button>
+            @auth
+            <div class="relative">
+                <button onclick="toggleNotificationMenu(event)" class="flex items-center text-white-600 hover:text-blue-600 focus:outline-none relative">
+                    <i class="fas fa-bell"></i>
+                    @php $count = auth()->user()->unreadNotifications->count(); @endphp
+                    @if($count > 0)
+                        <span class="absolute -top-2 -right-2 bg-blue-600 text-white text-[10px] px-1.5 rounded-full">
+                            {{ $count }}
+                        </span>
+                    @endif
+                </button>
 
-                    <div class="absolute right-0 mt-2 w-72 bg-white shadow-xl rounded-lg hidden group-hover:block z-50 border border-gray-100">
-                        <div class="p-3 border-b text-xs font-bold text-gray-400 uppercase">Notifications</div>
-                        <div class="max-h-60 overflow-y-auto">
-                            @forelse(auth()->user()->unreadNotifications as $notification)
-                                <div class="p-4 border-b hover:bg-gray-50">
-                                    <p class="text-sm text-gray-800">{{ $notification->data['message'] }}</p>
-                                    <p class="text-[10px] text-gray-400 mt-1">{{ $notification->created_at->diffForHumans() }}</p>
-                                </div>
-                            @empty
-                                <p class="p-4 text-center text-xs text-gray-400">No new updates</p>
-                            @endforelse
-                        </div>
+                <div id="notificationMenu" class="absolute right-0 mt-2 w-72 bg-white shadow-xl rounded-lg hidden z-50 border border-gray-100">
+                    <div class="p-3 border-b text-xs font-bold text-gray-400 uppercase">Notifications</div>
+                    <div class="max-h-60 overflow-y-auto">
+                        @forelse(auth()->user()->unreadNotifications as $notification)
+                            <div class="p-4 border-b hover:bg-gray-50">
+                                <p class="text-sm text-gray-800">{{ $notification->data['message'] }}</p>
+                                <p class="text-[10px] text-gray-400 mt-1">{{ $notification->created_at->diffForHumans() }}</p>
+                            </div>
+                        @empty
+                            <p class="p-4 text-center text-xs text-gray-400">No new updates</p>
+                        @endforelse
                     </div>
+                    @if($count > 0)
+                        <div class="p-2 border-t text-center">
+                            <form action="{{ route('notifications.markRead') }}" method="POST">
+                                @csrf
+                                <button type="submit" class="text-[10px] text-blue-600 font-bold hover:underline">Mark all as read</button>
+                            </form>
+                        </div>
+                    @endif
                 </div>
+            </div>
                 @endauth
                 @auth
                     <div class="flex items-center gap-3 bg-white/10 px-3 py-1.5 rounded-full border border-white/20 backdrop-blur-md">
@@ -263,5 +271,23 @@
             </div>
         </div>
     </footer>
+
+<script>
+    function toggleNotificationMenu(event) {
+        // Stop the click from immediately triggering the "click outside" logic
+        event.stopPropagation();
+        
+        const menu = document.getElementById('notificationMenu');
+        menu.classList.toggle('hidden');
+    }
+
+    // Close the menu if the user clicks anywhere else on the page
+    window.addEventListener('click', function(e) {
+        const menu = document.getElementById('notificationMenu');
+        if (!menu.contains(e.target)) {
+            menu.classList.add('hidden');
+        }
+    });
+</script>
 </body>
 </html>

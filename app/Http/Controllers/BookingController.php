@@ -11,27 +11,27 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Carbon\Carbon;
-use App\Notifications\NewBookingSubmitted;
-use App\Models\Staff;
-use Illuminate\Support\Facades\Notification;
+
 
 class BookingController extends Controller
 {
     // --- 1. MY BOOKINGS PAGE ---
     public function index(Request $request)
-    {
-        $query = Booking::where('customerID', Auth::id())
-                ->with(['vehicle', 'payments', 'penalties', 'inspections']); 
+{
+    $query = Booking::where('customerID', Auth::id())
+                ->with(['vehicle', 'payments', 'penalties', 'inspections']); // Added 'inspections'
                 
-        if ($request->filled('status') && $request->status != 'all') {
-            $query->where('bookingStatus', $request->status);
-        }
+    // Filter by Status
+    if ($request->filled('status') && $request->status != 'all') {
+        $query->where('bookingStatus', $request->status);
+    }
 
-        if ($request->filled('date')) {
-            $query->whereMonth('bookingDate', Carbon::parse($request->date)->month);
-        }
+    // Filter by Date (Month)
+    if ($request->filled('date')) {
+        $query->whereMonth('bookingDate', Carbon::parse($request->date)->month);
+    }
 
-        $bookings = $query->orderBy('bookingDate', 'desc')->get();
+    $bookings = $query->orderBy('bookingDate', 'desc')->get();
 
         return view('bookings.index', compact('bookings'));
     }
@@ -41,25 +41,27 @@ class BookingController extends Controller
     {
         $user = auth()->user();
 
-        // 1. BLACKLIST CHECK
+        // 1. BLACKLIST CHECK (NEW)
+        // If the user is blacklisted, block them immediately.
         if ($user->blacklisted) {
             $reason = $user->blacklist_reason ?? 'Violation of terms and conditions.';
+            
             return redirect()->route('profile.edit')
-                ->with('error', '⛔ ACTION BLOCKED: Your account is blacklisted. Reason: ' . $reason);
+                ->with('error', '⛔ ACTION BLOCKED: Your account is blacklisted. You cannot make new bookings. Reason: ' . $reason);
         }
 
-        // 2. STRICT CHECK: Verify ALL profile fields
+        // 2. STRICT CHECK: Verify ALL profile fields are filled
         if (
             empty($user->fullName) ||
             empty($user->email) ||
             empty($user->phoneNo) ||
             empty($user->emergency_contact_no) ||
-            empty($user->emergency_contact_name) || 
+            empty($user->emergency_contact_name) || // Added this new field
             empty($user->homeAddress) ||
             empty($user->collegeAddress) ||
-            empty($user->stustaffID) || 
-            empty($user->ic_passport) || 
-            empty($user->drivingNo) || 
+            empty($user->stustaffID) || // Student/Staff ID
+            empty($user->ic_passport) || // IC or Passport
+            empty($user->drivingNo) || // License Number
             empty($user->nationality) ||
             empty($user->dob) ||
             empty($user->faculty) ||
@@ -67,96 +69,59 @@ class BookingController extends Controller
             empty($user->bankAccountNo)
         ) {
             return redirect()->route('profile.edit')
-                ->with('error', '⚠️ Action Required: You must complete ALL profile details before booking.');
+                ->with('error', '⚠️ Action Required: You must complete ALL profile details (including Bank Info, Addresses, and IDs) before you can book a car.');
         }
         
-        // 3. FETCH AVAILABLE VEHICLES FOR TODAY (Default View)
-        $today = Carbon::today();
-    
-        $vehicles = Vehicle::where('availability', true)
-            ->whereDoesntHave('bookings', function ($q) use ($today) {
-                // Exclude cars that have active bookings overlapping with "today"
-                $q->whereIn('bookingStatus', ['Submitted', 'Deposit Paid', 'Paid', 'Approved', 'Active'])
-                ->where(function ($sub) use ($today) {
-                    $sub->whereDate('originalDate', '<=', $today)
-                        ->whereDate('returnDate', '>=', $today);
-                });
-            })
-            ->orderBy('priceHour', 'asc')
-            ->get();
-
-        // Pass $vehicles to the view
-        return view('bookings.create', compact('vehicles'));
-        }
+        // If checks pass, proceed to booking page
+        return view('bookings.create'); 
+    }
 
     // --- 3. SEARCH RESULTS (UPDATED) ---
     public function search(Request $request)
-    {
-        // 1. Basic Validation
-        $request->validate([
-            'pickup_date' => 'required|date|after_or_equal:today',
-            'return_date' => 'required|date|after_or_equal:pickup_date', 
-        ]);
+{
+    // --- 1. Basic Validation ---
+    $request->validate([
+        'pickup_date' => 'required|date|after_or_equal:today',
+        'return_date' => 'required|date|after_or_equal:pickup_date', 
+    ]);
 
-        $pickup = $request->pickup_date;
-        $return = $request->return_date;
+    $pickup = $request->pickup_date;
+    $return = $request->return_date;
 
-        // 2. Buffer Logic (1 Day Cooldown for turnover)
-        $bufferPickup = \Carbon\Carbon::parse($pickup)->subDay();
-        $bufferReturn = \Carbon\Carbon::parse($return)->addDay();
+    // --- 2. Buffer Logic (1 Day Cooldown) ---
+    // We expand the search range by 1 day before and after to ensure a gap
+    $bufferPickup = \Carbon\Carbon::parse($pickup)->subDay();
+    $bufferReturn = \Carbon\Carbon::parse($return)->addDay();
 
-        // 3. Start Query Builder
-        $query = Vehicle::where('availability', true);
+    // --- 3. Start Query Builder ---
+    // We break the chain here to allow conditional filtering
+    $query = Vehicle::where('availability', true);
 
-        // --- A. BOOKING CHECK (Existing Logic) ---
-        // Exclude vehicles booked during this time (Confirmed/Active bookings)
-        $query->whereDoesntHave('bookings', function ($q) use ($bufferPickup, $bufferReturn) {
-            $q->whereIn('bookingStatus', ['Submitted', 'Deposit Paid', 'Paid', 'Approved', 'Active', 'Confirmed']) // Added 'Confirmed' just in case
-              ->where(function ($subQ) use ($bufferPickup, $bufferReturn) {
-                  $subQ->whereBetween('originalDate', [$bufferPickup, $bufferReturn])
-                       ->orWhereBetween('returnDate', [$bufferPickup, $bufferReturn])
-                       ->orWhere(function ($inner) use ($bufferPickup, $bufferReturn) {
-                           $inner->where('originalDate', '<', $bufferPickup)
-                                 ->where('returnDate', '>', $bufferReturn);
-                       });
-              });
-        });
+    // --- 4. Apply Cooldown/Availability Check ---
+    $query->whereDoesntHave('bookings', function ($q) use ($bufferPickup, $bufferReturn) {
+        $q->whereIn('bookingStatus', ['Submitted', 'Deposit Paid', 'Paid', 'Approved', 'Active'])
+          ->where(function ($subQ) use ($bufferPickup, $bufferReturn) {
+              // Check for Overlap
+              $subQ->whereBetween('originalDate', [$bufferPickup, $bufferReturn])
+                   ->orWhereBetween('returnDate', [$bufferPickup, $bufferReturn])
+                   ->orWhere(function ($inner) use ($bufferPickup, $bufferReturn) {
+                       $inner->where('originalDate', '<', $bufferPickup)
+                             ->where('returnDate', '>', $bufferReturn);
+                   });
+          });
+    });
 
-        // --- B. MAINTENANCE CHECK (Added) ---
-        // Exclude vehicles under maintenance during this time
-        // Note: Using strict dates ($pickup/$return) instead of buffer for maintenance precision
-        $query->whereDoesntHave('maintenances', function($q) use ($pickup, $return) {
-            $q->whereDate('date', '>=', $pickup)
-              ->whereDate('date', '<=', $return);
-        });
-
-        // 4. Apply Vehicle Type Filter
-        if ($request->filled('types')) {
-            $query->whereIn('type', $request->types);
-        }
-
-        // 5. Execute Query
-        $vehicles = $query->get();
-
-        // --- C. BLOCKED DATES CHECK (Added) ---
-        // Filter out vehicles that have specific dates blocked in the calendar (JSON column)
-        $vehicles = $vehicles->filter(function($vehicle) use ($pickup, $return) {
-            $blockedDates = $vehicle->blocked_dates ?? []; 
-            $start = Carbon::parse($pickup);
-            $end = Carbon::parse($return);
-
-            foreach($blockedDates as $date) {
-                $blocked = Carbon::parse($date);
-                // If a blocked date falls inside the requested range, remove vehicle
-                if($blocked->between($start, $end)) {
-                    return false; 
-                }
-            }
-            return true; 
-        });
-
-        return view('bookings.search_results', compact('vehicles'));
+    // --- 5. Apply Vehicle Type Filter (The New Part) ---
+    // This only runs if the user checked any boxes in the sidebar
+    if ($request->filled('types')) {
+        $query->whereIn('type', $request->types);
     }
+
+    // --- 6. Execute Query ---
+    $vehicles = $query->get();
+
+    return view('bookings.search_results', compact('vehicles'));
+}
 
     // --- 4. VEHICLE DETAILS ---
     public function show(Request $request, $id)
@@ -175,6 +140,7 @@ class BookingController extends Controller
     {
         $vehicle = Vehicle::findOrFail($id);
         
+        // Calculate using shared logic
         $rentalCharge = $this->calculateRentalPrice(
             $vehicle, 
             $request->pickup_date, $request->pickup_time, 
@@ -183,6 +149,7 @@ class BookingController extends Controller
 
         $grandTotal = $rentalCharge + $vehicle->baseDepo;
 
+        // We still need these for the display badge
         $pickup = Carbon::parse($request->pickup_date . ' ' . $request->pickup_time);
         $return = Carbon::parse($request->return_date . ' ' . $request->return_time);
         $totalHours = $pickup->diffInHours($return);
@@ -201,97 +168,122 @@ class BookingController extends Controller
         ]);
     }
 
-    // --- 6. SUBMIT BOOKING ---
-    public function submitPayment(Request $request, $id)
-    {
-        $request->validate([
-            'payment_proof' => 'required|image|max:2048',
-            'agreement_proof' => 'required|file|mimes:pdf,jpg,jpeg,png|max:2048',
-            'payment_type' => 'required|in:full,deposit',
-        ]);
+    // --- 6. SUBMIT BOOKING (Handles Full/Deposit & Vouchers) ---
+    // In App\Http\Controllers\BookingController.php
+
+public function submitPayment(Request $request, $id)
+{
+    // 1. Validation
+    $request->validate([
+        'payment_proof' => 'required|image|max:2048',
+        'agreement_proof' => 'required|file|mimes:pdf,jpg,jpeg,png|max:2048',
+        'payment_type' => 'required|in:full,deposit',
+    ]);
 
         $vehicle = Vehicle::findOrFail($id);
 
-        $rentalCharge = $this->calculateRentalPrice(
-            $vehicle, 
-            $request->input('pickup_date'), $request->input('pickup_time'), 
-            $request->input('return_date'), $request->input('return_time')
-        );
+    // 2. Calculate Base Rental Price
+    $rentalCharge = $this->calculateRentalPrice(
+        $vehicle, 
+        $request->input('pickup_date'), $request->input('pickup_time'), 
+        $request->input('return_date'), $request->input('return_time')
+    );
 
-        $baseDepo = $vehicle->baseDepo;
-        $grossTotal = $rentalCharge + $baseDepo;
+    $baseDepo = $vehicle->baseDepo;
+    $grossTotal = $rentalCharge + $baseDepo;
+    
+    // --- NEW: VOUCHER LOGIC START ---
+    $discountAmount = 0;
+    $voucherID = null;
+
+    if ($request->filled('voucher_id')) {
+        $voucher = Voucher::find($request->input('voucher_id'));
         
-        // Voucher Logic
-        $discountAmount = 0;
-        $voucherID = null;
-
-        if ($request->filled('voucher_id')) {
-            $voucher = Voucher::find($request->input('voucher_id'));
-            if ($voucher) {
-                $voucherID = $voucher->id;
-                if ($voucher->discount_percentage > 0) {
-                    $discountAmount = ($grossTotal * $voucher->discount_percentage) / 100;
-                } else {
-                    $discountAmount = $voucher->discount_amount;
-                }
+        // Basic validation to ensure voucher is still valid at moment of submission
+        if ($voucher) {
+            $voucherID = $voucher->id; // Save ID to link it later if needed
+            
+            if ($voucher->discount_percentage > 0) {
+                // Percentage based discount (usually on Rental Charge only, not Deposit)
+                // But matching your frontend logic:
+                $discountAmount = ($grossTotal * $voucher->discount_percentage) / 100;
+            } else {
+                // Fixed amount discount
+                $discountAmount = $voucher->discount_amount;
             }
+            
+            // Optional: Mark voucher as used (if single-use)
+            // $voucher->decrement('usage_limit'); 
         }
+    }
 
-        $finalTotalCost = max(0, $grossTotal - $discountAmount);
+    // Calculate Final Total Cost after Discount
+    $finalTotalCost = max(0, $grossTotal - $discountAmount);
+    // --- NEW: VOUCHER LOGIC END ---
 
-        // Payment Logic
-        if ($request->input('payment_type') == 'deposit') {
-            $amountToPayNow = $baseDepo;
-            $bookingStatus = 'Deposit Paid';
-            if ($amountToPayNow >= $finalTotalCost) {
-                 $amountToPayNow = $finalTotalCost;
-                 $bookingStatus = 'Submitted'; 
-            }
-        } else {
-            $amountToPayNow = $finalTotalCost;
-            $bookingStatus = 'Submitted';
-        }
-
-        $proofPath = $request->file('payment_proof')->store('receipts', 'public');
-        $agreementPath = $request->file('agreement_proof')->store('agreements', 'public');
-
-        $booking = Booking::create([
-            'customerID' => Auth::id(),
-            'vehicleID' => $id,
-            'bookingDate' => now(),
-            'originalDate' => $request->input('pickup_date'),
-            'bookingTime' => $request->input('pickup_time'),
-            'returnDate' => $request->input('return_date'),
-            'returnTime' => $request->input('return_time'),
-            'pickupLocation' => $request->input('pickup_location'),
-            'returnLocation' => $request->input('return_location'),
-            'totalCost' => $finalTotalCost, 
-            'voucherID' => $voucherID, 
-            'aggreementDate' => now(),
-            'aggreementLink' => $agreementPath,
-            'bookingStatus' => $bookingStatus,
-            'bookingType' => 'Standard',
-            'remarks' => $request->input('remarks'),
-        ]);
-
-        Payment::create([
-            'bookingID' => $booking->bookingID,
-            'amount' => $amountToPayNow, 
-            'depoAmount' => $baseDepo,
-            'transactionDate' => now(),
-            'paymentMethod' => 'QR Transfer',
-            'paymentStatus' => 'Pending Verification',
-            'depoStatus' => 'Holding',
-            'depoRequestDate' => now(),
-            'installmentDetails' => $proofPath
-        ]);
+    // 3. Determine Amount to Pay NOW
+    if ($request->input('payment_type') == 'deposit') {
+        $amountToPayNow = $baseDepo;
+        $bookingStatus = 'Deposit Paid';
         
-        try {
-            $staff = Staff::all(); 
-            Notification::send($staff, new NewBookingSubmitted($booking));
-        } catch (\Exception $e) {
-            \Log::error("Notification failed: " . $e->getMessage());
+        // Safety: If deposit is greater than total (e.g. huge discount), pay full
+        if ($amountToPayNow >= $finalTotalCost) {
+             $amountToPayNow = $finalTotalCost;
+             $bookingStatus = 'Submitted'; 
         }
+    } else {
+        // Full Payment
+        $amountToPayNow = $finalTotalCost;
+        $bookingStatus = 'Submitted';
+    }
+
+    // 4. File Uploads
+    $proofPath = $request->file('payment_proof')->store('receipts', 'public');
+    $agreementPath = $request->file('agreement_proof')->store('agreements', 'public');
+
+    // 5. Create Booking
+    $booking = Booking::create([
+        'customerID' => Auth::id(),
+        'vehicleID' => $id,
+        'bookingDate' => now(),
+        'originalDate' => $request->input('pickup_date'),
+        'bookingTime' => $request->input('pickup_time'),
+        'returnDate' => $request->input('return_date'),
+        'returnTime' => $request->input('return_time'),
+        'pickupLocation' => $request->input('pickup_location'),
+        'returnLocation' => $request->input('return_location'),
+        
+        // SAVE THE DISCOUNTED TOTAL
+        'totalCost' => $finalTotalCost, 
+        'voucherID' => $voucherID, // Ensure you have this column in your table, or remove this line
+        
+        'aggreementDate' => now(),
+        'aggreementLink' => $agreementPath,
+        'bookingStatus' => $bookingStatus,
+        'bookingType' => 'Standard',
+        'remarks' => $request->input('remarks'),
+    ]);
+
+    // 6. Create Payment Record
+    Payment::create([
+        'bookingID' => $booking->bookingID,
+        'amount' => $amountToPayNow, 
+        'depoAmount' => $baseDepo,
+        'transactionDate' => now(),
+        'paymentMethod' => 'QR Transfer',
+        'paymentStatus' => 'Pending Verification',
+        'depoStatus' => 'Holding',
+        'depoRequestDate' => now(),
+        'installmentDetails' => $proofPath
+    ]);
+    
+    // 7. Notifications
+    try {
+        $staff = Staff::all(); 
+        Notification::send($staff, new NewBookingSubmitted($booking));
+    } catch (\Exception $e) {
+        \Log::error("Notification failed: " . $e->getMessage());
+    }
 
         return redirect()->route('book.index')->with('show_thank_you', true);
     }
@@ -345,30 +337,35 @@ class BookingController extends Controller
     {
         $booking = Booking::where('customerID', Auth::id())->findOrFail($id);
 
+        // 1. Determine Inspection Type EARLY
+        // If status is Active or Completed, it's a "Return" inspection. Otherwise "Pickup".
         $type = ($booking->bookingStatus == 'Active' || $booking->bookingStatus == 'Completed') 
                 ? 'Return' 
                 : 'Pickup';
 
+        // 2. [NEW] STRICT CHECK: Stop if inspection already exists
+        // We check for an inspection of this Booking ID, this Type, and where staffID is null (Customer)
         $exists = \App\Models\Inspection::where('bookingID', $booking->bookingID)
                                         ->where('inspectionType', $type)
-                                        ->whereNull('staffID') 
+                                        ->whereNull('staffID') // Ensures we check customer's submission
                                         ->exists();
 
         if ($exists) {
             return back()->with('error', "Action Failed: You have already submitted the $type inspection.");
         }
 
+        // --- EXISTING LOGIC STARTS HERE ---
+
+        // Determine expected count based on stage
         $requiredCount = ($type == 'Pickup') ? 5 : 6;
         $typeName = $type;
 
         $request->validate([
-            'photos' => "required|array|size:$requiredCount",
-            'photos.*' => 'image|mimes:jpeg,png,jpg|max:2048',
-            'fuel_level' => 'required',
-            'mileage' => 'required|numeric',
-        ], [
-            'photos.size' => "You must upload exactly $requiredCount photos for $typeName."
+            'photos' => 'required',
+            'photos.*' => 'image|max:4048', // Allow multiple images
         ]);
+
+        
 
         $photoPaths = [];
         if ($request->hasFile('photos')) {
@@ -377,31 +374,35 @@ class BookingController extends Controller
             }
         }
 
+        // Create Inspection Record
         \App\Models\Inspection::create([
             'bookingID' => $booking->bookingID,
             'staffID' => null, 
             'inspectionType' => $type,
             'inspectionDate' => now(),
+            
+            // Dynamic Columns
             'photosBefore' => $type == 'Pickup' ? json_encode($photoPaths) : null,
             'photosAfter' => $type == 'Return' ? json_encode($photoPaths) : null,
-            'fuelBefore' => $type == 'Pickup' ? $request->input('fuel_level') : null,
-            'fuelAfter' => $type == 'Return' ? $request->input('fuel_level') : null,
-            'mileageBefore' => $type == 'Pickup' ? $request->input('mileage') : null,
-            'mileageAfter' => $type == 'Return' ? $request->input('mileage') : null,
+            'fuelBefore' => $request->input('fuel_level'), // Optional
+            'mileageBefore' => $request->input('mileage'), // Optional
         ]);
 
         return back()->with('success', 'Inspection photos uploaded successfully!');
     }
 
-    // --- HELPER METHODS ---
+    /**
+     * Shared logic to calculate the total rental price.
+     */
     private function calculateRentalPrice($vehicle, $pickupDate, $pickupTime, $returnDate, $returnTime)
     {
         $pickup = Carbon::parse($pickupDate . ' ' . $pickupTime);
         $return = Carbon::parse($returnDate . ' ' . $returnTime);
 
+        // Calculate Total Hours
         $totalHours = $pickup->diffInHours($return);
         if ($pickup->diffInMinutes($return) > $totalHours * 60) {
-            $totalHours++; 
+            $totalHours++; // Round up for partial hours
         }
 
         $rates = is_array($vehicle->hourly_rates) 
@@ -428,10 +429,12 @@ class BookingController extends Controller
         return ($days * $dailyRate) + $remainderCost;
     }
 
+
     public function getRemainingBalanceAttribute()
     {
+        // Sum all payments for this booking that are already verified or completed
         $totalPaid = $this->payments()->where('paymentStatus', 'Verified')->sum('amount');
-        return max(0, $this->totalCost - $totalPaid); 
+        return max(0, $this->totalCost - $totalPaid); // Ensure balance never goes below 0
     }
 
     public function markNotificationsRead()
@@ -439,4 +442,5 @@ class BookingController extends Controller
         auth()->user()->unreadNotifications->markAsRead();
         return back();
     }
+
 }

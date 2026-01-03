@@ -13,6 +13,7 @@ use App\Http\Controllers\VoucherController;
 use App\Http\Controllers\FleetController;
 use App\Http\Controllers\InspectionController;
 use App\Http\Controllers\StaffCustomerController;
+use App\Http\Controllers\PageController;
 
 
 /*
@@ -38,9 +39,9 @@ Route::get('/reset-password/{token}', [AuthController::class, 'showResetForm'])-
 Route::post('/reset-password', [AuthController::class, 'reset'])->name('password.update');
 
 // Static Pages
-Route::get('/about', function() { return view('pages.about'); })->name('pages.about');
-Route::get('/faq', function() { return view('pages.faq'); })->name('pages.faq');
-Route::get('/contact', function() { return view('pages.contact'); })->name('pages.contact');
+Route::get('/about', [PageController::class, 'about'])->name('pages.about');
+Route::get('/faq', [PageController::class, 'faq'])->name('pages.faq');
+Route::get('/contact', [PageController::class, 'contact'])->name('pages.contact');
 
 // ====================================================
 //  CUSTOMER ROUTES (Middleware: auth)
@@ -159,6 +160,7 @@ Route::prefix('staff')->middleware(['auth:staff'])->group(function () {
     Route::post('/customers/{id}/approve', [App\Http\Controllers\StaffCustomerController::class, 'approve'])->name('staff.customers.approve');
     Route::post('/customers/{id}/reject', [App\Http\Controllers\StaffCustomerController::class, 'reject'])->name('staff.customers.reject');
     Route::post('/customers/{id}/blacklist', [App\Http\Controllers\StaffCustomerController::class, 'toggleBlacklist'])->name('staff.customers.blacklist');
+    Route::post('/customers/{id}/penalty', [App\Http\Controllers\StaffCustomerController::class, 'imposePenalty'])->name('staff.customers.penalty');
 
     // --- SEPARATE INSPECTION MODE (If needed for dedicated page) ---
     // Renamed to avoid conflict with 'storeInspection' above
