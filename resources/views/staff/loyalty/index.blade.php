@@ -111,10 +111,10 @@
                                     <td class="px-6 py-4">
                                         <div class="flex items-center gap-3">
                                             <div class="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center font-bold">
-                                                {{ substr($loyalty->customer->name ?? 'G', 0, 1) }}
+                                                {{ substr($loyalty->customer->fullName ?? 'G', 0, 1) }}
                                             </div>
                                             <div>
-                                                <p class="font-medium text-gray-900">{{ $loyalty->customer->name ?? 'N/A' }}</p>
+                                                <p class="font-medium text-gray-900">{{ $loyalty->customer->fullName ?? 'N/A' }}</p>
                                                 <p class="text-xs text-gray-500">{{ $loyalty->customer->email ?? 'N/A' }}</p>
                                             </div>
                                         </div>
@@ -214,7 +214,7 @@
                                         {{ $index + 1 }}
                                     </div>
                                     <div>
-                                        <p class="font-medium text-gray-900">{{ $performer->customer->name ?? 'N/A' }}</p>
+                                        <p class="font-medium text-gray-900">{{ $performer->customer->fullName ?? 'N/A' }}</p>
                                         <p class="text-xs text-gray-500">{{ $performer->tier }}</p>
                                     </div>
                                 </div>
@@ -395,7 +395,7 @@
                             <div class="flex-1">
                                 <p class="text-sm font-bold text-gray-900">{{ $activity->reason }}</p>
                                 <p class="text-xs text-gray-600 mt-1">
-                                    <i class="fas fa-user mr-1"></i> {{ $activity->customer->name ?? 'Unknown' }}
+                                    <i class="fas fa-user mr-1"></i> {{ $activity->customer->fullName ?? 'Unknown' }}
                                 </p>
                                 <p class="text-xs text-gray-400 mt-1">{{ $activity->created_at->format('M d, Y H:i') }}</p>
                             </div>
