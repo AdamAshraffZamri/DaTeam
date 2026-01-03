@@ -8,7 +8,7 @@
 </div>
 
 {{-- 2. SCROLLABLE CONTENT --}}
-<div class="relative z-10 min-h-[calc(100vh-64px)] pb-20">
+<div class="relative z-10 pb-20">
     
     <div class="container mx-auto px-4 py-12 max-w-6xl">
         
@@ -484,3 +484,4 @@
         }
     });
 </script>
+@endsection

@@ -5,7 +5,7 @@
 <div class="relative h-screen min-h-[600px] flex flex-col justify-center bg-cover bg-center overflow-hidden" style="background-image: url('{{ asset('hastabg.png') }}');">
     
     {{-- Dark Overlay --}}
-    <div class="absolute inset-0 bg-gradient-to-r from-black/90 via-black/50 to-transparent"></div>
+    <div class="absolute inset-0 bg-gradient-to-r from-black/60 via-black/35 to-black/65"></div>
 
     {{-- Main Container: Added justify-center and gap-8 to bring elements closer --}}
     <div class="relative z-10 container mx-auto px-6 md:px-12 flex flex-col h-full justify-center items-center gap-10 pt-10 pb-20">
