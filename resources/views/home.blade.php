@@ -50,18 +50,18 @@
     </div>
 
     {{-- Decorative Bottom Fade --}}
-    <div class="absolute bottom-0 left-0 w-full h-32 bg-gradient-to-t from-gray-900 to-transparent"></div>
+    <div class="absolute bottom-0 left-0 w-full h-32 bg-gradient-to-t from-gray-800 to-transparent"></div>
 </div>
 
-{{-- SECTION 2: AUTOMATIC FLEET CAROUSEL --}}
-<div id="fleet-showcase" class="bg-gray-900 py-24 border-b border-gray-800 overflow-hidden">
+
+    {{-- SECTION 2: AUTOMATIC FLEET CAROUSEL --}}
+<div id="fleet-showcase" class="bg-gray-800 py-24 border-b border-gray-800 overflow-hidden">
     <div class="container mx-auto px-4 mb-12 flex justify-between items-end">
         <div>
             <h2 class="text-4xl font-black text-white mb-2">Our Entire Fleet</h2>
             <p class="text-gray-400">Browsing {{ count($vehicles) }} available vehicles ready for you.</p>
         </div>
         
-        {{-- Custom Navigation Buttons --}}
         <div class="hidden md:flex gap-2">
             <button id="slidePrev" class="w-12 h-12 rounded-full border border-gray-700 text-white flex items-center justify-center hover:bg-orange-600 hover:border-orange-600 transition">
                 <i class="fas fa-chevron-left"></i>
@@ -72,19 +72,18 @@
         </div>
     </div>
 
-    {{-- Carousel Track --}}
     <div class="relative w-full">
         @if($vehicles->count() > 0)
         <div class="flex overflow-x-auto gap-6 px-4 pb-8 scroll-smooth no-scrollbar" id="carouselTrack">
             @foreach($vehicles as $vehicle)
-            <div class="min-w-[300px] md:min-w-[400px] bg-gray-800 rounded-3xl overflow-hidden border border-gray-700 shadow-2xl relative group hover:-translate-y-2 transition duration-300 flex-shrink-0">
+            {{-- Adjusted to a muted dark gray with glass effect and subtle border --}}
+            <div class="min-w-[300px] md:min-w-[400px] bg-gray-800/50 backdrop-blur-sm rounded-3xl overflow-hidden border border-white/10 shadow-2xl relative group hover:-translate-y-2 transition duration-300 flex-shrink-0">
                 
                 {{-- Image Area --}}
                 <div class="h-64 overflow-hidden relative">
                     <img src="{{ $vehicle->image_url }}" alt="{{ $vehicle->model }}" class="w-full h-full object-cover transform group-hover:scale-110 transition duration-700">
                     <div class="absolute inset-0 bg-gradient-to-t from-gray-900 via-transparent to-transparent"></div>
                     
-                    {{-- Badge --}}
                     <div class="absolute top-4 right-4 bg-white/10 backdrop-blur-md border border-white/20 text-white px-3 py-1 rounded-full text-xs font-bold">
                         {{ strtoupper($vehicle->type) }}
                     </div>
@@ -99,12 +98,12 @@
                         </div>
                         <div class="text-right">
                             <p class="text-white font-bold text-xl">RM {{ number_format($vehicle->priceHour, 0) }}</p>
-                            <p class="text-gray-500 text-xs">/ hour</p>
+                            <p class="text-gray-400 text-xs">/ hour</p>
                         </div>
                     </div>
 
                     {{-- Features Icons --}}
-                    <div class="flex gap-4 text-gray-400 mb-6 text-sm border-t border-gray-700 pt-4">
+                    <div class="flex gap-4 text-gray-400 mb-6 text-sm border-t border-white/5 pt-4">
                         <div class="flex items-center gap-2">
                             <i class="fas fa-gas-pump text-orange-500"></i> {{ $vehicle->fuelType }}
                         </div>
@@ -132,54 +131,58 @@
 </div>
 
 {{-- SECTION 3: STATS --}}
-<div class="bg-gray-50 py-20">
+<div class="bg-gray-900/80 backdrop-blur-md py-20 border-b border-gray-800">
     <div class="container mx-auto px-4 flex flex-wrap justify-center gap-16 text-center">
         <div>
-            <h3 class="text-5xl font-black text-gray-900 mb-2">50+</h3>
-            <p class="text-gray-500 font-medium uppercase tracking-wider">Premium Vehicles</p>
+            <h3 class="text-5xl font-black text-white mb-2">50+</h3>
+            <p class="text-gray-400 font-medium uppercase tracking-wider">Premium Vehicles</p>
         </div>
         <div>
-            <h3 class="text-5xl font-black text-gray-900 mb-2">1k+</h3>
-            <p class="text-gray-500 font-medium uppercase tracking-wider">Happy Students</p>
+            <h3 class="text-5xl font-black text-white mb-2">1k+</h3>
+            <p class="text-gray-400 font-medium uppercase tracking-wider">Happy Students</p>
         </div>
         <div>
-            <h3 class="text-5xl font-black text-gray-900 mb-2">24/7</h3>
-            <p class="text-gray-500 font-medium uppercase tracking-wider">Support Team</p>
+            <h3 class="text-5xl font-black text-white mb-2">24/7</h3>
+            <p class="text-gray-400 font-medium uppercase tracking-wider">Support Team</p>
         </div>
     </div>
 </div>
 
 {{-- SECTION 4: FEATURES --}}
-<div class="py-24 bg-white">
+<div class="py-24 bg-gray-800">
     <div class="container mx-auto px-4">
         <div class="text-center mb-16">
-            <h2 class="text-4xl font-black text-gray-900 mb-4">Why Choose Hasta?</h2>
-            <p class="text-gray-500 max-w-2xl mx-auto text-lg">We provide the most reliable and student-friendly car rental service in UTM.</p>
+            {{-- Updated headings to white --}}
+            <h2 class="text-4xl font-black text-white mb-4">Why Choose Hasta?</h2>
+            <p class="text-gray-400 max-w-2xl mx-auto text-lg">We provide the most reliable and student-friendly car rental service in UTM.</p>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-3 gap-12">
-            <div class="group p-8 rounded-[2rem] bg-gray-50 hover:bg-gray-900 transition duration-500">
-                <div class="w-16 h-16 bg-orange-100 rounded-2xl flex items-center justify-center text-orange-600 text-3xl mb-8 group-hover:bg-orange-600 group-hover:text-white transition">
+            {{-- Card 1: Updated to white background with dark text --}}
+            <div class="group p-8 rounded-[2rem] bg-gray-300 hover:bg-orange-600 transition duration-500 shadow-xl">
+                <div class="w-16 h-16 bg-orange-100 rounded-2xl flex items-center justify-center text-orange-600 text-3xl mb-8 group-hover:bg-white group-hover:text-orange-600 transition">
                     <i class="fas fa-wallet"></i>
                 </div>
                 <h3 class="text-2xl font-bold text-gray-900 mb-4 group-hover:text-white">Student Prices</h3>
-                <p class="text-gray-500 leading-relaxed group-hover:text-gray-400">Affordable rates designed specifically for UTM students. No hidden fees, ever.</p>
+                <p class="text-gray-600 leading-relaxed group-hover:text-white/90">Affordable rates designed specifically for UTM students. No hidden fees, ever.</p>
             </div>
 
-            <div class="group p-8 rounded-[2rem] bg-gray-50 hover:bg-gray-900 transition duration-500">
-                <div class="w-16 h-16 bg-blue-100 rounded-2xl flex items-center justify-center text-blue-600 text-3xl mb-8 group-hover:bg-blue-600 group-hover:text-white transition">
+            {{-- Card 2: Updated to white background with dark text --}}
+            <div class="group p-8 rounded-[2rem] bg-gray-300 hover:bg-blue-600 transition duration-500 shadow-xl">
+                <div class="w-16 h-16 bg-blue-100 rounded-2xl flex items-center justify-center text-blue-600 text-3xl mb-8 group-hover:bg-white group-hover:text-blue-600 transition">
                     <i class="fas fa-shield-alt"></i>
                 </div>
                 <h3 class="text-2xl font-bold text-gray-900 mb-4 group-hover:text-white">Fully Insured</h3>
-                <p class="text-gray-500 leading-relaxed group-hover:text-gray-400">Drive with peace of mind. All our vehicles come with comprehensive insurance coverage.</p>
+                <p class="text-gray-600 leading-relaxed group-hover:text-white/90">Drive with peace of mind. All our vehicles come with comprehensive insurance coverage.</p>
             </div>
 
-            <div class="group p-8 rounded-[2rem] bg-gray-50 hover:bg-gray-900 transition duration-500">
-                <div class="w-16 h-16 bg-green-100 rounded-2xl flex items-center justify-center text-green-600 text-3xl mb-8 group-hover:bg-green-600 group-hover:text-white transition">
+            {{-- Card 3: Updated to white background with dark text --}}
+            <div class="group p-8 rounded-[2rem] bg-gray-300 hover:bg-green-600 transition duration-500 shadow-xl">
+                <div class="w-16 h-16 bg-green-100 rounded-2xl flex items-center justify-center text-green-600 text-3xl mb-8 group-hover:bg-white group-hover:text-green-600 transition">
                     <i class="fas fa-bolt"></i>
                 </div>
                 <h3 class="text-2xl font-bold text-gray-900 mb-4 group-hover:text-white">Instant Access</h3>
-                <p class="text-gray-500 leading-relaxed group-hover:text-gray-400">Book in seconds using our digital platform. No paperwork, just drive.</p>
+                <p class="text-gray-600 leading-relaxed group-hover:text-white/90">Book in seconds using our digital platform. No paperwork, just drive.</p>
             </div>
         </div>
     </div>
