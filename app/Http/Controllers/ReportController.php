@@ -5,28 +5,30 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Payment;
 use App\Models\Booking;
-use App\Models\Vehicle;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
 use Carbon\Carbon;
-use Barryvdh\DomPDF\Facade\Pdf; // Requires 'composer require barryvdh/laravel-dompdf'
+use Barryvdh\DomPDF\Facade\Pdf;
+use Google\Client; 
+use Google\Service\Drive;
+use Google\Service\Drive\DriveFile;
+use GuzzleHttp\Client as GuzzleClient; // Import Guzzle
 
 class ReportController extends Controller
 {
     public function index()
     {
-        // 1. REVENUE (Last 6 Months) - Grouped by Month
+        // 1. REVENUE (Last 6 Months)
         $revenueData = Payment::select(
             DB::raw("DATE_FORMAT(transactionDate, '%Y-%m') as month"), 
             DB::raw('SUM(amount) as total')
         )
-        ->where('paymentStatus', 'Verified') // Only counted verified payments
+        ->where('paymentStatus', 'Verified')
         ->where('transactionDate', '>=', Carbon::now()->subMonths(6))
         ->groupBy('month')
         ->orderBy('month')
         ->get();
 
-        // 2. FLEET POPULARITY (Top 5 Vehicles)
+        // 2. FLEET POPULARITY
         $popularVehicles = Booking::select('vehicleID', DB::raw('count(*) as count'))
             ->whereIn('bookingStatus', ['Completed', 'Active'])
             ->with('vehicle')
@@ -35,7 +37,7 @@ class ReportController extends Controller
             ->limit(5)
             ->get();
 
-        // 3. BOOKING STATUS (Pie Chart Data)
+        // 3. BOOKING STATUS
         $statusStats = Booking::select('bookingStatus', DB::raw('count(*) as total'))
             ->groupBy('bookingStatus')
             ->get();
@@ -54,20 +56,46 @@ class ReportController extends Controller
                 'bookings' => Booking::with(['customer', 'vehicle'])->latest()->take(20)->get()
             ];
 
-            // 2. Generate PDF (Now inside the try block to catch errors)
+            // 2. Generate PDF
             $pdf = Pdf::loadView('staff.reports.pdf', $data);
+            $pdfContent = $pdf->output();
             
-            // 3. Define Filename
-            $filename = 'Monthly_Report_' . now()->format('F_Y') . '.pdf';
+            $filename = 'Monthly_Report_' . now()->format('F_Y') . '_' . time() . '.pdf';
 
-            // 4. Upload to Google Drive
-            Storage::disk('google')->put($filename, $pdf->output());
+            // ---------------------------------------------------------
+            // DIRECT GOOGLE UPLOAD (OAuth + SSL Fix)
+            // ---------------------------------------------------------
+            
+            // A. Setup Client using REFRESH TOKEN
+            $client = new Client();
+            $client->setClientId(env('GOOGLE_DRIVE_CLIENT_ID'));
+            $client->setClientSecret(env('GOOGLE_DRIVE_CLIENT_SECRET'));
+            $client->refreshToken(env('GOOGLE_DRIVE_REFRESH_TOKEN'));
+            
+            // B. FIX: Disable SSL Verify to prevent cURL Error 77
+            $httpClient = new GuzzleClient(['verify' => false]);
+            $client->setHttpClient($httpClient);
 
-            return back()->with('success', 'Report successfully uploaded to Google Drive!');
+            $service = new Drive($client);
+
+            // C. Define File Metadata
+            $folderId = env('GOOGLE_DRIVE_FOLDER_ID');
+            $fileMetadata = new DriveFile([
+                'name' => $filename,
+                'parents' => [$folderId] 
+            ]);
+
+            // D. Upload File
+            $service->files->create($fileMetadata, [
+                'data' => $pdfContent,
+                'mimeType' => 'application/pdf',
+                'uploadType' => 'multipart'
+            ]);
+
+            return back()->with('success', 'Report uploaded successfully! (User Mode)');
 
         } catch (\Exception $e) {
-            // This will now catch PDF errors AND Google Drive errors
-            return back()->with('error', 'Export Failed: ' . $e->getMessage());
+            return back()->with('error', 'Upload Failed: ' . $e->getMessage());
         }
     }
 }

@@ -191,4 +191,6 @@ Route::prefix('staff')->middleware(['auth:staff'])->group(function () {
     // Reporting Routes
     Route::get('/reports', [App\Http\Controllers\ReportController::class, 'index'])->name('staff.reports.index');
     Route::post('/reports/export', [App\Http\Controllers\ReportController::class, 'exportToDrive'])->name('staff.reports.export');
+
+    
 });
