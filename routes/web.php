@@ -146,7 +146,8 @@ Route::prefix('staff')->middleware(['auth:staff'])->group(function () {
     
     // UNBLOCK DATE (Remove from JSON)
     Route::post('/fleet/{id}/unblock', [FleetController::class, 'unblockDate'])->name('staff.fleet.unblock');
-
+    // LOG MAINTENANCE
+    Route::post('/fleet/{id}/maintenance', [FleetController::class, 'storeMaintenance'])->name('staff.fleet.maintenance.store');
     // Separate Inspection Mode
 
     // Customer Management

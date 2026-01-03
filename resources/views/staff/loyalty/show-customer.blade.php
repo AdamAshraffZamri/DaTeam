@@ -1,7 +1,7 @@
 @extends('layouts.staff')
 
 @section('content')
-<div class="min-h-screen bg-gray-100 p-6">
+<div class="min-h-screen bg-gray-100 rounded-2xl p-6">
     <div class="max-w-5xl mx-auto">
         
         {{-- BACK BUTTON --}}
