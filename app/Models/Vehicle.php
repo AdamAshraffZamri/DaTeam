@@ -40,6 +40,7 @@ class Vehicle extends Model
         'owner_nric',       // NRIC or Company Reg Number 
         // 'operating_state',  // Defaulted to 'Johor' per documents [cite: 764, 809]
         // 'date_register_jpj' // JPJ Registration Date [cite: 754, 808, 1026]
+        'blocked_dates',
     ];
 
     /**
@@ -50,6 +51,7 @@ class Vehicle extends Model
         'hourly_rates' => 'array',
         'availability' => 'boolean',
         // 'date_register_jpj' => 'date',
+        'blocked_dates' => 'array',
         'baseDepo' => 'decimal:2',
         'priceHour' => 'decimal:2',
     ];

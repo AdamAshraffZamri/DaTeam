@@ -57,6 +57,7 @@ class DatabaseSeeder extends Seeder
             'accountStat' => 'unverified'
         ]);
 
+
         // Add loyalty points for main customer
         LoyaltyPoint::firstOrCreate(
             ['user_id' => $mainCustomer->customerID],
@@ -92,6 +93,8 @@ class DatabaseSeeder extends Seeder
      */
     private function seedVehicles(): void
     {
+        // 3. Insert 14 Hasta Travel & Tours Vehicles
+
         $vehicles = [
             [
                 'plateNo' => 'JWD9496', 
@@ -105,6 +108,21 @@ class DatabaseSeeder extends Seeder
             'color' => 'Yellow',
             'image' => 'vehicles/jwd9496.jpg',
             'mileage' => 1111809,
+            'baseDepo' => 50,
+            'fuelType' => 'Petrol RON95'
+        ],
+        [
+            'plateNo' => 'QRP5205', 
+            'brand' => 'Honda', 
+            'model' => 'Vario 160 CC', 
+            'vehicle_category' => 'bike',
+            'type' => 'Scooter', 
+            'owner_name' => 'HASTA TRAVEL & TOURS', 
+            'hourly_rates' => ['1'=>10, '3'=>18, '5'=>25, '7'=>31, '9'=>36, '12'=>40, '24'=>43], 
+            'year' => 2021, 
+            'color' => 'Orange',
+            'image' => 'vehicles/qrp5205.jpg',
+            'mileage' => 0,
             'baseDepo' => 50,
             'fuelType' => 'Petrol RON95'
         ],
@@ -270,6 +288,21 @@ class DatabaseSeeder extends Seeder
             'color' => 'Silver',
             'image' => 'vehicles/vc6522.jpg',
             'mileage' => 280108,
+            'baseDepo' => 50,
+            'fuelType' => 'Petrol RON95'
+        ],
+        [
+            'plateNo' => 'UUM1095', 
+            'brand' => 'Perodua', 
+            'model' => 'Alza (2nd Gen)', 
+            'vehicle_category' => 'car', 
+            'type' => 'SUV', 
+            'owner_name' => 'HASTA TRAVEL & TOURS', 
+            'hourly_rates' => ['1'=>40, '3'=>60, '5'=>70, '7'=>75, '9'=>90, '12'=>100, '24'=>130], 
+            'year' => 2023, 
+            'color' => 'Silver',
+            'image' => 'vehicles/uum1095.jpg',
+            'mileage' => 247879,
             'baseDepo' => 50,
             'fuelType' => 'Petrol RON95'
         ],

@@ -114,105 +114,111 @@
                 </div>
 
                 <div class="space-y-4 flex-grow max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
+
     @forelse($balanceBookings ?? [] as $booking)
-        @php
-            // Get all VERIFIED payments
-            $verifiedPayments = $booking->payments->where('paymentStatus', 'Verified');
-            
-            // Total amount paid (including deposit and balance payments)
-            $totalPaid = $verifiedPayments->sum('amount');
-            
-            // Total deposit paid (sum of depoAmount fields from verified payments)
-            $depositPaid = $verifiedPayments->sum('depoAmount');
-            
-            // Calculate remaining balance
-            $balance = $booking->totalCost - $totalPaid;
-            
-            // Calculate what's been paid towards the actual rental (non-deposit)
-            $rentalPaid = $totalPaid - $depositPaid;
-            
-            // Show only if there's actual balance to pay
-        @endphp
+    @php
+        // 1. DATA CALCULATION
+        $totalCost = $booking->totalCost;
+        
+        // Sum of payments effectively received and verified by Admin
+        $verifiedPaid = $booking->payments->where('paymentStatus', 'Verified')->sum('amount');
+        
+        // Sum of payments currently processing (e.g., the deposit you just submitted)
+        $pendingPaid = $booking->payments->where('paymentStatus', 'Pending Verification')->sum('amount');
+        
+        // Gross Balance: Total Cost - Verified Paid (The absolute remaining debt)
+        $grossBalance = $totalCost - $verifiedPaid;
 
-        @if($balance > 0)
-            <div class="bg-white/5 rounded-2xl p-5 border border-orange-500/30 hover:bg-white/10 transition relative overflow-hidden">
-                <div class="absolute left-0 top-0 bottom-0 w-1 bg-orange-500"></div>
+        // Net Balance: Gross Balance - Pending Paid (What is left to pay if current pending payments are approved)
+        // If you just paid a deposit, this will still be > 0
+        $netBalance = $grossBalance - $pendingPaid;
+        
+        // This ensures floating point precision errors don't cause issues
+        if($netBalance < 0) $netBalance = 0;
+    @endphp
 
-                <div class="flex justify-between items-start mb-3">
-                    <div>
-                        <span class="text-xs font-bold text-orange-400 uppercase">
-                            Outstanding Balance
-                        </span>
-                        <p class="text-white font-bold text-lg">
-                            MYR {{ number_format($balance, 2) }}
-                        </p>
-                    </div>
+    {{-- Show card if there is debt OR if we are waiting for a payment to clear --}}
+    @if($grossBalance > 0)
+        <div class="bg-white/5 rounded-2xl p-5 border border-orange-500/30 hover:bg-white/10 transition relative overflow-hidden flex flex-col">
+            <div class="absolute left-0 top-0 bottom-0 w-1 bg-orange-500"></div>
+
+            {{-- HEADER --}}
+            <div class="flex justify-between items-start mb-3">
+                <div>
+                    <span class="text-xs font-bold text-orange-400 uppercase">Outstanding</span>
+                    {{-- Show the Net Balance here so user knows what is actually LEFT to pay --}}
+                    <p class="text-white font-bold text-lg">MYR {{ number_format($netBalance, 2) }}</p>
+                </div>
+                <div class="text-right">
                     <span class="bg-orange-500/20 text-orange-400 text-[10px] px-2 py-1 rounded uppercase font-bold">
                         {{ $booking->bookingStatus }}
                     </span>
-                </div>
-
-                {{-- Payment breakdown --}}
-                <div class="text-gray-300 text-sm mb-3 space-y-1 bg-black/20 p-3 rounded-lg">
-                    <div class="flex justify-between">
-                        <span>Total Booking Cost:</span>
-                        <span class="font-bold">MYR {{ number_format($booking->totalCost, 2) }}</span>
-                    </div>
-                    <div class="flex justify-between">
-                        <span>Deposit Required:</span>
-                        <span class="text-blue-400">MYR {{ number_format($booking->vehicle->baseDepo ?? 0, 2) }}</span>
-                    </div>
-                    <div class="border-t border-gray-700 pt-1 mt-1"></div>
-                    <div class="flex justify-between">
-                        <span>Total Paid:</span>
-                        <span class="text-green-400 font-bold">MYR {{ number_format($totalPaid, 2) }}</span>
-                    </div>
-                    <div class="flex justify-between text-xs">
-                        <span class="ml-2">↳ Deposit portion:</span>
-                        <span>MYR {{ number_format($depositPaid, 2) }}</span>
-                    </div>
-                    <div class="flex justify-between text-xs">
-                        <span class="ml-2">↳ Rental portion:</span>
-                        <span>MYR {{ number_format($rentalPaid, 2) }}</span>
-                    </div>
-                    <div class="border-t border-gray-700 pt-1 mt-1">
-                        <div class="flex justify-between font-bold">
-                            <span>Balance Due:</span>
-                            <span class="text-orange-400">MYR {{ number_format($balance, 2) }}</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="text-gray-400 text-sm mb-4">
-                    <p class="font-medium text-white">
-                        {{ $booking->vehicle->model }}
-                        ({{ $booking->vehicle->plateNo }})
-                    </p>
-                    <p class="text-xs mt-1">
-                        Booking ID: #{{ $booking->bookingID }}
-                    </p>
-                    <p class="text-xs text-red-400 mt-1">
-                        <i class="far fa-clock mr-1"></i>
-                        Due by {{ \Carbon\Carbon::parse($booking->originalDate ?? $booking->created_at)->format('d M Y') }}
-                    </p>
-                </div>
-
-                <div class="flex justify-end">
-                    <a href="{{ route('finance.pay', $booking->bookingID) }}"
-                       class="bg-orange-600 hover:bg-orange-700 text-white px-8 py-2 rounded-xl font-bold text-sm shadow-lg shadow-orange-500/30 transition hover:scale-105">
-                        Pay Balance
-                    </a>
+                    <p class="text-[10px] text-gray-500 mt-1">ID: #{{ $booking->bookingID }}</p>
                 </div>
             </div>
-        @endif
 
-    @empty
-        <div class="h-full flex flex-col items-center justify-center text-center opacity-50 py-10">
-            <i class="fas fa-check-circle text-5xl text-green-500/50 mb-4"></i>
-            <p class="text-gray-300 font-bold">All payments settled</p>
-            <p class="text-gray-500 text-sm">No outstanding balances.</p>
+            {{-- VEHICLE INFO --}}
+            <div class="text-gray-400 text-sm mb-3">
+                <i class="fas fa-car mr-1"></i> {{ $booking->vehicle->model }} ({{ $booking->vehicle->plateNo }})
+            </div>
+
+            {{-- FINANCIAL BREAKDOWN --}}
+            <div class="bg-black/20 p-3 rounded-lg text-sm space-y-1 mb-4">
+                <div class="flex justify-between text-gray-400">
+                    <span>Total Cost:</span>
+                    <span>MYR {{ number_format($totalCost, 2) }}</span>
+                </div>
+                
+                @if($verifiedPaid > 0)
+                <div class="flex justify-between text-green-400">
+                    <span>Paid (Verified):</span>
+                    <span>- MYR {{ number_format($verifiedPaid, 2) }}</span>
+                </div>
+                @endif
+
+                @if($pendingPaid > 0)
+                <div class="flex justify-between text-yellow-400 font-bold">
+                    <span>Processing:</span>
+                    <span>- MYR {{ number_format($pendingPaid, 2) }}</span>
+                </div>
+                @endif
+                
+                <div class="border-t border-white/10 pt-1 mt-1 flex justify-between font-bold text-white">
+                    <span>Balance to Pay:</span>
+                    <span>MYR {{ number_format($netBalance, 2) }}</span>
+                </div>
+            </div>
+
+            {{-- ACTION BUTTONS --}}
+            <div class="mt-auto flex justify-end">
+                @if($netBalance > 0.50) {{-- Using 0.50 buffer for float safety --}}
+                    {{-- User still owes money --}}
+                    <a href="{{ route('finance.pay', $booking->bookingID) }}" 
+                       class="bg-orange-600 hover:bg-orange-700 text-white px-6 py-2 rounded-xl font-bold text-sm shadow-lg transition">
+                        Pay Balance
+                    </a>
+                @elseif($pendingPaid > 0)
+                    {{-- User has paid everything, just waiting for admin --}}
+                    <span class="bg-yellow-500/20 text-yellow-400 border border-yellow-500/30 px-4 py-2 rounded-xl text-xs font-bold animate-pulse">
+                        <i class="fas fa-clock mr-1"></i> Waiting for Verification
+                    </span>
+                @else
+                    {{-- Paid in full --}}
+                    <span class="text-green-500 font-bold text-sm">
+                        <i class="fas fa-check-circle mr-1"></i> Fully Paid
+                    </span>
+                @endif
+            </div>
         </div>
-    @endforelse
+    @endif
+
+@empty
+    <div class="col-span-full text-center py-10 opacity-50">
+        <i class="fas fa-check-circle text-5xl text-green-500/50 mb-4"></i>
+        <p class="text-gray-300 font-bold">All payments settled</p>
+        <p class="text-gray-500 text-sm">No outstanding balances.</p>
+    </div>
+@endforelse
 </div>
             </div>
 

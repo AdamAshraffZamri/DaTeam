@@ -262,9 +262,44 @@
                         </div>
                     </div>
                 </div>
+    {{-- 4. CUSTOMER FEEDBACK (NEW) --}}
+                    @if($booking->feedback)
+                    <div class="bg-indigo-50 rounded-2xl shadow-sm border border-indigo-100 p-6 relative overflow-hidden">
+                        <div class="absolute top-0 right-0 p-4 opacity-10">
+                            <i class="fas fa-star text-6xl text-indigo-600"></i>
+                        </div>
+                        
+                        <h3 class="text-xs font-bold text-indigo-700 uppercase tracking-wider mb-4 border-b border-indigo-200 pb-2">
+                            Customer Review
+                        </h3>
 
-                {{-- 5. WORKFLOW ACTIONS --}}
-<div class="bg-gray-900 rounded-2xl shadow-lg p-6 text-white">
+                        <div class="flex items-center gap-1 mb-3">
+                            @for($i = 1; $i <= 5; $i++)
+                                <i class="fas fa-star text-lg {{ $i <= $booking->feedback->rating ? 'text-yellow-400' : 'text-gray-300' }}"></i>
+                            @endfor
+                            <span class="ml-2 text-xs font-bold text-indigo-600 bg-indigo-100 px-2 py-1 rounded">
+                                {{ $booking->feedback->rating }}/5
+                            </span>
+                        </div>
+
+                        @if($booking->feedback->comment)
+                            <div class="bg-white/80 rounded-xl p-4 border border-indigo-100 relative z-10">
+                                <i class="fas fa-quote-left text-indigo-200 text-xl absolute -top-2 -left-2"></i>
+                                <p class="text-sm text-gray-800 italic relative z-10 pl-2">
+                                    "{{ $booking->feedback->comment }}"
+                                </p>
+                            </div>
+                        @else
+                            <p class="text-sm text-gray-500 italic">No written comment provided.</p>
+                        @endif
+                        
+                        <p class="text-[10px] text-indigo-400 mt-3 text-right">
+                            Submitted {{ $booking->feedback->created_at->format('d M Y, h:i A') }}
+                        </p>
+                    </div>
+                    @endif
+                    {{-- 5. WORKFLOW ACTIONS --}}
+    <div class="bg-gray-900 rounded-2xl shadow-lg p-6 text-white">
     <h3 class="text-lg font-bold mb-4">Manage Booking Status</h3>
     
     <div class="flex justify-between items-center mb-6 border-b border-gray-700 pb-4">
@@ -294,7 +329,7 @@
         {{-- ACTION BUTTONS BASED ON STATUS --}}
         
         {{-- STEP 1: INITIAL PROCESSING (Submitted OR Deposit Paid) --}}
-        @if(in_array($booking->bookingStatus, ['Submitted', 'Deposit Paid']))
+        @if(in_array($booking->bookingStatus, ['Submitted', 'Deposit Paid', 'Paid']))
             
             {{-- If there are pending payments, force verification first --}}
             @if($pendingPayments->count() > 0)
@@ -320,32 +355,32 @@
                 </button>
             @endif
 
-        {{-- STEP 2: CONFIRMED (Ready for Pickup) --}}
-        @elseif($booking->bookingStatus == 'Confirmed')
-            <form action="{{ route('staff.bookings.pickup', $booking->bookingID) }}" method="POST">@csrf
-                <button class="bg-purple-500 hover:bg-purple-600 text-white px-6 py-3 rounded-xl font-bold transition shadow-lg shadow-purple-500/20">
-                    3. Vehicle Pickup (Handover)
-                </button>
-            </form>
+                {{-- STEP 2: CONFIRMED (Ready for Pickup) --}}
+                @elseif($booking->bookingStatus == 'Confirmed')
+                    <form action="{{ route('staff.bookings.pickup', $booking->bookingID) }}" method="POST">@csrf
+                        <button class="bg-purple-500 hover:bg-purple-600 text-white px-6 py-3 rounded-xl font-bold transition shadow-lg shadow-purple-500/20">
+                            3. Vehicle Pickup (Handover)
+                        </button>
+                    </form>
 
-        {{-- STEP 3: ACTIVE (On Rental) --}}
-        @elseif($booking->bookingStatus == 'Active')
-            <form action="{{ route('staff.bookings.return', $booking->bookingID) }}" method="POST" onsubmit="return confirm('Complete rental & release deposit?');">@csrf
-                <button class="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-xl font-bold transition shadow-lg shadow-blue-500/20">
-                    4. Process Return (Complete)
-                </button>
-            </form>
+                {{-- STEP 3: ACTIVE (On Rental) --}}
+                @elseif($booking->bookingStatus == 'Active')
+                    <form action="{{ route('staff.bookings.return', $booking->bookingID) }}" method="POST" onsubmit="return confirm('Complete rental & release deposit?');">@csrf
+                        <button class="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-xl font-bold transition shadow-lg shadow-blue-500/20">
+                            4. Process Return (Complete)
+                        </button>
+                    </form>
 
-        {{-- STEP 4: CANCELLATIONS (Refunds) --}}
-        @elseif($booking->bookingStatus == 'Cancelled' && $booking->payment && $booking->payment->depoStatus == 'Requested')
-            <form action="{{ route('staff.bookings.refund', $booking->bookingID) }}" method="POST" onsubmit="return confirm('Issue refund to customer?');">@csrf
-                <button class="bg-red-500 hover:bg-red-600 text-white px-6 py-3 rounded-xl font-bold transition shadow-lg shadow-red-500/20 flex items-center">
-                    <i class="fas fa-hand-holding-usd mr-2"></i> Approve Refund
-                </button>
-            </form>
-        @endif
-    </div>
-</div>
+                {{-- STEP 4: CANCELLATIONS (Refunds) --}}
+                @elseif($booking->bookingStatus == 'Cancelled' && $booking->payment && $booking->payment->depoStatus == 'Requested')
+                    <form action="{{ route('staff.bookings.refund', $booking->bookingID) }}" method="POST" onsubmit="return confirm('Issue refund to customer?');">@csrf
+                        <button class="bg-red-500 hover:bg-red-600 text-white px-6 py-3 rounded-xl font-bold transition shadow-lg shadow-red-500/20 flex items-center">
+                            <i class="fas fa-hand-holding-usd mr-2"></i> Approve Refund
+                        </button>
+                    </form>
+                @endif
+            </div>
+        </div>
 
             </div>
         </div>

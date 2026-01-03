@@ -89,7 +89,7 @@
     </nav>
 
     {{-- Updated Condition: Hide this Layout Pill Bar on Home AND About pages (since they have their own) --}}
-    @if(!request()->routeIs('home') && !request()->routeIs('pages.about'))
+    @if(!request()->routeIs('home') && !request()->routeIs('pages.about') && !request()->routeIs('pages.contact'))
         <div class="w-full flex justify-center py-6 relative z-40">
             <div class="bg-white/10 backdrop-blur-md border border-white/20 rounded-full p-1.5 flex items-center shadow-2xl">
                 <a href="{{ route('book.create') }}" 
