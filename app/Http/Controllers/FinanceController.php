@@ -21,11 +21,20 @@ class FinanceController extends Controller
                          ->with(['vehicle', 'payment']) 
                          ->get();
 
-        // 2. GET OUTSTANDING ITEMS
-        $fines = Penalties::whereHas('booking', function($q) use ($user) {
-                    $q->where('customerID', $user->customerID);
+        // 2. GET OUTSTANDING ITEMS (Both booking-based and customer-level penalties)
+        $fines = Penalties::where(function($query) use ($user) {
+                    // Customer-level penalties (direct customerID match)
+                    $query->where('customerID', $user->customerID)
+                    // OR booking-based penalties (through booking relationship)
+                    ->orWhereHas('booking', function($q) use ($user) {
+                        $q->where('customerID', $user->customerID);
+                    });
                  })
-                 ->where('status', 'Pending')
+                 ->where(function($query) {
+                     $query->where('status', 'Pending')
+                           ->orWhere('penaltyStatus', 'Unpaid');
+                 })
+                 ->with(['booking.vehicle', 'customer'])
                  ->get();
 
         $balanceBookings = Booking::where('customerID', $user->customerID)
@@ -105,12 +114,20 @@ class FinanceController extends Controller
 
     public function payFine($id)
     {
-        // Find the penalty by its ID
-        $penalty = Penalties::findOrFail($id);
+        // Find the penalty by its ID with relationships
+        $penalty = Penalties::with(['booking.vehicle', 'customer'])->findOrFail($id);
 
-        // Optional: Security check to ensure the penalty belongs to the logged-in user
-        if ($penalty->booking->customerID !== Auth::id()) {
-            abort(403, 'Unauthorized action.');
+        // Security check: ensure the penalty belongs to the logged-in user
+        if ($penalty->bookingID) {
+            // Booking-based penalty
+            if ($penalty->booking && $penalty->booking->customerID !== Auth::id()) {
+                abort(403, 'Unauthorized action.');
+            }
+        } else {
+            // Customer-level penalty
+            if ($penalty->customerID !== Auth::id()) {
+                abort(403, 'Unauthorized action.');
+            }
         }
 
         return view('finance.pay_fine', compact('penalty'));
@@ -124,23 +141,33 @@ class FinanceController extends Controller
 
         $penalty = Penalties::findOrFail($id);
         
-        // CALCULATE TOTAL FROM DB COLUMNS
-        // Since 'amount' column doesn't exist, we sum the fees
-        $totalFine = $penalty->penaltyFees + $penalty->fuelSurcharge + $penalty->mileageSurcharge;
+        // Security check
+        if ($penalty->bookingID) {
+            if ($penalty->booking->customerID !== Auth::id()) {
+                abort(403, 'Unauthorized action.');
+            }
+        } else {
+            if ($penalty->customerID !== Auth::id()) {
+                abort(403, 'Unauthorized action.');
+            }
+        }
+        
+        // CALCULATE TOTAL: Use amount if available, otherwise sum the fees
+        $totalFine = $penalty->amount ?? ($penalty->penaltyFees + $penalty->fuelSurcharge + $penalty->mileageSurcharge);
 
         $path = $request->file('payment_proof')->store('receipts', 'public');
 
         Payment::create([
-            'bookingID' => $penalty->bookingID,
-            'amount' => $totalFine, // <--- USE CALCULATED TOTAL HERE
+            'bookingID' => $penalty->bookingID, // Can be null for customer-level penalties
+            'amount' => $totalFine,
             'depoAmount' => 0,
             'transactionDate' => now(),
-            'paymentMethod' => 'QR Transfer (Fine)',
+            'paymentMethod' => 'QR Transfer (Penalty)',
             'paymentStatus' => 'Pending Verification',
             'installmentDetails' => $path 
         ]);
 
-        $penalty->update(['status' => 'Paid']);
+        $penalty->update(['status' => 'Paid', 'penaltyStatus' => 'Paid']);
 
         return redirect()->route('finance.index')->with('success', 'Fine payment submitted successfully!');
     }

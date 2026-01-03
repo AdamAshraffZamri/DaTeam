@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Models\Customer;
+use App\Models\Penalties;
 use Illuminate\Http\Request;
 
 class StaffCustomerController extends Controller
@@ -119,5 +120,40 @@ class StaffCustomerController extends Controller
 
             return back()->with('success', 'Customer has been blacklisted.');
             }
+    }
+
+    // ACTION 4: Impose Penalty
+    public function imposePenalty(Request $request, $id)
+    {
+        $customer = Customer::findOrFail($id);
+        
+        $request->validate([
+            'penalty_reason' => 'required|string',
+            'penalty_amount' => 'required|numeric|min:0.01',
+            'penalty_custom' => 'nullable|string|max:500'
+        ]);
+
+        // Combine Reason + Custom Text
+        $finalReason = $request->penalty_reason;
+        if ($request->filled('penalty_custom')) {
+            $finalReason .= " - " . $request->penalty_custom;
+        }
+
+        // Create penalty record
+        Penalties::create([
+            'customerID' => $customer->customerID,
+            'bookingID' => null, // Customer-level penalty, not booking-specific
+            'amount' => $request->penalty_amount,
+            'penaltyFees' => $request->penalty_amount,
+            'reason' => $finalReason,
+            'status' => 'Pending',
+            'penaltyStatus' => 'Unpaid',
+            'date_imposed' => now(),
+            'lateReturnHour' => 0,
+            'fuelSurcharge' => 0,
+            'mileageSurcharge' => 0,
+        ]);
+
+        return back()->with('success', 'Penalty imposed successfully. Customer must pay before making new bookings.');
     }
 }
