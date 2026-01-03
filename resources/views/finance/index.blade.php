@@ -22,7 +22,7 @@
             {{-- ========================= --}}
             {{-- COLUMN 1: CLAIMABLE REFUNDS --}}
             {{-- ========================= --}}
-            <div class="bg-white/5 backdrop-blur-md rounded-[2.5rem] p-8 border border-white/10 shadow-2xl h-full flex flex-col">
+            <div class="bg-black/50 backdrop-blur-md rounded-[2.5rem] p-8 border border-white/10 shadow-2xl h-full flex flex-col">
 
                 <div class="flex items-center justify-between mb-8">
                     <h2 class="text-2xl font-bold text-white flex items-center">
@@ -101,7 +101,7 @@
             {{-- ========================= --}}
             {{-- COLUMN 2: OUTSTANDING PAYMENTS --}}
             {{-- ========================= --}}
-            <div class="bg-white/5 backdrop-blur-md rounded-[2.5rem] p-8 border border-white/10 shadow-2xl h-full flex flex-col">
+            <div class="bg-black/50 backdrop-blur-md rounded-[2.5rem] p-8 border border-white/10 shadow-2xl h-full flex flex-col">
 
                 <div class="flex items-center justify-between mb-8">
                     <h2 class="text-2xl font-bold text-white flex items-center">

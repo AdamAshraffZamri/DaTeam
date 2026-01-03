@@ -161,9 +161,9 @@
                 
                 <div class="flex items-center space-x-6">
 
-                    {{-- Example notification bell/dropdown --}}
+                    {{-- STAFF NOTIFICATION BELL --}}
                     <div class="relative">
-                        <button id="notif-bell" class="flex items-center text-gray-500 hover:text-gray-700 focus:outline-none relative p-2">
+                        <button id="notif-bell" class="flex items-center text-gray-500 hover:text-orange-600 focus:outline-none relative p-2 transition-colors">
                             <i class="fas fa-bell text-xl"></i>
                             @php $unreadCount = Auth::guard('staff')->user()->unreadNotifications->count(); @endphp
                             @if($unreadCount > 0)
@@ -173,31 +173,54 @@
                             @endif
                         </button>
 
-                        <div id="notif-dropdown" class="absolute right-0 mt-2 w-80 bg-white border border-gray-100 rounded-xl shadow-xl hidden z-50 overflow-hidden">
-                            <div class="p-4 border-b border-gray-50 flex justify-between items-center">
+                        {{-- DROPDOWN MENU --}}
+                        <div id="notif-dropdown" class="absolute right-0 mt-3 w-80 bg-white border border-gray-100 rounded-2xl shadow-2xl hidden z-50 overflow-hidden transform origin-top-right transition-all">
+                            <div class="p-4 border-b border-gray-50 flex justify-between items-center bg-gray-50/50">
                                 <h4 class="text-xs font-black uppercase text-gray-400 tracking-wider">Notifications</h4>
                                 @if($unreadCount > 0)
                                     <span class="text-[10px] bg-orange-100 text-orange-600 px-2 py-0.5 rounded-full font-bold">{{ $unreadCount }} NEW</span>
                                 @endif
                             </div>
                             
-                            <div class="max-h-80 overflow-y-auto">
+                            <div class="max-h-96 overflow-y-auto custom-scrollbar">
                                 @forelse(Auth::guard('staff')->user()->unreadNotifications as $notification)
-                                    <a href="{{ route('staff.bookings.show', $notification->data['booking_id']) }}" class="block p-4 hover:bg-gray-50 transition border-b border-gray-50 group">
-                                        <p class="text-sm font-bold text-gray-800 group-hover:text-blue-600">{{ $notification->data['message'] }}</p>
-                                        <p class="text-[10px] text-gray-400 mt-1 flex items-center">
-                                            <i class="far fa-clock mr-1"></i> {{ $notification->created_at->diffForHumans() }}
-                                        </p>
+                                    <a href="{{ route('staff.bookings.show', $notification->data['booking_id'] ?? '#') }}" 
+                                       class="block p-4 hover:bg-orange-50/50 transition border-b border-gray-50 group">
+                                        <div class="flex gap-3">
+                                            <div class="mt-1">
+                                                <div class="w-2 h-2 bg-orange-500 rounded-full"></div>
+                                            </div>
+                                            <div>
+                                                <p class="text-sm font-semibold text-gray-800 leading-tight group-hover:text-orange-700 transition-colors">
+                                                    {{ $notification->data['message'] }}
+                                                </p>
+                                                <p class="text-[10px] text-gray-400 mt-1.5 flex items-center">
+                                                    <i class="far fa-clock mr-1"></i> {{ $notification->created_at->diffForHumans() }}
+                                                </p>
+                                            </div>
+                                        </div>
                                     </a>
                                 @empty
-                                    <div class="p-8 text-center">
+                                    <div class="p-10 text-center">
                                         <div class="bg-gray-50 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3">
                                             <i class="fas fa-check text-gray-300"></i>
                                         </div>
-                                        <p class="text-xs text-gray-400">All caught up!</p>
+                                        <p class="text-xs text-gray-400 font-medium">No unread notifications</p>
                                     </div>
                                 @endforelse
                             </div>
+
+                            {{-- MARK AS READ BUTTON --}}
+                            @if($unreadCount > 0)
+                                <div class="p-3 bg-gray-50 border-t border-gray-100 text-center">
+                                    <form action="{{ route('notifications.markRead') }}" method="POST">
+                                        @csrf
+                                        <button type="submit" class="text-[11px] text-orange-600 font-extrabold hover:text-orange-700 uppercase tracking-tighter">
+                                            Clear All Notifications
+                                        </button>
+                                    </form>
+                                </div>
+                            @endif
                         </div>
                     </div>
 
@@ -220,18 +243,30 @@
         </div>
     </div>
 <script>
-    // Toggle dropdown on click
     const bell = document.getElementById('notif-bell');
     const dropdown = document.getElementById('notif-dropdown');
 
+    // Toggle dropdown on click
     bell.addEventListener('click', (e) => {
         e.stopPropagation();
         dropdown.classList.toggle('hidden');
+        
+        // Optional: Add a simple animation class if you want
+        if (!dropdown.classList.contains('hidden')) {
+            dropdown.classList.add('animate-in', 'fade-in', 'zoom-in-95', 'duration-100');
+        }
     });
 
-    // Close dropdown if clicking anywhere else
-    window.addEventListener('click', () => {
-        dropdown.classList.add('hidden');
+    // Close dropdown if clicking anywhere else on the document
+    document.addEventListener('click', (e) => {
+        if (!dropdown.contains(e.target) && !bell.contains(e.target)) {
+            dropdown.classList.add('hidden');
+        }
+    });
+
+    // Prevent dropdown from closing when clicking inside the notification list
+    dropdown.addEventListener('click', (e) => {
+        e.stopPropagation();
     });
 </script>
 </body>

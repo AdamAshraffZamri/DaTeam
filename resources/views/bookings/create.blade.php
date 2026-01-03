@@ -30,7 +30,7 @@
 
                 {{-- PICKUP LOCATION --}}
                 <div class="flex-1 px-6 py-2 w-full md:border-r border-white/10">
-                    <label class="block text-[10px] font-bold text-gray-300 uppercase tracking-wider mb-1">PICKUP POINT</label>
+                    <label class="block text-[12px] font-bold text-white uppercase tracking-wider mb-1">PICKUP POINT</label>
                     <div class="flex items-center group">
                         <button type="button" onclick="openMapModal('pickup')" class="w-8 h-8 rounded-full bg-green-500/20 flex items-center justify-center mr-3 text-green-400 hover:bg-green-500 hover:text-white transition cursor-pointer">
                             <i class="fas fa-map-marker-alt"></i>
@@ -42,7 +42,7 @@
 
                 {{-- RETURN LOCATION --}}
                 <div class="flex-1 px-6 py-2 w-full md:border-r border-white/10">
-                    <label class="block text-[10px] font-bold text-gray-300 uppercase tracking-wider mb-1">RETURN POINT</label>
+                    <label class="block text-[12px] font-bold text-white uppercase tracking-wider mb-1">RETURN POINT</label>
                     <div class="flex items-center group">
                         <button type="button" onclick="openMapModal('return')" class="w-8 h-8 rounded-full bg-red-500/20 flex items-center justify-center mr-3 text-red-400 hover:bg-red-500 hover:text-white transition cursor-pointer">
                             <i class="fas fa-flag-checkered"></i>
@@ -54,7 +54,7 @@
 
                 {{-- PICKUP DATE & TIME --}}
                 <div class="px-6 py-2 w-full md:w-auto md:border-r border-white/10">
-                    <label class="block text-[10px] font-bold text-gray-300 uppercase tracking-wider mb-1">PICKUP DATE</label>
+                    <label class="block text-[12px] font-bold text-white uppercase tracking-wider mb-1">PICKUP DATE</label>
                     <div class="flex items-center bg-white/5 rounded-lg px-3 py-1 hover:bg-white/10 transition h-[42px]">
 
                         {{-- Date Input --}}
@@ -69,9 +69,15 @@
                             {{-- Initial Value empty; JS will fill it --}}
                             <input type="hidden" name="pickup_time" id="pickup_time_hidden" value="">
 
-                            <input type="number" id="pickup_hour" min="1" max="12" value="10"
-                                   class="w-10 bg-transparent text-center text-white font-bold text-sm p-0 border-none focus:ring-0 appearance-none leading-none"
-                                   oninput="updateHiddenTime('pickup')">
+                            <select id="pickup_hour" 
+                                    onchange="updateHiddenTime('pickup')"
+                                    class="bg-transparent text-white font-bold text-sm border-none p-0 focus:ring-0 cursor-pointer appearance-none text-center w-8">
+                                @for ($i = 1; $i <= 12; $i++)
+                                    <option value="{{ $i }}" {{ $i == 10 ? 'selected' : '' }} class="text-black">
+                                        {{ $i }}
+                                    </option>
+                                @endfor
+                            </select>
 
                             <span class="text-white font-bold text-sm leading-none">:00</span>
 
@@ -87,7 +93,7 @@
 
                 {{-- RETURN DATE & TIME --}}
                 <div class="px-6 py-2 w-full md:w-auto">
-                    <label class="block text-[10px] font-bold text-gray-300 uppercase tracking-wider mb-1">RETURN DATE</label>
+                    <label class="block text-[12px] font-bold text-white uppercase tracking-wider mb-1">RETURN DATE</label>
                     <div class="flex items-center bg-white/5 rounded-lg px-3 py-1 hover:bg-white/10 transition h-[42px]">
 
                         {{-- Date Input --}}
@@ -102,9 +108,15 @@
                             {{-- Initial Value empty; JS will fill it --}}
                             <input type="hidden" name="return_time" id="return_time_hidden" value="">
 
-                            <input type="number" id="return_hour" min="1" max="12" value="10"
-                                   class="w-10 bg-transparent text-center text-white font-bold text-sm p-0 border-none focus:ring-0 appearance-none leading-none"
-                                   oninput="updateHiddenTime('return')">
+                            <select id="return_hour" 
+                                    onchange="updateHiddenTime('return')"
+                                    class="bg-transparent text-white font-bold text-sm border-none p-0 focus:ring-0 cursor-pointer appearance-none text-center w-8">
+                                @for ($i = 1; $i <= 12; $i++)
+                                    <option value="{{ $i }}" {{ $i == 10 ? 'selected' : '' }} class="text-black">
+                                        {{ $i }}
+                                    </option>
+                                @endfor
+                            </select>
 
                             <span class="text-white font-bold text-sm leading-none">:00</span>
 
@@ -219,19 +231,22 @@
 <script>
     // --- 1. TIME UPDATER (Converts 12h to 24h for Backend) ---
     function updateHiddenTime(type) {
+    // This correctly pulls the selected value from the new dropdown
         let hour = parseInt(document.getElementById(type + '_hour').value) || 10;
         let ampm = document.getElementById(type + '_ampm').value;
         const hiddenInput = document.getElementById(type + '_time_hidden');
-
-        if (hour < 1) hour = 1;
-        if (hour > 12) hour = 12;
 
         let hour24 = hour;
         if (ampm === 'PM' && hour < 12) hour24 += 12;
         if (ampm === 'AM' && hour === 12) hour24 = 0;
 
-        // Format as HH:00:00
+        // Format as HH:00:00 for the backend
         hiddenInput.value = (hour24 < 10 ? '0' + hour24 : hour24) + ':00';
+        
+        // If you are in search_results.blade.php, also call:
+        if (typeof updateAllSelectLinks === "function") {
+            updateAllSelectLinks();
+        }
     }
 
     // --- 2. DATE SYNC (Ensures Return Date is never before Pickup Date) ---
@@ -327,9 +342,6 @@
         }
     });
 </script>
-{{-- Spacing --}}
-<div class="col-span-1 md:col-span-2 lg:col-span-3 flex flex-col items-center justify-center py-24 text-center"></div>
-<div class="h-24 bg-gray-50"></div>
 
 {{-- MAP MODAL --}}
 <div id="mapModal" class="fixed inset-0 z-50 hidden">

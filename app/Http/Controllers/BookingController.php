@@ -130,9 +130,24 @@ class BookingController extends Controller
               ->whereDate('date', '<=', $return);
         });
 
-        // 4. Apply Vehicle Type Filter
+        // Filter by Category (Car/Bike)
+        if ($request->filled('category')) {
+            $query->whereIn('vehicle_category', $request->category);
+        }
+
+        // Filter by Body Type
         if ($request->filled('types')) {
             $query->whereIn('type', $request->types);
+        }
+
+        // Filter by Price Range
+        if ($request->filled('price_range')) {
+            $query->where(function($q) use ($request) {
+                foreach ($request->price_range as $range) {
+                    [$min, $max] = explode('-', $range);
+                    $q->orWhereBetween('priceHour', [(int)$min / 24, (int)$max / 24]);
+                }
+            });
         }
 
         // 5. Execute Query
@@ -206,7 +221,7 @@ class BookingController extends Controller
     {
         $request->validate([
             'payment_proof' => 'required|image|max:2048',
-            'agreement_proof' => 'required|file|mimes:pdf,jpg,jpeg,png|max:2048',
+            'agreement_proof' => 'required|file|mimes:pdf|max:2048',
             'payment_type' => 'required|in:full,deposit',
         ]);
 
@@ -437,6 +452,6 @@ class BookingController extends Controller
     public function markNotificationsRead()
     {
         auth()->user()->unreadNotifications->markAsRead();
-        return back();
+        return back()->with('success', 'Notifications cleared');
     }
 }

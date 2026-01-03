@@ -18,35 +18,69 @@
                 <p class="text-gray-300 mt-2">Manage your active and past rentals.</p>
             </div>
 
-            {{-- SERVER-SIDE FILTER BAR --}}
-            <form action="{{ route('book.index') }}" method="GET" class="flex overflow-x-auto pb-1 md:pb-0 gap-1 no-scrollbar">
-                
+            {{-- SERVER-SIDE FILTER BAR (MODERN STATUS DROPDOWN) --}}
+            <form action="{{ route('book.index') }}" method="GET" id="filterForm" class="relative z-50">
                 @php
                     $currentStatus = request('status', 'all');
+                    
+                    // Comprehensive list of booking and payment statuses
                     $statuses = [
-                        'all' => 'All',
-                        'Submitted' => 'Submitted', 
-                        'Approved' => 'Approved',
-                        'Active' => 'Active',
-                        'Completed' => 'Completed',
-                        'Cancelled' => 'Cancelled'
+                        'all'          => 'All Bookings',
+                        'Submitted'    => 'Submitted', 
+                        'Deposit Paid' => 'Deposit Paid',
+                        'Paid'         => 'Paid (Full)',
+                        'Approved'     => 'Approved',
+                        'Active'       => 'Active',
+                        'Completed'    => 'Completed',
+                        'Cancelled'    => 'Cancelled',
+                        'Rejected'     => 'Rejected'
                     ];
+                    $currentLabel = $statuses[$currentStatus] ?? 'Select Status';
                 @endphp
 
-                @foreach($statuses as $value => $label)
-                    <button type="submit" name="status" value="{{ $value }}" 
-                        class="px-5 py-2 rounded-full text-xs font-bold border transition-all whitespace-nowrap 
-                        {{ $currentStatus == $value ? 'bg-black text-white border-black' : 'border-white/20 text-gray-300 hover:bg-white/10' }}">
-                        {{ $label }}
+                <input type="hidden" name="status" id="statusInput" value="{{ $currentStatus }}">
+
+                {{-- CUSTOM GLASS DROPDOWN --}}
+                <div class="relative w-full md:w-[220px]" id="customDropdown">
+                    
+                    {{-- TRIGGER BUTTON --}}
+                    <button type="button" onclick="toggleDropdown()" 
+                        class="w-full flex items-center justify-between bg-black/40 backdrop-blur-md border border-white/15 text-white text-xs font-bold py-3.5 px-5 rounded-2xl hover:bg-white/10 hover:border-orange-500/50 transition-all shadow-xl group">
+                        
+                        <div class="flex items-center gap-3">
+                            <i class="fas fa-wallet text-orange-500"></i>
+                            <span id="dropdownLabel">{{ $currentLabel }}</span>
+                        </div>
+
+                        <i class="fas fa-chevron-down text-[10px] text-gray-400 group-hover:text-white transition-transform duration-300" id="dropdownArrow"></i>
                     </button>
-                @endforeach
+
+                    {{-- DROPDOWN MENU --}}
+                    <div id="dropdownMenu" 
+                        class="absolute top-full right-0 mt-2 w-full bg-[#1a1a1a] border border-white/10 rounded-2xl shadow-2xl overflow-hidden hidden transform origin-top transition-all duration-200 z-50 max-h-[350px] overflow-y-auto custom-scrollbar">
+                        
+                        @foreach($statuses as $value => $label)
+                        <div onclick="selectStatus('{{ $value }}')" 
+                             class="px-5 py-3 text-xs font-bold cursor-pointer transition-colors flex items-center justify-between border-b border-white/5 last:border-0
+                             {{ $currentStatus == $value ? 'bg-orange-600 text-white' : 'text-gray-300 hover:bg-white/10 hover:text-white' }}">
+                            
+                            <span>{{ $label }}</span>
+                            
+                            @if($currentStatus == $value)
+                                <i class="fas fa-check"></i>
+                            @endif
+                        </div>
+                        @endforeach
+                    </div>
+                </div>
             </form>
+
         </div>
 
         <div class="space-y-7 min-h-[300px]">
             {{-- LOOP: CARDS --}}
             @forelse($bookings as $booking)
-                <div class="group bg-black/50 backdrop-blur-[2px] border border-white/15 rounded-3xl p-6 shadow-xl hover:shadow-orange-500/10 hover:bg-white/15 transition-all duration-300 relative overflow-hidden animate-fade-in">
+                <div class="group bg-black/50 backdrop-blur-[2px] border border-white/15 rounded-3xl p-6 shadow-xl hover:shadow-orange-500/10 hover:bg-black/60 transition-all duration-300 relative overflow-hidden animate-fade-in">
                     <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/2 to-transparent opacity-0 group-hover:opacity-10 transition-opacity duration-500 pointer-events-none"></div>
                     
                     {{-- Clickable Area for Details --}}
@@ -185,7 +219,7 @@
         $requiredCount = ($booking->bookingStatus == 'Confirmed') ? 5 : 6;
     @endphp
 
-    <div id="inspection-modal-{{ $booking->bookingID }}" class="fixed inset-0 z-[10000] hidden bg-black/90 backdrop-blur-md flex items-center justify-center p-4">
+    <div id="inspection-modal-{{ $booking->bookingID }}" class="fixed inset-0 z-[10000] hidden bg-black/70 backdrop-blur-md flex items-center justify-center p-4">
         <div class="bg-[#1a1a1a] border border-white/15 rounded-2xl w-full max-w-md p-6 relative shadow-2xl">
             <button onclick="document.getElementById('inspection-modal-{{ $booking->bookingID }}').classList.add('hidden')" class="absolute top-4 right-4 text-gray-400 hover:text-white">
                 <i class="fas fa-times text-xl"></i>
@@ -269,7 +303,7 @@
 {{-- 4. FEEDBACK MODALS (LOOP 3) --}}
 @foreach($bookings as $booking)
     @if($booking->bookingStatus == 'Completed' && !$booking->feedback)
-    <div id="feedback-modal-{{ $booking->bookingID }}" class="fixed inset-0 z-[10000] hidden bg-black/90 backdrop-blur-md flex items-center justify-center p-4">
+    <div id="feedback-modal-{{ $booking->bookingID }}" class="fixed inset-0 z-[10000] hidden bg-black/70 backdrop-blur-md flex items-center justify-center p-4">
         <div class="bg-[#1a1a1a] border border-white/15 rounded-2xl w-full max-w-md p-6 relative shadow-2xl">
             <button onclick="document.getElementById('feedback-modal-{{ $booking->bookingID }}').classList.add('hidden')" class="absolute top-4 right-4 text-gray-400 hover:text-white">
                 <i class="fas fa-times text-xl"></i>
@@ -302,7 +336,7 @@
 {{-- 5. DETAILS MODALS (LOOP 4) --}}
 @foreach($bookings as $booking)
     <div id="modal-{{ $booking->bookingID }}" class="fixed inset-0 z-[9999] hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-        <div class="absolute inset-0 bg-black/90 backdrop-blur-sm transition-opacity duration-300" 
+        <div class="absolute inset-0 bg-black/70 backdrop-blur-sm transition-opacity duration-300" 
              onclick="document.getElementById('modal-{{ $booking->bookingID }}').classList.add('hidden')"></div>
 
         <div class="flex items-center justify-center min-h-screen p-4 sm:p-6 pointer-events-none">
@@ -496,5 +530,44 @@
             textSpan.innerHTML = '<i class="fas fa-times-circle mr-1"></i> Selected ' + fileCount + ' (Need ' + requiredCount + ')';
         }
     }
+</script>
+
+<script>
+    // --- CUSTOM DROPDOWN LOGIC ---
+    function toggleDropdown() {
+        const menu = document.getElementById('dropdownMenu');
+        const arrow = document.getElementById('dropdownArrow');
+        
+        if (menu.classList.contains('hidden')) {
+            // Open
+            menu.classList.remove('hidden');
+            menu.classList.add('animate-fade-in-down'); // Optional animation class
+            arrow.style.transform = 'rotate(180deg)';
+        } else {
+            // Close
+            menu.classList.add('hidden');
+            arrow.style.transform = 'rotate(0deg)';
+        }
+    }
+
+    function selectStatus(value) {
+        // 1. Set hidden input value
+        document.getElementById('statusInput').value = value;
+        
+        // 2. Submit form immediately
+        document.getElementById('filterForm').submit();
+    }
+
+    // Close dropdown when clicking outside
+    document.addEventListener('click', function(event) {
+        const dropdown = document.getElementById('customDropdown');
+        const menu = document.getElementById('dropdownMenu');
+        const arrow = document.getElementById('dropdownArrow');
+
+        if (!dropdown.contains(event.target)) {
+            menu.classList.add('hidden');
+            if(arrow) arrow.style.transform = 'rotate(0deg)';
+        }
+    });
 </script>
 @endsection

@@ -122,10 +122,8 @@
         @if($vehicles->count() > 0)
         <div class="flex overflow-x-auto gap-8 px-4 pb-12 scroll-smooth no-scrollbar" id="carouselTrack">
             @foreach($vehicles as $vehicle)
-            <div class="glass-card min-w-[320px] md:min-w-[400px] rounded-[2.5rem] relative group flex-shrink-0">
-                <span class="absolute top-6 right-8 text-7xl font-black text-white/5 pointer-events-none group-hover:text-orange-500/10 transition select-none z-0">
-                    {{ strtoupper(substr($vehicle->brand, 0, 3)) }}
-                </span>
+            <div class="glass-card w-[320px] md:w-[400px] rounded-[2.5rem] relative group flex-shrink-0">                
+                
                 <div class="h-64 w-full flex items-center justify-center relative mt-6 perspective-1000">
                     <img src="{{ $vehicle->image_url }}" alt="{{ $vehicle->model }}" 
                          class="w-[85%] object-contain drop-shadow-2xl transform group-hover:scale-110 group-hover:-rotate-2 transition duration-500 ease-out z-10">

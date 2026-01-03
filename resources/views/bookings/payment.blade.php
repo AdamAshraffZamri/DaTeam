@@ -42,7 +42,7 @@
             <div class="lg:col-span-7 space-y-6">
                 
                 {{-- A. RENTAL ITINERARY CARD --}}
-                <div class="bg-white/5 backdrop-blur-md rounded-[2rem] p-6 border border-white/10 shadow-2xl">
+                <div class="bg-black/50 backdrop-blur-md rounded-[2rem] p-6 border border-white/10 shadow-2xl">
                     <div class="flex justify-between items-center mb-6">
                         <h3 class="text-lg font-bold text-white flex items-center">
                             <i class="far fa-calendar-alt text-orange-500 mr-3"></i> Rental Itinerary
@@ -100,7 +100,7 @@
                 </div>
 
                 {{-- B. PAYMENT SUMMARY & VOUCHER CARD --}}
-                <div class="bg-white/5 backdrop-blur-md rounded-[2.5rem] p-8 border border-white/10 shadow-2xl relative overflow-hidden">
+                <div class="bg-black/50 backdrop-blur-md rounded-[2.5rem] p-8 border border-white/10 shadow-2xl relative overflow-hidden">
                     {{-- Decorative Glow --}}
                     <div class="absolute top-0 right-0 w-64 h-64 bg-orange-500/10 rounded-full blur-3xl pointer-events-none -mr-32 -mt-32"></div>
 
@@ -228,7 +228,7 @@
                     <input type="hidden" name="payment_type" id="hidden_payment_type" value="full">
                     <input type="hidden" name="voucher_id" id="hidden_voucher_id" value="">
 
-                    <div class="bg-white/10 backdrop-blur-xl border border-white/20 rounded-[2rem] p-8 shadow-2xl space-y-8">
+                    <div class="bg-black/50 backdrop-blur-xl border border-white/20 rounded-[2rem] p-8 shadow-2xl space-y-8">
                         
                         {{-- 1. AGREEMENT SECTION --}}
                         <div class="bg-white/5 rounded-xl p-4 border border-white/10 text-left">
@@ -303,8 +303,7 @@
                         </div>
 
                         <button type="submit" class="w-full bg-[#ea580c] hover:bg-orange-600 text-white py-4 rounded-xl font-black text-sm uppercase tracking-widest shadow-lg shadow-orange-500/20 transition-all transform hover:scale-[1.02] active:scale-95 flex items-center justify-center group">
-                            <span>Confirm & Pay RM <span id="payAmountDisplay">{{ number_format($total, 2) }}</span></span>
-                            <i class="fas fa-arrow-right ml-2 opacity-70 group-hover:translate-x-1 transition-transform"></i>
+                            <span>Submit</span>
                         </button>
 
                         <p class="text-center text-[10px] text-white flex items-center justify-center">
