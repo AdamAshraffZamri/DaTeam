@@ -35,6 +35,18 @@
             </div>
         </div>
 
+        @if(session('success'))
+            <div class="mb-6 bg-green-50 border border-green-200 rounded-2xl p-4 flex items-center gap-4 shadow-sm">
+                <div class="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center text-green-600 shrink-0 border border-green-200">
+                    <i class="fas fa-check text-sm"></i>
+                </div>
+                <div>
+                    <h4 class="text-sm font-black text-green-900">Success!</h4>
+                    <p class="text-xs text-green-700 font-medium">{{ session('success') }}</p>
+                </div>
+            </div>
+        @endif
+
         {{-- VEHICLE LIST --}}
         <div class="space-y-3">
             @foreach($vehicles->sortByDesc('availability') as $vehicle)

@@ -106,6 +106,9 @@ Route::prefix('staff')->middleware(['auth:staff'])->group(function () {
     // Dashboard
     Route::get('/dashboard', [StaffBookingController::class, 'dashboard'])->name('staff.dashboard');
     
+    Route::get('/profile', [App\Http\Controllers\StaffProfileController::class, 'edit'])->name('staff.profile.edit');
+    Route::put('/profile', [App\Http\Controllers\StaffProfileController::class, 'update'])->name('staff.profile.update');
+
     // Booking Management
     Route::get('/bookings', [StaffBookingController::class, 'index'])->name('staff.bookings.index');
     Route::get('/bookings/{id}', [StaffBookingController::class, 'show'])->name('staff.bookings.show');

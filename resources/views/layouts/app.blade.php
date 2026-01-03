@@ -93,19 +93,19 @@
         <div class="w-full flex justify-center py-6 relative z-40">
             <div class="bg-white/10 backdrop-blur-md border border-white/20 rounded-full p-1.5 flex items-center shadow-2xl">
                 <a href="{{ route('book.create') }}" 
-                   class="px-8 py-2.5 rounded-full font-bold transition {{ request()->routeIs('book.create') ? 'nav-link-active' : 'text-white/80 hover:bg-white/10' }}">
+                   class="px-8 py-2.5 rounded-full font-bold transition {{ (request()->routeIs('book.create') || request()->routeIs('book.search') || request()->routeIs('book.show') || request()->routeIs('book.payment') || request()->routeIs('book.payment.submit')) ? 'nav-link-active' : 'text-white/80 hover:bg-white/10' }}">
                     Book a Car
                 </a>
                 <a href="{{ route('book.index') }}" 
-                   class="px-8 py-2.5 rounded-full font-bold transition {{ request()->routeIs('book.index') ? 'nav-link-active' : 'text-white/80 hover:bg-white/10' }}">
+                   class="px-8 py-2.5 rounded-full font-bold transition {{ (request()->routeIs('book.index') || request()->routeIs('book.cancel')) ? 'nav-link-active' : 'text-white/80 hover:bg-white/10' }}">
                     My Bookings
                 </a>
                 <a href="{{ route('loyalty.index') }}" 
-                   class="px-8 py-2.5 rounded-full font-bold transition {{ request()->routeIs('loyalty.index') ? 'nav-link-active' : 'text-white/80 hover:bg-white/10' }}">
+                   class="px-8 py-2.5 rounded-full font-bold transition {{ (request()->routeIs('loyalty.index') || request()->routeIs('loyalty.redeem') || request()->routeIs('voucher.apply') || request()->routeIs('voucher.available')) ? 'nav-link-active' : 'text-white/80 hover:bg-white/10' }}">
                     Loyalty
                 </a>
                 <a href="{{ route('finance.index') }}" 
-                   class="px-8 py-2.5 rounded-full font-bold transition {{ request()->routeIs('finance.index') ? 'nav-link-active' : 'text-white/80 hover:bg-white/10' }}">
+                   class="px-8 py-2.5 rounded-full font-bold transition {{ (request()->routeIs('finance.index') || request()->routeIs('finance.claim') || request()->routeIs('finance.pay') || request()->routeIs('finance.submit_balance') || request()->routeIs('finance.pay_fine') || request()->routeIs('finance.submit_fine')) ? 'nav-link-active' : 'text-white/80 hover:bg-white/10' }}">
                     Payments
                 </a>
             </div>

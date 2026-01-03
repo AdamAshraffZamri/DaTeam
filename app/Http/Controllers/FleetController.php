@@ -97,7 +97,8 @@ class FleetController extends Controller
         ]);
 
         return redirect()->route('staff.fleet.index')
-            ->with('success', 'Vehicle registered to fleet successfully.');
+            ->with('success', 'Vehicle registered successfully.');
+        //return back()->with('success', 'Vehicle registered successfully!');
     }
 
     public function show($id)
@@ -134,7 +135,7 @@ class FleetController extends Controller
         // A. Bookings
         foreach($vehicle->bookings as $booking) {
             if($booking->bookingStatus !== 'Cancelled') {
-                $custName = $booking->customer ? ($booking->customer->name ?? 'Guest') : 'Guest';
+                $custName = $booking->customer ? ($booking->customer->fullName ?? 'Guest') : 'Guest';
                 $events[] = [
                     'id' => $booking->bookingID,
                     'title' => $custName,
@@ -180,7 +181,7 @@ class FleetController extends Controller
                     'title' => 'Blocked',
                     'start' => $date,
                     'end'   => $date,
-                    'color' => '#ef4444',
+                    'color' => 'gray', // Gray
                     'type'  => 'manual_block',
                     'extendedProps' => ['date_value' => $date]
                 ];
@@ -307,7 +308,7 @@ class FleetController extends Controller
 
         $vehicle->delete();
         return redirect()->route('staff.fleet.index')
-            ->with('success', 'Vehicle removed from fleet inventory.');
+            ->with('success', 'Vehicle removed from fleet inventory successfully.');
     }
 
     // 7. EDIT FORM (Placeholder for the Modify button)
