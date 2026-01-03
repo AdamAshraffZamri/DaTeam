@@ -64,30 +64,39 @@ class ReportController extends Controller
             $filename = 'Monthly_Report_' . now()->format('F_Y') . '_' . time() . '.pdf';
 
             // ---------------------------------------------------------
-            // DIRECT GOOGLE UPLOAD (OAuth + SSL Fix)
+            // DIRECT GOOGLE UPLOAD (Deep SSL Fix)
             // ---------------------------------------------------------
             
-            // A. Setup Client using REFRESH TOKEN from .env
+            // A. Initialize Client
             $client = new Client();
+
+            // B. FIX: Override the broken 'php.ini' certificate path
+            // We point CURLOPT_CAINFO to THIS file (__FILE__) because we know it exists.
+            // Then we disable verification so it doesn't matter that it's not a real cert.
+            $httpClient = new GuzzleClient([
+                'verify' => false,
+                'curl' => [
+                    CURLOPT_CAINFO => __FILE__, // Override the missing system file
+                    CURLOPT_SSL_VERIFYPEER => false,
+                ]
+            ]);
+            $client->setHttpClient($httpClient);
+
+            // C. Set Credentials
             $client->setClientId(env('GOOGLE_DRIVE_CLIENT_ID'));
             $client->setClientSecret(env('GOOGLE_DRIVE_CLIENT_SECRET'));
             $client->refreshToken(env('GOOGLE_DRIVE_REFRESH_TOKEN'));
             
-            // B. FIX: Disable SSL Verify to prevent cURL Error 77
-            // This tells the system to ignore the missing Laragon certificate
-            $httpClient = new GuzzleClient(['verify' => false]);
-            $client->setHttpClient($httpClient);
-
             $service = new Drive($client);
 
-            // C. Define File Metadata
+            // D. Define File Metadata
             $folderId = env('GOOGLE_DRIVE_FOLDER_ID');
             $fileMetadata = new DriveFile([
                 'name' => $filename,
                 'parents' => [$folderId] 
             ]);
 
-            // D. Upload File
+            // E. Upload File
             $service->files->create($fileMetadata, [
                 'data' => $pdfContent,
                 'mimeType' => 'application/pdf',
