@@ -1,9 +1,10 @@
 @extends('layouts.staff')
 
-@section('title', 'Overview')
+@section('title', 'Staff Overview Dashboard')
 
 @section('content')
 
+<div class="min-h-screen bg-gray-100 rounded-2xl p-6">
     <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
         
         <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition">
@@ -131,5 +132,6 @@
         </div>
 
     </div>
+</div>
 
 @endsection

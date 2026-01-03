@@ -94,4 +94,9 @@ class Vehicle extends Model
     {
         return $this->hasMany(Booking::class, 'vehicleID', 'VehicleID');
     }
+
+    public function maintenances()
+    {
+        return $this->hasMany(Maintenance::class, 'VehicleID', 'VehicleID');
+    }
 }

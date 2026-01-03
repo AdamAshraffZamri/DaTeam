@@ -15,72 +15,149 @@
 <body class="bg-gray-50 text-gray-800 font-sans">
 
     <div class="flex h-screen overflow-hidden">
-        
-        <aside class="w-64 bg-white border-r border-gray-100 hidden md:flex flex-col justify-between fixed h-full z-20">
-            <div>
-                <div class="h-20 flex items-center px-8">
-                     <img src="{{ asset('hasta.jpeg') }}" alt="Hasta Logo" class="h-12 w-auto object-contain">
-                </div>
+    
+    {{-- SIDEBAR --}}
+    <aside class="w-64 bg-orange-100/45 border-r border-gray-100 hidden md:flex flex-col justify-between fixed h-full z-20 shadow-[4px_0_24px_rgba(0,0,0,0.02)]">
+        <div>
+            {{-- LOGO AREA --}}
+            <div class="h-24 flex items-center px-8">
+                 <img src="{{ asset('hasta.jpeg') }}" alt="Hasta Logo" class="h-10 w-auto object-contain">
+            </div>
 
-                <nav class="p-4 space-y-2 mt-2">
-                    <a href="{{ route('staff.dashboard') }}" 
-                       class="flex items-center px-4 py-3 rounded-xl transition font-bold text-sm
-                       {{ request()->routeIs('staff.dashboard') ? 'bg-orange-600 text-white shadow-lg shadow-orange-500/30' : 'text-gray-500 hover:bg-orange-50 hover:text-orange-600' }}">
-                        <i class="fas fa-th-large w-5 mr-3"></i> Dashboard
-                    </a>
-
-                    <a href="{{ route('staff.bookings.index') }}" 
-                       class="flex items-center px-4 py-3 rounded-xl transition font-bold text-sm
-                       {{ request()->routeIs('staff.bookings.index') ? 'bg-orange-600 text-white shadow-lg shadow-orange-500/30' : 'text-gray-500 hover:bg-orange-50 hover:text-orange-600' }}">
-                        <i class="fas fa-file-invoice w-5 mr-3"></i> Manage Bookings
-                    </a>
-
-                    <a href="{{ route('staff.fleet.index') }}" 
-                        class="flex items-center px-4 py-3 rounded-xl transition font-bold text-sm
-                       {{ request()->routeIs('staff.fleet.index') ? 'bg-orange-600 text-white shadow-lg shadow-orange-500/30' : 'text-gray-500 hover:bg-orange-50 hover:text-orange-600' }}">
-                        <i class="fas fa-car w-5 mr-3"></i> Fleet Management
-                    </a>
-
-                    <a href="{{ route('staff.customers.index') }}"
-                        class="flex items-center px-4 py-3 rounded-xl transition font-bold text-sm
-                        {{ request()->routeIs('staff.customers.*') ? 'bg-orange-600 text-white shadow-lg shadow-orange-500/30' : 'text-gray-500 hover:bg-orange-50 hover:text-orange-600' }}">
-                        <i class="fas fa-user w-5 mr-3"></i> Customer Management
-                    </a>
-
-                    <a href="#" class="flex items-center px-4 py-3 rounded-xl transition font-bold text-sm text-gray-500 hover:bg-orange-50 hover:text-orange-600">
-                        <i class="fas fa-chart-bar w-5 mr-3"></i> Reporting & Analysis
-                    </a>
-
-                    <a href="{{ route('staff.loyalty.index') }}" class="flex items-center px-4 py-3 rounded-xl transition font-bold text-sm {{ request()->routeIs('staff.loyalty.index') ? 'bg-orange-100 text-orange-600' : 'text-gray-500 hover:bg-orange-50 hover:text-orange-600' }}">
-                        <i class="fas fa-medal w-5 mr-3"></i> Loyalty & Rewards
-                    </a>
-
-                    @if(Auth::guard('staff')->user()->role === 'admin')
-                        <a href="{{ route('staff.management.index') }}" 
-                        class="flex items-center px-4 py-3 rounded-xl transition font-bold text-sm
-                        {{ request()->routeIs('staff.management.*') ? 'bg-orange-600 text-white shadow-lg shadow-orange-500/30' : 'text-gray-500 hover:bg-orange-50 hover:text-orange-600' }}">
-                            <i class="fas fa-users-cog w-5 mr-3"></i> Staff Management
-                        </a>
+            {{-- NAVIGATION --}}
+            <nav class="px-4 space-y-1 mt-2">
+                
+                {{-- Dashboard Link --}}
+                <a href="{{ route('staff.dashboard') }}" 
+                   class="group flex items-center px-4 py-3.5 rounded-xl transition-all duration-300 font-bold text-sm relative overflow-hidden
+                   {{ request()->routeIs('staff.dashboard') 
+                        ? 'text-white shadow-lg shadow-orange-500/25' 
+                        : 'text-gray-500 hover:bg-orange-50 hover:text-orange-600' }}">
+                    
+                    {{-- Active Background Gradient --}}
+                    @if(request()->routeIs('staff.dashboard'))
+                        <div class="absolute inset-0 bg-gradient-to-br from-orange-500 to-orange-600 z-0"></div>
                     @endif
-                </nav>
-            </div>
 
-            <div class="p-4 pb-8">
-                
-                
-                <form action="{{ route('logout') }}" method="POST">
-                    @csrf
-                    <button type="submit" class="flex items-center text-red-500 font-bold text-sm hover:text-red-700 px-4">
-                        <i class="fas fa-sign-out-alt w-5 mr-3"></i> Sign Out
-                    </button>
-                </form>
-            </div>
-        </aside>
+                    <div class="relative z-10 flex items-center w-full">
+                        <i class="fas fa-th-large w-6 text-center mr-3 text-lg {{ request()->routeIs('staff.dashboard') ? 'text-orange-100' : 'text-gray-400 group-hover:text-orange-500 transition-colors' }}"></i> 
+                        <span>Dashboard</span>
+                    </div>
+                </a>
 
+                {{-- Manage Bookings --}}
+                <a href="{{ route('staff.bookings.index') }}" 
+                   class="group flex items-center px-4 py-3.5 rounded-xl transition-all duration-300 font-bold text-sm relative overflow-hidden
+                   {{ request()->routeIs('staff.bookings.*') 
+                        ? 'text-white shadow-lg shadow-orange-500/25' 
+                        : 'text-gray-500 hover:bg-orange-50 hover:text-orange-600' }}">
+                    
+                    @if(request()->routeIs('staff.bookings.*'))
+                        <div class="absolute inset-0 bg-gradient-to-br from-orange-500 to-orange-600 z-0"></div>
+                    @endif
+
+                    <div class="relative z-10 flex items-center w-full">
+                        <i class="fas fa-file-invoice w-6 text-center mr-3 text-lg {{ request()->routeIs('staff.bookings.*') ? 'text-orange-100' : 'text-gray-400 group-hover:text-orange-500 transition-colors' }}"></i> 
+                        <span>Manage Bookings</span>
+                    </div>
+                </a>
+                
+                {{-- Fleet Management --}}
+                <a href="{{ route('staff.fleet.index') }}" 
+                   class="group flex items-center px-4 py-3.5 rounded-xl transition-all duration-300 font-bold text-sm relative overflow-hidden
+                   {{ request()->routeIs('staff.fleet.*') 
+                        ? 'text-white shadow-lg shadow-orange-500/25' 
+                        : 'text-gray-500 hover:bg-orange-50 hover:text-orange-600' }}">
+                    
+                    @if(request()->routeIs('staff.fleet.*'))
+                        <div class="absolute inset-0 bg-gradient-to-br from-orange-500 to-orange-600 z-0"></div>
+                    @endif
+
+                    <div class="relative z-10 flex items-center w-full">
+                        <i class="fas fa-car w-6 text-center mr-3 text-lg {{ request()->routeIs('staff.fleet.*') ? 'text-orange-100' : 'text-gray-400 group-hover:text-orange-500 transition-colors' }}"></i> 
+                        <span>Fleet Management</span>
+                    </div>
+                </a>
+
+                {{-- Customer Management --}}
+                <a href="{{ route('staff.customers.index') }}"
+                   class="group flex items-center px-4 py-3.5 rounded-xl transition-all duration-300 font-bold text-sm relative overflow-hidden
+                   {{ request()->routeIs('staff.customers.*') 
+                        ? 'text-white shadow-lg shadow-orange-500/25' 
+                        : 'text-gray-500 hover:bg-orange-50 hover:text-orange-600' }}">
+                    
+                    @if(request()->routeIs('staff.customers.*'))
+                        <div class="absolute inset-0 bg-gradient-to-br from-orange-500 to-orange-600 z-0"></div>
+                    @endif
+
+                    <div class="relative z-10 flex items-center w-full">
+                        <i class="fas fa-user w-6 text-center mr-3 text-lg {{ request()->routeIs('staff.customers.*') ? 'text-orange-100' : 'text-gray-400 group-hover:text-orange-500 transition-colors' }}"></i> 
+                        <span>Customer Management</span>
+                    </div>
+                </a>
+
+                {{-- Reporting --}}
+                <a href="#" class="group flex items-center px-4 py-3.5 rounded-xl transition-all duration-300 font-bold text-sm text-gray-500 hover:bg-orange-50 hover:text-orange-600">
+                    <div class="relative z-10 flex items-center w-full">
+                        <i class="fas fa-chart-bar w-6 text-center mr-3 text-lg text-gray-400 group-hover:text-orange-500 transition-colors"></i> 
+                        <span>Reporting & Analysis</span>
+                    </div>
+                </a>
+
+                {{-- Loyalty --}}
+                <a href="{{ route('staff.loyalty.index') }}" 
+                   class="group flex items-center px-4 py-3.5 rounded-xl transition-all duration-300 font-bold text-sm relative overflow-hidden
+                   {{ request()->routeIs('staff.loyalty.*') 
+                        ? 'text-white shadow-lg shadow-orange-500/25' 
+                        : 'text-gray-500 hover:bg-orange-50 hover:text-orange-600' }}">
+                    
+                    @if(request()->routeIs('staff.loyalty.*'))
+                         <div class="absolute inset-0 bg-gradient-to-br from-orange-500 to-orange-600 z-0"></div>
+                    @endif
+
+                    <div class="relative z-10 flex items-center w-full">
+                        <i class="fas fa-medal w-6 text-center mr-3 text-lg {{ request()->routeIs('staff.loyalty.*') ? 'text-orange-100' : 'text-gray-400 group-hover:text-orange-500 transition-colors' }}"></i> 
+                        <span>Loyalty & Rewards</span>
+                    </div>
+                </a>
+
+                {{-- Staff Management (Admin Only) --}}
+                @if(Auth::guard('staff')->user()->role === 'admin')
+                    <a href="{{ route('staff.management.index') }}" 
+                       class="group flex items-center px-4 py-3.5 rounded-xl transition-all duration-300 font-bold text-sm relative overflow-hidden
+                       {{ request()->routeIs('staff.management.*') 
+                            ? 'text-white shadow-lg shadow-orange-500/25' 
+                            : 'text-gray-500 hover:bg-orange-50 hover:text-orange-600' }}">
+                        
+                        @if(request()->routeIs('staff.management.*'))
+                            <div class="absolute inset-0 bg-gradient-to-br from-orange-500 to-orange-600 z-0"></div>
+                        @endif
+
+                        <div class="relative z-10 flex items-center w-full">
+                            <i class="fas fa-users-cog w-6 text-center mr-3 text-lg {{ request()->routeIs('staff.management.*') ? 'text-orange-100' : 'text-gray-400 group-hover:text-orange-500 transition-colors' }}"></i> 
+                            <span>Staff Management</span>
+                        </div>
+                    </a>
+                @endif
+            </nav>
+        </div>
+
+        {{-- LOGOUT --}}
+        <div class="p-6 border-t border-gray-50">
+            <form action="{{ route('logout') }}" method="POST">
+                @csrf
+                <button type="submit" class="flex items-center w-full px-4 py-3 rounded-xl text-red-500 font-bold text-sm hover:bg-red-50 hover:text-red-600 transition-all group">
+                    <i class="fas fa-sign-out-alt w-6 text-center mr-3 text-lg opacity-50 group-hover:opacity-100 transition-opacity"></i> 
+                    <span>Log Out</span>
+                </button>
+            </form>
+        </div>
+    </aside>
+    
         <div class="flex-1 flex flex-col h-screen overflow-hidden md:ml-64">
             
-            <header class="h-20 bg-white border-b border-gray-100 flex justify-between items-center px-8 sticky top-0 z-10">
-                <h2 class="text-2xl font-bold text-gray-800">@yield('title', 'Overview')</h2>
+            <header class="h-20 bg-gradient-to-r from-[#ea580c]/50 to-red-100 border-b border-gray-100 flex justify-between items-center px-8 sticky top-0 z-10">
+                <h2 class="text-2xl font-bold text-gray-800">@yield('title', 'Staff Overview')</h2>
                 
                 <div class="flex items-center space-x-6">
 
@@ -136,7 +213,7 @@
                 </div>
             </header>
 
-            <main class="flex-1 overflow-x-hidden overflow-y-auto bg-gray-50 p-8">
+            <main class="flex-1 overflow-x-hidden overflow-y-auto bg-white p-8">
                 @yield('content')
             </main>
 

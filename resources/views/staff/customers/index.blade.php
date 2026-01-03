@@ -3,7 +3,7 @@
 @section('title', 'Customers')
 
 @section('content')
-<div class="min-h-screen bg-gray-100 p-8">
+<div class="min-h-screen bg-gray-100 rounded-2xl p-8">
     <div class="max-w-7xl mx-auto space-y-8">
         
         <div class="flex justify-between items-end">

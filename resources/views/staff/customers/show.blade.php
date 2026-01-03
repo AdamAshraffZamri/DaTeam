@@ -3,7 +3,7 @@
 @section('title', 'Customer Details')
 
 @section('content')
-<div x-data="{ showRejectModal: false, showBlacklistModal: false }" class="min-h-screen bg-gray-100 p-8">
+<div x-data="{ showRejectModal: false, showBlacklistModal: false }" class="min-h-screen bg-gray-100 rounded-2xl p-6">
     <div class="max-w-6xl mx-auto">
         
         <div class="flex justify-between items-center mb-6">

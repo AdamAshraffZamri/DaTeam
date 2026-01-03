@@ -1,7 +1,7 @@
 @extends('layouts.staff')
 
 @section('content')
-<div class="min-h-screen bg-gray-100 p-6">
+<div class="min-h-screen bg-gray-100 rounded-2xl p-6">
     <div class="max-w-7xl mx-auto">
 
         <div class="flex flex-col md:flex-row justify-between items-end mb-8 gap-4">
