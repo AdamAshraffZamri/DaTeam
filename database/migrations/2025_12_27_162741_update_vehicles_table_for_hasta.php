@@ -21,6 +21,7 @@ return new class extends Migration
             $table->string('owner_phone')->nullable();
             $table->string('owner_nric')->nullable();
             $table->string('image')->nullable();
+            $table->json('blocked_dates')->nullable()->after('availability');
         });
     }
 
@@ -40,6 +41,7 @@ return new class extends Migration
                 'owner_phone',
                 'owner_nric',
                 'image',
+                'blocked_dates'
             ]);
         });
     }
