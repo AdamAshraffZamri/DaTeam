@@ -6,10 +6,13 @@ use App\Models\Booking;
 use App\Models\Payment;
 use App\Models\Vehicle;
 use App\Models\Penalties;
-use App\Models\Voucher; 
+use App\Models\Voucher;
+use App\Models\Staff;
+use App\Notifications\NewBookingSubmitted;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Notification;
 use Carbon\Carbon;
 
 
