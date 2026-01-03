@@ -3,6 +3,31 @@
 @section('title', 'Reporting & Analysis')
 
 @section('content')
+
+{{-- START: Add this Alert Block --}}
+    @if(session('success'))
+        <div class="p-4 mb-4 text-sm text-green-800 rounded-lg bg-green-50" role="alert">
+            <span class="font-medium">Success!</span> {{ session('success') }}
+        </div>
+    @endif
+
+    @if(session('error'))
+        <div class="p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50" role="alert">
+            <span class="font-medium">Error!</span> {{ session('error') }}
+        </div>
+    @endif
+    
+    @if ($errors->any())
+        <div class="p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50" role="alert">
+            <ul>
+                @foreach ($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
+    {{-- END: Alert Block --}}
+
 <div class="row g-5 g-xl-8">
     
     <div class="col-12 flex justify-between items-center mb-4">
