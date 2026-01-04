@@ -60,6 +60,11 @@ return [
             'report' => false,
         ],
 
+        'google' => [
+            'driver' => 'google',
+            'folder' => env('GOOGLE_DRIVE_FOLDER_ID'), 
+        ],
+        
     ],
 
     /*

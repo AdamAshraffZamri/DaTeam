@@ -13,7 +13,9 @@ use App\Http\Controllers\VoucherController;
 use App\Http\Controllers\FleetController;
 use App\Http\Controllers\InspectionController;
 use App\Http\Controllers\StaffCustomerController;
+use App\Http\Controllers\ReportController;
 use App\Http\Controllers\PageController;
+
 
 
 /*
@@ -194,5 +196,9 @@ Route::prefix('staff')->middleware(['auth:staff'])->group(function () {
     Route::put('/loyalty/voucher/{voucherId}', [LoyaltyController::class, 'staffUpdateVoucher'])->name('staff.loyalty.update_voucher');
     Route::delete('/loyalty/voucher/{voucherId}', [LoyaltyController::class, 'staffDeleteVoucher'])->name('staff.loyalty.delete_voucher');
     
+    // Reporting Routes
+    Route::get('/reports', [App\Http\Controllers\ReportController::class, 'index'])->name('staff.reports.index');
+    Route::post('/reports/export', [App\Http\Controllers\ReportController::class, 'exportToDrive'])->name('staff.reports.export');
 
+    
 });
