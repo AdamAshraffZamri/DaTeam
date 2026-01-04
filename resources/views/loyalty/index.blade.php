@@ -14,10 +14,10 @@
         {{-- HEADER SECTION --}}
         <div class="flex flex-col md:flex-row justify-between items-start md:items-end mb-12 gap-6">
             <div class="animate-fade-in">
-                <h1 class="text-5xl md:text-6xl font-black text-white drop-shadow-[0_4px_4px_rgba(0,0,0,0.5)] tracking-tight">
+                <h1 class="text-4xl md:text-4xl font-black text-white drop-shadow-[0_4px_4px_rgba(0,0,0,0.5)] tracking-tight">
                     Loyalty & Rewards
                 </h1>
-                <p class="text-xl text-gray-300 mt-2 font-medium">Earn points with every booking and unlock exclusive rewards.</p>
+                <p class="text text-gray-300 mt-2 font-medium">Earn points with every booking and unlock exclusive rewards.</p>
             </div>
 
             {{-- TOP STATS --}}
@@ -47,7 +47,13 @@
                             </div>
                             <h2 class="text-2xl font-black text-white">Loyalty Status</h2>
                         </div>
+<<<<<<< HEAD
                         
+=======
+                        <span class="bg-orange-400/20 text-orange-400 px-4 py-1.5 rounded-full border border-orange-500/30 text-[10px] font-black uppercase tracking-widest">
+                            {{ ucfirst($loyalty->tier ?? 'Bronze') }} Member
+                        </span>
+>>>>>>> origin/testmerge
                     </div>
 
                     <div class="space-y-4">

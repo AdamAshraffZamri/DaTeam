@@ -395,6 +395,27 @@ class LoyaltyController extends Controller
     public function redeemReward(Request $request)
     {
         $userId = Auth::id();
+        $user = Auth::user();
+        
+        // Check for unpaid penalties - block merchant voucher redemption
+        $unpaidPenalties = \App\Models\Penalties::where('customerID', $user->customerID)
+            ->where(function($query) {
+                $query->where('status', 'Pending')
+                      ->orWhere('penaltyStatus', 'Unpaid');
+            })
+            ->get();
+        
+        if ($unpaidPenalties->count() > 0) {
+            $totalPenalty = $unpaidPenalties->sum(function($penalty) {
+                return $penalty->amount ?? ($penalty->penaltyFees + $penalty->fuelSurcharge + $penalty->mileageSurcharge);
+            });
+            
+            return response()->json([
+                'success' => false, 
+                'message' => 'You have unpaid penalties totaling MYR ' . number_format($totalPenalty, 2) . '. Please pay your outstanding penalties before redeeming merchant vouchers.'
+            ]);
+        }
+        
         $loyalty = LoyaltyPoint::where('user_id', $userId)->first();
         
         $rewardId = $request->input('reward_id');

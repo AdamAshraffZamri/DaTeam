@@ -1,7 +1,7 @@
 @extends('layouts.staff')
 
 @section('content')
-<div class="min-h-screen bg-gray-100 p-6">
+<div class="min-h-screen bg-gray-100 rounded-2xl p-6">
     <div class="max-w-5xl mx-auto">
         
         {{-- BACK BUTTON --}}
@@ -14,10 +14,10 @@
             <div class="flex items-center justify-between">
                 <div class="flex items-center gap-6">
                     <div class="w-20 h-20 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 font-bold text-3xl">
-                        {{ substr($customer->name, 0, 1) }}
+                        {{ substr($customer->fullName, 0, 1) }}
                     </div>
                     <div>
-                        <h1 class="text-3xl font-bold text-gray-900">{{ $customer->name }}</h1>
+                        <h1 class="text-3xl font-bold text-gray-900">{{ $customer->fullName }}</h1>
                         <p class="text-gray-500">{{ $customer->email }}</p>
                         <p class="text-sm text-gray-400 mt-1">ID: {{ $customer->customerID }}</p>
                     </div>

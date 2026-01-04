@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Models\Customer;
+use App\Models\Penalties;
 use Illuminate\Http\Request;
 
 class StaffCustomerController extends Controller
@@ -121,7 +122,10 @@ class StaffCustomerController extends Controller
             }
     }
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> origin/testmerge
     // ACTION 4: Impose Penalty
     public function imposePenalty(Request $request, $id)
     {
@@ -156,6 +160,7 @@ class StaffCustomerController extends Controller
 
         return back()->with('success', 'Penalty imposed successfully. Customer must pay before making new bookings.');
     }
+<<<<<<< HEAD
 
     // Show penalty history for a customer
     public function penaltyHistory($id)
@@ -253,4 +258,6 @@ class StaffCustomerController extends Controller
         return view('staff.customers.penalty-history', compact('customer', 'penalties', 'totalPenalties', 'unpaidPenalties', 'totalAmount'));
     }
 
+=======
+>>>>>>> origin/testmerge
 }

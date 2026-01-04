@@ -3,21 +3,26 @@
 @section('content')
 <div class="fixed inset-0 z-0">
     <div class="absolute inset-0 bg-cover bg-center" style="background-image: url('{{ asset('hastabg.png') }}');"></div>
-    <div class="absolute inset-0 bg-gradient-to-b from-black/80 via-black/50 to-black/90"></div>
+    <div class="absolute inset-0 bg-gradient-to-r from-black/70 via-black/45 to-black/75"></div>
 </div>
 
 <div class="relative z-10 min-h-[calc(100vh-64px)] py-12">
     <div class="container mx-auto px-4 max-w-5xl">
 
         <a href="{{ route('finance.index') }}" class="inline-flex items-center text-gray-400 hover:text-white mb-8 transition">
-            <i class="fas fa-arrow-left mr-2"></i> Back to Finance
+            <i class="fas fa-arrow-left mr-2"></i> Back to Payment
         </a>
 
         <div class="flex flex-col md:flex-row justify-between items-end mb-8 text-white">
             <div>
                 <h1 class="text-3xl font-black drop-shadow-lg">Pay Penalty</h1>
-                {{-- FIX: Construct the reference string manually since 'reason' column doesn't exist --}}
-                <p class="text-gray-400 mt-1">Ref #{{ $penalty->bookingID }} • Penalty Fee</p>
+                <p class="text-gray-400 mt-1">
+                    @if($penalty->bookingID)
+                        Booking #{{ $penalty->bookingID }} • Penalty Payment
+                    @else
+                        Customer Penalty Payment
+                    @endif
+                </p>
             </div>
         </div>
 
@@ -29,31 +34,50 @@
                     </h2>
                     <div class="space-y-4">
                         
-                        {{-- FIX: Display Breakdown instead of $penalty->reason --}}
-                        <div class="flex justify-between items-center p-4 bg-white/5 rounded-2xl border border-white/5">
-                            <div class="w-full">
-                                <p class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Fee Breakdown</p>
-                                <div class="grid grid-cols-2 gap-2 text-sm">
-                                    <div class="text-gray-400">Late Fees:</div>
-                                    <div class="text-white text-right">MYR {{ number_format($penalty->penaltyFees, 2) }}</div>
-                                    
-                                    <div class="text-gray-400">Fuel Surcharge:</div>
-                                    <div class="text-white text-right">MYR {{ number_format($penalty->fuelSurcharge, 2) }}</div>
-                                    
-                                    <div class="text-gray-400">Mileage Surcharge:</div>
-                                    <div class="text-white text-right">MYR {{ number_format($penalty->mileageSurcharge, 2) }}</div>
+                        @if($penalty->reason)
+                        <div class="p-4 bg-white/5 rounded-2xl border border-white/5">
+                            <p class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Reason</p>
+                            <p class="text-white font-medium">{{ $penalty->reason }}</p>
+                        </div>
+                        @endif
+
+                        @php
+                            // Calculate total: Use amount if available (customer-level), otherwise sum fees (booking-based)
+                            $totalAmount = $penalty->amount ?? ($penalty->penaltyFees + $penalty->fuelSurcharge + $penalty->mileageSurcharge);
+                        @endphp
+
+                        @if($penalty->bookingID)
+                            {{-- Booking-based penalty: Show breakdown --}}
+                            <div class="flex justify-between items-center p-4 bg-white/5 rounded-2xl border border-white/5">
+                                <div class="w-full">
+                                    <p class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Fee Breakdown</p>
+                                    <div class="grid grid-cols-2 gap-2 text-sm">
+                                        <div class="text-gray-400">Late Fees:</div>
+                                        <div class="text-white text-right">MYR {{ number_format($penalty->penaltyFees ?? 0, 2) }}</div>
+                                        
+                                        <div class="text-gray-400">Fuel Surcharge:</div>
+                                        <div class="text-white text-right">MYR {{ number_format($penalty->fuelSurcharge ?? 0, 2) }}</div>
+                                        
+                                        <div class="text-gray-400">Mileage Surcharge:</div>
+                                        <div class="text-white text-right">MYR {{ number_format($penalty->mileageSurcharge ?? 0, 2) }}</div>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
+                        @endif
 
                         <div class="flex justify-between items-center">
-                            <p class="text-sm font-bold text-white uppercase tracking-wider">Total Fine</p>
+                            <p class="text-sm font-bold text-white uppercase tracking-wider">Total Penalty</p>
                             <p class="text-4xl font-black text-red-500">
                                 <span class="text-lg font-bold align-top mt-2 inline-block">MYR</span> 
-                                {{-- FIX: Calculate the sum here --}}
-                                {{ number_format($penalty->penaltyFees + $penalty->fuelSurcharge + $penalty->mileageSurcharge, 2) }}
+                                {{ number_format($totalAmount, 2) }}
                             </p>
                         </div>
+
+                        @if($penalty->date_imposed)
+                        <div class="text-xs text-gray-400 text-center">
+                            <i class="fas fa-calendar mr-1"></i> Imposed on {{ \Carbon\Carbon::parse($penalty->date_imposed)->format('d M Y') }}
+                        </div>
+                        @endif
                     </div>
                 </div>
             </div>

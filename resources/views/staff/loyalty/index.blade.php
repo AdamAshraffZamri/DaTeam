@@ -1,7 +1,7 @@
 @extends('layouts.staff')
 
 @section('content')
-<div class="min-h-screen bg-gray-100 p-6">
+<div class="min-h-screen bg-gray-100 rounded-2xl p-6">
     <div class="max-w-7xl mx-auto">
         
         {{-- PAGE HEADER --}}
@@ -164,7 +164,7 @@
 
                 <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
                     {{-- Bronze --}}
-                    <div class="bg-gradient-to-br from-amber-50 to-amber-100 rounded-xl p-6 border border-amber-200">
+                    <div class="bg-gradient-to-br from-amber-200 to-amber-600 rounded-xl p-6 border border-amber-200">
                         <div class="flex items-center justify-between mb-3">
                             <h4 class="font-bold text-gray-900 text-lg">Bronze</h4>
                             <i class="fas fa-medal text-amber-700 text-3xl"></i>
@@ -174,7 +174,7 @@
                     </div>
 
                     {{-- Silver --}}
-                    <div class="bg-gradient-to-br from-slate-50 to-slate-100 rounded-xl p-6 border border-slate-200">
+                    <div class="bg-gradient-to-br from-slate-200 to-slate-600 rounded-xl p-6 border border-slate-200">
                         <div class="flex items-center justify-between mb-3">
                             <h4 class="font-bold text-gray-900 text-lg">Silver</h4>
                             <i class="fas fa-medal text-slate-600 text-3xl"></i>
@@ -184,7 +184,7 @@
                     </div>
 
                     {{-- Gold --}}
-                    <div class="bg-gradient-to-br from-yellow-50 to-yellow-100 rounded-xl p-6 border border-yellow-300">
+                    <div class="bg-gradient-to-br from-yellow-200 to-yellow-600 rounded-xl p-6 border border-yellow-300">
                         <div class="flex items-center justify-between mb-3">
                             <h4 class="font-bold text-gray-900 text-lg">Gold</h4>
                             <i class="fas fa-medal text-yellow-600 text-3xl"></i>
@@ -194,7 +194,7 @@
                     </div>
 
                     {{-- Platinum --}}
-                    <div class="bg-gradient-to-br from-cyan-50 to-cyan-100 rounded-xl p-6 border border-cyan-300">
+                    <div class="bg-gradient-to-br from-cyan-200 to-cyan-600 rounded-xl p-6 border border-cyan-300">
                         <div class="flex items-center justify-between mb-3">
                             <h4 class="font-bold text-gray-900 text-lg">Platinum</h4>
                             <i class="fas fa-crown text-cyan-600 text-3xl"></i>

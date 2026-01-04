@@ -14,6 +14,7 @@ class Penalties extends Model
 
     // Fix: Match these to your migration columns!
     protected $fillable = [
+        'customerID',
         'bookingID', 
         'penaltyFees',     // database has this
         'lateReturnHour',  // database has this
@@ -21,12 +22,26 @@ class Penalties extends Model
         'mileageSurcharge',// database has this
         'penaltyStatus',   // database has this
         'status', 
-        'date_imposed'
+        'date_imposed',
+        'reason',
+        'amount'
     ];
+
+
+    
+    // Tambah relationship ke User melalui Booking
+    public function user() {
+        return $this->hasOneThrough(User::class, Booking::class, 'bookingID', 'id', 'bookingID', 'user_id');
+    }
 
     public function booking()
     {
         return $this->belongsTo(Booking::class, 'bookingID', 'bookingID');
+    }
+
+    public function customer()
+    {
+        return $this->belongsTo(Customer::class, 'customerID', 'customerID');
     }
 
     // Helper to calculate total (optional but useful)

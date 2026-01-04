@@ -7,7 +7,7 @@
 {{-- 1. FIXED BACKGROUND --}}
 <div class="fixed inset-0 z-0">
     <div class="absolute inset-0 bg-cover bg-center" style="background-image: url('{{ asset('hastabg.png') }}');"></div>
-    <div class="absolute inset-0 bg-gradient-to-b from-black/80 via-black/50 to-black/90"></div>
+    <div class="absolute inset-0 bg-gradient-to-r from-black/70 via-black/45 to-black/75"></div>
 </div>
 
 {{-- 2. SCROLLABLE CONTENT --}}
@@ -17,7 +17,7 @@
     <div class="bg-black/25 backdrop-blur-xl border-b border-white/15 sticky top-0 z-30 shadow-2xl">
         <div class="container mx-auto px-4 py-4">
             <form action="{{ route('book.search') }}" method="GET" id="search-form">
-                
+    
                 <div class="flex flex-col lg:flex-row items-center justify-center gap-4">
                     
                     {{-- Locations --}}
@@ -41,16 +41,29 @@
                         {{-- Pickup --}}
                         <div class="flex-1 bg-white/5 rounded-xl px-3 py-2 border border-white/10 flex items-center h-[50px]">
                             <span class="hidden xl:inline text-[10px] font-bold text-gray-400 mr-2 uppercase">Pickup</span>
-                            <input type="date" name="pickup_date" value="{{ request('pickup_date', now()->format('Y-m-d')) }}" 
-                                class="bg-transparent border-none text-sm font-bold text-white p-0 focus:ring-0 [color-scheme:dark] w-full md:w-auto">
                             
+                            {{-- Added ID, MIN, and ONCHANGE --}}
+                            <input type="date" 
+                                id="pickup_date" 
+                                name="pickup_date" 
+                                min="{{ now()->format('Y-m-d') }}"
+                                value="{{ request('pickup_date', now()->format('Y-m-d')) }}" 
+                                onchange="validateDates()"
+                                class="bg-transparent border-none text-sm font-bold text-white p-0 focus:ring-0 [color-scheme:dark] w-full md:w-auto">
+                        
                             <div class="w-px h-4 bg-white/20 mx-2 hidden md:block"></div>
                             
                             <div class="flex items-center">
                                 <input type="hidden" name="pickup_time" id="pickup_time_search_hidden" value="{{ request('pickup_time', '10:00') }}">
-                                <input type="number" id="pickup_hour_search" min="1" max="12" value="10" 
-                                    class="w-10 bg-transparent text-center text-white font-bold text-sm p-0 border-none focus:ring-0 appearance-none"
-                                    oninput="updateSearchTime('pickup')">
+                                {{-- HOUR DROPDOWN --}}
+                                <select id="pickup_hour_search" onchange="updateSearchTime('pickup')"
+                                    class="bg-transparent text-white font-bold text-sm border-none p-0 focus:ring-0 cursor-pointer appearance-none text-center w-6">
+                                    @for ($i = 1; $i <= 12; $i++)
+                                        <option value="{{ $i }}" {{ request('pickup_time') && explode(':', request('pickup_time'))[0] == $i ? 'selected' : ($i == 10 ? 'selected' : '') }} class="text-black">
+                                            {{ $i }}
+                                        </option>
+                                    @endfor
+                                </select>
                                 <span class="text-white font-bold text-sm -ml-0.5">:00</span>
                                 <select id="pickup_ampm_search" class="bg-transparent text-white font-bold text-xs border-none p-0 focus:ring-0 cursor-pointer ml-1"
                                         onchange="updateSearchTime('pickup')">
@@ -63,16 +76,29 @@
                         {{-- Return --}}
                         <div class="flex-1 bg-white/5 rounded-xl px-3 py-2 border border-white/10 flex items-center h-[50px]">
                             <span class="hidden xl:inline text-[10px] font-bold text-gray-400 mr-2 uppercase">Return</span>
-                            <input type="date" name="return_date" value="{{ request('return_date', now()->addDay()->format('Y-m-d')) }}" 
-                                class="bg-transparent border-none text-sm font-bold text-white p-0 focus:ring-0 [color-scheme:dark] w-full md:w-auto">
                             
+                            {{-- Added ID, MIN, and ONCHANGE --}}
+                            <input type="date" 
+                                id="return_date" 
+                                name="return_date" 
+                                min="{{ now()->format('Y-m-d') }}"
+                                value="{{ request('return_date', now()->addDay()->format('Y-m-d')) }}" 
+                                onchange="updateAllSelectLinks()"
+                                class="bg-transparent border-none text-sm font-bold text-white p-0 focus:ring-0 [color-scheme:dark] w-full md:w-auto">
+                        
                             <div class="w-px h-4 bg-white/20 mx-2 hidden md:block"></div>
 
                             <div class="flex items-center">
                                 <input type="hidden" name="return_time" id="return_time_search_hidden" value="{{ request('return_time', '10:00') }}">
-                                <input type="number" id="return_hour_search" min="1" max="12" value="10" 
-                                    class="w-10 bg-transparent text-center text-white font-bold text-sm p-0 border-none focus:ring-0 appearance-none"
-                                    oninput="updateSearchTime('return')">
+                                {{-- HOUR DROPDOWN --}}
+                                <select id="return_hour_search" onchange="updateSearchTime('return')"
+                                    class="bg-transparent text-white font-bold text-sm border-none p-0 focus:ring-0 cursor-pointer appearance-none text-center w-6">
+                                    @for ($i = 1; $i <= 12; $i++)
+                                        <option value="{{ $i }}" {{ request('return_time') && explode(':', request('return_time'))[0] == $i ? 'selected' : ($i == 10 ? 'selected' : '') }} class="text-black">
+                                            {{ $i }}
+                                        </option>
+                                    @endfor
+                                </select>
                                 <span class="text-white font-bold text-sm -ml-0.5">:00</span>
                                 <select id="return_ampm_search" class="bg-transparent text-white font-bold text-xs border-none p-0 focus:ring-0 cursor-pointer ml-1"
                                         onchange="updateSearchTime('return')">
@@ -97,108 +123,257 @@
             
             {{-- SIDEBAR FILTERS --}}
             <div class="lg:col-span-1 hidden lg:block">
-                <div class="bg-black/25 backdrop-blur-[2px] border border-white/15 rounded-3xl p-6 sticky top-32 shadow-xl">
-                    <h3 class="text-lg font-extrabold text-white mb-4">Vehicle Type</h3>
-                    <div class="space-y-3">
-                        @foreach(['Compact', 'Sedan', 'SUV', 'MPV'] as $type)
-                        <label class="flex items-center space-x-3 cursor-pointer group">
-                            <div class="w-5 h-5 rounded border border-white/20 flex items-center justify-center group-hover:border-orange-500 transition relative">
-                                <input type="checkbox" 
-                                       form="search-form"
-                                       name="types[]" 
-                                       value="{{ $type }}" 
-                                       class="peer appearance-none absolute inset-0 w-full h-full cursor-pointer z-10"
-                                       onchange="document.getElementById('search-form').submit()"
-                                       {{ in_array($type, request('types', [])) ? 'checked' : '' }}>
-                                <div class="w-2.5 h-2.5 rounded-sm bg-orange-500 opacity-0 peer-checked:opacity-100 transition"></div>
-                            </div>
-                            <span class="font-medium text-gray-300 group-hover:text-white transition">{{ $type }}</span>
-                        </label>
-                        @endforeach
-                    </div>
-                </div>
-            </div>
-
-            {{-- RESULTS GRID --}}
-            <div class="lg:col-span-3 grid grid-cols-1 md:grid-cols-2 gap-6">
-                @forelse($vehicles as $vehicle)
-                {{-- Vehicle Card --}}
-                <div class="group bg-black/25 backdrop-blur-[2px] border border-white/15 rounded-3xl p-6 shadow-xl hover:shadow-orange-500/10 hover:bg-white/15 transition-all duration-300 relative overflow-hidden flex flex-col h-full">
+                <div class="bg-black/25 backdrop-blur-[2px] border border-white/15 rounded-3xl p-6 shadow-xl space-y-8">
                     
-                    {{-- Plate Tag --}}
-                    <div class="absolute top-5 right-5 z-10">
-                        <span class="bg-black/60 text-gray-300 text-[10px] font-black px-3 py-1 rounded-full border border-white/10 uppercase tracking-widest backdrop-blur-md">
-                            {{ $vehicle->plateNo }}
-                        </span>
-                    </div>
-
-                    {{-- Image Area --}}
-                    <div class="h-48 flex items-center justify-center mb-4 relative overflow-hidden rounded-2xl bg-black/30 border border-white/5">
-                        <div class="absolute inset-0 bg-gradient-to-tr from-orange-500/10 to-transparent opacity-50"></div>
-                        @if($vehicle->image)
-                            <img src="{{ asset('storage/' . $vehicle->image) }}" alt="{{ $vehicle->model }}" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">
-                        @else
-                            <i class="fas fa-{{ $vehicle->vehicle_category == 'bike' ? 'motorcycle' : 'car-side' }} text-6xl text-white/10 group-hover:text-white/20 transition-colors"></i>
-                        @endif
-                    </div>
-
-                    <div class="space-y-3 flex-grow">
-                        <div>
-                            <h3 class="text-xl font-black text-white leading-tight">{{ $vehicle->brand }} {{ $vehicle->model }}</h3>
-                            <div class="flex items-center space-x-1 text-yellow-500 text-[10px] mt-1">
-                                <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
-                                <span class="text-gray-500 font-bold ml-1">5.0</span>
-                            </div>
-                        </div>
-
-                        {{-- Specs --}}
-                        <div class="grid grid-cols-2 gap-2 text-[10px] font-bold text-gray-400 uppercase tracking-tight">
-                            <div class="flex items-center"><i class="fas fa-{{ $vehicle->vehicle_category == 'bike' ? 'user' : 'chair' }} w-5 text-orange-500"></i> {{ $vehicle->vehicle_category == 'bike' ? '1-2' : '5' }} Seats</div>
-                            <div class="flex items-center"><i class="fas fa-cog w-5 text-orange-500"></i> Auto</div>
-                            <div class="flex items-center"><i class="fas fa-gas-pump w-5 text-orange-500"></i> {{ $vehicle->fuelType ?? 'RON95' }}</div>
-                            <div class="flex items-center"><i class="fas fa-{{ $vehicle->vehicle_category == 'bike' ? 'helmet-safety' : 'snowflake' }} w-5 text-orange-500"></i> {{ $vehicle->vehicle_category == 'bike' ? 'Helmet' : 'A/C' }}</div>
+                    {{-- 1. VEHICLE CATEGORY --}}
+                    <div>
+                        <h3 class="text-xs font-black text-gray-500 uppercase tracking-widest mb-4">Category</h3>
+                        <div class="space-y-3">
+                            @foreach(['car' => 'Cars', 'bike' => 'Motorcycles'] as $val => $label)
+                            <label class="flex items-center space-x-3 cursor-pointer group">
+                                <div class="w-5 h-5 rounded border border-white/20 flex items-center justify-center group-hover:border-orange-500 transition relative">
+                                    <input type="checkbox" 
+                                           form="search-form"
+                                           name="category[]" 
+                                           value="{{ $val }}" 
+                                           class="peer appearance-none absolute inset-0 w-full h-full cursor-pointer z-10"
+                                           onchange="document.getElementById('search-form').submit()"
+                                           {{ in_array($val, request('category', [])) ? 'checked' : '' }}>
+                                    <div class="w-2.5 h-2.5 rounded-sm bg-orange-500 opacity-0 peer-checked:opacity-100 transition"></div>
+                                </div>
+                                <span class="font-medium text-gray-300 group-hover:text-white transition text-sm">{{ $label }}</span>
+                            </label>
+                            @endforeach
                         </div>
                     </div>
 
-                    {{-- Action Footer --}}
-                    <div class="pt-4 mt-4 border-t border-white/10 flex items-center justify-between">
-                        <div>
-                            <span class="block text-[10px] text-gray-500 font-black uppercase tracking-widest">Daily Rate</span>
-                            @php
-                                $rates = is_array($vehicle->hourly_rates) ? $vehicle->hourly_rates : json_decode($vehicle->hourly_rates, true);
-                                $dailyRate = $rates[24] ?? ($vehicle->priceHour * 24);
-                            @endphp
-                            <span class="text-xl font-black text-white tracking-tighter">RM {{ number_format($dailyRate, 0) }}</span>
-                        </div>
-                        
-                        <div class="flex items-center space-x-2">
-                            <button onclick="document.getElementById('details-modal-{{ $vehicle->VehicleID }}').classList.remove('hidden')" 
-                                class="bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-xl font-bold text-xs transition-all border border-white/10">
-                                Details
-                            </button>
+                    <div class="h-px bg-white/10 w-full"></div>
 
-                            <a href="{{ route('book.payment', [
-                                'id' => $vehicle->VehicleID, 
-                                'pickup_date' => request('pickup_date'), 
-                                'return_date' => request('return_date'),
-                                'pickup_time' => request('pickup_time'),
-                                'return_time' => request('return_time'),
-                                'pickup_location' => request('pickup_location'),
-                                'return_location' => request('return_location')
-                            ]) }}" class="bg-[#ea580c] hover:bg-orange-600 text-white px-5 py-2 rounded-xl font-bold text-xs shadow-lg transition-all transform hover:scale-105">
-                                Select
-                            </a>
+                    {{-- 2. VEHICLE TYPE (Existing) --}}
+                    <div>
+                        <h3 class="text-xs font-black text-gray-500 uppercase tracking-widest mb-4">Body Type</h3>
+                        <div class="space-y-3">
+                            @foreach(['Compact', 'Sedan', 'SUV', 'MPV', 'Luxury'] as $type)
+                            <label class="flex items-center space-x-3 cursor-pointer group">
+                                <div class="w-5 h-5 rounded border border-white/20 flex items-center justify-center group-hover:border-orange-500 transition relative">
+                                    <input type="checkbox" 
+                                           form="search-form"
+                                           name="types[]" 
+                                           value="{{ $type }}" 
+                                           class="peer appearance-none absolute inset-0 w-full h-full cursor-pointer z-10"
+                                           onchange="document.getElementById('search-form').submit()"
+                                           {{ in_array($type, request('types', [])) ? 'checked' : '' }}>
+                                    <div class="w-2.5 h-2.5 rounded-sm bg-orange-500 opacity-0 peer-checked:opacity-100 transition"></div>
+                                </div>
+                                <span class="font-medium text-gray-300 group-hover:text-white transition text-sm">{{ $type }}</span>
+                            </label>
+                            @endforeach
                         </div>
                     </div>
+
+
+                    <div class="h-px bg-white/10 w-full"></div>
+
+                    {{-- 5. PRICE RANGE --}}
+                    <div>
+                        <h3 class="text-xs font-black text-gray-500 uppercase tracking-widest mb-4">Daily Rate (RM)</h3>
+                        <div class="space-y-3">
+                            @foreach(['0-100' => '< 100', '100-200' => '100 - 200', '200-300' => '200 - 300', '300-1000' => '> 300'] as $val => $label)
+                            <label class="flex items-center space-x-3 cursor-pointer group">
+                                <div class="w-5 h-5 rounded border border-white/20 flex items-center justify-center group-hover:border-orange-500 transition relative">
+                                    <input type="checkbox" 
+                                           form="search-form"
+                                           name="price_range[]" 
+                                           value="{{ $val }}" 
+                                           class="peer appearance-none absolute inset-0 w-full h-full cursor-pointer z-10"
+                                           onchange="document.getElementById('search-form').submit()"
+                                           {{ in_array($val, request('price_range', [])) ? 'checked' : '' }}>
+                                    <div class="w-2.5 h-2.5 rounded-sm bg-orange-500 opacity-0 peer-checked:opacity-100 transition"></div>
+                                </div>
+                                <span class="font-medium text-gray-300 group-hover:text-white transition text-sm">{{ $label }}</span>
+                            </label>
+                            @endforeach
+                        </div>
+                    </div>
+                    
                 </div>
-                @empty
-                <div class="col-span-full py-24 text-center">
-                    <i class="fas fa-car-crash text-5xl text-white/10 mb-4"></i>
-                    <h3 class="text-xl font-black text-white uppercase tracking-widest">No matching fleet</h3>
-                    <p class="text-gray-500 text-sm mt-2">Try adjusting your filters or search terms.</p>
-                </div>
-                @endforelse
             </div>
+
+{{-- RESULTS GRID --}}
+<div class="lg:col-span-3 grid grid-cols-1 md:grid-cols-2 gap-6">
+    @forelse($vehicles as $vehicle)
+    
+    {{-- CALCULATION LOGIC --}}
+    @php
+        // 1. Get Inputs
+        $pDate = request('pickup_date', now()->format('Y-m-d'));
+        $pTime = request('pickup_time', '10:00');
+        $rDate = request('return_date', now()->addDay()->format('Y-m-d'));
+        $rTime = request('return_time', '10:00');
+
+        $totalPrice = 0;
+        $durationLabel = '';
+
+        try {
+            $start = \Carbon\Carbon::parse("$pDate $pTime");
+            $end = \Carbon\Carbon::parse("$rDate $rTime");
+            
+            // Prevent negative time
+            if ($end->lt($start)) {
+                $end = $start->copy()->addHour();
+            }
+
+            // 2. Get Total Duration in Hours (Round up partial hours, e.g., 1.5h -> 2h)
+            $totalHours = ceil($start->floatDiffInHours($end));
+            if ($totalHours < 1) $totalHours = 1;
+
+            // 3. Get Rates
+            $rates = is_array($vehicle->hourly_rates) ? $vehicle->hourly_rates : json_decode($vehicle->hourly_rates ?? '[]', true);
+            
+            // Define Base Rates
+            $rate1h = $rates[1] ?? $vehicle->priceHour; // Cost for 1 hour
+            $rate24h = $rates[24] ?? ($rate1h * 24);    // Cost for 1 full day
+
+            // 4. Calculation Strategy
+            if ($totalHours < 24) {
+                // SCENARIO A: Less than 1 Day
+                if (isset($rates[$totalHours])) {
+                    $totalPrice = $rates[$totalHours]; // Use exact fixed rate if exists
+                } else {
+                    $totalPrice = $totalHours * $rate1h; // Fallback to hourly mult
+                }
+
+                // Cap: If hourly calculation exceeds daily rate, charge daily rate
+                if ($totalPrice > $rate24h) {
+                    $totalPrice = $rate24h;
+                }
+                
+                $durationLabel = $totalHours . ' Hour' . ($totalHours > 1 ? 's' : '');
+
+            } else {
+                // SCENARIO B: More than 1 Day (Days + Remainder Hours)
+                $days = floor($totalHours / 24);
+                $remainderHours = $totalHours % 24;
+
+                // Calculate base cost for full days
+                $daysCost = $days * $rate24h;
+
+                // Calculate cost for remaining hours
+                if (isset($rates[$remainderHours])) {
+                    $remainderCost = $rates[$remainderHours];
+                } else {
+                    $remainderCost = $remainderHours * $rate1h;
+                }
+
+                // Optimization: If remainder cost is more than a full day, just add another day
+                if ($remainderCost > $rate24h) {
+                    $remainderCost = $rate24h;
+                }
+
+                $totalPrice = $daysCost + $remainderCost;
+
+                // Label formatting
+                $durationLabel = $days . ' Day' . ($days > 1 ? 's' : '');
+                if ($remainderHours > 0) {
+                    $durationLabel .= ' + ' . $remainderHours . 'h';
+                }
+            }
+
+        } catch (\Exception $e) {
+            // Fallback for errors
+            $totalPrice = $vehicle->priceHour * 24;
+            $durationLabel = "1 Day (Est)";
+        }
+    @endphp
+
+    {{-- Vehicle Card --}}
+    <div onclick="document.getElementById('details-modal-{{ $vehicle->VehicleID }}').classList.remove('hidden')" 
+        class="group bg-black/25 backdrop-blur-[2px] border border-white/15 rounded-3xl p-6 shadow-xl hover:shadow-orange-500/10 hover:bg-black/60 transition-all duration-300 relative overflow-hidden flex flex-col h-full cursor-pointer">
+
+        {{-- Image Area --}}
+        <div class="h-60 flex items-center justify-center mb-4 relative overflow-hidden rounded-2xl bg-black/30 border border-white/5">
+            <div class="absolute inset-0 bg-gradient-to-tr from-orange-500/10 to-transparent opacity-50"></div>
+            @if($vehicle->image)
+                <img src="{{ asset('storage/' . $vehicle->image) }}" alt="{{ $vehicle->model }}" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">
+            @else
+                <i class="fas fa-{{ $vehicle->vehicle_category == 'bike' ? 'motorcycle' : 'car-side' }} text-6xl text-white/10 group-hover:text-white/20 transition-colors"></i>
+            @endif
+        </div>
+
+        <div class="space-y-3 flex-grow">
+            <div>
+                <h3 class="text-xl font-black text-white leading-tight">{{ $vehicle->brand }} {{ $vehicle->model }}</h3>
+                <div class="flex items-center space-x-2 mt-1">
+                    <span class="text-[10px] text-gray-500 font-bold uppercase">{{ $vehicle->year }}</span>
+                    <span class="text-white/20">|</span>
+                    <span class="text-[10px] text-gray-500 font-bold uppercase">{{ $vehicle->color }}</span>
+                </div>
+            </div>
+
+            {{-- Specs --}}
+            <div class="grid grid-cols-2 gap-2 text-[10px] font-bold text-gray-400 uppercase tracking-tight">
+                <div class="flex items-center">
+                    <i class="fas fa-{{ $vehicle->vehicle_category == 'bike' ? 'user' : 'chair' }} w-5 text-orange-500"></i> 
+                    {{ $vehicle->vehicle_category == 'bike' ? '2' : '5' }} Seats
+                </div>
+                <div class="flex items-center">
+                    <i class="fas fa-cog w-5 text-orange-500"></i> 
+                    Auto
+                </div>
+                <div class="flex items-center">
+                    <i class="fas fa-gas-pump w-5 text-orange-500"></i> 
+                    {{ $vehicle->fuelType ?? 'RON95' }}
+                </div>
+                <div class="flex items-center">
+                    <i class="fas fa-{{ $vehicle->vehicle_category == 'bike' ? 'helmet-safety' : 'snowflake' }} w-5 text-orange-500"></i> 
+                    {{ $vehicle->vehicle_category == 'bike' ? 'Helmet' : 'A/C' }}
+                </div>
+            </div>
+        </div>
+
+        {{-- Action Footer --}}
+        <div class="pt-4 mt-4 border-t border-white/10 flex items-center justify-between">
+            <div>
+                <span class="block text-[10px] text-gray-500 font-black uppercase tracking-widest">
+                    Total for {{ $durationLabel }}
+                </span>
+                <span class="text-xl font-black text-white tracking-tighter">
+                    RM {{ number_format($totalPrice, 0) }}
+                </span>
+            </div>
+            
+            <div class="flex items-center space-x-2 relative z-10">
+                {{-- Details Button (Optional now since card is clickable) --}}
+                <button type="button" 
+                    class="bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-xl font-bold text-xs transition-all border border-white/10">
+                    Details
+                </button>
+
+                {{-- Select Button (Stops propagation so it doesn't open modal when clicking Select) --}}
+                <a href="{{ route('book.payment', [
+                    'id' => $vehicle->VehicleID, 
+                    'pickup_date' => request('pickup_date'), 
+                    'return_date' => request('return_date'),
+                    'pickup_time' => request('pickup_time'),
+                    'return_time' => request('return_time'),
+                    'pickup_location' => request('pickup_location'),
+                    'return_location' => request('return_location')
+                ]) }}" 
+                onclick="event.stopPropagation();"
+                class="bg-[#ea580c] hover:bg-orange-600 text-white px-5 py-2 rounded-xl font-bold text-xs shadow-lg transition-all transform hover:scale-105">
+                    Select
+                </a>
+            </div>
+        </div>
+    </div>
+    @empty
+    <div class="col-span-full py-24 text-center">
+        <i class="fas fa-car-crash text-5xl text-white/10 mb-4"></i>
+        <h3 class="text-xl font-black text-white uppercase tracking-widest">No matching fleet</h3>
+        <p class="text-gray-500 text-sm mt-2">Try adjusting your filters or search terms.</p>
+    </div>
+    @endforelse
+</div>
         </div>
     </div>
 </div>
@@ -207,7 +382,7 @@
 @foreach($vehicles as $vehicle)
 <div id="details-modal-{{ $vehicle->VehicleID }}" class="fixed inset-0 z-50 hidden" style="z-index: 100;" role="dialog" aria-modal="true">
     {{-- Backdrop --}}
-    <div class="absolute inset-0 bg-black/90 backdrop-blur-md transition-opacity" 
+    <div class="absolute inset-0 bg-black/70 backdrop-blur-md transition-opacity" 
          onclick="document.getElementById('details-modal-{{ $vehicle->VehicleID }}').classList.add('hidden')"></div>
 
     <div class="relative z-10 flex items-center justify-center min-h-screen p-4 pointer-events-none">
@@ -383,20 +558,20 @@
         });
     }
 
-    // --- 2. TIME INPUT LOGIC ---
+    // --- 2. TIME INPUT LOGIC (UPDATED FOR DROPDOWNS) ---
     function updateSearchTime(type) {
+        // Pull value from the SELECT dropdown instead of NUMBER input
         let hour = parseInt(document.getElementById(type + '_hour_search').value) || 10;
         let ampm = document.getElementById(type + '_ampm_search').value;
         const hiddenInput = document.getElementById(type + '_time_search_hidden');
-
-        if (hour < 1) hour = 1;
-        if (hour > 12) hour = 12;
 
         let hour24 = hour;
         if (ampm === 'PM' && hour < 12) hour24 = hour + 12;
         if (ampm === 'AM' && hour === 12) hour24 = 0;
 
         hiddenInput.value = (hour24 < 10 ? '0' + hour24 : hour24) + ':00';
+        
+        // Update the "Select" buttons on the car cards immediately
         updateAllSelectLinks();
     }
 
@@ -493,7 +668,33 @@
         closeMapModal();
     }
 </script>
+<script>
+    function validateDates() {
+        const pickupInput = document.getElementById('pickup_date');
+        const returnInput = document.getElementById('return_date');
 
+        if(pickupInput && returnInput) {
+            // 1. Set the minimum return date to the selected pickup date
+            returnInput.min = pickupInput.value;
+
+            // 2. If the current return date is BEFORE the new pickup date, 
+            // automatically shift return date to match pickup date
+            if(returnInput.value < pickupInput.value) {
+                returnInput.value = pickupInput.value;
+            }
+        }
+        
+        // Trigger the link updater so the "Select" buttons get the new dates
+        if(typeof updateAllSelectLinks === 'function') {
+            updateAllSelectLinks();
+        }
+    }
+
+    // Run on load to ensure logic is correct from the start
+    document.addEventListener("DOMContentLoaded", function() {
+        validateDates();
+    });
+</script>
 <style>
     .custom-scrollbar::-webkit-scrollbar { width: 4px; }
     .custom-scrollbar::-webkit-scrollbar-track { background: rgba(255,255,255,0.05); }

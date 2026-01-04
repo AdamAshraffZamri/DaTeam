@@ -13,6 +13,9 @@ use App\Http\Controllers\VoucherController;
 use App\Http\Controllers\FleetController;
 use App\Http\Controllers\InspectionController;
 use App\Http\Controllers\StaffCustomerController;
+use App\Http\Controllers\ReportController;
+use App\Http\Controllers\PageController;
+
 
 
 /*
@@ -38,9 +41,9 @@ Route::get('/reset-password/{token}', [AuthController::class, 'showResetForm'])-
 Route::post('/reset-password', [AuthController::class, 'reset'])->name('password.update');
 
 // Static Pages
-Route::get('/about', function() { return view('pages.about'); })->name('pages.about');
-Route::get('/faq', function() { return view('pages.faq'); })->name('pages.faq');
-Route::get('/contact', function() { return view('pages.contact'); })->name('pages.contact');
+Route::get('/about', [PageController::class, 'about'])->name('pages.about');
+Route::get('/faq', [PageController::class, 'faq'])->name('pages.faq');
+Route::get('/contact', [PageController::class, 'contact'])->name('pages.contact');
 
 // ====================================================
 //  CUSTOMER ROUTES (Middleware: auth)
@@ -106,6 +109,9 @@ Route::prefix('staff')->middleware(['auth:staff'])->group(function () {
     // Dashboard
     Route::get('/dashboard', [StaffBookingController::class, 'dashboard'])->name('staff.dashboard');
     
+    Route::get('/profile', [App\Http\Controllers\StaffProfileController::class, 'edit'])->name('staff.profile.edit');
+    Route::put('/profile', [App\Http\Controllers\StaffProfileController::class, 'update'])->name('staff.profile.update');
+
     // Booking Management
     Route::get('/bookings', [StaffBookingController::class, 'index'])->name('staff.bookings.index');
     Route::get('/bookings/{id}', [StaffBookingController::class, 'show'])->name('staff.bookings.show');
@@ -146,7 +152,8 @@ Route::prefix('staff')->middleware(['auth:staff'])->group(function () {
     
     // UNBLOCK DATE (Remove from JSON)
     Route::post('/fleet/{id}/unblock', [FleetController::class, 'unblockDate'])->name('staff.fleet.unblock');
-
+    // LOG MAINTENANCE
+    Route::post('/fleet/{id}/maintenance', [FleetController::class, 'storeMaintenance'])->name('staff.fleet.maintenance.store');
     // Separate Inspection Mode
 
     // Customer Management
@@ -156,6 +163,7 @@ Route::prefix('staff')->middleware(['auth:staff'])->group(function () {
     Route::post('/customers/{id}/approve', [App\Http\Controllers\StaffCustomerController::class, 'approve'])->name('staff.customers.approve');
     Route::post('/customers/{id}/reject', [App\Http\Controllers\StaffCustomerController::class, 'reject'])->name('staff.customers.reject');
     Route::post('/customers/{id}/blacklist', [App\Http\Controllers\StaffCustomerController::class, 'toggleBlacklist'])->name('staff.customers.blacklist');
+    Route::post('/customers/{id}/penalty', [App\Http\Controllers\StaffCustomerController::class, 'imposePenalty'])->name('staff.customers.penalty');
 
     // --- SEPARATE INSPECTION MODE (If needed for dedicated page) ---
     // Renamed to avoid conflict with 'storeInspection' above
@@ -189,5 +197,9 @@ Route::prefix('staff')->middleware(['auth:staff'])->group(function () {
     Route::put('/loyalty/voucher/{voucherId}', [LoyaltyController::class, 'staffUpdateVoucher'])->name('staff.loyalty.update_voucher');
     Route::delete('/loyalty/voucher/{voucherId}', [LoyaltyController::class, 'staffDeleteVoucher'])->name('staff.loyalty.delete_voucher');
     
+    // Reporting Routes
+    Route::get('/reports', [App\Http\Controllers\ReportController::class, 'index'])->name('staff.reports.index');
+    Route::post('/reports/export', [App\Http\Controllers\ReportController::class, 'exportToDrive'])->name('staff.reports.export');
 
+    
 });

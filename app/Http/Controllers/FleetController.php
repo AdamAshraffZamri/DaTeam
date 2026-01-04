@@ -52,15 +52,28 @@ class FleetController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'plateNo' => 'required|unique:vehicles',
-            'image'   => 'nullable|image|max:2048',
+            'plateNo' => 'required|string|unique:vehicles,plateNo',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
             'brand'   => 'required',
             'model'   => 'required',
         ]);
 
         $imagePath = null;
+        // 2. Handle Image Upload with Custom Filename
         if ($request->hasFile('image')) {
-            $imagePath = $request->file('image')->store('vehicles', 'public');
+            $file = $request->file('image');
+            
+            // Clean Plate No (Remove spaces, uppercase) -> "UTM9078"
+            $plateNo = strtoupper(str_replace(' ', '', $request->plateNo));
+            
+            // Generate Filename -> "UTM9078.jpg"
+            $filename = $plateNo . '.' . $file->getClientOriginalExtension();
+            
+            // Store in 'storage/app/public/vehicles'
+            // This requires: php artisan storage:link
+            $path = $file->storeAs('vehicles', $filename, 'public');
+            
+            $imagePath = 'vehicles/' . $filename; // Path to save in DB
         }
 
         Vehicle::create([
@@ -84,72 +97,98 @@ class FleetController extends Controller
         ]);
 
         return redirect()->route('staff.fleet.index')
-            ->with('success', 'Vehicle registered to fleet successfully.');
+            ->with('success', 'Vehicle registered successfully.');
+        //return back()->with('success', 'Vehicle registered successfully!');
     }
 
-    /**
-     * Display the glassy profile of a specific vehicle.
-     */
     public function show($id)
     {
-        $vehicle = Vehicle::with(['bookings.customer', 'bookings.inspections'])->findOrFail($id);
+        // 1. Load Data (Fixed: 'maintenances' relationship now exists)
+        $vehicle = Vehicle::with(['bookings.customer', 'bookings.inspections', 'maintenances'])
+            ->findOrFail($id);
+            
         $currentMileage = $vehicle->mileage;
 
+        // 2. Service Reminder Logic (Example: 10k km or 6 months)
+        $lastMaint = $vehicle->maintenances->sortByDesc('date')->first();
+        $serviceDue = false;
+        $serviceMsg = "Healthy";
+        
+        if ($lastMaint) {
+            // Check Mileage (Assuming service every 10,000km)
+            // Ideally, you'd save 'mileage_at_service' in DB. Here we assume 10k intervals.
+            $nextServiceDate = \Carbon\Carbon::parse($lastMaint->date)->addMonths(6);
+            
+            // Simple check: If current mileage is way higher than last service or date passed
+            if (\Carbon\Carbon::now()->gt($nextServiceDate)) {
+                $serviceDue = true;
+                $serviceMsg = "Service Due (Time)";
+            }
+        } elseif ($currentMileage > 10000) {
+            $serviceDue = true;
+            $serviceMsg = "First Service Due";
+        }
+
+        // 3. Build Calendar Events
         $events = [];
 
+        // A. Bookings
         foreach($vehicle->bookings as $booking) {
             if($booking->bookingStatus !== 'Cancelled') {
-                
-                // === 1. FIX THE NAME/TITLE ===
-                $title = '';
-                
-                if ($booking->bookingStatus === 'Maintenance') {
-                    $title = 'Maintenance';
-                } elseif ($booking->customer) {
-                    // If customer exists, show Name
-                    $title = $booking->customer->fullName;
-                } else {
-                    // If customer is MISSING (NULL), show Booking ID instead
-                    $title = 'Booking #' . $booking->bookingID;
-                }
-
+                $custName = $booking->customer ? ($booking->customer->fullName ?? 'Guest') : 'Guest';
                 $events[] = [
                     'id' => $booking->bookingID,
-                    'title' => $title, // No more "null"
+                    'title' => $custName,
                     'start' => $booking->bookingDate,
                     'end'   => $booking->returnDate,
-                    'color' => '#f97316', 
+                    'color' => '#f97316', // Orange
                     'type'  => 'booking',
-                    
-                    // === 2. PASS DETAILS FOR POPUP ===
+                    // Pass details for popup
                     'extendedProps' => [
                         'status' => $booking->bookingStatus,
-                        'cost'   => number_format($booking->totalCost, 2),
-                        'pickup' => $booking->pickupLocation ?? 'N/A',
-                        'dropoff'=> $booking->returnLocation ?? 'N/A',
-                        'time'   => ($booking->bookingTime ?? '00:00') . ' - ' . ($booking->returnTime ?? '00:00'),
-                        'cust_name' => $booking->customer ? $booking->customer->name : 'Walk-in / Guest',
-                        'cust_phone'=> $booking->customer ? $booking->customer->phoneNo : 'N/A'
+                        'cost' => $booking->totalCost,
+                        'pickup' => $booking->pickupLocation,
+                        'dropoff' => $booking->returnLocation,
+                        'time' => $booking->bookingTime . ' - ' . $booking->returnTime,
+                        'cust_name' => $custName,
+                        'cust_phone' => $booking->customer->phoneNo ?? 'N/A'
                     ]
                 ];
             }
         }
 
-        // Add Blocked Dates (Maintenance from JSON)
-        $blockedDates = $vehicle->blocked_dates ?? [];
-        foreach($blockedDates as $date) {
+        // B. Maintenance Records (The new part)
+        foreach($vehicle->maintenances as $maint) {
             $events[] = [
-                'id' => 'block_' . $date,
-                'title' => 'Blocked',
-                'start' => $date,
-                'end'   => $date,
-                'color' => '#ef4444',
-                'type'  => 'maintenance',
-                'extendedProps' => ['date_value' => $date]
+                'id' => 'm_' . $maint->MaintenanceID,
+                'title' => 'Maintenance', // Shows as blocked on calendar
+                'start' => $maint->date,
+                'end'   => $maint->date, // Or add duration if you have it
+                'color' => '#ef4444', // Red
+                'type'  => 'maintenance_log',
+                'extendedProps' => [
+                    'desc' => $maint->description,
+                    'cost' => $maint->cost
+                ]
             ];
         }
 
-        return view('staff.fleet.show', compact('vehicle', 'currentMileage', 'events'));
+        // C. Manual Blocks (blocked_dates JSON)
+        if($vehicle->blocked_dates) {
+            foreach($vehicle->blocked_dates as $date) {
+                $events[] = [
+                    'id' => 'blk_' . $date,
+                    'title' => 'Blocked',
+                    'start' => $date,
+                    'end'   => $date,
+                    'color' => 'gray', // Gray
+                    'type'  => 'manual_block',
+                    'extendedProps' => ['date_value' => $date]
+                ];
+            }
+        }
+
+        return view('staff.fleet.show', compact('vehicle', 'currentMileage', 'events', 'serviceDue', 'serviceMsg'));
     }
 
     // --- ADD DATE TO JSON ARRAY ---
@@ -186,6 +225,25 @@ class FleetController extends Controller
         $vehicle->save();
 
         return back()->with('success', 'Date unblocked.');
+    }
+
+    public function storeMaintenance(Request $request, $id)
+    {
+        $request->validate([
+            'date' => 'required|date',
+            'cost' => 'required|numeric|min:0',
+            'description' => 'required|string|max:255',
+        ]);
+
+        \App\Models\Maintenance::create([
+            'VehicleID' => $id,
+            'StaffID' => \Illuminate\Support\Facades\Auth::guard('staff')->id() ?? 1, // Default to 1 if testing
+            'date' => $request->date,
+            'cost' => $request->cost,
+            'description' => $request->description,
+        ]);
+
+        return back()->with('success', 'Service record logged successfully.');
     }
 
     public function destroyBooking($booking_id)
@@ -246,10 +304,11 @@ class FleetController extends Controller
         $vehicle = Vehicle::findOrFail($id);
         
         // Optional: Delete image if exists
-        // if($vehicle->image) { Storage::disk('public')->delete($vehicle->image); }
+        if($vehicle->image) { Storage::disk('public')->delete($vehicle->image); }
 
         $vehicle->delete();
-        return back()->with('success', 'Vehicle removed from fleet.');
+        return redirect()->route('staff.fleet.index')
+            ->with('success', 'Vehicle removed from fleet inventory successfully.');
     }
 
     // 7. EDIT FORM (Placeholder for the Modify button)

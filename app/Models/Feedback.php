@@ -36,4 +36,16 @@ class Feedback extends Model
     {
         return $this->belongsTo(Customer::class, 'customerID', 'customerID');
     }
+
+    // 2. Define Customer "Through" the Booking (So your view code $review->customer works)
+    public function getCustomerAttribute()
+    {
+        return $this->booking ? $this->booking->customer : null;
+    }
+
+    // 3. Define Vehicle "Through" the Booking
+    public function getVehicleAttribute()
+    {
+        return $this->booking ? $this->booking->vehicle : null;
+    }
 }

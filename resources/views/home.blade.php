@@ -1,16 +1,58 @@
 @extends('layouts.app')
 
 @section('content')
-{{-- SECTION 1: HERO (Professional Brand Focus) --}}
-<div class="relative h-screen min-h-[600px] flex flex-col justify-center bg-cover bg-center overflow-hidden" style="background-image: url('{{ asset('hastabg.png') }}');">
-    
-    {{-- Dark Overlay --}}
-    <div class="absolute inset-0 bg-gradient-to-r from-black/60 via-black/35 to-black/65"></div>
 
-    {{-- Main Container: Added justify-center and gap-8 to bring elements closer --}}
-    <div class="relative z-10 container mx-auto px-6 md:px-12 flex flex-col h-full justify-center items-center gap-10 pt-10 pb-20">
+{{-- CUSTOM STYLES --}}
+<style>
+    /* Hide scrollbar */
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    
+    /* GLASS AESTHETIC (For Fleet, Stats, Features) */
+    .glass-section {
+        background-color: #111; /* Pitch dark background */
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .glass-card {
+        background: rgba(255, 255, 255, 0.05); /* 5% White opacity */
+        backdrop-filter: blur(12px);            /* Blur effect */
+        -webkit-backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.1); /* Subtle white border */
+        box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);  /* Deep shadow */
+        transition: transform 0.5s ease, background 0.5s ease;
+    }
+
+    .glass-card:hover {
+        background: rgba(255, 255, 255, 0.08); /* Slightly lighter on hover */
+        transform: translateY(-10px);          /* Float up effect */
+    }
+
+    /* Animation Utilities */
+    @keyframes fade-in-up {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-fade-in-up { animation: fade-in-up 1s ease-out forwards; }
+    .delay-100 { animation-delay: 100ms; }
+</style>
+
+{{-- SECTION 1: HERO (With Custom Gradient Overlay + Bottom Fade) --}}
+<div class="relative h-screen min-h-[600px] flex flex-col justify-center bg-gray-900 overflow-hidden">
+    
+    {{-- Background Image --}}
+    <div class="absolute inset-0 w-full h-full">
+        {{-- 1. Your Custom Gradient Overlay (For Text Readability) --}}
+        <div class="absolute inset-0 bg-gradient-to-r from-black/60 via-black/35 to-black/65 z-10"></div>
         
-        {{-- Navigation Pill (Centered) --}}
+        <img src="{{ asset('hastabg.png') }}" alt="Background" class="w-full h-full object-cover">
+    </div>
+
+    {{-- Content Container --}}
+    <div class="relative z-20 container mx-auto px-6 md:px-12 flex flex-col h-full justify-center items-center gap-10 pt-10 pb-20">
+        
+        {{-- Navigation Pill --}}
         <div class="flex justify-center animate-fade-in-up">
             <div class="bg-white/10 backdrop-blur-md border border-white/20 rounded-full p-1.5 flex flex-wrap justify-center md:flex-nowrap items-center shadow-2xl">
                 <a href="{{ route('book.create') }}" class="px-6 md:px-8 py-2.5 text-white/90 font-bold hover:bg-white/10 rounded-full transition text-sm md:text-base">
@@ -28,14 +70,14 @@
             </div>
         </div>
 
-        {{-- Main Hero Content --}}
+        {{-- Hero Text --}}
         <div class="max-w-4xl mx-auto text-center animate-fade-in-up delay-100">
             <h1 class="text-5xl md:text-8xl font-black text-white mb-6 leading-tight tracking-tighter">
                 ELEVATE <br>
                 <span class="text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-red-600">YOUR JOURNEY</span>
             </h1>
             <p class="text-lg md:text-xl text-gray-300 font-light mb-10 max-w-2xl mx-auto leading-relaxed">
-                Experience the freedom of movement with HASTA. Affordable, reliable, and premium vehicles curated for UTM students and staff.
+                Experience the freedom of movement with HASTA. Affordable, reliable, and premium vehicles curated for UTM students.
             </p>
             
             <div class="flex flex-col sm:flex-row gap-4 justify-center">
@@ -49,74 +91,69 @@
         </div>
     </div>
 
-    {{-- Decorative Bottom Fade --}}
-    <div class="absolute bottom-0 left-0 w-full h-32 bg-gradient-to-t from-gray-900 to-transparent"></div>
+    {{-- 2. Decorative Bottom Fade (Seamless transition to next section) --}}
+    <div class="absolute bottom-0 left-0 w-full h-32 bg-gradient-to-t from-[#111] to-transparent z-20"></div>
 </div>
 
-{{-- SECTION 2: AUTOMATIC FLEET CAROUSEL --}}
-<div id="fleet-showcase" class="bg-gray-900 py-24 border-b border-gray-800 overflow-hidden">
-    <div class="container mx-auto px-4 mb-12 flex justify-between items-end">
+
+{{-- SECTION 2: FLEET (Glass Design) --}}
+<div id="fleet-showcase" class="glass-section py-24 border-b border-white/5">
+    
+    {{-- Decorative Glow --}}
+    <div class="absolute top-0 right-0 w-[500px] h-[500px] bg-orange-600/10 blur-[120px] rounded-full pointer-events-none"></div>
+
+    <div class="container mx-auto px-4 mb-12 flex justify-between items-end relative z-10">
         <div>
-            <h2 class="text-4xl font-black text-white mb-2">Our Entire Fleet</h2>
-            <p class="text-gray-400">Browsing {{ count($vehicles) }} available vehicles ready for you.</p>
+            <h2 class="text-4xl md:text-5xl font-black text-white mb-2">Our Fleet</h2>
+            <p class="text-gray-400">Browsing {{ count($vehicles) }} premium vehicles.</p>
         </div>
         
-        {{-- Custom Navigation Buttons --}}
-        <div class="hidden md:flex gap-2">
-            <button id="slidePrev" class="w-12 h-12 rounded-full border border-gray-700 text-white flex items-center justify-center hover:bg-orange-600 hover:border-orange-600 transition">
+        <div class="hidden md:flex gap-3">
+            <button id="slidePrev" class="w-12 h-12 rounded-full border border-gray-600 text-white flex items-center justify-center hover:bg-white hover:text-black transition">
                 <i class="fas fa-chevron-left"></i>
             </button>
-            <button id="slideNext" class="w-12 h-12 rounded-full border border-gray-700 text-white flex items-center justify-center hover:bg-orange-600 hover:border-orange-600 transition">
+            <button id="slideNext" class="w-12 h-12 rounded-full bg-white text-black flex items-center justify-center hover:bg-orange-600 hover:text-white transition shadow-lg">
                 <i class="fas fa-chevron-right"></i>
             </button>
         </div>
     </div>
 
-    {{-- Carousel Track --}}
-    <div class="relative w-full">
+    <div class="relative w-full z-10">
         @if($vehicles->count() > 0)
-        <div class="flex overflow-x-auto gap-6 px-4 pb-8 scroll-smooth no-scrollbar" id="carouselTrack">
+        <div class="flex overflow-x-auto gap-8 px-4 pb-12 scroll-smooth no-scrollbar" id="carouselTrack">
             @foreach($vehicles as $vehicle)
-            <div class="min-w-[300px] md:min-w-[400px] bg-gray-800 rounded-3xl overflow-hidden border border-gray-700 shadow-2xl relative group hover:-translate-y-2 transition duration-300 flex-shrink-0">
+            <div class="glass-card w-[320px] md:w-[400px] rounded-[2.5rem] relative group flex-shrink-0">                
                 
-                {{-- Image Area --}}
-                <div class="h-64 overflow-hidden relative">
-                    <img src="{{ $vehicle->image_url }}" alt="{{ $vehicle->model }}" class="w-full h-full object-cover transform group-hover:scale-110 transition duration-700">
-                    <div class="absolute inset-0 bg-gradient-to-t from-gray-900 via-transparent to-transparent"></div>
-                    
-                    {{-- Badge --}}
-                    <div class="absolute top-4 right-4 bg-white/10 backdrop-blur-md border border-white/20 text-white px-3 py-1 rounded-full text-xs font-bold">
+                <div class="h-64 w-full flex items-center justify-center relative mt-6 perspective-1000">
+                    <img src="{{ $vehicle->image_url }}" alt="{{ $vehicle->model }}" 
+                         class="w-[85%] object-contain drop-shadow-2xl transform group-hover:scale-110 group-hover:-rotate-2 transition duration-500 ease-out z-10">
+                    <div class="absolute top-0 left-6 bg-black/40 backdrop-blur-md border border-white/10 text-white px-4 py-1.5 rounded-full text-xs font-bold z-20">
                         {{ strtoupper($vehicle->type) }}
                     </div>
                 </div>
-
-                {{-- Content Area --}}
-                <div class="p-6 relative">
-                    <div class="flex justify-between items-start mb-4">
+                <div class="p-8 relative bg-gradient-to-b from-transparent to-black/40 rounded-b-[2.5rem]">
+                    <div class="flex justify-between items-start mb-6">
                         <div>
-                            <p class="text-orange-500 text-xs font-bold tracking-wider uppercase mb-1">{{ $vehicle->brand }}</p>
-                            <h3 class="text-2xl font-bold text-white truncate max-w-[200px]">{{ $vehicle->model }}</h3>
+                            <p class="text-orange-500 text-xs font-bold tracking-widest uppercase mb-1">{{ $vehicle->brand }}</p>
+                            <h3 class="text-3xl font-bold text-white truncate max-w-[200px]">{{ $vehicle->model }}</h3>
                         </div>
                         <div class="text-right">
-                            <p class="text-white font-bold text-xl">RM {{ number_format($vehicle->priceHour, 0) }}</p>
-                            <p class="text-gray-500 text-xs">/ hour</p>
+                            <p class="text-white font-bold text-2xl">RM {{ number_format($vehicle->priceHour, 0) }}</p>
+                            <p class="text-gray-400 text-xs">/ hour</p>
                         </div>
                     </div>
-
-                    {{-- Features Icons --}}
-                    <div class="flex gap-4 text-gray-400 mb-6 text-sm border-t border-gray-700 pt-4">
-                        <div class="flex items-center gap-2">
+                    <div class="flex gap-3 text-gray-300 mb-8 text-sm">
+                        <div class="flex items-center gap-2 bg-white/5 px-3 py-2 rounded-xl border border-white/5">
                             <i class="fas fa-gas-pump text-orange-500"></i> {{ $vehicle->fuelType }}
                         </div>
-                        <div class="flex items-center gap-2">
+                        <div class="flex items-center gap-2 bg-white/5 px-3 py-2 rounded-xl border border-white/5">
                             <i class="fas fa-calendar-alt text-orange-500"></i> {{ $vehicle->year }}
                         </div>
-                        <div class="flex items-center gap-2">
+                        <div class="flex items-center gap-2 bg-white/5 px-3 py-2 rounded-xl border border-white/5">
                             <i class="fas fa-palette text-orange-500"></i> {{ $vehicle->color }}
                         </div>
                     </div>
-
-                    <a href="{{ route('book.create', ['vehicle_id' => $vehicle->VehicleID]) }}" class="block w-full py-3 bg-white text-gray-900 font-bold text-center rounded-xl hover:bg-orange-500 hover:text-white transition">
+                    <a href="{{ route('book.create', ['vehicle_id' => $vehicle->VehicleID]) }}" class="block w-full py-4 bg-white text-black font-bold text-center rounded-2xl hover:bg-orange-600 hover:text-white transition shadow-[0_0_20px_rgba(255,255,255,0.2)]">
                         Rent Now
                     </a>
                 </div>
@@ -125,88 +162,77 @@
         </div>
         @else
         <div class="text-center py-12 text-gray-500">
-            <p>No vehicles are currently available. Please check back later.</p>
+            <p>No vehicles are currently available.</p>
         </div>
         @endif
     </div>
 </div>
 
-{{-- SECTION 3: STATS --}}
-<div class="bg-gray-50 py-20">
-    <div class="container mx-auto px-4 flex flex-wrap justify-center gap-16 text-center">
-        <div>
-            <h3 class="text-5xl font-black text-gray-900 mb-2">50+</h3>
-            <p class="text-gray-500 font-medium uppercase tracking-wider">Premium Vehicles</p>
-        </div>
-        <div>
-            <h3 class="text-5xl font-black text-gray-900 mb-2">1k+</h3>
-            <p class="text-gray-500 font-medium uppercase tracking-wider">Happy Students</p>
-        </div>
-        <div>
-            <h3 class="text-5xl font-black text-gray-900 mb-2">24/7</h3>
-            <p class="text-gray-500 font-medium uppercase tracking-wider">Support Team</p>
+{{-- SECTION 3: STATS (Glass Style) --}}
+<div class="bg-[#111] py-20 border-b border-white/5">
+    <div class="container mx-auto px-4">
+        <div class="glass-card rounded-[2rem] py-12 px-6 flex flex-wrap justify-center gap-16 text-center border border-white/5 bg-white/5">
+            <div>
+                <h3 class="text-5xl font-black text-white mb-2">50+</h3>
+                <p class="text-gray-400 font-medium uppercase tracking-wider text-sm">Premium Vehicles</p>
+            </div>
+            {{-- Vertical Divider (Hidden on mobile) --}}
+            <div class="hidden md:block w-px bg-white/10 h-20"></div>
+            <div>
+                <h3 class="text-5xl font-black text-white mb-2">1k+</h3>
+                <p class="text-gray-400 font-medium uppercase tracking-wider text-sm">Happy Students</p>
+            </div>
+            {{-- Vertical Divider --}}
+            <div class="hidden md:block w-px bg-white/10 h-20"></div>
+            <div>
+                <h3 class="text-5xl font-black text-white mb-2">24/7</h3>
+                <p class="text-gray-400 font-medium uppercase tracking-wider text-sm">Support Team</p>
+            </div>
         </div>
     </div>
 </div>
 
-{{-- SECTION 4: FEATURES --}}
-<div class="py-24 bg-white">
-    <div class="container mx-auto px-4">
+{{-- SECTION 4: FEATURES (Glass Style) --}}
+<div class="glass-section py-24 relative">
+    {{-- Ambient Glow --}}
+    <div class="absolute bottom-0 left-0 w-[500px] h-[500px] bg-blue-600/10 blur-[120px] rounded-full pointer-events-none"></div>
+
+    <div class="container mx-auto px-4 relative z-10">
         <div class="text-center mb-16">
-            <h2 class="text-4xl font-black text-gray-900 mb-4">Why Choose Hasta?</h2>
-            <p class="text-gray-500 max-w-2xl mx-auto text-lg">We provide the most reliable and student-friendly car rental service in UTM.</p>
+            <h2 class="text-4xl font-black text-white mb-4">Why Choose Hasta?</h2>
+            <p class="text-gray-400 max-w-2xl mx-auto text-lg">We provide the most reliable and student-friendly car rental service in UTM.</p>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-12">
-            <div class="group p-8 rounded-[2rem] bg-gray-50 hover:bg-gray-900 transition duration-500">
-                <div class="w-16 h-16 bg-orange-100 rounded-2xl flex items-center justify-center text-orange-600 text-3xl mb-8 group-hover:bg-orange-600 group-hover:text-white transition">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {{-- Card 1 --}}
+            <div class="glass-card p-10 rounded-[2.5rem] group hover:-translate-y-2 transition duration-500 relative">
+                <div class="w-20 h-20 bg-gradient-to-br from-orange-500 to-red-600 rounded-2xl flex items-center justify-center text-white text-3xl mb-8 shadow-lg shadow-orange-500/30 group-hover:scale-110 transition">
                     <i class="fas fa-wallet"></i>
                 </div>
-                <h3 class="text-2xl font-bold text-gray-900 mb-4 group-hover:text-white">Student Prices</h3>
-                <p class="text-gray-500 leading-relaxed group-hover:text-gray-400">Affordable rates designed specifically for UTM students. No hidden fees, ever.</p>
+                <h3 class="text-2xl font-bold text-white mb-4">Student Prices</h3>
+                <p class="text-gray-400 leading-relaxed group-hover:text-gray-200 transition">Affordable rates designed specifically for UTM students. No hidden fees, ever.</p>
             </div>
 
-            <div class="group p-8 rounded-[2rem] bg-gray-50 hover:bg-gray-900 transition duration-500">
-                <div class="w-16 h-16 bg-blue-100 rounded-2xl flex items-center justify-center text-blue-600 text-3xl mb-8 group-hover:bg-blue-600 group-hover:text-white transition">
+            {{-- Card 2 --}}
+            <div class="glass-card p-10 rounded-[2.5rem] group hover:-translate-y-2 transition duration-500 relative">
+                <div class="w-20 h-20 bg-gradient-to-br from-blue-500 to-cyan-600 rounded-2xl flex items-center justify-center text-white text-3xl mb-8 shadow-lg shadow-blue-500/30 group-hover:scale-110 transition">
                     <i class="fas fa-shield-alt"></i>
                 </div>
-                <h3 class="text-2xl font-bold text-gray-900 mb-4 group-hover:text-white">Fully Insured</h3>
-                <p class="text-gray-500 leading-relaxed group-hover:text-gray-400">Drive with peace of mind. All our vehicles come with comprehensive insurance coverage.</p>
+                <h3 class="text-2xl font-bold text-white mb-4">Fully Insured</h3>
+                <p class="text-gray-400 leading-relaxed group-hover:text-gray-200 transition">Drive with peace of mind. All our vehicles come with comprehensive insurance coverage.</p>
             </div>
 
-            <div class="group p-8 rounded-[2rem] bg-gray-50 hover:bg-gray-900 transition duration-500">
-                <div class="w-16 h-16 bg-green-100 rounded-2xl flex items-center justify-center text-green-600 text-3xl mb-8 group-hover:bg-green-600 group-hover:text-white transition">
+            {{-- Card 3 --}}
+            <div class="glass-card p-10 rounded-[2.5rem] group hover:-translate-y-2 transition duration-500 relative">
+                <div class="w-20 h-20 bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl flex items-center justify-center text-white text-3xl mb-8 shadow-lg shadow-green-500/30 group-hover:scale-110 transition">
                     <i class="fas fa-bolt"></i>
                 </div>
-                <h3 class="text-2xl font-bold text-gray-900 mb-4 group-hover:text-white">Instant Access</h3>
-                <p class="text-gray-500 leading-relaxed group-hover:text-gray-400">Book in seconds using our digital platform. No paperwork, just drive.</p>
+                <h3 class="text-2xl font-bold text-white mb-4">Instant Access</h3>
+                <p class="text-gray-400 leading-relaxed group-hover:text-gray-200 transition">Book in seconds using our digital platform. No paperwork, just drive.</p>
             </div>
         </div>
     </div>
 </div>
-
-<style>
-    /* Hide scrollbar for Chrome, Safari and Opera */
-    .no-scrollbar::-webkit-scrollbar {
-        display: none;
-    }
-    /* Hide scrollbar for IE, Edge and Firefox */
-    .no-scrollbar {
-        -ms-overflow-style: none;  /* IE and Edge */
-        scrollbar-width: none;  /* Firefox */
-    }
-    
-    @keyframes fade-in-up {
-        from { opacity: 0; transform: translateY(20px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
-    .animate-fade-in-up {
-        animation: fade-in-up 1s ease-out forwards;
-    }
-    .delay-100 {
-        animation-delay: 100ms;
-    }
-</style>
 
 <script>
     document.addEventListener('DOMContentLoaded', () => {
@@ -215,26 +241,22 @@
         const prevBtn = document.getElementById('slidePrev');
         let autoScrollInterval;
 
-        // Auto Scroll Function
         function autoScroll() {
             if (!track) return;
-            // If we've reached the end (roughly), scroll back to start
             if (track.scrollLeft + track.clientWidth >= track.scrollWidth - 10) {
                 track.scrollTo({ left: 0, behavior: 'smooth' });
             } else {
-                track.scrollBy({ left: 350, behavior: 'smooth' });
+                track.scrollBy({ left: 420, behavior: 'smooth' });
             }
         }
 
-        // Initialize Auto Scroll
         if(track && track.childElementCount > 1) {
-             autoScrollInterval = setInterval(autoScroll, 3000); // Change every 3 seconds
+             autoScrollInterval = setInterval(autoScroll, 3000);
 
-            // Manual Navigation
             if(nextBtn) {
                 nextBtn.addEventListener('click', () => {
                     clearInterval(autoScrollInterval);
-                    track.scrollBy({ left: 350, behavior: 'smooth' });
+                    track.scrollBy({ left: 420, behavior: 'smooth' });
                     autoScrollInterval = setInterval(autoScroll, 4000);
                 });
             }
@@ -242,12 +264,11 @@
             if(prevBtn) {
                 prevBtn.addEventListener('click', () => {
                     clearInterval(autoScrollInterval);
-                    track.scrollBy({ left: -350, behavior: 'smooth' });
+                    track.scrollBy({ left: -420, behavior: 'smooth' });
                     autoScrollInterval = setInterval(autoScroll, 4000);
                 });
             }
 
-            // Pause on hover
             track.addEventListener('mouseenter', () => clearInterval(autoScrollInterval));
             track.addEventListener('mouseleave', () => autoScrollInterval = setInterval(autoScroll, 3000));
         }

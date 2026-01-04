@@ -13,14 +13,47 @@
     }
 </style>
 
-{{-- GREY BACKGROUND RECTANGLE (Matches Booking Page) --}}
-<div class="min-h-screen bg-gray-100 p-6">
+{{-- GREY BACKGROUND RECTANGLE --}}
+<div class="min-h-screen bg-gray-100 rounded-2xl p-6">
     <div class="max-w-7xl mx-auto">
 
-        {{-- BACK BUTTON (Matches Booking Page Style) --}}
+        {{-- BACK BUTTON --}}
         <a href="{{ route('staff.fleet.index') }}" class="inline-flex items-center text-gray-500 hover:text-gray-900 mb-6 transition">
             <i class="fas fa-arrow-left mr-2"></i> Back to Fleet
         </a>
+
+        {{-- === 1. SUCCESS MESSAGE === --}}
+        @if(session('success'))
+            <div class="mb-6 bg-green-50 border border-green-200 rounded-2xl p-4 flex items-center gap-4 shadow-sm animate-pulse">
+                <div class="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center text-green-600 shrink-0 border border-green-200">
+                    <i class="fas fa-check text-sm"></i>
+                </div>
+                <div>
+                    <h4 class="text-sm font-black text-green-900">Success</h4>
+                    <p class="text-xs text-green-700 font-medium">{{ session('success') }}</p>
+                </div>
+            </div>
+        @endif
+
+        {{-- === 2. ERROR MESSAGE === --}}
+        @if($errors->any())
+            <div class="mb-6 bg-red-50 border border-red-200 rounded-2xl p-4 shadow-sm">
+                <div class="flex items-center gap-4 mb-2">
+                    <div class="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center text-red-600 shrink-0 border border-red-200">
+                        <i class="fas fa-exclamation text-sm"></i>
+                    </div>
+                    <div>
+                        <h4 class="text-sm font-black text-red-900">Unable to Save Vehicle</h4>
+                        <p class="text-xs text-red-700 font-medium">Please check the following errors:</p>
+                    </div>
+                </div>
+                <ul class="list-disc list-inside text-xs text-red-600 font-bold ml-14 space-y-1">
+                    @foreach($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
 
         <div x-data="fleetForm()">
             <form action="{{ route('staff.fleet.store') }}" method="POST" enctype="multipart/form-data">
@@ -30,7 +63,7 @@
                 {{-- MAIN WHITE CARD --}}
                 <div class="bg-white rounded-[2.5rem] shadow-sm border border-gray-100 overflow-hidden flex flex-col lg:flex-row">
                     
-                    {{-- LEFT SIDE: VISUALS (30% Width) --}}
+                    {{-- LEFT SIDE: VISUALS --}}
                     <div class="w-full lg:w-1/3 bg-gray-50/50 p-10 border-r border-gray-100 flex flex-col gap-8">
                         <div>
                             <h1 class="text-3xl font-black text-gray-900 leading-none mb-2">Register<br><span class="text-orange-600">Fleet.</span></h1>
@@ -131,22 +164,22 @@
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
                                 <div class="col-span-full">
                                     <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-1.5 ml-1">Plate Number</label>
-                                    <input type="text" name="plateNo" placeholder="UTMXXXX" class="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 font-bold text-gray-900 tracking-wider uppercase outline-none focus:bg-white focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all" required>
+                                    <input type="text" name="plateNo" placeholder="UTMXXXX" value="{{ old('plateNo') }}" class="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 font-bold text-gray-900 tracking-wider uppercase outline-none focus:bg-white focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all" required>
                                 </div>
                                 <div>
                                     <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-1.5 ml-1">Brand</label>
-                                    <input type="text" name="brand" placeholder="Perodua" class="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 font-medium text-gray-900 outline-none focus:bg-white focus:border-orange-500 transition-all" required>
+                                    <input type="text" name="brand" placeholder="Perodua" value="{{ old('brand') }}" class="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 font-medium text-gray-900 outline-none focus:bg-white focus:border-orange-500 transition-all" required>
                                 </div>
                                 <div>
                                     <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-1.5 ml-1">Model</label>
-                                    <input type="text" name="model" placeholder="Myvi" class="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 font-medium text-gray-900 outline-none focus:bg-white focus:border-orange-500 transition-all" required>
+                                    <input type="text" name="model" placeholder="Myvi" value="{{ old('model') }}" class="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 font-medium text-gray-900 outline-none focus:bg-white focus:border-orange-500 transition-all" required>
                                 </div>
                                 <div>
                                     <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-1.5 ml-1">Year</label>
                                     <div class="relative">
                                         <select name="year" class="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 font-medium text-gray-900 outline-none focus:bg-white focus:border-orange-500 appearance-none cursor-pointer">
                                             @for($i = date('Y'); $i >= 2010; $i--)
-                                                <option value="{{ $i }}">{{ $i }}</option>
+                                                <option value="{{ $i }}" {{ old('year') == $i ? 'selected' : '' }}>{{ $i }}</option>
                                             @endfor
                                         </select>
                                     </div>
@@ -154,29 +187,22 @@
                                 <div>
                                     <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-1.5 ml-1">Color</label>
                                     <select name="color" class="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 font-medium text-gray-900 outline-none focus:bg-white focus:border-orange-500 appearance-none cursor-pointer">
-                                        <option>Yellow</option>
-                                        <option>Orange</option>
-                                        <option>Blue</option>
-                                        <option>White</option>
-                                        <option>Green</option>
-                                        <option>Purple</option>
-                                        <option>Gold</option>
-                                        <option>Black</option>
-                                        <option>Red</option>
-                                        <option>Silver</option>
+                                        @foreach(['Yellow','Orange','Blue','White','Green','Purple','Gold','Black','Red','Silver'] as $color)
+                                            <option value="{{ $color }}" {{ old('color') == $color ? 'selected' : '' }}>{{ $color }}</option>
+                                        @endforeach
                                     </select>
                                 </div>
                                 <div>
                                     <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-1.5 ml-1">Mileage</label>
-                                    <input type="number" name="mileage" placeholder="0" class="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 font-medium text-gray-900 outline-none focus:bg-white focus:border-orange-500 transition-all no-spin">
+                                    <input type="number" name="mileage" placeholder="0" value="{{ old('mileage') }}" class="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 font-medium text-gray-900 outline-none focus:bg-white focus:border-orange-500 transition-all no-spin">
                                 </div>
                                 <div>
                                     <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-1.5 ml-1">Fuel Type</label>
                                     <select name="fuelType" class="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 font-medium text-gray-900 outline-none focus:bg-white focus:border-orange-500 appearance-none cursor-pointer">
-                                        <option>Petrol (RON95)</option>
-                                        <option>Petrol (RON97)</option>
-                                        <option>Diesel</option>
-                                        <option>Electric</option>
+                                        <option value="Petrol (RON95)" {{ old('fuelType') == 'Petrol (RON95)' ? 'selected' : '' }}>Petrol (RON95)</option>
+                                        <option value="Petrol (RON97)" {{ old('fuelType') == 'Petrol (RON97)' ? 'selected' : '' }}>Petrol (RON97)</option>
+                                        <option value="Diesel" {{ old('fuelType') == 'Diesel' ? 'selected' : '' }}>Diesel</option>
+                                        <option value="Electric" {{ old('fuelType') == 'Electric' ? 'selected' : '' }}>Electric</option>
                                     </select>
                                 </div>
                             </div>
@@ -192,50 +218,43 @@
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
                                 <div class="col-span-full">
                                     <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-1.5 ml-1">Owner Name</label>
-                                    <input type="text" name="owner_name" placeholder="Hasta Travel & Tours" class="w-full bg-blue-50/50 border border-blue-100 rounded-xl px-4 py-3 font-medium text-gray-900 outline-none focus:bg-white focus:border-blue-500 transition-all">
+                                    <input type="text" name="owner_name" placeholder="Hasta Travel & Tours" value="{{ old('owner_name') }}" class="w-full bg-blue-50/50 border border-blue-100 rounded-xl px-4 py-3 font-medium text-gray-900 outline-none focus:bg-white focus:border-blue-500 transition-all">
                                 </div>
                                 <div>
                                     <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-1.5 ml-1">Contact No.</label>
-                                    <input type="text" name="owner_phone" placeholder="012-3456789" class="w-full bg-blue-50/50 border border-blue-100 rounded-xl px-4 py-3 font-medium text-gray-900 outline-none focus:bg-white focus:border-blue-500 transition-all">
+                                    <input type="text" name="owner_phone" placeholder="012-3456789" value="{{ old('owner_phone') }}" class="w-full bg-blue-50/50 border border-blue-100 rounded-xl px-4 py-3 font-medium text-gray-900 outline-none focus:bg-white focus:border-blue-500 transition-all">
                                 </div>
                                 <div>
                                     <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-1.5 ml-1">NRIC / ID</label>
-                                    <input type="text" name="owner_nric" placeholder="XXXXXX-XX-XXXX" class="w-full bg-blue-50/50 border border-blue-100 rounded-xl px-4 py-3 font-medium text-gray-900 outline-none focus:bg-white focus:border-blue-500 transition-all">
+                                    <input type="text" name="owner_nric" placeholder="XXXXXX-XX-XXXX" value="{{ old('owner_nric') }}" class="w-full bg-blue-50/50 border border-blue-100 rounded-xl px-4 py-3 font-medium text-gray-900 outline-none focus:bg-white focus:border-blue-500 transition-all">
                                 </div>
                                 <div class="col-span-full">
                                     <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-1.5 ml-1">Base Security Deposit (RM)</label>
-                                    <input type="number" name="baseDepo" value="50" class="w-full bg-orange-50/50 border border-orange-100 rounded-xl px-4 py-3 font-bold text-orange-600 outline-none focus:bg-white focus:border-orange-500 transition-all no-spin">
+                                    <input type="number" name="baseDepo" value="{{ old('baseDepo', 50) }}" class="w-full bg-orange-50/50 border border-orange-100 rounded-xl px-4 py-3 font-bold text-orange-600 outline-none focus:bg-white focus:border-orange-500 transition-all no-spin">
                                 </div>
                             </div>
                         </div>
 
-                        {{-- 3. Pricing (Clean List) --}}
+                        {{-- 3. Pricing --}}
                         <div class="bg-gray-50/50 rounded-[2rem] p-8 border border-gray-100">
                             <h4 class="text-xs font-bold text-gray-900 uppercase tracking-[0.2em] mb-6 text-center border-b border-gray-200 pb-4">Hourly Rates (RM)</h4>
                             <div class="space-y-3">
                                 @foreach([1, 3, 5, 7, 9, 12, 24] as $h)
-                                <div x-data="{ price: 0 }" class="flex items-center justify-between bg-white p-3 pr-4 rounded-xl border border-gray-200 shadow-sm hover:border-orange-300 transition-all group">
-                                    
-                                    {{-- Label --}}
+                                <div x-data="{ price: {{ old("rates.$h", 0) }} }" class="flex items-center justify-between bg-white p-3 pr-4 rounded-xl border border-gray-200 shadow-sm hover:border-orange-300 transition-all group">
                                     <div class="flex items-center gap-3">
                                         <div class="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center text-xs font-black text-gray-500 group-hover:bg-orange-50 group-hover:text-orange-600 transition-colors">
                                             {{ $h }}H
                                         </div>
                                         <span class="text-xs font-bold text-gray-700 uppercase tracking-wider">{{ $h }} Hour Rate</span>
                                     </div>
-
-                                    {{-- Input Controls --}}
                                     <div class="flex items-center gap-2">
                                         <button type="button" @click="price = Math.max(0, parseInt(price) - 5)" class="w-8 h-8 rounded-full flex items-center justify-center text-gray-400 hover:bg-gray-100 hover:text-orange-600 transition-all">
                                             <i class="fas fa-minus text-xs"></i>
                                         </button>
-                                        
                                         <div class="relative w-16">
                                             <span class="absolute left-2 top-1/2 -translate-y-1/2 text-[10px] font-bold text-gray-400">RM</span>
-                                            <input type="number" name="rates[{{ $h }}]" x-model="price" 
-                                                class="w-full pl-6 pr-2 py-1 text-right font-black text-gray-900 bg-transparent outline-none border-b border-gray-200 focus:border-orange-500 transition-colors no-spin">
+                                            <input type="number" name="rates[{{ $h }}]" x-model="price" class="w-full pl-6 pr-2 py-1 text-right font-black text-gray-900 bg-transparent outline-none border-b border-gray-200 focus:border-orange-500 transition-colors no-spin">
                                         </div>
-
                                         <button type="button" @click="price = parseInt(price) + 5" class="w-8 h-8 rounded-full flex items-center justify-center text-gray-400 hover:bg-gray-100 hover:text-orange-600 transition-all">
                                             <i class="fas fa-plus text-xs"></i>
                                         </button>
@@ -248,7 +267,7 @@
                         {{-- SUBMIT --}}
                         <div class="pt-4">
                             <button type="submit" class="w-full bg-gray-900 text-white py-5 rounded-2xl font-bold text-xs uppercase tracking-[0.2em] shadow-xl hover:bg-orange-600 hover:shadow-orange-500/30 transition-all transform active:scale-[0.98] flex items-center justify-center gap-3">
-                                <span>Save Vehicle</span>
+                                <span>Add & Save Vehicle</span>
                                 <i class="fas fa-arrow-right"></i>
                             </button>
                         </div>
@@ -263,7 +282,7 @@
 <script>
     function fleetForm() {
         return {
-            category: 'car',
+            category: '{{ old('vehicle_category', 'car') }}',
             imagePreview: null,
             fileName: '',
             previewImage(event) {

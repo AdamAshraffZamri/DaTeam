@@ -21,3 +21,24 @@
 Homestead.json
 Homestead.yaml
 Thumbs.db
+# 1. Ignore everything in these public subfolders by default
+/public/storage/agreements/*
+/public/storage/inspections/*
+/public/storage/receipts/*
+/public/storage/uploads/*
+/storage/app/public/agreements/*
+/storage/app/public/inspections/*
+/storage/app/public/receipts/*
+/storage/app/public/uploads/*
+# 2. But keep the folders themselves (by tracking .gitkeep files)
+!/public/storage/agreements/.gitkeep
+!/public/storage/inspections/.gitkeep
+!/public/storage/receipts/.gitkeep
+!/public/storage/uploads/.gitkeep
+!/storage/app/public/agreements/.gitkeep
+!/storage/app/public/inspections/.gitkeep
+!/storage/app/public/receipts/.gitkeep
+!/storage/app/public/uploads/.gitkeep
+# 3. EXCEPTION: Track EVERYTHING in public/vehicles (Do not ignore)
+!/public/storage/vehicles/
+!/public/storage/vehicles/*
