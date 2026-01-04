@@ -36,7 +36,7 @@
 @endphp
 
 {{-- GREY BACKGROUND RECTANGLE --}}
-<div class="min-h-screen bg-gray-100 p-6" 
+<div class="min-h-screen bg-gray-100 rounded-2xl p-6" 
      x-data="fleetForm({ 
          category: '{{ $currentCategory }}', 
          currentImage: '{{ $imageUrl }}',

@@ -42,43 +42,54 @@
             </div>
 
             <div class="flex items-center space-x-5">
-                @auth
-            <div class="relative group">
-                    <button class="flex items-center text-white-600 hover:text-blue-600 focus:outline-none relative">
-                        <i class="fas fa-bell"></i>
-                        @php $count = auth()->user()->unreadNotifications->count(); @endphp
-                        @if($count > 0)
-                            <span class="absolute -top-2 -right-2 bg-blue-600 text-white text-[10px] px-1.5 rounded-full">
-                                {{ $count }}
-                            </span>
-                        @endif
-                    </button>
+            @auth
+            <div class="relative">
+                <button onclick="toggleNotificationMenu(event)" class="flex items-center text-white-600 hover:text-blue-600 focus:outline-none relative">
+                    <i class="fas fa-bell"></i>
+                    @php $count = auth()->user()->unreadNotifications->count(); @endphp
+                    @if($count > 0)
+                        <span class="absolute -top-2 -right-2 bg-blue-600 text-white text-[10px] px-1.5 rounded-full">
+                            {{ $count }}
+                        </span>
+                    @endif
+                </button>
 
-                    <div class="absolute right-0 mt-2 w-72 bg-white shadow-xl rounded-lg hidden group-hover:block z-50 border border-gray-100">
-                        <div class="p-3 border-b text-xs font-bold text-gray-400 uppercase">Notifications</div>
-                        <div class="max-h-60 overflow-y-auto">
-                            @forelse(auth()->user()->unreadNotifications as $notification)
-                                <div class="p-4 border-b hover:bg-gray-50">
-                                    <p class="text-sm text-gray-800">{{ $notification->data['message'] }}</p>
-                                    <p class="text-[10px] text-gray-400 mt-1">{{ $notification->created_at->diffForHumans() }}</p>
-                                </div>
-                            @empty
-                                <p class="p-4 text-center text-xs text-gray-400">No new updates</p>
-                            @endforelse
-                        </div>
+                <div id="notificationMenu" class="absolute right-0 mt-2 w-72 bg-white shadow-xl rounded-lg hidden z-50 border border-gray-100">
+                    <div class="p-3 border-b text-xs font-bold text-gray-400 uppercase">Notifications</div>
+                    <div class="max-h-60 overflow-y-auto">
+                        @forelse(auth()->user()->unreadNotifications as $notification)
+                            <div class="p-4 border-b hover:bg-gray-50">
+                                <p class="text-sm text-gray-800">{{ $notification->data['message'] }}</p>
+                                <p class="text-[10px] text-gray-400 mt-1">{{ $notification->created_at->diffForHumans() }}</p>
+                            </div>
+                        @empty
+                            <p class="p-4 text-center text-xs text-gray-400">No new updates</p>
+                        @endforelse
                     </div>
+                    @if($count > 0)
+                        <div class="p-2 border-t text-center">
+                            <form action="{{ route('notifications.markRead') }}" method="POST">
+                                @csrf
+                                <button type="submit" class="text-[10px] text-blue-600 font-bold hover:underline">Mark all as read</button>
+                            </form>
+                        </div>
+                    @endif
                 </div>
+            </div>
                 @endauth
                 @auth
-                    <div class="flex items-center gap-3 bg-white/10 px-3 py-1.5 rounded-full border border-white/20 backdrop-blur-md">
-                        <a href="{{ route('profile.edit') }}" class="flex items-center gap-2">
-                            <i class="fas fa-user-circle text-2xl"></i>
-                            <span class="text-xs font-bold hidden sm:block">{{ Auth::user()->name }}</span>
+                    <div class="flex items-center gap-4 bg-white/10 px-4 py-2 rounded-full border border-white/20 backdrop-blur-md shadow-sm">
+                        <a href="{{ route('profile.edit') }}" class="flex items-center gap-2 group" title="Edit Profile">
+                            <i class="fas fa-user-circle text-2xl group-hover:scale-105 transition"></i>
+                            <span class="text-sm font-bold hidden sm:block group-hover:text-orange-100 transition">{{ Auth::user()->name }}</span>
                         </a>
-                        <div class="w-px h-4 bg-white/30"></div>
+                        
+                        {{-- Logout Button --}}
                         <form action="{{ route('logout') }}" method="POST" class="inline">
                             @csrf
-                            <button type="submit" class="text-xs font-bold hover:text-orange-200 transition">Logout</button>
+                            <button type="submit" class="text-sm font-bold bg-white/20 hover:bg-white/30 px-4 py-1 rounded-full transition text-white shadow-sm border border-white/10 hover:shadow-md">
+                                Logout
+                            </button>
                         </form>
                     </div>
                 @else
@@ -89,23 +100,25 @@
     </nav>
 
     {{-- Updated Condition: Hide this Layout Pill Bar on Home AND About pages (since they have their own) --}}
-    @if(!request()->routeIs('home') && !request()->routeIs('pages.about') && !request()->routeIs('pages.contact'))
+    @if(!request()->routeIs('home') && !request()->routeIs('pages.about') && !request()->routeIs('pages.contact') && !request()->routeIs('login') && !request()->routeIs('staff.login') && !request()->routeIs('register') && !request()->routeIs('password.*') && !request()->routeIs('pages.faq'))
+
+
         <div class="w-full flex justify-center py-6 relative z-40">
             <div class="bg-white/10 backdrop-blur-md border border-white/20 rounded-full p-1.5 flex items-center shadow-2xl">
                 <a href="{{ route('book.create') }}" 
-                   class="px-8 py-2.5 rounded-full font-bold transition {{ request()->routeIs('book.create') ? 'nav-link-active' : 'text-white/80 hover:bg-white/10' }}">
+                   class="px-8 py-2.5 rounded-full font-bold transition {{ (request()->routeIs('book.create') || request()->routeIs('book.search') || request()->routeIs('book.show') || request()->routeIs('book.payment') || request()->routeIs('book.payment.submit')) ? 'nav-link-active' : 'text-white/80 hover:bg-white/10' }}">
                     Book a Car
                 </a>
                 <a href="{{ route('book.index') }}" 
-                   class="px-8 py-2.5 rounded-full font-bold transition {{ request()->routeIs('book.index') ? 'nav-link-active' : 'text-white/80 hover:bg-white/10' }}">
+                   class="px-8 py-2.5 rounded-full font-bold transition {{ (request()->routeIs('book.index') || request()->routeIs('book.cancel')) ? 'nav-link-active' : 'text-white/80 hover:bg-white/10' }}">
                     My Bookings
                 </a>
                 <a href="{{ route('loyalty.index') }}" 
-                   class="px-8 py-2.5 rounded-full font-bold transition {{ request()->routeIs('loyalty.index') ? 'nav-link-active' : 'text-white/80 hover:bg-white/10' }}">
+                   class="px-8 py-2.5 rounded-full font-bold transition {{ (request()->routeIs('loyalty.index') || request()->routeIs('loyalty.redeem') || request()->routeIs('voucher.apply') || request()->routeIs('voucher.available')) ? 'nav-link-active' : 'text-white/80 hover:bg-white/10' }}">
                     Loyalty
                 </a>
                 <a href="{{ route('finance.index') }}" 
-                   class="px-8 py-2.5 rounded-full font-bold transition {{ request()->routeIs('finance.index') ? 'nav-link-active' : 'text-white/80 hover:bg-white/10' }}">
+                   class="px-8 py-2.5 rounded-full font-bold transition {{ (request()->routeIs('finance.index') || request()->routeIs('finance.claim') || request()->routeIs('finance.pay') || request()->routeIs('finance.submit_balance') || request()->routeIs('finance.pay_fine') || request()->routeIs('finance.submit_fine')) ? 'nav-link-active' : 'text-white/80 hover:bg-white/10' }}">
                     Payments
                 </a>
             </div>
@@ -263,5 +276,23 @@
             </div>
         </div>
     </footer>
+
+<script>
+    function toggleNotificationMenu(event) {
+        // Stop the click from immediately triggering the "click outside" logic
+        event.stopPropagation();
+        
+        const menu = document.getElementById('notificationMenu');
+        menu.classList.toggle('hidden');
+    }
+
+    // Close the menu if the user clicks anywhere else on the page
+    window.addEventListener('click', function(e) {
+        const menu = document.getElementById('notificationMenu');
+        if (!menu.contains(e.target)) {
+            menu.classList.add('hidden');
+        }
+    });
+</script>
 </body>
 </html>

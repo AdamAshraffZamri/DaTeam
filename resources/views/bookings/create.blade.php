@@ -30,7 +30,7 @@
 
                 {{-- PICKUP LOCATION --}}
                 <div class="flex-1 px-6 py-2 w-full md:border-r border-white/10">
-                    <label class="block text-[10px] font-bold text-gray-300 uppercase tracking-wider mb-1">PICKUP POINT</label>
+                    <label class="block text-[12px] font-bold text-white uppercase tracking-wider mb-1">PICKUP POINT</label>
                     <div class="flex items-center group">
                         <button type="button" onclick="openMapModal('pickup')" class="w-8 h-8 rounded-full bg-green-500/20 flex items-center justify-center mr-3 text-green-400 hover:bg-green-500 hover:text-white transition cursor-pointer">
                             <i class="fas fa-map-marker-alt"></i>
@@ -42,7 +42,7 @@
 
                 {{-- RETURN LOCATION --}}
                 <div class="flex-1 px-6 py-2 w-full md:border-r border-white/10">
-                    <label class="block text-[10px] font-bold text-gray-300 uppercase tracking-wider mb-1">RETURN POINT</label>
+                    <label class="block text-[12px] font-bold text-white uppercase tracking-wider mb-1">RETURN POINT</label>
                     <div class="flex items-center group">
                         <button type="button" onclick="openMapModal('return')" class="w-8 h-8 rounded-full bg-red-500/20 flex items-center justify-center mr-3 text-red-400 hover:bg-red-500 hover:text-white transition cursor-pointer">
                             <i class="fas fa-flag-checkered"></i>
@@ -54,7 +54,7 @@
 
                 {{-- PICKUP DATE & TIME --}}
                 <div class="px-6 py-2 w-full md:w-auto md:border-r border-white/10">
-                    <label class="block text-[10px] font-bold text-gray-300 uppercase tracking-wider mb-1">PICKUP DATE</label>
+                    <label class="block text-[12px] font-bold text-white uppercase tracking-wider mb-1">PICKUP DATE</label>
                     <div class="flex items-center bg-white/5 rounded-lg px-3 py-1 hover:bg-white/10 transition h-[42px]">
 
                         {{-- Date Input --}}
@@ -69,9 +69,15 @@
                             {{-- Initial Value empty; JS will fill it --}}
                             <input type="hidden" name="pickup_time" id="pickup_time_hidden" value="">
 
-                            <input type="number" id="pickup_hour" min="1" max="12" value="10"
-                                   class="w-10 bg-transparent text-center text-white font-bold text-sm p-0 border-none focus:ring-0 appearance-none leading-none"
-                                   oninput="updateHiddenTime('pickup')">
+                            <select id="pickup_hour" 
+                                    onchange="updateHiddenTime('pickup')"
+                                    class="bg-transparent text-white font-bold text-sm border-none p-0 focus:ring-0 cursor-pointer appearance-none text-center w-8">
+                                @for ($i = 1; $i <= 12; $i++)
+                                    <option value="{{ $i }}" {{ $i == 10 ? 'selected' : '' }} class="text-black">
+                                        {{ $i }}
+                                    </option>
+                                @endfor
+                            </select>
 
                             <span class="text-white font-bold text-sm leading-none">:00</span>
 
@@ -87,7 +93,7 @@
 
                 {{-- RETURN DATE & TIME --}}
                 <div class="px-6 py-2 w-full md:w-auto">
-                    <label class="block text-[10px] font-bold text-gray-300 uppercase tracking-wider mb-1">RETURN DATE</label>
+                    <label class="block text-[12px] font-bold text-white uppercase tracking-wider mb-1">RETURN DATE</label>
                     <div class="flex items-center bg-white/5 rounded-lg px-3 py-1 hover:bg-white/10 transition h-[42px]">
 
                         {{-- Date Input --}}
@@ -102,9 +108,15 @@
                             {{-- Initial Value empty; JS will fill it --}}
                             <input type="hidden" name="return_time" id="return_time_hidden" value="">
 
-                            <input type="number" id="return_hour" min="1" max="12" value="10"
-                                   class="w-10 bg-transparent text-center text-white font-bold text-sm p-0 border-none focus:ring-0 appearance-none leading-none"
-                                   oninput="updateHiddenTime('return')">
+                            <select id="return_hour" 
+                                    onchange="updateHiddenTime('return')"
+                                    class="bg-transparent text-white font-bold text-sm border-none p-0 focus:ring-0 cursor-pointer appearance-none text-center w-8">
+                                @for ($i = 1; $i <= 12; $i++)
+                                    <option value="{{ $i }}" {{ $i == 10 ? 'selected' : '' }} class="text-black">
+                                        {{ $i }}
+                                    </option>
+                                @endfor
+                            </select>
 
                             <span class="text-white font-bold text-sm leading-none">:00</span>
 
@@ -128,25 +140,113 @@
             </div>
         </form>
     </div>
+
+{{-- NEW SECTION: AVAILABLE TODAY --}}
+    <div class="w-full max-w-7xl mt-16 mb-20">
+        <div class="flex items-end justify-between mb-8 px-4">
+            <div>
+                <h2 class="text-3xl font-black text-white drop-shadow-md">Available Today</h2>
+                <p class="text-gray-300 text-sm mt-1">Grab a car instantly for today's journey.</p>
+            </div>
+            
+            {{-- Navigation Buttons --}}
+            <div class="hidden md:flex gap-2">
+                <button id="slidePrev" class="w-10 h-10 rounded-full bg-white/10 hover:bg-orange-600 text-white flex items-center justify-center transition border border-white/10">
+                    <i class="fas fa-chevron-left"></i>
+                </button>
+                <button id="slideNext" class="w-10 h-10 rounded-full bg-white/10 hover:bg-orange-600 text-white flex items-center justify-center transition border border-white/10">
+                    <i class="fas fa-chevron-right"></i>
+                </button>
+            </div>
+        </div>
+
+        {{-- SCROLLABLE LIST --}}
+        <div class="relative w-full">
+            @if(isset($vehicles) && $vehicles->count() > 0)
+            <div class="flex overflow-x-auto gap-5 px-4 pb-8 scroll-smooth no-scrollbar" id="carouselTrack">
+                @foreach($vehicles as $vehicle)
+                <div class="min-w-[280px] md:min-w-[320px] bg-black/40 backdrop-blur-md rounded-3xl overflow-hidden border border-white/15 shadow-xl relative group hover:-translate-y-2 transition duration-300 flex-shrink-0">
+                    
+                    {{-- Image --}}
+                    <div class="h-48 overflow-hidden relative">
+                        {{-- Use specific asset logic based on your system, assuming public/storage --}}
+                        <img src="{{ asset('storage/' . $vehicle->image) }}" alt="{{ $vehicle->model }}" 
+                             class="w-full h-full object-cover transform group-hover:scale-110 transition duration-700">
+                        <div class="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-80"></div>
+                        
+                        <div class="absolute top-3 right-3 bg-black/50 backdrop-blur border border-white/20 text-white px-3 py-1 rounded-full text-[10px] font-bold uppercase">
+                            {{ $vehicle->type }}
+                        </div>
+                    </div>
+
+                    {{-- Details --}}
+                    <div class="p-5">
+                        <div class="flex justify-between items-start mb-3">
+                            <div>
+                                <p class="text-orange-500 text-[10px] font-bold uppercase tracking-wider">{{ $vehicle->brand }}</p>
+                                <h3 class="text-xl font-bold text-white truncate">{{ $vehicle->model }}</h3>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-white font-bold text-lg">RM {{ $vehicle->priceHour }}</p>
+                                <p class="text-gray-400 text-[10px]">/ hour</p>
+                            </div>
+                        </div>
+
+                        {{-- Features --}}
+                        <div class="flex gap-3 text-gray-400 mb-5 text-xs border-t border-white/10 pt-3">
+                            <span class="flex items-center gap-1"><i class="fas fa-gas-pump text-orange-500"></i> {{ $vehicle->fuelType }}</span>
+                            <span class="flex items-center gap-1"><i class="fas fa-palette text-orange-500"></i> {{ $vehicle->color }}</span>
+                        </div>
+
+                        {{-- Quick Book Button (Auto-fills date to today) --}}
+                        <a href="{{ route('book.search', [
+                                'pickup_location' => 'Student Mall, UTM',
+                                'return_location' => 'Student Mall, UTM',
+                                'pickup_date' => date('Y-m-d'),
+                                'return_date' => date('Y-m-d', strtotime('+1 day')),
+                                'pickup_time' => '10:00', // Default
+                                'return_time' => '10:00', // Default
+                                'types[]' => $vehicle->type 
+                            ]) }}" 
+                           class="block w-full py-2.5 bg-white text-black font-bold text-center rounded-xl hover:bg-orange-500 hover:text-white transition text-sm">
+                            Book This Car
+                        </a>
+                    </div>
+                </div>
+                @endforeach
+            </div>
+            @else
+            <div class="text-center py-10 bg-white/5 rounded-3xl border border-white/10 mx-4">
+                <i class="fas fa-car-side text-4xl text-gray-600 mb-3"></i>
+                <p class="text-gray-300">All cars are fully booked for today.</p>
+                <p class="text-xs text-gray-500 mt-1">Try searching for a future date above.</p>
+            </div>
+            @endif
+        </div>
+    </div>
+
 </div>
 
 {{-- JAVASCRIPT --}}
 <script>
     // --- 1. TIME UPDATER (Converts 12h to 24h for Backend) ---
     function updateHiddenTime(type) {
+    // This correctly pulls the selected value from the new dropdown
         let hour = parseInt(document.getElementById(type + '_hour').value) || 10;
         let ampm = document.getElementById(type + '_ampm').value;
         const hiddenInput = document.getElementById(type + '_time_hidden');
-
-        if (hour < 1) hour = 1;
-        if (hour > 12) hour = 12;
 
         let hour24 = hour;
         if (ampm === 'PM' && hour < 12) hour24 += 12;
         if (ampm === 'AM' && hour === 12) hour24 = 0;
 
-        // Format as HH:00:00
+        // Format as HH:00:00 for the backend
         hiddenInput.value = (hour24 < 10 ? '0' + hour24 : hour24) + ':00';
+        
+        // If you are in search_results.blade.php, also call:
+        if (typeof updateAllSelectLinks === "function") {
+            updateAllSelectLinks();
+        }
     }
 
     // --- 2. DATE SYNC (Ensures Return Date is never before Pickup Date) ---
@@ -226,10 +326,22 @@
         syncDates();
     });
 </script>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const track = document.getElementById('carouselTrack');
+        const nextBtn = document.getElementById('slideNext');
+        const prevBtn = document.getElementById('slidePrev');
 
-{{-- Spacing --}}
-<div class="col-span-1 md:col-span-2 lg:col-span-3 flex flex-col items-center justify-center py-24 text-center"></div>
-<div class="h-24 bg-gray-50"></div>
+        if(track && nextBtn && prevBtn) {
+            nextBtn.addEventListener('click', () => {
+                track.scrollBy({ left: 320, behavior: 'smooth' });
+            });
+            prevBtn.addEventListener('click', () => {
+                track.scrollBy({ left: -320, behavior: 'smooth' });
+            });
+        }
+    });
+</script>
 
 {{-- MAP MODAL --}}
 <div id="mapModal" class="fixed inset-0 z-50 hidden">
