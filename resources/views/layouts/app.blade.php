@@ -78,15 +78,18 @@
             </div>
                 @endauth
                 @auth
-                    <div class="flex items-center gap-3 bg-white/10 px-3 py-1.5 rounded-full border border-white/20 backdrop-blur-md">
-                        <a href="{{ route('profile.edit') }}" class="flex items-center gap-2">
-                            <i class="fas fa-user-circle text-2xl"></i>
-                            <span class="text-xs font-bold hidden sm:block">{{ Auth::user()->name }}</span>
+                    <div class="flex items-center gap-4 bg-white/10 px-4 py-2 rounded-full border border-white/20 backdrop-blur-md shadow-sm">
+                        <a href="{{ route('profile.edit') }}" class="flex items-center gap-2 group" title="Edit Profile">
+                            <i class="fas fa-user-circle text-2xl group-hover:scale-105 transition"></i>
+                            <span class="text-sm font-bold hidden sm:block group-hover:text-orange-100 transition">{{ Auth::user()->name }}</span>
                         </a>
-                        <div class="w-px h-4 bg-white/30"></div>
+                        
+                        {{-- Logout Button --}}
                         <form action="{{ route('logout') }}" method="POST" class="inline">
                             @csrf
-                            <button type="submit" class="text-xs font-bold hover:text-orange-200 transition">Logout</button>
+                            <button type="submit" class="text-sm font-bold bg-white/20 hover:bg-white/30 px-4 py-1 rounded-full transition text-white shadow-sm border border-white/10 hover:shadow-md">
+                                Logout
+                            </button>
                         </form>
                     </div>
                 @else
@@ -97,6 +100,7 @@
     </nav>
 
     {{-- Updated Condition: Hide this Layout Pill Bar on Home AND About pages (since they have their own) --}}
+    @if(!request()->routeIs('home') && !request()->routeIs('pages.about') && !request()->routeIs('pages.contact') && !request()->routeIs('login') && !request()->routeIs('staff.login') && !request()->routeIs('register') && !request()->routeIs('password.*'))
     @if(!request()->routeIs('home') && !request()->routeIs('pages.about') && !request()->routeIs('pages.contact') && !request()->routeIs('pages.faq'))
         <div class="w-full flex justify-center py-6 relative z-40">
             <div class="bg-white/10 backdrop-blur-md border border-white/20 rounded-full p-1.5 flex items-center shadow-2xl">
