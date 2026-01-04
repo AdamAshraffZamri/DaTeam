@@ -8,7 +8,6 @@
     showBlacklistModal: false, 
     showPenaltyModal: false 
 }" class="min-h-screen bg-gray-100 p-8">
-<div x-data="{ showRejectModal: false, showBlacklistModal: false, showPenaltyModal: false }" class="min-h-screen bg-gray-100 p-8">
     <div class="max-w-6xl mx-auto">
         
         <div class="flex justify-between items-center mb-6">
