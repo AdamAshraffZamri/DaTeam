@@ -29,7 +29,7 @@
                         'Submitted'    => 'Submitted', 
                         'Deposit Paid' => 'Deposit Paid',
                         'Paid'         => 'Paid (Full)',
-                        'Approved'     => 'Approved',
+                        'Confirmed'     => 'Confirmed',
                         'Active'       => 'Active',
                         'Completed'    => 'Completed',
                         'Cancelled'    => 'Cancelled',
@@ -48,7 +48,7 @@
                         class="w-full flex items-center justify-between bg-black/40 backdrop-blur-md border border-white/15 text-white text-xs font-bold py-3.5 px-5 rounded-2xl hover:bg-white/10 hover:border-orange-500/50 transition-all shadow-xl group">
                         
                         <div class="flex items-center gap-3">
-                            <i class="fas fa-wallet text-orange-500"></i>
+                            <i class="fas fa-filter text-orange-500"></i>
                             <span id="dropdownLabel">{{ $currentLabel }}</span>
                         </div>
 
@@ -97,7 +97,7 @@
                                 <div>
                                     <p class="text-[10px] text-gray-400 font-bold uppercase tracking-wider leading-none mb-1">Your booking starts:</p>
                                     <p class="text-white text-sm font-bold leading-none">
-                                        {{ \Carbon\Carbon::parse($booking->bookingDate)->format('d M Y') }}
+                                        {{ \Carbon\Carbon::parse($booking->originalDate)->format('d M Y') }}
                                     </p>
                                 </div>
                             </div>
@@ -310,7 +310,7 @@
             </button>
             <h3 class="text-xl font-bold text-white mb-2">Rate Your Experience</h3>
             
-            {{-- ADDED: Google Review Link Section --}}
+            {{-- Google Review Link Section --}}
             <div class="mb-6 p-4 bg-orange-500/10 border border-orange-500/30 rounded-xl">
                 <p class="text-[10px] text-orange-500 font-black uppercase tracking-widest mb-2">Support Us on Google</p>
                 <a href="https://share.google/VmSuaHx7XHvnaSiwU" target="_blank" class="flex items-center justify-between bg-white/5 hover:bg-white/10 p-3 rounded-lg transition group">
@@ -326,7 +326,8 @@
             
             <form action="{{ route('feedback.store', $booking->bookingID) }}" method="POST">
                 @csrf
-                {{-- ... existing rating stars and comment field ... --}}
+                
+                {{-- STAR RATING --}}
                 <div class="flex flex-row-reverse justify-center gap-2 mb-6 group">
                     @for($i=5; $i>=1; $i--)
                         <input type="radio" id="star{{ $i }}-{{ $booking->bookingID }}" name="rating" value="{{ $i }}" class="hidden peer" required>
@@ -335,10 +336,32 @@
                         </label>
                     @endfor
                 </div>
+
+                {{-- NEW: DROPDOWN SUGGESTIONS --}}
+                <div class="mb-4">
+                    <label class="text-[10px] text-gray-500 uppercase font-bold mb-2 block">Quick Suggestions</label>
+                    <div class="relative">
+                        <select onchange="this.closest('form').querySelector('textarea[name=comment]').value = this.value" 
+                                class="w-full bg-white/10 border border-white/20 rounded-xl text-white text-sm p-3 focus:border-yellow-500 focus:outline-none appearance-none cursor-pointer">
+                            <option value="" class="bg-gray-800 text-gray-400">Select a phrase...</option>
+                            <option value="Car was clean and comfortable." class="bg-gray-800">Car was clean and comfortable.</option>
+                            <option value="Great service, very punctual!" class="bg-gray-800">Great service, very punctual!</option>
+                            <option value="Smooth booking process." class="bg-gray-800">Smooth booking process.</option>
+                            <option value="Friendly staff and good vehicle." class="bg-gray-800">Friendly staff and good vehicle.</option>
+                            <option value="Will definitely rent again!" class="bg-gray-800">Will definitely rent again!</option>
+                        </select>
+                        <div class="absolute right-3 top-3.5 text-gray-400 pointer-events-none">
+                            <i class="fas fa-chevron-down text-xs"></i>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- COMMENT AREA --}}
                 <div class="mb-6">
                     <label class="text-[10px] text-gray-500 uppercase font-bold mb-2 block">Comment (Optional)</label>
                     <textarea name="comment" rows="3" class="w-full bg-white/10 border border-white/20 rounded-xl text-white text-sm p-3 focus:border-yellow-500 focus:outline-none placeholder-gray-500" placeholder="Share your feedback..."></textarea>
                 </div>
+
                 <button type="submit" class="w-full bg-yellow-500 hover:bg-yellow-600 text-black font-bold py-3.5 rounded-xl shadow-lg transition transform hover:scale-[1.02]">
                     Submit Internal Feedback
                 </button>
@@ -383,15 +406,34 @@
                         <div class="space-y-6">
                             {{-- Dates Timeline --}}
                             <div class="relative pl-5 border-l-2 border-dashed border-white/25 space-y-5">
+                                {{-- PICKUP SECTION --}}
                                 <div>
                                     <p class="text-[10px] text-gray-400 uppercase font-bold tracking-wider">Pickup</p>
-                                    <p class="text-white font-black text-lg">{{ \Carbon\Carbon::parse($booking->originalDate)->format('d M Y') }}</p>
-                                    <p class="text-sm text-gray-300 mt-1">{{ $booking->pickupLocation }}</p>
+                                    <div class="flex items-baseline gap-2">
+                                        <p class="text-white font-black text-lg">{{ \Carbon\Carbon::parse($booking->originalDate)->format('d M Y') }}</p>
+                                        {{-- ADDED TIME --}}
+                                        <p class="text-orange-400 font-bold text-sm">
+                                            {{ \Carbon\Carbon::parse($booking->bookingTime)->format('h:i A') }}
+                                        </p>
+                                    </div>
+                                    <p class="text-sm text-gray-300 mt-1 flex items-center gap-1">
+                                        <i class="fas fa-map-marker-alt text-xs text-gray-500"></i> {{ $booking->pickupLocation }}
+                                    </p>
                                 </div>
+
+                                {{-- RETURN SECTION --}}
                                 <div>
                                     <p class="text-[10px] text-gray-400 uppercase font-bold tracking-wider">Return</p>
-                                    <p class="text-white font-black text-lg">{{ \Carbon\Carbon::parse($booking->returnDate)->format('d M Y') }}</p>
-                                    <p class="text-sm text-gray-300 mt-1">{{ $booking->returnLocation }}</p>
+                                    <div class="flex items-baseline gap-2">
+                                        <p class="text-white font-black text-lg">{{ \Carbon\Carbon::parse($booking->returnDate)->format('d M Y') }}</p>
+                                        {{-- ADDED TIME --}}
+                                        <p class="text-orange-400 font-bold text-sm">
+                                            {{ \Carbon\Carbon::parse($booking->returnTime)->format('h:i A') }}
+                                        </p>
+                                    </div>
+                                    <p class="text-sm text-gray-300 mt-1 flex items-center gap-1">
+                                        <i class="fas fa-map-marker-alt text-xs text-gray-500"></i> {{ $booking->returnLocation }}
+                                    </p>
                                 </div>
                             </div>
 
@@ -458,11 +500,11 @@
                                 <p class="text-[10px] text-gray-400 uppercase font-bold mb-3 tracking-wider">Documents</p>
                                 <div class="grid grid-cols-2 gap-3">
                                     <a href="{{ asset('storage/' . $booking->aggreementLink) }}" target="_blank" class="flex items-center justify-center gap-2 p-3.5 bg-blue-500/10 rounded-xl border border-blue-500/20 hover:bg-blue-500 hover:text-white text-blue-300 text-sm transition-all duration-200">
-                                        <i class="fas fa-file-signature"></i> <span>View Agreement</span>
+                                            <i class="fas fa-file-signature"></i> <span>View Agreement</span>
                                     </a>
                                     @if($booking->payments && $booking->payments->count() > 0)
                                         <a href="{{ asset('storage/'.$booking->payments->last()->installmentDetails) }}" target="_blank" class="flex items-center justify-center gap-2 p-3.5 bg-black/25 rounded-xl border border-dashed border-white/20 hover:border-orange-500 hover:text-orange-400 text-gray-300 text-sm transition-colors duration-200">
-                                            <i class="fas fa-receipt"></i> <span>View Receipt</span>
+                                                <i class="fas fa-receipt"></i> <span>View Receipt</span>
                                         </a>
                                     @else
                                         <div class="flex items-center justify-center gap-2 p-3.5 bg-red-500/10 rounded-xl border border-red-500/20 text-red-400 text-xs font-bold">
@@ -475,7 +517,7 @@
                     </div>
                 </div>
 
-                @if(in_array($booking->bookingStatus, ['Submitted', 'Deposit Paid', 'Paid', 'Approved']))
+                @if(in_array($booking->bookingStatus, ['Submitted', 'Deposit Paid', 'Paid', 'Confirmed']))
                 <div class="bg-white/7 p-6 border-t border-white/15">
                     <form action="{{ route('book.cancel', $booking->bookingID) }}" method="POST" onsubmit="return confirm('Cancel booking?');" class="w-full">
                         @csrf

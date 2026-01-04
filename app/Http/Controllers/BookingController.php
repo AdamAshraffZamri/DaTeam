@@ -34,7 +34,7 @@ class BookingController extends Controller
         $query->whereMonth('bookingDate', Carbon::parse($request->date)->month);
     }
 
-    $bookings = $query->orderBy('bookingDate', 'desc')->get();
+    $bookings = $query->orderBy('originalDate', 'desc')->get();
 
         return view('bookings.index', compact('bookings'));
     }

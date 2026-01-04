@@ -256,7 +256,7 @@
     @auth
     @php
         $reminderBooking = Auth::user()->bookings()
-            ->whereIn('bookingStatus', ['Approved', 'Active'])
+            ->whereIn('bookingStatus', ['Confirmed', 'Active'])
             ->orderBy('originalDate', 'asc')
             ->first();
     @endphp
