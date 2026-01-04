@@ -1,6 +1,0 @@
-*
-!private/
-!public/
-!public/vehicles/
-!public/vehicles/**
-!.gitignore

@@ -13,7 +13,7 @@
     <div class="container mx-auto px-4 py-12 max-w-6xl">
         
         {{-- HEADER SECTION --}}
-        <a href="{{ url()->previous() }}" class="inline-flex items-center text-gray-400 hover:text-white mb-4 transition">
+        <a href="{{ url()->previous() }}" class="inline-flex items-center text-white hover:text-white mb-4 transition">
             <i class="fas fa-arrow-left mr-2"></i> Back to Vehicle Details
         </a>
         <div class="flex flex-col md:flex-row justify-between items-end mb-8 text-white">
@@ -36,17 +36,19 @@
 
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
             
-            {{-- LEFT COLUMN: ITINERARY & SUMMARY --}}
+            {{-- ========================
+                 LEFT COLUMN: INFO & COST
+                 ======================== --}}
             <div class="lg:col-span-7 space-y-6">
                 
-                {{-- RENTAL ITINERARY --}}
-                <div class="bg-white/5 backdrop-blur-md rounded-[2rem] p-6 border border-white/10 shadow-2xl">
+                {{-- A. RENTAL ITINERARY CARD --}}
+                <div class="bg-black/50 backdrop-blur-md rounded-[2rem] p-6 border border-white/10 shadow-2xl">
                     <div class="flex justify-between items-center mb-6">
                         <h3 class="text-lg font-bold text-white flex items-center">
                             <i class="far fa-calendar-alt text-orange-500 mr-3"></i> Rental Itinerary
                         </h3>
                         
-                        {{-- DYNAMIC DURATION BADGE --}}
+                        {{-- Duration Badge --}}
                         <span class="bg-orange-500/20 text-orange-300 text-xs font-bold px-3 py-1 rounded-full border border-orange-500/30">
                             @if($days > 0 && $extraHours > 0)
                                 {{ $days }} Day(s) + {{ $extraHours }} Hour(s)
@@ -63,14 +65,14 @@
                         <div class="relative">
                             <div class="absolute -left-[31px] top-1 bg-gray-900 border-4 border-green-500 w-6 h-6 rounded-full shadow-lg"></div>
                             <div>
-                                <p class="text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">Pickup</p>
+                                <p class="text-xs font-bold text-white uppercase tracking-wide mb-1">Pickup</p>
                                 <div class="flex justify-between items-start">
                                     <div>
                                         <p class="font-bold text-white text-lg">{{ \Carbon\Carbon::parse($pickupDate)->format('d M Y') }}</p>
                                         <p class="text-sm font-medium text-gray-400">{{ $pickupLoc }}</p>
                                     </div>
                                     <div class="text-right">
-                                        <p class="text-xs font-bold text-gray-500">Time</p>
+                                        <p class="text-xs font-bold text-white">Time</p>
                                         <p class="font-bold text-white">{{ request('pickup_time', '10:00') }}</p>
                                     </div>
                                 </div>
@@ -81,14 +83,14 @@
                         <div class="relative">
                             <div class="absolute -left-[31px] top-1 bg-gray-900 border-4 border-red-500 w-6 h-6 rounded-full shadow-lg"></div>
                             <div>
-                                <p class="text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">Return</p>
+                                <p class="text-xs font-bold text-white uppercase tracking-wide mb-1">Return</p>
                                 <div class="flex justify-between items-start">
                                     <div>
                                         <p class="font-bold text-white text-lg">{{ \Carbon\Carbon::parse($returnDate)->format('d M Y') }}</p>
                                         <p class="text-sm font-medium text-gray-400">{{ $returnLoc }}</p>
                                     </div>
                                     <div class="text-right">
-                                        <p class="text-xs font-bold text-gray-500">Time</p>
+                                        <p class="text-xs font-bold text-white">Time</p>
                                         <p class="font-bold text-white">{{ request('return_time', '10:00') }}</p>
                                     </div>
                                 </div>
@@ -97,62 +99,94 @@
                     </div>
                 </div>
 
-                {{-- PAYMENT SUMMARY --}}
-                <div class="bg-white/5 backdrop-blur-md rounded-[2rem] p-8 border border-white/10 shadow-2xl">
-                    <h3 class="text-lg font-bold text-white mb-6 flex items-center">
-                        <i class="fas fa-file-invoice-dollar text-orange-500 mr-3"></i> Payment Summary
+                {{-- B. PAYMENT SUMMARY & VOUCHER CARD --}}
+                <div class="bg-black/50 backdrop-blur-md rounded-[2.5rem] p-8 border border-white/10 shadow-2xl relative overflow-hidden">
+                    {{-- Decorative Glow --}}
+                    <div class="absolute top-0 right-0 w-64 h-64 bg-orange-500/10 rounded-full blur-3xl pointer-events-none -mr-32 -mt-32"></div>
+
+                    <h3 class="text-xl font-black text-white mb-8 flex items-center tracking-tight">
+                        <i class="fas fa-file-invoice-dollar text-orange-500 mr-4 text-2xl"></i> 
+                        PAYMENT SUMMARY
                     </h3>
                     
-                    <div class="card p-4 mb-4">
-                        <h3>Booking Summary</h3>
-                        <div class="flex justify-between">
-                            <span>Rental Charges:</span>
-                            <span>RM {{ number_format($rentalCharge, 2) }}</span>
+                    {{-- 1. Cost Breakdown --}}
+                    <div class="bg-black/20 rounded-2xl p-6 border border-white/5 mb-6">
+                        <h4 class="text-[12px] text-white font-black uppercase tracking-[0.2em] mb-4">Cost Breakdown</h4>
+                        <div class="space-y-3">
+                            <div class="flex justify-between items-center text-sm">
+                                <span class="text-gray-400">Rental Charges</span>
+                                <span class="text-white font-bold">RM {{ number_format($rentalCharge, 2) }}</span>
+                            </div>
+                            <div class="flex justify-between items-center text-sm">
+                                <div class="flex items-center text-gray-400">
+                                    <span>Security Deposit</span>
+                                    <span class="ml-2 text-[9px] bg-white/10 px-1.5 py-0.5 rounded text-gray-300">REFUNDABLE</span>
+                                </div>
+                                <span class="text-white font-bold">RM {{ number_format($vehicle->baseDepo, 2) }}</span>
+                            </div>
+                            {{-- Hidden Discount Row (Show via JS) --}}
+                            <div id="discount_row" class="hidden flex justify-between items-center text-sm">
+                                <span class="text-green-400 font-bold">Voucher Discount</span>
+                                <span class="text-green-400 font-bold">- RM <span id="discount_amount">0.00</span></span>
+                            </div>
                         </div>
-                        <div class="flex justify-between text-muted">
-                            <span>Security Deposit (Refundable):</span>
-                            <span>RM {{ number_format($vehicle->baseDepo, 2) }}</span>
-                        </div>
-                        <div class="flex justify-between font-bold text-xl mt-2 border-t pt-2">
-                            <span>TOTAL BOOKING COST:</span>
-                            <span>RM <span id="total_booking_cost_display">{{ number_format($total, 2) }}</span></span> 
+
+                        <div class="mt-6 pt-4 border-t border-white/10 flex justify-between items-center">
+                            <span class="text-xs font-black text-orange-500 uppercase tracking-widest">Total Cost</span>
+                            <span class="text-2xl font-black text-white tracking-tighter">
+                                RM <span id="total_booking_cost_display">{{ number_format($total, 2) }}</span>
+                            </span> 
                         </div>
                     </div>
 
-                    <div class="card p-4">
-                        <h3>Select Payment Option</h3>
+                    {{-- 2. Select Payment Mode --}}
+                    <div class="space-y-4 mb-8">
+                        <h4 class="text-[10px] text-white font-black uppercase tracking-[0.2em] mb-2">Select Payment Mode</h4>
                         
-                        <label class="block border p-3 rounded mb-2 cursor-pointer">
-                            <input type="radio" name="payment_type" value="full" checked onchange="updatePaymentMode('full')">
-                            <span class="font-bold">Pay Full Amount</span>
-                            <div class="text-sm">Pay RM {{ number_format($total, 2) }} now. Balance: RM 0.00</div>
+                        {{-- Full Payment --}}
+                        <label class="group relative block cursor-pointer">
+                            <input type="radio" name="payment_type" value="full" checked onchange="updatePaymentMode('full')" class="peer sr-only">
+                            <div class="p-4 rounded-xl border border-white/10 bg-white/5 peer-checked:bg-orange-500/10 peer-checked:border-orange-500 transition-all duration-300 hover:bg-white/10">
+                                <div class="flex items-start">
+                                    <div class="flex-shrink-0 mt-1">
+                                    </div>
+                                    <div class="ml-4">
+                                        <span class="block text-white font-bold text-sm group-hover:text-orange-400 transition-colors">Pay Full Amount</span>
+                                        <span class="block text-xs text-gray-400 mt-1">
+                                            Pay <span class="text-white">RM {{ number_format($total, 2) }}</span> now. No balance due.
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
                         </label>
 
-                        <label class="block border p-3 rounded mb-2 cursor-pointer">
-                            <input type="radio" name="payment_type" value="deposit" onchange="updatePaymentMode('deposit')">
-                            <span class="font-bold">Pay Deposit Only</span>
-                            <div class="text-sm">
-                                Pay RM {{ number_format($vehicle->baseDepo, 2) }} now. 
-                                Balance RM {{ number_format($total - $vehicle->baseDepo, 2) }} due later.
+                        {{-- Deposit Only --}}
+                        <label class="group relative block cursor-pointer">
+                            <input type="radio" name="payment_type" value="deposit" onchange="updatePaymentMode('deposit')" class="peer sr-only">
+                            <div class="p-4 rounded-xl border border-white/10 bg-white/5 peer-checked:bg-orange-500/10 peer-checked:border-orange-500 transition-all duration-300 hover:bg-white/10">
+                                <div class="flex items-start">
+                                    <div class="ml-4">
+                                        <span class="block text-white font-bold text-sm group-hover:text-orange-400 transition-colors">Pay Deposit Only</span>
+                                        <span class="block text-xs text-gray-400 mt-1">
+                                            Pay <span class="text-white">RM {{ number_format($vehicle->baseDepo, 2) }}</span> now. 
+                                            Balance <span class="text-orange-400">RM {{ number_format($total - $vehicle->baseDepo, 2) }}</span> due on pickup.
+                                        </span>
+                                    </div>
+                                </div>
                             </div>
                         </label>
                     </div>
 
-                    <button type="submit" class="btn btn-primary w-full mt-4">
-                        Pay RM <span id="payAmountDisplay">{{ number_format($total, 2) }}</span>
-                    </button>
-
-                    {{-- VOUCHER INPUT --}}
+                    {{-- 3. Voucher Input --}}
                     <div class="mt-6 pt-4 border-t border-dashed border-white/10">
-                         <label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2 block">Have a Voucher?</label>
+                         <label class="text-[10px] font-bold text-white uppercase tracking-widest mb-2 block">Have a Voucher?</label>
                          <div class="relative flex gap-2">
                              <div class="relative flex-1">
                                  <input type="text" id="voucher_code" class="bg-white/5 border border-white/10 text-white text-sm rounded-lg px-4 py-3 w-full focus:outline-none focus:border-orange-500 transition uppercase font-bold" placeholder="Enter Code" autocomplete="off">
                                  
                                  {{-- VOUCHER DROPDOWN --}}
                                  <div id="voucherDropdown" class="hidden absolute top-full left-0 right-0 mt-1 bg-gray-800 border border-white/20 rounded-lg shadow-2xl z-50 max-h-64 overflow-y-auto">
-                                     <!-- Voucher suggestions will be populated here -->
-                                 </div>
+                                     </div>
                              </div>
                              <button type="button" onclick="applyVoucher()" id="btn_apply_voucher" class="bg-gray-700 hover:bg-gray-600 text-white text-xs font-bold px-5 py-2 rounded-lg transition border border-white/10 whitespace-nowrap">
                                  APPLY
@@ -161,11 +195,12 @@
                          <p id="voucher_message" class="text-xs mt-2 font-medium"></p>
                     </div>
 
-                    {{-- GRAND TOTAL DISPLAY --}}
+                    {{-- 4. Grand Total Display --}}
                     <div class="mt-6 pt-6 border-t-2 border-dashed border-white/10 flex justify-between items-end">
                         <div>
-                            <p class="text-xs font-bold text-gray-500 uppercase">Amount to Pay Now</p>
-                            <p class="text-xs text-gray-600 font-medium">*All prices in MYR</p>
+                            <p class="text-xs font-bold text-white uppercase">Amount to Pay Now</p>
+                            <p class="text-xs text-white font-medium">*All prices in MYR</p>
+                            <p id="balance_warning_ui" class="text-[10px] text-orange-400 font-bold mt-1 hidden">Balance to pay later: RM 0.00</p>
                         </div>
                         <p class="text-4xl font-black text-[#ea580c] tracking-tight">
                             <span class="text-lg font-bold align-top mt-2 inline-block">MYR</span> <span id="grand_total_display">{{ number_format($total, 2) }}</span>
@@ -174,10 +209,13 @@
                 </div>
             </div>
 
-            {{-- RIGHT COLUMN: PAYMENT SUBMISSION --}}
+            {{-- ==============================
+                 RIGHT COLUMN: FORM & ACTION
+                 ============================== --}}
             <div class="lg:col-span-5">
                 <form action="{{ route('book.payment.submit', ['id' => $vehicle->VehicleID]) }}" method="POST" enctype="multipart/form-data">
                     @csrf 
+                    {{-- Hidden Info Inputs --}}
                     <input type="hidden" name="pickup_location" value="{{ $pickupLoc }}">
                     <input type="hidden" name="return_location" value="{{ $returnLoc }}">
                     <input type="hidden" name="pickup_date" value="{{ $pickupDate }}">
@@ -185,14 +223,14 @@
                     <input type="hidden" name="pickup_time" value="{{ request('pickup_time', '10:00') }}">
                     <input type="hidden" name="return_time" value="{{ request('return_time', '10:00') }}">
                     
-                    {{-- DYNAMIC HIDDEN FIELDS --}}
+                    {{-- Dynamic Hidden Fields (JS Updates These) --}}
                     <input type="hidden" name="total" id="hidden_total" value="{{ $total }}">
                     <input type="hidden" name="payment_type" id="hidden_payment_type" value="full">
                     <input type="hidden" name="voucher_id" id="hidden_voucher_id" value="">
 
-                    <div class="bg-white/10 backdrop-blur-xl border border-white/20 rounded-[2rem] p-8 shadow-2xl text-center space-y-8">
+                    <div class="bg-black/50 backdrop-blur-xl border border-white/20 rounded-[2rem] p-8 shadow-2xl space-y-8">
                         
-                        {{-- AGREEMENT SECTION --}}
+                        {{-- 1. AGREEMENT SECTION --}}
                         <div class="bg-white/5 rounded-xl p-4 border border-white/10 text-left">
                             <h4 class="text-white font-bold flex items-center mb-2">
                                 <i class="fas fa-file-signature text-orange-500 mr-2"></i> Rental Agreement
@@ -211,14 +249,14 @@
 
                             <label class="block w-full h-24 border-2 border-dashed border-white/20 rounded-xl flex flex-col items-center justify-center cursor-pointer hover:border-orange-500 hover:bg-white/5 transition group">
                                 <i class="fas fa-pen-nib text-gray-500 group-hover:text-orange-500 mb-1 transition"></i>
-                                <span class="text-xs font-bold text-gray-400 group-hover:text-white">Upload Signed Form</span>
+                                <span class="text-xs font-bold text-gray-400 group-hover:text-white">Upload Signed Form(pdf only)</span>
                                 <input type="file" name="agreement_proof" class="hidden" required onchange="document.getElementById('agree-name').innerText = this.files[0].name">
                             </label>
-                            <p id="agree-name" class="text-[10px] text-orange-400 mt-1 font-bold h-4"></p>
+                            <p id="agree-name" class="text-[10px] text-orange-400 mt-1 font-bold h-4 overflow-hidden"></p>
                         </div>
 
-                        {{-- QR Section --}}
-                        <div class="border-t border-white/10 pt-6">
+                        {{-- 2. QR & BANK SECTION --}}
+                        <div class="border-t border-white/10 pt-6 text-center">
                             <div class="bg-white rounded-2xl p-3 w-48 h-48 flex items-center justify-center overflow-hidden mx-auto mb-4 shadow-2xl border-4 border-white/10">
                                 <img src="{{ asset('qr.JPG') }}" alt="Payment QR Code" class="w-full h-full object-contain">
                             </div>
@@ -231,40 +269,46 @@
                             </div>
                         </div>
 
-                        {{-- File Upload --}}
+                        {{-- 3. UPLOAD PAYMENT PROOF --}}
                         <div>
                             <label for="proof_upload" class="block w-full h-36 border-2 border-dashed border-white/10 rounded-2xl flex flex-col items-center justify-center cursor-pointer hover:border-orange-500 hover:bg-white/5 transition group bg-white/5">
                                 <div class="w-12 h-12 bg-white/10 rounded-full shadow-xl flex items-center justify-center mb-2 group-hover:scale-110 transition border border-white/10">
                                     <i class="fas fa-cloud-upload-alt text-orange-500 text-lg"></i>
                                 </div>
-                                <span class="text-sm font-bold text-gray-300 group-hover:text-white">Click to upload receipt</span>
+                                <span class="text-sm font-bold text-gray-300 group-hover:text-white">Click to upload receipt(jpg, jpeg, png only)</span>
                                 <input type="file" id="proof_upload" name="payment_proof" class="hidden" required onchange="document.getElementById('file-name').innerText = 'Selected: ' + this.files[0].name">
                             </label>
-                            <p id="file-name" class="text-xs text-orange-400 mt-2 font-bold"></p>
+                            <p id="file-name" class="text-xs text-orange-400 mt-2 font-bold text-center h-4"></p>
                         </div>
-                                {{-- REMARKS FIELD --}}
-                                    <div class="mb-6">
-                                        <label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2 block">
-                                            Additional Requests (Optional)
-                                        </label>
-                                        <textarea name="remarks" rows="2" 
-                                            class="bg-white/5 border border-white/10 text-white text-sm rounded-lg px-4 py-3 w-full focus:outline-none focus:border-orange-500 transition" 
-                                            placeholder="e.g. Baby seat needed, picking up late..."></textarea>
-                                    </div>
 
-                                    <div class="bg-yellow-500/20 border border-yellow-500/50 rounded-xl p-4 mb-6 flex items-start gap-3">                                        <div>
-                                            <p class="text-sm font-bold text-yellow-400">Notice</p>
-                                            <p class="text-xs text-gray-300">
-                                                Please complete your payment <span class="font-bold text-white">ASAP</span>. 
-                                                Bookings are not secured until proof of payment is uploaded.
-                                            </p>
-                                        </div>
-                                    </div>
-                        <div class="space-y-4">
-                            <button type="submit" class="block w-full bg-[#ea580c] hover:bg-orange-600 text-white font-bold py-4 rounded-xl shadow-xl transition-all transform hover:scale-[1.02] text-center text-lg">
-                                Confirm & Submit
-                            </button>
+                        {{-- 4. REMARKS FIELD --}}
+                        <div class="mb-6">
+                            <label class="text-[10px] font-bold text-white uppercase tracking-widest mb-2 block">
+                                Additional Requests (Optional)
+                            </label>
+                            <textarea name="remarks" rows="2" 
+                                class="bg-white/5 border border-white/10 text-white text-sm rounded-lg px-4 py-3 w-full focus:outline-none focus:border-orange-500 transition" 
+                                placeholder="e.g. Baby seat needed, picking up late..."></textarea>
                         </div>
+
+                        {{-- 5. NOTICE & SUBMIT --}}
+                        <div class="bg-yellow-500/20 border border-yellow-500/50 rounded-xl p-4 mb-6 flex items-start gap-3">
+                             <div>
+                                 <p class="text-sm font-bold text-yellow-400">Notice</p>
+                                 <p class="text-xs text-gray-300">
+                                     Please complete your payment <span class="font-bold text-white">ASAP</span>. 
+                                     Bookings are not secured until proof of payment is uploaded.
+                                 </p>
+                             </div>
+                        </div>
+
+                        <button type="submit" class="w-full bg-[#ea580c] hover:bg-orange-600 text-white py-4 rounded-xl font-black text-sm uppercase tracking-widest shadow-lg shadow-orange-500/20 transition-all transform hover:scale-[1.02] active:scale-95 flex items-center justify-center group">
+                            <span>Submit</span>
+                        </button>
+
+                        <p class="text-center text-[10px] text-white flex items-center justify-center">
+                            <i class="fas fa-lock text-gray-600 mr-1.5"></i> Secure SSL Encrypted Payment
+                        </p>
                     </div>
                 </form>
             </div>
@@ -277,7 +321,7 @@
     // 1. STATE MANAGEMENT
     let fullTotal = {{ $total }}; 
     let depositAmount = {{ $vehicle->baseDepo }}; 
-    let currentVoucherDiscount = 0; // <--- ADD THIS LINE BACK
+    let currentVoucherDiscount = 0; 
     let activeMode = 'full'; 
 
     function updatePaymentMode(mode) {

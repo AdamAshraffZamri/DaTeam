@@ -1,57 +1,126 @@
 @extends('layouts.app')
 
 @section('content')
+
 {{-- SweetAlert2 for Popups --}}
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
-{{-- 
-    FULL-SCREEN "BREAKOUT" HERO
-    -mt-28 / pt-32: Finely tuned to hide the layout's white bar 
-    while giving the correct gap for the Red Header.
---}}
-<div class="w-screen relative left-[calc(-50vw+50%)] -mt-10 pt-32 min-h-screen flex flex-col items-center justify-center bg-gray-900 overflow-hidden z-10">
+{{-- CUSTOM STYLES --}}
+<style>
+    /* GLASS AESTHETIC */
+    .glass-section {
+        background-color: #050505; /* Deepest Black */
+        position: relative;
+        overflow: hidden;
+    }
     
-    {{-- 1. BACKGROUND IMAGE (Elegant Car/Rental Theme) --}}
-    <div class="absolute inset-0 z-0">
-        {{-- Image: Elegant Dashboard/Driving View --}}
-        <img src="{{ asset('hastabg1.png') }}" 
-             alt="Luxury Drive" 
-             class="w-full h-full object-cover opacity-40">
+    .glass-card {
+        background: rgba(255, 255, 255, 0.03); /* Lower opacity for darker feel */
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
+        transition: transform 0.3s ease;
+    }
+
+    /* Form Input Styles */
+    .glass-input {
+        background: rgba(0, 0, 0, 0.3); /* Darker input background */
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        color: white;
+        transition: all 0.3s ease;
+    }
+    .glass-input:focus {
+        background: rgba(0, 0, 0, 0.5);
+        border-color: #ea580c;
+        outline: none;
+    }
+
+    @keyframes fade-in-up {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-fade-in-up { animation: fade-in-up 1s ease-out forwards; }
+    .delay-100 { animation-delay: 100ms; }
+    .delay-200 { animation-delay: 200ms; }
+</style>
+
+{{-- SECTION 1: HERO (Darker Version) --}}
+<div class="relative h-screen min-h-[600px] flex flex-col justify-center bg-black overflow-hidden">
+    
+    {{-- Background Image --}}
+    <div class="absolute inset-0 w-full h-full">
+        {{-- 1. Darker Gradient Overlay --}}
+        <div class="absolute inset-0 bg-gradient-to-r from-black/50 via-black/30 to-black/60 z-10"></div>
         
-        {{-- Dark Gradient Overlay for "Calm" Contrast --}}
-        <div class="absolute inset-0 bg-gradient-to-b from-gray-900/40 via-gray-900/10 to-gray-900"></div>
+        {{-- 2. Lowered Image Opacity (opacity-40) --}}
+        <img src="{{ asset('hastabg1.png') }}" alt="Contact Background" class="w-full h-full object-cover opacity-40">
     </div>
 
-    {{-- 2. NAVIGATION PILL (Exact Match to Home Page) --}}
-    <div class="relative z-20 mb-16 mt-16 animate-fade-in-up">
-        <div class="bg-white/10 backdrop-blur-md border border-white/20 rounded-full p-1.5 flex flex-wrap justify-center items-center shadow-2xl">
-            <a href="{{ route('book.create') }}" class="px-6 md:px-8 py-2.5 text-white/90 font-bold hover:bg-white/10 rounded-full transition text-sm md:text-base">Book a Car</a>
-            <a href="{{ route('book.index') }}" class="px-6 md:px-8 py-2.5 text-white/90 font-bold hover:bg-white/10 rounded-full transition text-sm md:text-base">My Bookings</a>
-            <a href="{{ route('loyalty.index') }}" class="px-6 md:px-8 py-2.5 text-white/90 font-bold hover:bg-white/10 rounded-full transition text-sm md:text-base">Loyalty</a>
-            <a href="{{ route('finance.index') }}" class="px-6 md:px-8 py-2.5 text-white/90 font-bold hover:bg-white/10 rounded-full transition text-sm md:text-base">Payments</a>
+    {{-- Content Container --}}
+    <div class="relative z-20 container mx-auto px-6 md:px-12 flex flex-col h-full justify-center items-center gap-10 pt-10 pb-20">
+        
+        {{-- Navigation Pill --}}
+        <div class="flex justify-center animate-fade-in-up">
+            <div class="bg-white/5 backdrop-blur-md border border-white/10 rounded-full p-1.5 flex flex-wrap justify-center md:flex-nowrap items-center shadow-2xl">
+                <a href="{{ route('book.create') }}" class="px-6 md:px-8 py-2.5 text-white/90 font-bold hover:bg-white/10 rounded-full transition text-sm md:text-base">
+                    Book a Car
+                </a>
+                <a href="{{ route('book.index') }}" class="px-6 md:px-8 py-2.5 text-white/90 font-bold hover:bg-white/10 rounded-full transition text-sm md:text-base">
+                    My Bookings
+                </a>
+                <a href="{{ route('loyalty.index') }}" class="px-6 md:px-8 py-2.5 text-white/90 font-bold hover:bg-white/10 rounded-full transition text-sm md:text-base">
+                    Loyalty
+                </a>
+                <a href="{{ route('finance.index') }}" class="px-6 md:px-8 py-2.5 text-white/90 font-bold hover:bg-white/10 rounded-full transition text-sm md:text-base">
+                    Payments
+                </a>
+            </div>
+        </div>
+
+        {{-- Hero Text --}}
+        <div class="max-w-4xl mx-auto text-center animate-fade-in-up delay-100">
+            <h1 class="text-5xl md:text-8xl font-black text-white mb-6 leading-tight tracking-tighter">
+                LET'S <br>
+                <span class="text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-red-600">CONNECT</span>
+            </h1>
+            <p class="text-lg md:text-xl text-gray-400 font-light mb-10 max-w-2xl mx-auto leading-relaxed">
+                Have a question? Need help with a booking? We are here to keep your journey moving forward.
+            </p>
+            
+            <a href="#contact-section" class="px-10 py-4 bg-white/5 hover:bg-white/10 text-white font-bold rounded-full backdrop-blur-md border border-white/10 transition flex items-center justify-center w-fit mx-auto">
+                Send a Message <i class="fas fa-arrow-down ml-3"></i>
+            </a>
         </div>
     </div>
 
-    {{-- 3. MAIN CONTENT --}}
-    <div class="container mx-auto mb-60 px-4 relative z-10 max-w-6xl">
+    {{-- Decorative Bottom Fade (Transitions to #050505) --}}
+    <div class="absolute bottom-0 left-0 w-full h-32 bg-gradient-to-t from-[#050505] to-transparent z-20"></div>
+</div>
+
+
+{{-- SECTION 2: CONTACT FORM & INFO (Glass Aesthetic) --}}
+<div id="contact-section" class="glass-section py-24 border-b border-white/5">
+    
+    {{-- Ambient Glow (Darker/Subtler) --}}
+    <div class="absolute top-0 right-0 w-[500px] h-[500px] bg-orange-900/10 blur-[120px] rounded-full pointer-events-none"></div>
+    <div class="absolute bottom-0 left-0 w-[500px] h-[500px] bg-blue-900/10 blur-[120px] rounded-full pointer-events-none"></div>
+
+    <div class="container mx-auto px-4 relative z-10">
         <div class="flex flex-col lg:flex-row gap-16 items-start">
             
-            {{-- LEFT: Text & Info --}}
-            <div class="w-full lg:w-5/12 text-white space-y-8 animate-fade-in-up delay-100 pt-4">
+            {{-- LEFT: Info Cards --}}
+            <div class="w-full lg:w-5/12 space-y-8">
                 <div>
-                    <h1 class="text-5xl font-black leading-tight mb-6 drop-shadow-lg">
-                        Drive with <br>
-                        <span class="text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-amber-200">Confidence.</span>
-                    </h1>
-                    <p class="text-lg text-gray-300 font-light leading-relaxed">
-                        Experience the smoothest rental journey. From booking inquiries to roadside assistance, we are always here to keep you moving forward.
-                    </p>
+                    <h2 class="text-4xl font-black text-white mb-4">Get in Touch</h2>
+                    <p class="text-gray-400 text-lg">We are available 24/7 for UTM students and staff.</p>
                 </div>
 
-                {{-- Contact Cards --}}
-                <div class="space-y-4 mt-8">
-                    <div class="bg-black/40 backdrop-blur-lg border border-white/10 p-5 rounded-2xl flex items-center gap-5 hover:bg-black/50 transition duration-300 group">
-                        <div class="w-12 h-12 rounded-full bg-orange-500/20 flex items-center justify-center text-orange-400 group-hover:scale-110 transition">
+                {{-- Glass Contact Cards --}}
+                <div class="space-y-4">
+                    {{-- Phone --}}
+                    <div class="glass-card p-6 rounded-2xl flex items-center gap-5 group hover:bg-white/5">
+                        <div class="w-12 h-12 rounded-xl bg-orange-500/10 flex items-center justify-center text-orange-500 group-hover:scale-110 transition">
                             <i class="fas fa-phone-alt"></i>
                         </div>
                         <div>
@@ -60,8 +129,9 @@
                         </div>
                     </div>
 
-                    <div class="bg-black/40 backdrop-blur-lg border border-white/10 p-5 rounded-2xl flex items-center gap-5 hover:bg-black/50 transition duration-300 group">
-                        <div class="w-12 h-12 rounded-full bg-green-500/20 flex items-center justify-center text-green-400 group-hover:scale-110 transition">
+                    {{-- Whatsapp --}}
+                    <div class="glass-card p-6 rounded-2xl flex items-center gap-5 group hover:bg-white/5">
+                        <div class="w-12 h-12 rounded-xl bg-green-500/10 flex items-center justify-center text-green-500 group-hover:scale-110 transition">
                             <i class="fab fa-whatsapp text-xl"></i>
                         </div>
                         <div>
@@ -70,8 +140,9 @@
                         </div>
                     </div>
 
-                    <div class="bg-black/40 backdrop-blur-lg border border-white/10 p-5 rounded-2xl flex items-center gap-5 hover:bg-black/50 transition duration-300 group">
-                        <div class="w-12 h-12 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-400 group-hover:scale-110 transition">
+                    {{-- Location --}}
+                    <div class="glass-card p-6 rounded-2xl flex items-center gap-5 group hover:bg-white/5">
+                        <div class="w-12 h-12 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-500 group-hover:scale-110 transition">
                             <i class="fas fa-map-marker-alt"></i>
                         </div>
                         <div>
@@ -82,53 +153,44 @@
                 </div>
             </div>
 
-            {{-- RIGHT: Glass Form --}}
-            <div class="w-full lg:w-7/12 animate-fade-in-up delay-200">
-                <div class="bg-black/50 backdrop-blur-xl border border-white/10 p-8 md:p-10 rounded-[2rem] shadow-2xl relative overflow-hidden">
+            {{-- RIGHT: The Form --}}
+            <div class="w-full lg:w-7/12">
+                <div class="glass-card p-8 md:p-10 rounded-[2.5rem]">
+                    <h3 class="text-2xl font-bold text-white mb-6">Send a Message</h3>
                     
-                    {{-- Soft Glow Effects for "Calm" feel --}}
-                    <div class="absolute -top-32 -right-32 w-64 h-64 bg-orange-500 rounded-full blur-[100px] opacity-20 pointer-events-none"></div>
-                    <div class="absolute -bottom-32 -left-32 w-64 h-64 bg-blue-600 rounded-full blur-[100px] opacity-20 pointer-events-none"></div>
-
-                    <h2 class="text-3xl font-bold text-white mb-2 relative z-10">Send a Message</h2>
-                    <p class="text-gray-400 mb-8 relative z-10 text-sm">Fill out the form below and we'll get back to you.</p>
-
-                    <form id="contactForm" action="https://formspree.io/f/YOUR_FORMSPREE_ID" method="POST" class="space-y-5 relative z-10">
-                        
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <form id="contactForm" action="https://formspree.io/f/YOUR_FORMSPREE_ID" method="POST" class="space-y-6">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div class="group">
-                                <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Name</label>
+                                <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Name</label>
                                 <input type="text" name="name" required placeholder="Your Name"
-                                    class="w-full bg-white/5 border border-white/10 text-white rounded-xl px-5 py-4 outline-none focus:border-orange-500 focus:bg-white/10 transition placeholder-gray-600">
+                                    class="glass-input w-full rounded-xl px-5 py-4 placeholder-gray-600">
                             </div>
-
                             <div class="group">
-                                <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Email</label>
+                                <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Email</label>
                                 <input type="email" name="email" required placeholder="email@example.com"
-                                    class="w-full bg-white/5 border border-white/10 text-white rounded-xl px-5 py-4 outline-none focus:border-orange-500 focus:bg-white/10 transition placeholder-gray-600">
+                                    class="glass-input w-full rounded-xl px-5 py-4 placeholder-gray-600">
                             </div>
                         </div>
 
                         <div class="group">
-                            <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Subject</label>
-                            <select name="subject" class="w-full bg-white/5 border border-white/10 text-white rounded-xl px-5 py-4 outline-none focus:border-orange-500 focus:bg-white/10 transition appearance-none cursor-pointer">
-                                <option class="text-gray-900" value="General Inquiry">General Inquiry</option>
-                                <option class="text-gray-900" value="Booking Help">Booking Help</option>
-                                <option class="text-gray-900" value="Feedback">Feedback</option>
+                            <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Subject</label>
+                            <select name="subject" class="glass-input w-full rounded-xl px-5 py-4 cursor-pointer appearance-none text-gray-400">
+                                <option class="bg-gray-900" value="General Inquiry">General Inquiry</option>
+                                <option class="bg-gray-900" value="Booking Help">Booking Help</option>
+                                <option class="bg-gray-900" value="Feedback">Feedback</option>
                             </select>
                         </div>
 
                         <div class="group">
-                            <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Message</label>
+                            <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Message</label>
                             <textarea name="message" rows="4" required placeholder="How can we help?"
-                                class="w-full bg-white/5 border border-white/10 text-white rounded-xl px-5 py-4 outline-none focus:border-orange-500 focus:bg-white/10 transition placeholder-gray-600 resize-none"></textarea>
+                                class="glass-input w-full rounded-xl px-5 py-4 placeholder-gray-600 resize-none"></textarea>
                         </div>
 
                         <button type="submit" id="submitBtn" class="w-full bg-gradient-to-r from-orange-600 to-orange-500 text-white font-bold py-4 rounded-xl shadow-lg shadow-orange-900/20 hover:shadow-orange-500/40 hover:scale-[1.01] active:scale-95 transition-all duration-300 flex justify-center items-center">
                             <span>Send Message</span>
                             <i class="fas fa-paper-plane ml-2"></i>
                         </button>
-
                     </form>
                 </div>
             </div>
@@ -137,7 +199,7 @@
     </div>
 </div>
 
-{{-- SCRIPT --}}
+{{-- JAVASCRIPT --}}
 <script>
     var form = document.getElementById("contactForm");
     
@@ -176,16 +238,4 @@
 
     form.addEventListener("submit", handleSubmit);
 </script>
-
-<style>
-    @keyframes fade-in-up {
-        from { opacity: 0; transform: translateY(20px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
-    .animate-fade-in-up {
-        animation: fade-in-up 1s ease-out forwards;
-    }
-    .delay-100 { animation-delay: 100ms; }
-    .delay-200 { animation-delay: 200ms; }
-</style>
 @endsection

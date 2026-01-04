@@ -3,7 +3,11 @@
 @section('title', 'Customer Details')
 
 @section('content')
-<div x-data="{ showRejectModal: false, showBlacklistModal: false }" class="min-h-screen bg-gray-100 p-8">
+<div x-data="{ 
+    showRejectModal: false, 
+    showBlacklistModal: false, 
+    showPenaltyModal: false 
+}" class="min-h-screen bg-gray-100 p-8">
     <div class="max-w-6xl mx-auto">
         
         <div class="flex justify-between items-center mb-6">
@@ -87,6 +91,9 @@
                         </button>
                     </form>
                 @else
+                    <button @click="showPenaltyModal = true" type="button" class="bg-orange-100 text-orange-600 px-6 py-3 rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-orange-200 transition border border-orange-200">
+                        <i class="fas fa-exclamation-triangle mr-2"></i> Penalty
+                    </button>
                     <button @click="showBlacklistModal = true" type="button" class="bg-gray-100 text-gray-600 px-6 py-3 rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-gray-200 transition">
                         <i class="fas fa-ban mr-2"></i> Blacklist
                     </button>
@@ -370,6 +377,48 @@
                 <div class="flex justify-end gap-3">
                     <button type="button" @click="showBlacklistModal = false" class="px-6 py-3 rounded-xl font-bold text-xs uppercase tracking-widest text-gray-500 hover:bg-gray-100 transition">Cancel</button>
                     <button type="submit" class="bg-gray-900 text-white px-8 py-3 rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-black shadow-lg shadow-gray-900/20 transition">Confirm Blacklist</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    {{-- PENALTY MODAL --}}
+    <div x-show="showPenaltyModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" style="display: none;">
+        <div @click.away="showPenaltyModal = false" class="bg-white border border-orange-200 rounded-[2rem] p-8 max-w-lg w-full shadow-2xl">
+            <h3 class="text-2xl font-black text-gray-900 mb-2">
+                <i class="fas fa-exclamation-triangle text-orange-600 mr-2"></i> Impose Penalty
+            </h3>
+            <p class="text-gray-500 mb-6 text-sm">Charge this customer for violating rules. They must pay before making new bookings.</p>
+            
+            <form action="{{ route('staff.customers.penalty', $customer->customerID) }}" method="POST">
+                @csrf
+                
+                <div class="mb-4">
+                    <label class="block text-[10px] font-bold text-gray-900 uppercase tracking-widest mb-2">Select Main Reason</label>
+                    <select name="penalty_reason" class="w-full bg-gray-50 border border-gray-300 rounded-xl p-4 text-sm font-bold text-gray-900 focus:ring-2 focus:ring-orange-500 focus:outline-none appearance-none" required>
+                        <option value="" disabled selected>-- Choose a Reason --</option>
+                        <option value="Late Return">Late Return</option>
+                        <option value="Vehicle Damage">Vehicle Damage</option>
+                        <option value="Violation of Terms & Conditions">Violation of Terms & Conditions</option>
+                        <option value="Excessive Mileage">Excessive Mileage</option>
+                        <option value="Fuel Surcharge">Fuel Surcharge</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-[10px] font-bold text-gray-900 uppercase tracking-widest mb-2">Penalty Amount (RM)</label>
+                    <input type="number" name="penalty_amount" step="0.01" min="0.01" class="w-full bg-gray-50 border border-gray-300 rounded-xl p-4 text-sm font-bold text-gray-900 focus:ring-2 focus:ring-orange-500 focus:outline-none" placeholder="0.00" required>
+                </div>
+
+                <div class="mb-6">
+                    <label class="block text-[10px] font-bold text-gray-900 uppercase tracking-widest mb-2">Additional Remarks (Optional)</label>
+                    <textarea name="penalty_custom" rows="2" class="w-full bg-white border border-gray-300 rounded-xl p-4 text-sm font-medium text-gray-900 focus:ring-2 focus:ring-orange-500 focus:outline-none placeholder-gray-400" placeholder="Type specific details here..."></textarea>
+                </div>
+                
+                <div class="flex justify-end gap-3">
+                    <button type="button" @click="showPenaltyModal = false" class="px-6 py-3 rounded-xl font-bold text-xs uppercase tracking-widest text-gray-500 hover:bg-gray-100 transition">Cancel</button>
+                    <button type="submit" class="bg-orange-600 text-white px-8 py-3 rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-orange-700 shadow-lg shadow-orange-600/20 transition">Confirm Penalty</button>
                 </div>
             </form>
         </div>

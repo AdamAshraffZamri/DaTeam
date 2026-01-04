@@ -6,14 +6,15 @@ use App\Models\Booking;
 use App\Models\Payment;
 use App\Models\Vehicle;
 use App\Models\Penalties;
-use App\Models\Voucher; // Required for Voucher Logic
+use App\Models\Voucher;
+use App\Models\Staff;
+use App\Notifications\NewBookingSubmitted;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
-use Carbon\Carbon;
-use App\Notifications\NewBookingSubmitted;
-use App\Models\Staff;
 use Illuminate\Support\Facades\Notification;
+use Carbon\Carbon;
+
 
 class BookingController extends Controller
 {
@@ -35,8 +36,8 @@ class BookingController extends Controller
 
     $bookings = $query->orderBy('bookingDate', 'desc')->get();
 
-    return view('bookings.index', compact('bookings'));
-}
+        return view('bookings.index', compact('bookings'));
+    }
 
     // --- 2. LANDING / SEARCH FORM ---
     public function create() 
@@ -61,16 +62,15 @@ class BookingController extends Controller
             empty($user->emergency_contact_name) || // Added this new field
             empty($user->homeAddress) ||
             empty($user->collegeAddress) ||
-            empty($user->stustaffID) || 
-            empty($user->ic_passport) || 
-            empty($user->drivingNo) || 
+            empty($user->stustaffID) || // Student/Staff ID
+            empty($user->ic_passport) || // IC or Passport
+            empty($user->drivingNo) || // License Number
             empty($user->nationality) ||
             empty($user->dob) ||
             empty($user->faculty) ||
             empty($user->bankName) ||
             empty($user->bankAccountNo)
         ) {
-            // Redirect to Profile Edit with a specific warning
             return redirect()->route('profile.edit')
                 ->with('error', '⚠️ Action Required: You must complete ALL profile details (including Bank Info, Addresses, and IDs) before you can book a car.');
         }
@@ -79,7 +79,7 @@ class BookingController extends Controller
         return view('bookings.create'); 
     }
 
-    // --- 3. SEARCH RESULTS ---
+    // --- 3. SEARCH RESULTS (UPDATED) ---
     public function search(Request $request)
 {
     // --- 1. Basic Validation ---
@@ -183,7 +183,7 @@ public function submitPayment(Request $request, $id)
         'payment_type' => 'required|in:full,deposit',
     ]);
 
-    $vehicle = Vehicle::findOrFail($id);
+        $vehicle = Vehicle::findOrFail($id);
 
     // 2. Calculate Base Rental Price
     $rentalCharge = $this->calculateRentalPrice(
@@ -288,22 +288,17 @@ public function submitPayment(Request $request, $id)
         \Log::error("Notification failed: " . $e->getMessage());
     }
 
-    return redirect()->route('book.index')->with('show_thank_you', true);
-}
+        return redirect()->route('book.index')->with('show_thank_you', true);
+    }
 
-    // --- 7. CANCEL BOOKING (Updated Strategy) ---
+    // --- 7. CANCEL BOOKING ---
     public function cancel($id)
     {
         $booking = Booking::where('customerID', Auth::id())->findOrFail($id);
-
-        // Allow cancelling even if Paid/Approved so they can claim refund
         $allowedStatuses = ['Submitted', 'Deposit Paid', 'Paid', 'Approved'];
 
         if (in_array($booking->bookingStatus, $allowedStatuses)) {
-            
             $booking->update(['bookingStatus' => 'Cancelled']);
-            
-            // Redirect to Finance Center for refund
             return redirect()->route('finance.index')
                 ->with('success', 'Booking cancelled. Please check "Claimable" section to request your refund.');
         }
@@ -315,37 +310,32 @@ public function submitPayment(Request $request, $id)
     public function showAgreement($id)
     {
         $booking = Booking::with(['customer', 'vehicle'])->findOrFail($id);
-        
         if (Auth::id() != $booking->customerID && !Auth::guard('staff')->check()) {
             abort(403);
         }
-
         return view('bookings.agreement', compact('booking'));
     }
 
-    // --- ADD THIS NEW FUNCTION ---
     public function previewAgreement(Request $request)
     {
         $user = Auth::user();
         $vehicle = Vehicle::findOrFail($request->vehicle_id);
         
-        // Create a "Fake" Booking Object for the view
         $booking = new Booking();
-        $booking->bookingID = "PENDING"; // Placeholder
+        $booking->bookingID = "PENDING"; 
         $booking->aggreementDate = now();
         $booking->pickupLocation = $request->pickup_location;
         $booking->returnLocation = $request->return_location;
         $booking->returnDate = $request->return_date;
         $booking->returnTime = $request->return_time;
         
-        // Manually attach relationships
         $booking->setRelation('customer', $user);
         $booking->setRelation('vehicle', $vehicle);
 
         return view('bookings.agreement', compact('booking'));
     }
 
-    // --- 9. UPLOAD INSPECTION (Customer Side) ---
+    // --- 9. UPLOAD INSPECTION ---
     public function uploadInspection(Request $request, $id)
     {
         $booking = Booking::where('customerID', Auth::id())->findOrFail($id);
@@ -374,15 +364,12 @@ public function submitPayment(Request $request, $id)
         $typeName = $type;
 
         $request->validate([
-            'photos' => "required|array|size:$requiredCount",
-            'photos.*' => 'image|mimes:jpeg,png,jpg|max:2048',
-            'fuel_level' => 'required',
-            'mileage' => 'required|numeric',
-        ], [
-            'photos.size' => "You must upload exactly $requiredCount photos for $typeName."
+            'photos' => 'required',
+            'photos.*' => 'image|max:4048', // Allow multiple images
         ]);
 
-        // Store Photos
+        
+
         $photoPaths = [];
         if ($request->hasFile('photos')) {
             foreach ($request->file('photos') as $photo) {
@@ -393,17 +380,15 @@ public function submitPayment(Request $request, $id)
         // Create Inspection Record
         \App\Models\Inspection::create([
             'bookingID' => $booking->bookingID,
-            'staffID' => null, // Indicates Customer Submission
+            'staffID' => null, 
             'inspectionType' => $type,
             'inspectionDate' => now(),
             
             // Dynamic Columns
             'photosBefore' => $type == 'Pickup' ? json_encode($photoPaths) : null,
             'photosAfter' => $type == 'Return' ? json_encode($photoPaths) : null,
-            'fuelBefore' => $type == 'Pickup' ? $request->input('fuel_level') : null,
-            'fuelAfter' => $type == 'Return' ? $request->input('fuel_level') : null,
-            'mileageBefore' => $type == 'Pickup' ? $request->input('mileage') : null,
-            'mileageAfter' => $type == 'Return' ? $request->input('mileage') : null,
+            'fuelBefore' => $request->input('fuel_level'), // Optional
+            'mileageBefore' => $request->input('mileage'), // Optional
         ]);
 
         return back()->with('success', 'Inspection photos uploaded successfully!');
