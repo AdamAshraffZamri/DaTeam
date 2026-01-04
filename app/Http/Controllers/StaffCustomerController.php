@@ -189,5 +189,5 @@ class StaffCustomerController extends Controller
         
         return view('staff.customers.penalty-history', compact('customer', 'penalties', 'totalPenalties', 'unpaidPenalties', 'totalAmount'));
     }
->>>>>>> Stashed changes
+
 }
