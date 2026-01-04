@@ -309,9 +309,24 @@
                 <i class="fas fa-times text-xl"></i>
             </button>
             <h3 class="text-xl font-bold text-white mb-2">Rate Your Experience</h3>
-            <p class="text-xs text-gray-400 mb-6">How was your ride with the {{ $booking->vehicle->model }}?</p>
+            
+            {{-- ADDED: Google Review Link Section --}}
+            <div class="mb-6 p-4 bg-orange-500/10 border border-orange-500/30 rounded-xl">
+                <p class="text-[10px] text-orange-500 font-black uppercase tracking-widest mb-2">Support Us on Google</p>
+                <a href="https://share.google/VmSuaHx7XHvnaSiwU" target="_blank" class="flex items-center justify-between bg-white/5 hover:bg-white/10 p-3 rounded-lg transition group">
+                    <div class="flex items-center gap-3">
+                        <i class="fab fa-google text-white"></i>
+                        <span class="text-sm text-white font-bold">Write a Google Review</span>
+                    </div>
+                    <i class="fas fa-external-link-alt text-xs text-gray-400 group-hover:text-white"></i>
+                </a>
+            </div>
+
+            <p class="text-xs text-gray-400 mb-6">Alternatively, leave a private review for our team:</p>
+            
             <form action="{{ route('feedback.store', $booking->bookingID) }}" method="POST">
                 @csrf
+                {{-- ... existing rating stars and comment field ... --}}
                 <div class="flex flex-row-reverse justify-center gap-2 mb-6 group">
                     @for($i=5; $i>=1; $i--)
                         <input type="radio" id="star{{ $i }}-{{ $booking->bookingID }}" name="rating" value="{{ $i }}" class="hidden peer" required>
@@ -325,7 +340,7 @@
                     <textarea name="comment" rows="3" class="w-full bg-white/10 border border-white/20 rounded-xl text-white text-sm p-3 focus:border-yellow-500 focus:outline-none placeholder-gray-500" placeholder="Share your feedback..."></textarea>
                 </div>
                 <button type="submit" class="w-full bg-yellow-500 hover:bg-yellow-600 text-black font-bold py-3.5 rounded-xl shadow-lg transition transform hover:scale-[1.02]">
-                    Submit Feedback
+                    Submit Internal Feedback
                 </button>
             </form>
         </div>

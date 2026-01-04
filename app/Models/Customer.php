@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable; // Must extend Authenticatable
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Customer extends Authenticatable
 {
@@ -48,7 +49,11 @@ class Customer extends Authenticatable
         'dob' => 'date',
         'password' => 'hashed',
     ];
-
+    public function bookings(): HasMany
+    {
+        // Link to Booking model using 'customerID' as the foreign key
+        return $this->hasMany(Booking::class, 'customerID', 'customerID');
+    }
     // 4. Password Override (Laravel expects 'password', your DB has 'password', so this is default behavior)
     public function getAuthPassword()
     {
