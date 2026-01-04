@@ -47,6 +47,7 @@
                             </div>
                             <h2 class="text-2xl font-black text-white">Loyalty Status</h2>
                         </div>
+                        
 
                         <span class="bg-orange-500/20 text-orange-400 px-4 py-1.5 rounded-full border border-orange-500/30 text-[10px] font-black uppercase tracking-widest">
                             {{ ucfirst($loyalty->tier ?? 'Bronze') }} Member
@@ -111,6 +112,30 @@
                     </span>
                 </div>
 
+                {{-- PROGRESS BAR LOYALTY - Logic Betul (Every 3 Bookings = Reward) --}}
+                    <div class="bg-black/30 rounded-3xl p-6 border border-white/5 mb-6">
+                        <div class="flex justify-between items-end mb-4">
+                            <p class="text-gray-300 text-sm font-bold">
+                                Next Reward: <span class="text-orange-400">{{ $nextReward }}</span>
+                            </p>
+                            <span class="text-white font-black text-xl">
+                                {{ $currentInCycle }}/3
+                            </span>
+                        </div>
+
+                        <div class="w-full bg-white/10 rounded-full h-4 p-1 overflow-hidden">
+                            <div class="bg-gradient-to-r from-orange-500 to-yellow-400 h-full rounded-full transition-all duration-1000 ease-out"
+                                 style="width: {{ $progressPercent }}%">
+                            </div>
+                        </div>
+
+                        <p class="text-gray-400 text-xs mt-4">
+                            @if($currentInCycle == 0 && $totalCompleted > 0)
+                                🎉 Congratulations! You just unlocked a reward!
+                            @endif
+                            Book <span class="text-white font-bold">{{ $bookingsNeeded }}</span> more time{{ $bookingsNeeded > 1 ? 's' : '' }} to unlock your next reward!
+                        </p>
+                    </div>
                 {{-- PROGRESS BAR LOYALTY - Logic Betul (Every 3 Bookings = Reward) --}}
                     <div class="bg-black/30 rounded-3xl p-6 border border-white/5 mb-6">
                         <div class="flex justify-between items-end mb-4">
