@@ -152,6 +152,7 @@ Route::prefix('staff')->middleware(['auth:staff'])->group(function () {
     // Customer Management
     Route::get('/customers', [App\Http\Controllers\StaffCustomerController::class, 'index'])->name('staff.customers.index');
     Route::get('/customers/{id}', [App\Http\Controllers\StaffCustomerController::class, 'show'])->name('staff.customers.show');
+    Route::get('/customers/{id}/penalty-history', [App\Http\Controllers\StaffCustomerController::class, 'penaltyHistory'])->name('staff.customers.penalty_history');
     Route::post('/customers/{id}/approve', [App\Http\Controllers\StaffCustomerController::class, 'approve'])->name('staff.customers.approve');
     Route::post('/customers/{id}/reject', [App\Http\Controllers\StaffCustomerController::class, 'reject'])->name('staff.customers.reject');
     Route::post('/customers/{id}/blacklist', [App\Http\Controllers\StaffCustomerController::class, 'toggleBlacklist'])->name('staff.customers.blacklist');

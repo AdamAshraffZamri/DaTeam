@@ -120,4 +120,74 @@ class StaffCustomerController extends Controller
             return back()->with('success', 'Customer has been blacklisted.');
             }
     }
+<<<<<<< Updated upstream
+=======
+
+    // ACTION 4: Impose Penalty
+    public function imposePenalty(Request $request, $id)
+    {
+        $customer = Customer::findOrFail($id);
+        
+        $request->validate([
+            'penalty_reason' => 'required|string',
+            'penalty_amount' => 'required|numeric|min:0.01',
+            'penalty_custom' => 'nullable|string|max:500'
+        ]);
+
+        // Combine Reason + Custom Text
+        $finalReason = $request->penalty_reason;
+        if ($request->filled('penalty_custom')) {
+            $finalReason .= " - " . $request->penalty_custom;
+        }
+
+        // Create penalty record
+        Penalties::create([
+            'customerID' => $customer->customerID,
+            'bookingID' => null, // Customer-level penalty, not booking-specific
+            'amount' => $request->penalty_amount,
+            'penaltyFees' => $request->penalty_amount,
+            'reason' => $finalReason,
+            'status' => 'Pending',
+            'penaltyStatus' => 'Unpaid',
+            'date_imposed' => now(),
+            'lateReturnHour' => 0,
+            'fuelSurcharge' => 0,
+            'mileageSurcharge' => 0,
+        ]);
+
+        return back()->with('success', 'Penalty imposed successfully. Customer must pay before making new bookings.');
+    }
+
+    // Show penalty history for a customer
+    public function penaltyHistory($id)
+    {
+        $customer = Customer::findOrFail($id);
+        
+        // Get all penalties for this customer (both booking-based and customer-level)
+        $penalties = Penalties::where('customerID', $customer->customerID)
+            ->with(['booking.vehicle', 'customer'])
+            ->orderBy('date_imposed', 'desc')
+            ->paginate(15);
+        
+        // Calculate statistics
+        $totalPenalties = Penalties::where('customerID', $customer->customerID)->count();
+        $unpaidPenalties = Penalties::where('customerID', $customer->customerID)
+            ->where(function($query) {
+                $query->where('status', 'Pending')
+                      ->orWhere('penaltyStatus', 'Unpaid');
+            })
+            ->count();
+        $totalAmount = Penalties::where('customerID', $customer->customerID)
+            ->where(function($query) {
+                $query->where('status', 'Pending')
+                      ->orWhere('penaltyStatus', 'Unpaid');
+            })
+            ->get()
+            ->sum(function($penalty) {
+                return $penalty->amount ?? ($penalty->penaltyFees + $penalty->fuelSurcharge + $penalty->mileageSurcharge);
+            });
+        
+        return view('staff.customers.penalty-history', compact('customer', 'penalties', 'totalPenalties', 'unpaidPenalties', 'totalAmount'));
+    }
+>>>>>>> Stashed changes
 }

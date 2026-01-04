@@ -78,6 +78,9 @@
                 <p class="text-gray-400 text-xs mt-1">Review details and manage access.</p>
             </div>
             <div class="flex gap-3">
+                <a href="{{ route('staff.customers.penalty_history', $customer->customerID) }}" class="bg-purple-100 text-purple-600 px-6 py-3 rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-purple-200 transition border border-purple-200">
+                    <i class="fas fa-history mr-2"></i> Penalty History
+                </a>
     
                 @if($customer->blacklisted)
                     <form action="{{ route('staff.customers.blacklist', $customer->customerID) }}" method="POST" onsubmit="return confirm('Restore this user account?');">

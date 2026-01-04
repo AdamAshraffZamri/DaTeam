@@ -16,95 +16,113 @@ class LoyaltyController extends Controller
 {
     // --- DISPLAY DASHBOARD ---
     public function index()
-    {
-        $userId = Auth::id();
-        
-        // 1. Get or Init Loyalty
-        $loyalty = LoyaltyPoint::firstOrCreate(
-            ['user_id' => $userId],
-            ['points' => 0, 'tier' => 'Bronze']
-        );
-        
-        // 2. Calculate Stats
-        $pointsEarned = LoyaltyHistory::where('user_id', $userId)->where('points_change', '>', 0)->sum('points_change');
-        $pointsRedeemed = abs(LoyaltyHistory::where('user_id', $userId)->where('points_change', '<', 0)->sum('points_change'));
-        
-        $loyalty->points_earned = $pointsEarned;
-        $loyalty->points_redeemed = $pointsRedeemed;
-        
-        // 3. Get User's Active Vouchers
-        $vouchers = Voucher::where(function($query) use ($userId) {
-                $query->where('user_id', $userId)->orWhere('customerID', $userId);
-            })
-            ->where('isUsed', false)
-            ->whereDate('validUntil', '>=', now())
-            ->get();
-        
-        // 4. Calculate Progress for Rental Reward (9+ hour bookings)
-        // Track: Every 3 bookings >= 9 hours = 1 voucher
-        $rentalBookingProgress = $loyalty->rental_bookings_count ?? 0;
-        $bookingsNeeded = max(0, 3 - $rentalBookingProgress);
-        $progressPercent = ($rentalBookingProgress / 3) * 100;
-        $nextReward = "10% OFF Rental Discount Voucher";
+{
+    $userId = Auth::id();
 
-        // 5. Rankings
-        $rankings = LoyaltyPoint::with('customer')
-            ->orderByDesc('points')
-            ->take(10)
-            ->get();
-            
-        $userRank = LoyaltyPoint::where('points', '>', $loyalty->points)->count() + 1;
-        $totalUsers = LoyaltyPoint::count();
+    // 1. Get or Init Loyalty
+    $loyalty = LoyaltyPoint::firstOrCreate(
+        ['user_id' => $userId],
+        ['points' => 0, 'tier' => 'Bronze']
+    );
 
-        // 6. Define Rewards List (Hardcoded as per requirements)
-        $rewards = [
-            [
-                'id' => 'zus_coffee',
-                'name' => 'ZUS COFFEE', 
-                'offer' => '10% OFF Discount',
-                'points' => 150, // Updated to 150 as per text
-                'code' => 'ZXSOD102263',
-                'duration' => 2, // months
-                'icon' => 'fa-coffee',
-                'color' => 'bg-blue-600/20 border-blue-500/30'
-            ],
-            [
-                'id' => 'tealive',
-                'name' => 'TEALIVE', 
-                'offer' => 'BUY 2 FREE 1',
-                'points' => 300, 
-                'code' => 'TLOMN102356',
-                'duration' => 2, 
-                'icon' => 'fa-mug-hot',
-                'color' => 'bg-purple-600/20 border-purple-500/30'
-            ],
-            [
-                'id' => 'grab',
-                'name' => 'GRAB FOOD', 
-                'offer' => 'FREE DELIVERY',
-                'points' => 750, 
-                'code' => 'GRB12903X01',
-                'duration' => 4, 
-                'icon' => 'fa-utensils',
-                'color' => 'bg-green-600/20 border-green-500/30'
-            ],
-            [
-                'id' => 'tgv',
-                'name' => 'TGV CINEMAS', 
-                'offer' => '50% OFF FOOD',
-                'points' => 1000, 
-                'code' => 'TGV00DJ812',
-                'duration' => 8, 
-                'icon' => 'fa-film',
-                'color' => 'bg-red-600/20 border-red-500/30'
-            ],
-        ];
-        
-        return view('loyalty.index', compact(
-            'loyalty', 'vouchers', 'nextReward', 'bookingsNeeded', 'rentalBookingProgress',
-            'progressPercent', 'rankings', 'userRank', 'totalUsers', 'rewards'
-        ));
-    }
+    // 2. Calculate Points Stats
+    $pointsEarned = LoyaltyHistory::where('user_id', $userId)
+        ->where('points_change', '>', 0)
+        ->sum('points_change');
+
+    $pointsRedeemed = abs(LoyaltyHistory::where('user_id', $userId)
+        ->where('points_change', '<', 0)
+        ->sum('points_change'));
+
+    // 3. Get Active Vouchers
+    $vouchers = Voucher::where(function($query) use ($userId) {
+            $query->where('user_id', $userId)->orWhere('customerID', $userId);
+        })
+        ->where('isUsed', false)
+        ->whereDate('validUntil', '>=', now())
+        ->get();
+
+    // 4. PROGRESS BAR LOGIC - Setiap 3 completed booking = 1 reward
+    $totalCompleted = Booking::where('customerID', $userId)
+        ->where('bookingStatus', 'Completed')
+        ->count();
+
+    $currentInCycle = $totalCompleted % 3;                    // 0, 1 atau 2
+    $progressPercent = round(($currentInCycle / 3) * 100, 2);  // 0, 33.33, 66.67
+    $bookingsNeeded = 3 - $currentInCycle;                     // berapa lagi kena book
+    $nextReward = "10% OFF Rental Voucher";
+
+    // 5. Rankings
+    $rankings = LoyaltyPoint::with('customer')
+        ->orderByDesc('points')
+        ->take(10)
+        ->get();
+
+    $userRank = LoyaltyPoint::where('points', '>', $loyalty->points)->count() + 1;
+    $totalUsers = LoyaltyPoint::count();
+
+    // 6. Rewards List (hardcoded)
+    $rewards = [
+        [
+            'id' => 'zus_coffee',
+            'name' => 'ZUS COFFEE', 
+            'offer' => '10% OFF Discount',
+            'points' => 150, // Updated to 150 as per text
+            'code' => 'ZXSOD102263',
+            'duration' => 2, // months
+            'icon' => 'fa-coffee',
+            'color' => 'bg-blue-600/20 border-blue-500/30'
+        ],
+        [
+            'id' => 'tealive',
+            'name' => 'TEALIVE', 
+            'offer' => 'BUY 2 FREE 1',
+            'points' => 300, 
+            'code' => 'TLOMN102356',
+            'duration' => 2, 
+            'icon' => 'fa-mug-hot',
+            'color' => 'bg-purple-600/20 border-purple-500/30'
+        ],
+        [
+            'id' => 'grab',
+            'name' => 'GRAB FOOD', 
+            'offer' => 'FREE DELIVERY',
+            'points' => 750, 
+            'code' => 'GRB12903X01',
+            'duration' => 4, 
+            'icon' => 'fa-utensils',
+            'color' => 'bg-green-600/20 border-green-500/30'
+        ],
+        [
+            'id' => 'tgv',
+            'name' => 'TGV CINEMAS', 
+            'offer' => '50% OFF FOOD',
+            'points' => 1000, 
+            'code' => 'TGV00DJ812',
+            'duration' => 8, 
+            'icon' => 'fa-film',
+            'color' => 'bg-red-600/20 border-red-500/30'
+        ],
+
+    ];
+
+    // RETURN SEKALI SAHAJA - semua variable dalam satu compact
+    return view('loyalty.index', compact(
+        'loyalty',
+        'vouchers',
+        'totalCompleted',
+        'currentInCycle',
+        'progressPercent',
+        'bookingsNeeded',
+        'nextReward',
+        'rankings',
+        'userRank',
+        'totalUsers',
+        'rewards',
+        'pointsEarned',
+        'pointsRedeemed'
+    ));
+}
 
     // --- STAFF DASHBOARD: VIEW LOYALTY & REWARDS ---
     public function staffIndex()

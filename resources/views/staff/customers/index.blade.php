@@ -8,7 +8,7 @@
         
         <div class="flex justify-between items-end">
             <div>
-                <h1 class="text-4xl font-black text-gray-900 tracking-tight">Customer Database</h1>
+                <h1 class="text-3xl font-black text-gray-900 tracking-tight">Customer Database</h1>
                 <p class="text-[11px] font-bold text-gray-400 uppercase tracking-[0.3em] mt-2">Manage Users & Verification</p>
             </div>
             

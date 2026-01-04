@@ -6,11 +6,14 @@
         
         {{-- PAGE HEADER --}}
         <div class="mb-8">
-            <h1 class="text-4xl font-bold text-gray-900 mb-2">
-                <i class="fas fa-star text-yellow-500 mr-3"></i> Loyalty & Rewards Management
+            <h1 class="text-3xl font-black text-gray-900 tracking-tight">
+            Loyalty & Rewards Management
             </h1>
-            <p class="text-gray-600">Monitor customer loyalty points, rewards activities, and manage vouchers</p>
+            <p class="text-gray-500 mt-1 text-sm">Monitor customer loyalty points, rewards activities, and manage vouchers</p>
         </div>
+
+        
+        
 
         {{-- KEY METRICS --}}
         <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">

@@ -468,7 +468,7 @@
     }
 
     function showNoVouchersMessage() {
-        voucherDropdown.innerHTML = `<div class="p-4 text-center"><p class="text-sm text-gray-400">Tiada voucher tersedia</p></div>`;
+        voucherDropdown.innerHTML = `<div class="p-4 text-center"><p class="text-sm text-gray-400">No Available Vouchers</p></div>`;
         voucherDropdown.classList.remove('hidden');
     }
 
