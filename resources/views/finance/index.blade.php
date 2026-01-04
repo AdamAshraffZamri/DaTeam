@@ -10,7 +10,21 @@
 {{-- 2. CONTENT WRAPPER --}}
 <div class="relative z-10 min-h-[calc(100vh-64px)] py-12">
     <div class="container mx-auto px-4 max-w-6xl">
+        @if(session('success'))
+            <div class="container mx-auto px-4 mt-4">
+                <div class="bg-green-500/20 border border-green-500 text-green-400 px-4 py-3 rounded-xl">
+                    {{ session('success') }}
+                </div>
+            </div>
+        @endif
 
+        @if(session('error'))
+            <div class="container mx-auto px-4 mt-4">
+                <div class="bg-red-500/20 border border-red-500 text-red-400 px-4 py-3 rounded-xl">
+                    {{ session('error') }}
+                </div>
+            </div>
+        @endif
         {{-- HEADER --}}
         <div class="text-center mb-10">
             <h1 class="text-4xl font-black text-white drop-shadow-lg">Payments Center</h1>
