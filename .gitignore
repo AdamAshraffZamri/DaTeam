@@ -42,3 +42,6 @@ Thumbs.db
 # 3. EXCEPTION: Track EVERYTHING in public/vehicles (Do not ignore)
 !/public/storage/vehicles/
 !/public/storage/vehicles/*
+
+# --- IGNORE ---
+/storage/app/google-drive/*

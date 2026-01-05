@@ -35,11 +35,35 @@ class StaffBookingController extends Controller
     }
 
     // --- 2. LIST ALL BOOKINGS ---
-    public function index()
+    public function index(Request $request, )
     {
-        $bookings = Booking::with(['customer', 'vehicle', 'payment', 'payments']) 
-                           ->orderBy('created_at', 'desc')
-                           ->get();
+        $query = Booking::with(['customer', 'vehicle', 'payment', 'payments']) 
+                           ->orderBy('created_at', 'desc');
+        
+        if ($request->filled('status') && $request->status != 'all') {
+            $query->where('bookingStatus', $request->status);
+        }
+        
+        // Search Logic
+        if ($request->filled('search')) {
+            $term = $request->search;
+            $query->where(function($q) use ($term) {
+                // Search by Booking ID
+                $q->where('bookingID', 'like', "%$term%")
+                  // Search by Customer Name or Email
+                  ->orWhereHas('customer', function($c) use ($term) {
+                      $c->where('fullName', 'like', "%$term%")
+                        ->orWhere('email', 'like', "%$term%");
+                  })
+                  // Search by Vehicle Model or Plate
+                  ->orWhereHas('vehicle', function($v) use ($term) {
+                      $v->where('model', 'like', "%$term%")
+                        ->orWhere('plateNo', 'like', "%$term%");
+                  });
+            });
+        }
+
+        $bookings = $query->get();
 
         return view('staff.bookings.index', compact('bookings'));
     }
