@@ -157,10 +157,26 @@ class StaffBookingController extends Controller
                             'mime' => 'application/pdf',
                         ]);
             });
+           // 3. Upload to Google Drive (NEW LOGIC)
+            // Connect to the specific Invoice Folder
+            $googleDisk = Storage::build([
+                'driver' => 'google',
+                'clientId' => env('GOOGLE_DRIVE_CLIENT_ID'),
+                'clientSecret' => env('GOOGLE_DRIVE_CLIENT_SECRET'),
+                'refreshToken' => env('GOOGLE_DRIVE_REFRESH_TOKEN'),
+                'folderId' => env('GOOGLE_DRIVE_INVOICE'), // Uses the ID you provided
+            ]);
+
+            // Define Folder Name (Creates new folder automatically if it doesn't exist)
+            // Format: "Booking #123 - Customer Name"
+            $folderName = 'Booking #' . $booking->bookingID . ' - ' . preg_replace('/[^A-Za-z0-9 ]/', '', $booking->customer->fullName);
+            $fileName = 'Invoice-' . $booking->bookingID . '.pdf';
+
+            // Upload the file
+            $googleDisk->put($folderName . '/' . $fileName, $pdfContent);
 
         } catch (\Exception $e) {
-            \Log::error("Failed to send invoice: " . $e->getMessage());
-            // We don't stop the return process if email fails, just log it.
+            \Log::error("Invoice Generation/Upload Failed: " . $e->getMessage());
         }
         return back()->with('success', 'Vehicle returned & Loyalty Points Awarded.');
     }
@@ -285,5 +301,19 @@ class StaffBookingController extends Controller
         $notification = auth()->guard('staff')->user()->notifications()->findOrFail($id);
         $notification->markAsRead();
         return back();
+    }
+
+    // STREAM INVOICE AS PDF
+    public function streamInvoice($id)
+    {
+        // 1. Find booking (No customerID check needed for staff)
+        $booking = Booking::with(['customer', 'vehicle', 'payment', 'voucher'])
+                    ->findOrFail($id);
+
+        // 2. Generate and Stream
+        // Staff can preview it even if not strictly "Completed" yet if needed, 
+        // but typically invoice is for completed/paid jobs.
+        $pdf = Pdf::loadView('pdf.invoice', compact('booking'));
+        return $pdf->stream('Invoice-' . $booking->bookingID . '.pdf');
     }
 }

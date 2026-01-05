@@ -107,21 +107,36 @@ class InspectionController extends Controller
                 'actualReturnDate' => now()->toDateString(),
                 'actualReturnTime' => now()->toTimeString(),
             ]);
+            // --- INVOICE GENERATION & UPLOAD ---
             try {
-                // Ensure we have relationships loaded
                 $booking->load(['customer', 'vehicle', 'payment']);
-                
                 $pdf = Pdf::loadView('pdf.invoice', compact('booking'));
+                $pdfContent = $pdf->output();
                 
-                Mail::send([], [], function ($message) use ($booking, $pdf) {
+                // 1. Email
+                Mail::send([], [], function ($message) use ($booking, $pdfContent) {
                     $message->to($booking->customer->email)
                             ->subject('Invoice for Booking #' . $booking->bookingID)
-                            ->attachData($pdf->output(), 'Invoice-'.$booking->bookingID.'.pdf', [
-                                'mime' => 'application/pdf',
-                            ]);
+                            ->attachData($pdfContent, 'Invoice-'.$booking->bookingID.'.pdf', ['mime' => 'application/pdf']);
                 });
+
+                // 2. Upload to Google Drive
+                $googleDisk = Storage::build([
+                    'driver' => 'google',
+                    'clientId' => env('GOOGLE_DRIVE_CLIENT_ID'),
+                    'clientSecret' => env('GOOGLE_DRIVE_CLIENT_SECRET'),
+                    'refreshToken' => env('GOOGLE_DRIVE_REFRESH_TOKEN'),
+                    'folderId' => env('GOOGLE_DRIVE_INVOICE'), 
+                ]);
+
+                // Create Folder per Booking
+                $folderName = 'Booking #' . $booking->bookingID . ' - ' . preg_replace('/[^A-Za-z0-9 ]/', '', $booking->customer->fullName);
+                $fileName = 'Invoice-' . $booking->bookingID . '.pdf';
+
+                $googleDisk->put($folderName . '/' . $fileName, $pdfContent);
+
             } catch (\Exception $e) {
-                \Log::error("Failed to send invoice from Inspection: " . $e->getMessage());
+                \Log::error("Invoice Generation/Upload Failed: " . $e->getMessage());
             }
             $damage = $request->input('damageCosts', 0);
 

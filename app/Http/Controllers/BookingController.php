@@ -14,7 +14,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Notification;
 use Carbon\Carbon;
-
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class BookingController extends Controller
 {
@@ -509,4 +509,21 @@ public function submitPayment(Request $request, $id)
         return back();
     }
 
+    // --- 10. STREAM INVOICE PDF FOR CUSTOMER ---
+    public function streamInvoice($id)
+    {
+        // 1. Find booking owned by this customer
+        $booking = Booking::with(['customer', 'vehicle', 'payment', 'voucher'])
+                    ->where('customerID', Auth::id())
+                    ->findOrFail($id);
+
+        // 2. Security Check: Only allow if Completed
+        if ($booking->bookingStatus !== 'Completed') {
+            return back()->with('error', 'Invoice is only generated for Completed bookings.');
+        }
+
+        // 3. Generate and Stream
+        $pdf = Pdf::loadView('pdf.invoice', compact('booking'));
+        return $pdf->stream('Invoice-' . $booking->bookingID . '.pdf');
+    }
 }

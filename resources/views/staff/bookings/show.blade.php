@@ -209,7 +209,8 @@
                             </div>
                         </div>
                         
-                        <div class="grid grid-cols-2 gap-2">
+                        <div class="grid grid-cols-3 gap-2"> {{-- Changed from grid-cols-2 to grid-cols-3 --}}
+                            
                             {{-- Receipt --}}
                             @if($booking->payment && $booking->payment->installmentDetails)
                                 <a href="{{ asset('storage/' . $booking->payment->installmentDetails) }}" target="_blank" class="flex flex-col items-center justify-center bg-blue-50 border border-blue-200 text-blue-700 py-2 rounded-lg text-xs font-bold hover:bg-blue-100 transition text-center h-full">
@@ -229,6 +230,17 @@
                             @else
                                 <div class="flex flex-col items-center justify-center bg-gray-50 border border-gray-200 text-gray-400 py-2 rounded-lg text-xs font-bold text-center h-full opacity-60">
                                     <i class="fas fa-times mb-1 text-lg"></i> No Doc
+                                </div>
+                            @endif
+
+                            {{-- Invoice (NEW) --}}
+                            @if($booking->bookingStatus == 'Completed')
+                                <a href="{{ route('staff.bookings.invoice', $booking->bookingID) }}" target="_blank" class="flex flex-col items-center justify-center bg-emerald-50 border border-emerald-200 text-emerald-700 py-2 rounded-lg text-xs font-bold hover:bg-emerald-100 transition text-center h-full">
+                                    <i class="fas fa-file-invoice mb-1 text-lg"></i> Invoice
+                                </a>
+                            @else
+                                <div class="flex flex-col items-center justify-center bg-gray-50 border border-gray-200 text-gray-400 py-2 rounded-lg text-xs font-bold text-center h-full opacity-60" title="Available after completion">
+                                    <i class="fas fa-clock mb-1 text-lg"></i> Invoice
                                 </div>
                             @endif
                         </div>

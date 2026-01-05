@@ -95,6 +95,8 @@ Route::middleware('auth')->group(function () {
 
 
     Route::post('/notifications/mark-read', [App\Http\Controllers\BookingController::class, 'markNotificationsRead'])->name('notifications.markRead');
+
+    Route::get('/book/invoice/{id}', [BookingController::class, 'streamInvoice'])->name('book.invoice');
 });
 
  // <--- PENUTUP UNTUK CUSTOMER AUTH (JANGAN PADAM)
@@ -196,5 +198,5 @@ Route::prefix('staff')->middleware(['auth:staff'])->group(function () {
     Route::get('/reports', [App\Http\Controllers\ReportController::class, 'index'])->name('staff.reports.index');
     Route::post('/reports/export', [App\Http\Controllers\ReportController::class, 'exportToDrive'])->name('staff.reports.export');
 
-    
+    Route::get('/bookings/{id}/invoice', [StaffBookingController::class, 'streamInvoice'])->name('staff.bookings.invoice');
 });

@@ -185,7 +185,16 @@
                             </button>
                         </div>
                     @endif
-
+                    
+                    {{-- 3. INVOICE BUTTON (NEW) --}}
+                    @if($booking->bookingStatus == 'Completed')
+                        <div class="border-t border-white/10 pt-4 mt-2">
+                            <a href="{{ route('book.invoice', $booking->bookingID) }}" target="_blank" 
+                               class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-3 rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 shadow-lg">
+                                <i class="fas fa-file-invoice-dollar"></i> View Invoice
+                            </a>
+                        </div>
+                    @endif
                 </div>
             @empty
                 {{-- Empty State --}}
