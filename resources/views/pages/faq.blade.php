@@ -16,7 +16,6 @@
         </div>
     </div>
 
-<<<<<<< HEAD
     
     {{-- Navigation Pill --}}
         <div class="flex justify-center animate-fade-in-up">

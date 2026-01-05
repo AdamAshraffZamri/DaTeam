@@ -38,79 +38,107 @@ class LoyaltyController extends Controller
     $vouchers = Voucher::where(function($query) use ($userId) {
             $query->where('user_id', $userId)->orWhere('customerID', $userId);
         })
+        ->where('status', 'active') // Check status active
         ->where('isUsed', false)
         ->whereDate('validUntil', '>=', now())
         ->get();
 
-    // 4. PROGRESS BAR LOGIC - Setiap 3 completed booking = 1 reward
-    $totalCompleted = Booking::where('customerID', $userId)
+    // 4. PROGRESS BAR LOGIC (Yang baru update tadi)
+    $allBookings = Booking::where('customerID', $userId)
         ->where('bookingStatus', 'Completed')
-        ->count();
+        ->get();
 
-    $currentInCycle = $totalCompleted % 3;                    // 0, 1 atau 2
-    $progressPercent = round(($currentInCycle / 3) * 100, 2);  // 0, 33.33, 66.67
-    $bookingsNeeded = 3 - $currentInCycle;                     // berapa lagi kena book
-    $nextReward = "10% OFF Rental Voucher";
+    // Filter: Hanya kira booking yang tempoh > 9 jam
+    $qualifiedBookingsCount = $allBookings->filter(function ($booking) {
+        $start = \Carbon\Carbon::parse($booking->pickupDate);
+        $end = \Carbon\Carbon::parse($booking->returnDate);
+        return $start->diffInHours($end) > 9;
+    })->count();
+
+    // Logic Cycle 12 Steps
+    $cycleSize = 12;
+    $currentInCycle = $qualifiedBookingsCount % $cycleSize; 
+    
+    if ($currentInCycle < 3) {
+        $nextReward = "20% OFF";
+        $targetStep = 3;
+    } elseif ($currentInCycle < 6) {
+        $nextReward = "50% OFF";
+        $targetStep = 6;
+    } elseif ($currentInCycle < 9) {
+        $nextReward = "70% OFF";
+        $targetStep = 9;
+    } else {
+        $nextReward = "Free Half Day";
+        $targetStep = 12;
+    }
+
+    $bookingsNeeded = $targetStep - $currentInCycle;
+    $progressPercent = ($currentInCycle / $cycleSize) * 100;
+
+    // --- JANGAN LETAK RETURN KAT SINI! ---
+    // (Awak ter-return kat sini tadi, so code bawah ni tak jalan)
 
     // 5. Rankings
+    $userRank = LoyaltyPoint::where('points', '>', $loyalty->points)->count() + 1;
+    $totalUsers = LoyaltyPoint::count();
+    
+    // (Optional) Kalau nak list top 10 rankings
     $rankings = LoyaltyPoint::with('customer')
         ->orderByDesc('points')
         ->take(10)
         ->get();
 
-    $userRank = LoyaltyPoint::where('points', '>', $loyalty->points)->count() + 1;
-    $totalUsers = LoyaltyPoint::count();
-
-    // 6. Rewards List (hardcoded)
+    // 6. Rewards List (Hardcoded)
+    // Variable ni yang hilang tadi sebab code stop awal
     $rewards = [
         [
-            'id' => 'zus_coffee',
-            'name' => 'ZUS COFFEE', 
-            'offer' => '10% OFF Discount',
-            'points' => 150, // Updated to 150 as per text
-            'code' => 'ZXSOD102263',
-            'duration' => 2, // months
-            'icon' => 'fa-coffee',
-            'color' => 'bg-blue-600/20 border-blue-500/30'
+            'id' => 'sedap_kitchen',
+            'name' => 'SEDAP KITCHEN', 
+            'offer' => 'RM 5 OFF Discount',
+            'points' => 200,
+            'code' => 'SDKTN102478',
+            'duration' => 3, 
+            'icon' => 'fa-solid fa-utensils',
+            'color' => 'bg-yellow-600/20 border-yellow-500/30'
         ],
         [
-            'id' => 'tealive',
-            'name' => 'TEALIVE', 
-            'offer' => 'BUY 2 FREE 1',
-            'points' => 300, 
-            'code' => 'TLOMN102356',
-            'duration' => 2, 
-            'icon' => 'fa-mug-hot',
-            'color' => 'bg-purple-600/20 border-purple-500/30'
+            'id' => 'pak_atong',
+            'name' => 'PAK ATONG', 
+            'offer' => 'RM5 Off Discount',
+            'points' => 200, 
+            'code' => 'PKATNG102589',
+            'duration' => 3, 
+            'icon' => 'fa-solid fa-utensils',
+            'color' => 'bg-black-600/20 border-gray-500/30' // Betulkan typo grey -> gray
         ],
         [
-            'id' => 'grab',
-            'name' => 'GRAB FOOD', 
-            'offer' => 'FREE DELIVERY',
-            'points' => 750, 
-            'code' => 'GRB12903X01',
-            'duration' => 4, 
-            'icon' => 'fa-utensils',
-            'color' => 'bg-green-600/20 border-green-500/30'
+            'id' => 'restoran_rafi',
+            'name' => 'RESTORAN RAFI', 
+            'offer' => 'RM5 Off Discount',
+            'points' => 200, 
+            'code' => 'RSTRN102690',
+            'duration' => 3, 
+            'icon' => 'fa-solid fa-utensils',
+            'color' => 'bg-green-600/20 border-green-500/30' // Betulkan typo color class
         ],
         [
-            'id' => 'tgv',
-            'name' => 'TGV CINEMAS', 
-            'offer' => '50% OFF FOOD',
-            'points' => 1000, 
-            'code' => 'TGV00DJ812',
-            'duration' => 8, 
-            'icon' => 'fa-film',
+            'id' => 'pak_lah',
+            'name' => 'PAK LAH', 
+            'offer' => 'RM5 off Discount',
+            'points' => 200, 
+            'code' => 'PKLH102791',
+            'duration' => 3, 
+            'icon' => 'fa-solid fa-utensils',
             'color' => 'bg-red-600/20 border-red-500/30'
         ],
-
     ];
 
-    // RETURN SEKALI SAHAJA - semua variable dalam satu compact
+    // FINAL RETURN (Satu-satunya pintu keluar)
     return view('loyalty.index', compact(
         'loyalty',
         'vouchers',
-        'totalCompleted',
+        'qualifiedBookingsCount', // Saya tukar dari totalCompleted sbb kita guna qualified logic
         'currentInCycle',
         'progressPercent',
         'bookingsNeeded',

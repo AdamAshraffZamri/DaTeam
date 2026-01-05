@@ -47,13 +47,7 @@
                             </div>
                             <h2 class="text-2xl font-black text-white">Loyalty Status</h2>
                         </div>
-<<<<<<< HEAD
                         
-=======
-                        <span class="bg-orange-400/20 text-orange-400 px-4 py-1.5 rounded-full border border-orange-500/30 text-[10px] font-black uppercase tracking-widest">
-                            {{ ucfirst($loyalty->tier ?? 'Bronze') }} Member
-                        </span>
->>>>>>> origin/testmerge
                     </div>
 
                     <div class="space-y-4">
