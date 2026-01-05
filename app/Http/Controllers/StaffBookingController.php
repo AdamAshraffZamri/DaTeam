@@ -8,6 +8,9 @@ use App\Models\Staff;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Notifications\BookingStatusUpdated;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Storage;
 
 class StaffBookingController extends Controller
 {
@@ -139,6 +142,26 @@ class StaffBookingController extends Controller
         }
         $loyaltyController = new \App\Http\Controllers\LoyaltyController();
         $loyaltyController->bookingCompleted($id);
+
+        try {
+            $pdf = Pdf::loadView('pdf.invoice', compact('booking'));
+            
+            // 1. (Optional) Save to storage
+            // Storage::put('public/invoices/INV-' . $booking->bookingID . '.pdf', $pdf->output());
+
+            // 2. Email to Customer
+            Mail::send([], [], function ($message) use ($booking, $pdf) {
+                $message->to($booking->customer->email)
+                        ->subject('Invoice for Booking #' . $booking->bookingID)
+                        ->attachData($pdf->output(), 'Invoice-'.$booking->bookingID.'.pdf', [
+                            'mime' => 'application/pdf',
+                        ]);
+            });
+
+        } catch (\Exception $e) {
+            \Log::error("Failed to send invoice: " . $e->getMessage());
+            // We don't stop the return process if email fails, just log it.
+        }
         return back()->with('success', 'Vehicle returned & Loyalty Points Awarded.');
     }
     public function processRefund(Request $request, $id) {

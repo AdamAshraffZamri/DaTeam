@@ -8,6 +8,8 @@ use App\Models\Penalties;
 use App\Models\Payment;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Facades\Mail;
 
 class InspectionController extends Controller
 {
@@ -105,7 +107,22 @@ class InspectionController extends Controller
                 'actualReturnDate' => now()->toDateString(),
                 'actualReturnTime' => now()->toTimeString(),
             ]);
-
+            try {
+                // Ensure we have relationships loaded
+                $booking->load(['customer', 'vehicle', 'payment']);
+                
+                $pdf = Pdf::loadView('pdf.invoice', compact('booking'));
+                
+                Mail::send([], [], function ($message) use ($booking, $pdf) {
+                    $message->to($booking->customer->email)
+                            ->subject('Invoice for Booking #' . $booking->bookingID)
+                            ->attachData($pdf->output(), 'Invoice-'.$booking->bookingID.'.pdf', [
+                                'mime' => 'application/pdf',
+                            ]);
+                });
+            } catch (\Exception $e) {
+                \Log::error("Failed to send invoice from Inspection: " . $e->getMessage());
+            }
             $damage = $request->input('damageCosts', 0);
 
             // --- CRITICAL LINKING LOGIC ---

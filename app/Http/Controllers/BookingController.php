@@ -364,13 +364,32 @@ public function submitPayment(Request $request, $id)
         $booking = new Booking();
         $booking->bookingID = "PENDING"; 
         $booking->aggreementDate = now();
-        $booking->pickupLocation = $request->pickup_location;
-        $booking->returnLocation = $request->return_location;
+        
+        // Fill details from Request
+        $booking->originalDate = $request->pickup_date; // Use originalDate column name
+        $booking->bookingTime = $request->pickup_time;
         $booking->returnDate = $request->return_date;
         $booking->returnTime = $request->return_time;
+        $booking->pickupLocation = $request->pickup_location;
+        $booking->returnLocation = $request->return_location;
         
+        // Set Relations
         $booking->setRelation('customer', $user);
         $booking->setRelation('vehicle', $vehicle);
+
+        // --- FIX: CALCULATE PRICE FOR PREVIEW ---
+        // We reuse the private method logic
+        $rentalCharge = $this->calculateRentalPrice(
+            $vehicle,
+            $request->pickup_date,
+            $request->pickup_time,
+            $request->return_date,
+            $request->return_time
+        );
+        
+        // Don't forget to add Base Deposit for "Grand Total"
+        // (Assuming Grand Total = Rental + Deposit, based on payment method)
+        $booking->totalCost = $rentalCharge + $vehicle->baseDepo;
 
         return view('bookings.agreement', compact('booking'));
     }
