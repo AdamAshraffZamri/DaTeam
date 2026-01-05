@@ -1,5 +1,4 @@
 @extends('layouts.staff')
-@section('title', 'Staff Management')
 
 @section('content')
 <div class="flex justify-between items-center mb-6">

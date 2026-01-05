@@ -157,7 +157,7 @@
         <div class="flex-1 flex flex-col h-screen overflow-hidden md:ml-64">
             
             <header class="h-20 bg-gray-100 border-b border-gray-100 flex justify-between items-center px-8 sticky top-0 z-10">
-                <h2 class="text-2xl font-bold text-gray-800">@yield('title', 'Staff Overview')</h2>
+                <h2 class="text-2xl font-medium text-gray-800">@yield('title', 'Staff Overview')</h2>
                 
                 <div class="flex items-center space-x-6">
 

@@ -1,5 +1,4 @@
 @extends('layouts.staff')
-@section('title', 'Add New Staff')
 
 @section('content')
 <div class="max-w-2xl mx-auto bg-white p-8 rounded-xl shadow-sm border border-gray-100">

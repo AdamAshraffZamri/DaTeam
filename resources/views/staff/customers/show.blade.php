@@ -1,7 +1,5 @@
 @extends('layouts.staff')
 
-@section('title', 'Customer Details')
-
 @section('content')
 <div x-data="{ 
     showRejectModal: false, 
