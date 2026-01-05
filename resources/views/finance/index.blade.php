@@ -81,6 +81,17 @@
                                 </div>
                             </div>
 
+                            @if($claim->remarks)
+                                <div class="bg-white/5 p-3 rounded-xl border border-white/10 mb-4">
+                                    <p class="text-[10px] font-bold text-blue-400 uppercase mb-1">
+                                        <i class="fas fa-info-circle mr-1"></i> Notes / Deduction Details
+                                    </p>
+                                    <p class="text-xs text-gray-300 italic leading-relaxed whitespace-pre-line">
+                                        {{ $claim->remarks }}
+                                    </p>
+                                </div>
+                            @endif
+
                             <div class="flex justify-end">
                                 @if($claim->payment && $claim->payment->depoStatus === 'Requested')
                                     <span class="bg-yellow-500/20 text-yellow-400 px-4 py-2 rounded-xl text-xs font-bold border border-yellow-500/30 animate-pulse">

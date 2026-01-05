@@ -415,11 +415,9 @@
 
                         {{-- STEP 4: CANCELLATIONS --}}
                         @elseif($booking->bookingStatus == 'Cancelled' && $booking->payment && $booking->payment->depoStatus == 'Requested')
-                            <form action="{{ route('staff.bookings.refund', $booking->bookingID) }}" method="POST" onsubmit="return confirm('Issue refund to customer?');">@csrf
-                                <button class="bg-red-500 hover:bg-red-600 text-white px-6 py-3 rounded-xl font-bold transition shadow-lg shadow-red-500/20 flex items-center">
-                                    <i class="fas fa-hand-holding-usd mr-2"></i> Approve Refund
-                                </button>
-                            </form>
+                            <button onclick="document.getElementById('refund-modal').classList.remove('hidden')" class="bg-emerald-500 hover:bg-emerald-600 text-white px-6 py-3 rounded-xl font-bold transition shadow-lg shadow-emerald-500/20 flex items-center">
+                                <i class="fas fa-hand-holding-usd mr-2"></i> Process Refund
+                            </button>
                         @endif
                     </div>
                 </div>
@@ -499,6 +497,41 @@
 
             <button type="submit" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded-xl shadow-lg transition">
                 Confirm Rejection
+            </button>
+        </form>
+    </div>
+</div>
+{{-- REFUND MODAL --}}
+<div id="refund-modal" class="fixed inset-0 z-50 hidden bg-black/80 flex items-center justify-center p-4 backdrop-blur-sm">
+    <div class="bg-white rounded-2xl w-full max-w-md p-6 shadow-2xl border border-gray-100">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="font-bold text-gray-900 text-lg flex items-center">
+                <i class="fas fa-hand-holding-usd text-emerald-600 mr-2"></i> Process Refund
+            </h3>
+            <button onclick="document.getElementById('refund-modal').classList.add('hidden')" class="text-gray-400 hover:text-gray-900"><i class="fas fa-times"></i></button>
+        </div>
+        
+        <form action="{{ route('staff.bookings.refund', $booking->bookingID) }}" method="POST">
+            @csrf
+            
+            {{-- Info Box --}}
+            <div class="bg-blue-50 border border-blue-100 rounded-xl p-4 mb-4">
+                <p class="text-xs text-blue-800 font-bold mb-1">
+                    <i class="fas fa-info-circle mr-1"></i> Refund Policy
+                </p>
+                <p class="text-xs text-blue-700 leading-relaxed">
+                    If you are deducting any amount (e.g. for damages, late fees, or cancellation policy), please explain clearly in the remarks below. This will be recorded in the booking details.
+                </p>
+            </div>
+
+            {{-- Remarks Input --}}
+            <div class="mb-6">
+                <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Remarks / Deduction Reason</label>
+                <textarea name="refund_remarks" rows="3" class="w-full border border-gray-300 rounded-lg p-3 text-sm focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none placeholder-gray-400" placeholder="e.g. Full refund issued via Transfer... OR RM50 deducted for cleaning fee..."></textarea>
+            </div>
+
+            <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl shadow-lg transition flex items-center justify-center gap-2">
+                <i class="fas fa-check-circle"></i> Confirm Refund
             </button>
         </form>
     </div>

@@ -400,6 +400,21 @@
                         </div>
                     </div>
                 @endif    
+
+                {{-- NOTES / REFUND REMARKS (NEW SECTION) --}}
+                @if($booking->bookingStatus != 'Rejected' && $booking->remarks)
+                    <div class="bg-white/5 border border-white/10 rounded-2xl p-4 flex items-start gap-4">
+                        <div class="bg-blue-500/20 text-blue-400 rounded-full p-2 mt-0.5 shrink-0">
+                            <i class="fas fa-info"></i>
+                        </div>
+                        <div>
+                            <h4 class="text-blue-300 font-bold uppercase text-xs tracking-wider mb-1">Notes / Remarks</h4>
+                            <div class="text-gray-300 text-sm leading-relaxed whitespace-pre-line">
+                                {{ $booking->remarks }}
+                            </div>
+                        </div>
+                    </div>
+                @endif
                 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-7">
                         {{-- LEFT COLUMN: Dates & Person In Charge --}}

@@ -412,6 +412,14 @@
     });
 </script>
 
+<!-- Flash error message script -->
+<script>
+    @if(session('error'))
+        alert("{{ session('error') }}");
+    @endif
+</script>
+
+<!-- Custom animation keyframes -->
 <style>
     @keyframes shine {
         100% { transform: translateX(100%); }

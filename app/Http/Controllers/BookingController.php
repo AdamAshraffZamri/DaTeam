@@ -323,10 +323,22 @@ public function submitPayment(Request $request, $id)
     public function cancel($id)
     {
         $booking = Booking::where('customerID', Auth::id())->findOrFail($id);
-        $allowedStatuses = ['Submitted', 'Deposit Paid', 'Paid', 'Approved'];
+        $allowedStatuses = ['Submitted', 'Deposit Paid', 'Paid', 'Confirmed'];
 
         if (in_array($booking->bookingStatus, $allowedStatuses)) {
+            // 24-Hour Rule
+            if ($booking->bookingStatus == 'Confirmed') {
+                $pickupTime = Carbon::parse($booking->originalDate . ' ' . $booking->bookingTime);
+                
+                if (now()->addDay()->gt($pickupTime)) {
+                    // This sends the 'error' session to the view
+                    return back()->with('error', 'Too late to cancel! Confirmed bookings must be cancelled at least 24 hours before pickup.');
+                }
+            }
+            
             $booking->update(['bookingStatus' => 'Cancelled']);
+            
+            // This sends the 'success' session
             return redirect()->route('finance.index')
                 ->with('success', 'Booking cancelled. Please check "Claimable" section to request your refund.');
         }

@@ -43,7 +43,7 @@ class StaffBookingController extends Controller
         if ($request->filled('status') && $request->status != 'all') {
             $query->where('bookingStatus', $request->status);
         }
-        
+
         // Search Logic
         if ($request->filled('search')) {
             $term = $request->search;
@@ -141,12 +141,32 @@ class StaffBookingController extends Controller
         $loyaltyController->bookingCompleted($id);
         return back()->with('success', 'Vehicle returned & Loyalty Points Awarded.');
     }
-    public function processRefund($id) {
+    public function processRefund(Request $request, $id) {
         $booking = Booking::findOrFail($id);
+        
         if ($booking->payment && $booking->payment->depoStatus == 'Requested') {
-            $booking->payment->update(['depoStatus' => 'Refunded', 'paymentStatus' => 'Refund Completed']);
-            return back()->with('success', 'Refund issued.');
+            
+            // 1. Handle Remarks (if provided)
+            if ($request->filled('refund_remarks')) {
+                $oldRemarks = $booking->remarks ? $booking->remarks . "\n\n" : "";
+                // Add a timestamped note
+                $refundNote = "[REFUND " . now()->format('d/m/y H:i') . "]: " . $request->refund_remarks;
+                $booking->update(['remarks' => $oldRemarks . $refundNote]);
+            }
+
+            // 2. Update Status
+            $booking->payment->update([
+                'depoStatus' => 'Refunded', 
+                'paymentStatus' => 'Refund Completed',
+                'depoRefundedDate' => now()
+            ]);
+            
+            // 3. Notify Customer (Optional: Pass remarks to notification if your notification class supports it)
+            // $booking->customer->notify(new \App\Notifications\BookingStatusUpdated($booking, "Your refund has been processed."));
+
+            return back()->with('success', 'Refund issued successfully.');
         }
+        
         return back()->with('error', 'Error processing refund.');
     }
     public function storeInspection(Request $request, $id) {
