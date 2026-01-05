@@ -43,4 +43,5 @@ Thumbs.db
 !/public/storage/vehicles/
 !/public/storage/vehicles/*
 
+# --- IGNORE ---
 /storage/app/google-drive/*

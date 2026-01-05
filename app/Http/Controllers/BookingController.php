@@ -34,7 +34,7 @@ class BookingController extends Controller
         $query->whereMonth('bookingDate', Carbon::parse($request->date)->month);
     }
 
-    $bookings = $query->orderBy('bookingDate', 'desc')->get();
+    $bookings = $query->orderBy('originalDate', 'desc')->get();
 
         return view('bookings.index', compact('bookings'));
     }
@@ -76,7 +76,22 @@ class BookingController extends Controller
         }
         
         // If checks pass, proceed to booking page
-        return view('bookings.create'); 
+        $today = Carbon::today();
+    
+        $vehicles = Vehicle::where('availability', true)
+            ->whereDoesntHave('bookings', function ($q) use ($today) {
+                // Exclude cars that have active bookings overlapping with "today"
+                $q->whereIn('bookingStatus', ['Submitted', 'Deposit Paid', 'Paid', 'Approved', 'Active'])
+                ->where(function ($sub) use ($today) {
+                    $sub->whereDate('originalDate', '<=', $today)
+                        ->whereDate('returnDate', '>=', $today);
+                });
+            })
+            ->orderBy('priceHour', 'asc')
+            ->get();
+
+        // Pass $vehicles to the view
+        return view('bookings.create', compact('vehicles')); 
     }
 
     // --- 3. SEARCH RESULTS (UPDATED) ---
@@ -122,7 +137,20 @@ class BookingController extends Controller
 
     // --- 6. Execute Query ---
     $vehicles = $query->get();
+    $vehicles = $vehicles->filter(function($vehicle) use ($pickup, $return) {
+            $blockedDates = $vehicle->blocked_dates ?? []; 
+            $start = Carbon::parse($pickup);
+            $end = Carbon::parse($return);
 
+            foreach($blockedDates as $date) {
+                $blocked = Carbon::parse($date);
+                // If a blocked date falls inside the requested range, remove vehicle
+                if($blocked->between($start, $end)) {
+                    return false; 
+                }
+            }
+            return true; 
+        });
     return view('bookings.search_results', compact('vehicles'));
 }
 
@@ -179,7 +207,7 @@ public function submitPayment(Request $request, $id)
     // 1. Validation
     $request->validate([
         'payment_proof' => 'required|image|max:2048',
-        'agreement_proof' => 'required|file|mimes:pdf,jpg,jpeg,png|max:2048',
+        'agreement_proof' => 'required|file|mimes:pdf|max:4048',
         'payment_type' => 'required|in:full,deposit',
     ]);
 
@@ -295,10 +323,22 @@ public function submitPayment(Request $request, $id)
     public function cancel($id)
     {
         $booking = Booking::where('customerID', Auth::id())->findOrFail($id);
-        $allowedStatuses = ['Submitted', 'Deposit Paid', 'Paid', 'Approved'];
+        $allowedStatuses = ['Submitted', 'Deposit Paid', 'Paid', 'Confirmed'];
 
         if (in_array($booking->bookingStatus, $allowedStatuses)) {
+            // 24-Hour Rule
+            if ($booking->bookingStatus == 'Confirmed') {
+                $pickupTime = Carbon::parse($booking->originalDate . ' ' . $booking->bookingTime);
+                
+                if (now()->addDay()->gt($pickupTime)) {
+                    // This sends the 'error' session to the view
+                    return back()->with('error', 'Too late to cancel! Confirmed bookings must be cancelled at least 24 hours before pickup.');
+                }
+            }
+            
             $booking->update(['bookingStatus' => 'Cancelled']);
+            
+            // This sends the 'success' session
             return redirect()->route('finance.index')
                 ->with('success', 'Booking cancelled. Please check "Claimable" section to request your refund.');
         }
@@ -366,6 +406,10 @@ public function submitPayment(Request $request, $id)
         $request->validate([
             'photos' => 'required',
             'photos.*' => 'image|max:4048', // Allow multiple images
+            'fuel_level' => 'required',
+                'mileage' => 'required|numeric',
+            ], [
+                'photos.size' => "You must upload exactly $requiredCount photos for $typeName."
         ]);
 
         

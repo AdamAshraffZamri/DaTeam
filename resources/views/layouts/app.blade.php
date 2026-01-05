@@ -25,6 +25,57 @@
             box-shadow: 0 10px 15px -3px rgba(234, 88, 12, 0.3);
             transform: scale(1.05);
         }
+
+        /* Reminder Banner Animations */
+        @keyframes shine {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+        @keyframes bounce-subtle {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
+        }
+        @keyframes pulse-slow {
+            0%, 100% { opacity: 0.6; }
+            50% { opacity: 1; }
+        }
+        @keyframes banner-wiggle {
+            0%, 100% { transform: rotate(-5deg); }
+            50% { transform: rotate(5deg); }
+        }
+        .animate-shine { animation: shine 4s ease-in-out infinite; }
+        .animate-bounce-subtle { animation: bounce-subtle 2s ease-in-out infinite; }
+        .animate-pulse-slow { animation: pulse-slow 3s ease-in-out infinite; }
+        .animate-banner-wiggle { animation: banner-wiggle 0.5s ease-in-out infinite; }
+
+        /* Help Button Animations */
+        @keyframes bounce-slow {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        @keyframes help-wiggle {
+            0%, 100% { transform: rotate(-3deg); }
+            50% { transform: rotate(3deg); }
+        }
+        @keyframes float-1 {
+            0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.7; }
+            33% { transform: translate(10px, -15px) scale(1.5); opacity: 1; }
+            66% { transform: translate(-5px, -25px) scale(0.8); opacity: 0.5; }
+        }
+        @keyframes float-2 {
+            0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.7; }
+            33% { transform: translate(-15px, -10px) scale(1.3); opacity: 1; }
+            66% { transform: translate(5px, -20px) scale(0.9); opacity: 0.6; }
+        }
+        @keyframes float-3 {
+            0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.6; }
+            50% { transform: translate(-20px, 10px) scale(1.4); opacity: 1; }
+        }
+        .animate-bounce-slow { animation: bounce-slow 2s ease-in-out infinite; }
+        .animate-help-wiggle { animation: help-wiggle 1s ease-in-out infinite; }
+        .animate-float-1 { animation: float-1 3s ease-in-out infinite; }
+        .animate-float-2 { animation: float-2 3.5s ease-in-out infinite; }
+        .animate-float-3 { animation: float-3 4s ease-in-out infinite; }
     </style>
 </head>
 <body class="bg-gray-50 flex flex-col min-h-screen font-sans antialiased overflow-x-hidden">
@@ -84,7 +135,6 @@
                             <span class="text-sm font-bold hidden sm:block group-hover:text-orange-100 transition">{{ Auth::user()->name }}</span>
                         </a>
                         
-                        {{-- Logout Button --}}
                         <form action="{{ route('logout') }}" method="POST" class="inline">
                             @csrf
                             <button type="submit" class="text-sm font-bold bg-white/20 hover:bg-white/30 px-4 py-1 rounded-full transition text-white shadow-sm border border-white/10 hover:shadow-md">
@@ -99,10 +149,7 @@
         </div>
     </nav>
 
-    {{-- Updated Condition: Hide this Layout Pill Bar on Home AND About pages (since they have their own) --}}
     @if(!request()->routeIs('home') && !request()->routeIs('pages.about') && !request()->routeIs('pages.contact') && !request()->routeIs('login') && !request()->routeIs('staff.login') && !request()->routeIs('register') && !request()->routeIs('password.*') && !request()->routeIs('pages.faq'))
-
-
         <div class="w-full flex justify-center py-6 relative z-40">
             <div class="bg-white/10 backdrop-blur-md border border-white/20 rounded-full p-1.5 flex items-center shadow-2xl">
                 <a href="{{ route('book.create') }}" 
@@ -124,108 +171,182 @@
             </div>
         </div>
     @endif
-        <button onclick="document.getElementById('help-modal').classList.remove('hidden')" class="fixed bottom-6 right-6 bg-gradient-to-r from-blue-600 to-blue-500 text-white p-4 rounded-full shadow-[0_0_20px_rgba(37,99,235,0.5)] hover:scale-110 transition z-50 border border-white/20">
-            <i class="fas fa-question text-xl animate-bounce"></i>
-        </button>
 
-<div id="help-modal" class="fixed inset-0 z-[9999] hidden bg-black/90 backdrop-blur-sm flex items-center justify-center p-4">
-    <div class="bg-gray-900 border border-white/10 rounded-2xl max-w-lg w-full p-6 relative shadow-2xl">
-        <button onclick="document.getElementById('help-modal').classList.add('hidden')" class="absolute top-4 right-4 text-gray-400 hover:text-white transition">
-            <i class="fas fa-times text-xl"></i>
-        </button>
-        
-        <h3 class="text-xl font-bold text-white mb-6 flex items-center gap-2">
-            <i class="fas fa-info-circle text-orange-500"></i> How to Rent
-        </h3>
-        
-        <ul class="space-y-5 text-sm text-gray-300 max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar">
-            {{-- Step 1 --}}
-            <li class="flex gap-4">
-                <span class="bg-orange-500 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">1</span>
-                <div>
-                    <span class="block font-bold text-white">Complete Profile</span>
-                    <span class="text-xs text-gray-400">Update your details with a valid driving license and ID/Passport.</span>
-                </div>
-            </li>
-            
-            {{-- Step 2 --}}
-            <li class="flex gap-4">
-                <span class="bg-orange-500 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">2</span>
-                <div>
-                    <span class="block font-bold text-white">Book a Vehicle</span>
-                    <span class="text-xs text-gray-400">Select dates and car. (every car will have 1 day cooldown time for each booking).</span>
-                </div>
-            </li>
+    <button onclick="document.getElementById('help-modal').classList.remove('hidden')" 
+            class="fixed bottom-6 right-6 bg-gradient-to-br from-orange-500 via-red-500 to-pink-600 text-white p-5 rounded-2xl shadow-[0_0_40px_rgba(234,88,12,0.6)] hover:shadow-[0_0_60px_rgba(234,88,12,0.9)] hover:scale-125 hover:rotate-12 transition-all duration-500 z-[99999] border-2 border-white/30 group cursor-pointer animate-bounce-slow backdrop-blur-sm overflow-hidden"
+            style="position: fixed !important;">
+        <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -skew-x-12 translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-1000"></div>
+        <div class="absolute inset-0 rounded-2xl bg-orange-500/50 animate-ping opacity-0 group-hover:opacity-75"></div>
+        <i class="fas fa-question text-2xl relative z-10 group-hover:scale-125 group-hover:rotate-[360deg] transition-all duration-700 drop-shadow-lg"></i>
+        <span class="absolute -top-10 -left-5 bg-gradient-to-r from-yellow-300 to-orange-400 text-orange-900 text-[11px] font-black px-3 py-1 rounded-full shadow-lg animate-help-wiggle group-hover:scale-110 group-hover:-rotate-6 transition-all duration-300 border-2 border-white z-20">
+            How to rent? 🔥
+        </span>
+        <div class="absolute -top-1 -right-1 w-2 h-2 bg-yellow-300 rounded-full animate-float-1 opacity-70"></div>
+        <div class="absolute -bottom-1 -left-1 w-2 h-2 bg-pink-300 rounded-full animate-float-2 opacity-70"></div>
+        <div class="absolute top-1/2 -right-2 w-1.5 h-1.5 bg-orange-300 rounded-full animate-float-3 opacity-60"></div>
+    </button>
 
-            {{-- Step 3 --}}
-            <li class="flex gap-4">
-                <span class="bg-orange-500 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">3</span>
-                <div>
-                    <span class="block font-bold text-white">Make Payment</span>
-                    <span class="text-xs text-gray-400">Pay the Deposit or Full Amount within 30 minutes to secure your slot.</span>
+    <div id="help-modal" class="fixed inset-0 z-[10000] hidden bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
+        <div class="bg-[#1a1a1a] border border-white/10 rounded-[2.5rem] max-w-lg w-full p-8 relative shadow-2xl overflow-hidden">
+            <div class="absolute -top-24 -right-24 w-48 h-48 bg-orange-600/20 blur-[80px] rounded-full"></div>
+            <button onclick="document.getElementById('help-modal').classList.add('hidden')" class="absolute top-6 right-6 text-gray-500 hover:text-white transition">
+                <i class="fas fa-times text-xl"></i>
+            </button>
+            <div class="mb-8">
+                <h3 class="text-3xl font-black text-white tracking-tighter">Rental <span class="text-orange-500">Journey</span></h3>
+                <p class="text-gray-400 text-sm mt-1">Follow these steps for a smooth experience.</p>
+            </div>
+            <div class="relative space-y-8 max-h-[65vh] overflow-y-auto pr-4 custom-scrollbar">
+                <div class="absolute left-[15px] top-2 bottom-2 w-0.5 bg-gradient-to-b from-orange-500 via-blue-500 to-emerald-500 opacity-20"></div>
+                <div class="relative flex gap-6 group">
+                    <div class="z-10 w-8 h-8 rounded-full bg-orange-500 text-white flex items-center justify-center shadow-[0_0_15px_rgba(234,88,12,0.4)] shrink-0 transition group-hover:scale-110"><i class="fas fa-user-edit text-[10px]"></i></div>
+                    <div class="bg-white/5 border border-white/10 p-4 rounded-2xl flex-1 hover:bg-white/10 transition">
+                        <h4 class="text-white font-bold text-sm">Complete Profile</h4>
+                        <p class="text-xs text-gray-400 mt-1">Upload a valid driving license and ID/Passport in your profile settings.</p>
+                    </div>
                 </div>
-            </li>
-
-            {{-- Step 4 --}}
-            <li class="flex gap-4">
-                <span class="bg-orange-500 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">4</span>
-                <div>
-                    <span class="block font-bold text-white">Wait for Approval</span>
-                    <span class="text-xs text-gray-400">Staff will verify your payment and documents. Status changes to "Confirmed".</span>
+                <div class="relative flex gap-6 group">
+                    <div class="z-10 w-8 h-8 rounded-full bg-orange-500 text-white flex items-center justify-center shadow-[0_0_15px_rgba(234,88,12,0.4)] shrink-0 transition group-hover:scale-110"><i class="fas fa-calendar-check text-[10px]"></i></div>
+                    <div class="bg-white/5 border border-white/10 p-4 rounded-2xl flex-1 hover:bg-white/10 transition">
+                        <h4 class="text-white font-bold text-sm">Book a Vehicle</h4>
+                        <p class="text-xs text-gray-400 mt-1">Select your car and dates. Note: Every vehicle has a <span class="text-orange-400">1-day cooldown</span> between bookings.</p>
+                    </div>
                 </div>
-            </li>
-
-            {{-- NEW: Step 5 --}}
-            <li class="flex gap-4">
-                <span class="bg-blue-600 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">5</span>
-                <div>
-                    <span class="block font-bold text-white">Pickup & Inspection</span>
-                    <span class="text-xs text-gray-400">Meet staff at location. Upload <strong>5 photos</strong> (Front, Back, Left, Right, Dashboard) to start rental.</span>
+                <div class="relative flex gap-6 group">
+                    <div class="z-10 w-8 h-8 rounded-full bg-orange-500 text-white flex items-center justify-center shadow-[0_0_15px_rgba(234,88,12,0.4)] shrink-0 transition group-hover:scale-110"><i class="fas fa-wallet text-[10px]"></i></div>
+                    <div class="bg-white/5 border border-white/10 p-4 rounded-2xl flex-1 hover:bg-white/10 transition">
+                        <h4 class="text-white font-bold text-sm">Secure Slot</h4>
+                        <p class="text-xs text-gray-400 mt-1">Pay within <span class="text-orange-400">30 minutes</span> to avoid auto-cancellation.</p>
+                    </div>
                 </div>
-            </li>
-
-            {{-- NEW: Step 6 --}}
-            <li class="flex gap-4">
-                <span class="bg-blue-600 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">6</span>
-                <div>
-                    <span class="block font-bold text-white">Return Vehicle</span>
-                    <span class="text-xs text-gray-400">Return on time. Upload <strong>6 photos</strong> (Views + Key Location). Staff verifies condition.</span>
+                <div class="relative flex gap-6 group">
+                    <div class="z-10 w-8 h-8 rounded-full bg-blue-500 text-white flex items-center justify-center shadow-[0_0_15px_rgba(59,130,246,0.4)] shrink-0 transition group-hover:scale-110"><i class="fas fa-user-shield text-[10px]"></i></div>
+                    <div class="bg-white/5 border border-white/10 p-4 rounded-2xl flex-1 hover:bg-white/10 transition border-l-4 border-l-blue-500">
+                        <h4 class="text-white font-bold text-sm">Staff Verification</h4>
+                        <p class="text-xs text-gray-400 mt-1">Wait for verification. Status changes to <span class="text-green-400">Approved</span>.</p>
+                    </div>
                 </div>
-            </li>
-
-            {{-- NEW: Step 7 --}}
-            <li class="flex gap-4">
-                <span class="bg-green-600 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">7</span>
-                <div>
-                    <span class="block font-bold text-white">Completion & Refund</span>
-                    <span class="text-xs text-gray-400">Once returned, your deposit (if applicable) will be processed for refund.</span>
+                <div class="relative flex gap-6 group">
+                    <div class="z-10 w-8 h-8 rounded-full bg-blue-500 text-white flex items-center justify-center shadow-[0_0_15px_rgba(59,130,246,0.4)] shrink-0 transition group-hover:scale-110"><i class="fas fa-camera text-[10px]"></i></div>
+                    <div class="bg-white/5 border border-white/10 p-4 rounded-2xl flex-1 hover:bg-white/10 transition border-l-4 border-l-blue-500">
+                        <h4 class="text-white font-bold text-sm">Pickup Inspection</h4>
+                        <p class="text-xs text-gray-400 mt-1">Upload <span class="font-bold text-white">5 specific photos</span> to activate your rental.</p>
+                    </div>
                 </div>
-            </li>
-        </ul>
-    </div>
-</div>
-    <main class="flex-grow relative">
-        <div class="container mx-auto px-4">
-            @if(session('success'))
-                <div class="mt-4 bg-green-50 border-l-4 border-green-500 text-green-700 p-4 rounded shadow-sm flex items-center" role="alert">
-                    <i class="fas fa-check-circle text-xl mr-3"></i>
-                    <span class="font-medium">{{ session('success') }}</span>
+                <div class="relative flex gap-6 group">
+                    <div class="z-10 w-8 h-8 rounded-full bg-blue-500 text-white flex items-center justify-center shadow-[0_0_15px_rgba(59,130,246,0.4)] shrink-0 transition group-hover:scale-110"><i class="fas fa-key text-[10px]"></i></div>
+                    <div class="bg-white/5 border border-white/10 p-4 rounded-2xl flex-1 hover:bg-white/10 transition border-l-4 border-l-blue-500">
+                        <h4 class="text-white font-bold text-sm">Return & Key Check</h4>
+                        <p class="text-xs text-gray-400 mt-1">Upload <span class="font-bold text-white">6 photos</span> upon return to end the session.</p>
+                    </div>
                 </div>
-            @endif
-            
-            @if($errors->any() && !request()->routeIs('profile.edit'))
-                <div class="mt-4 bg-red-50 border-l-4 border-red-500 text-red-700 p-4 rounded shadow-sm">
-                    <ul class="list-disc list-inside text-sm">
-                        @foreach ($errors->all() as $error)
-                             <li>{{ $error }}</li>
-                        @endforeach
-                    </ul>
+                <div class="relative flex gap-6 group pb-4">
+                    <div class="z-10 w-8 h-8 rounded-full bg-emerald-500 text-white flex items-center justify-center shadow-[0_0_15px_rgba(16,185,129,0.4)] shrink-0 transition group-hover:scale-110"><i class="fas fa-check-circle text-[10px]"></i></div>
+                    <div class="bg-emerald-500/10 border border-emerald-500/20 p-4 rounded-2xl flex-1 hover:bg-emerald-500/20 transition">
+                        <h4 class="text-emerald-400 font-bold text-sm">Completion</h4>
+                        <p class="text-xs text-gray-300 mt-1">Staff performs final verification and deposit is refunded shortly.</p>
+                    </div>
                 </div>
-            @endif
+            </div>
+            <button onclick="document.getElementById('help-modal').classList.add('hidden')" class="w-full mt-6 py-3 bg-white hover:bg-gray-200 text-black font-black rounded-xl transition text-xs uppercase tracking-widest">Understood</button>
         </div>
+    </div>
 
-        @yield('content')
-    </main>
+    <main class="flex-grow relative">
+    @auth
+    @php
+        $reminderBooking = Auth::user()->bookings()
+            ->whereIn('bookingStatus', ['Confirmed', 'Active'])
+            ->orderBy('originalDate', 'asc')
+            ->first();
+    @endphp
+
+    @if($reminderBooking && request()->routeIs('home'))
+        @php
+            $startDate = \Carbon\Carbon::parse($reminderBooking->originalDate);
+            $diffInHours = now()->diffInHours($startDate, false);
+            $displayHours = round($diffInHours); 
+            $isUrgent = ($diffInHours > 0 && $diffInHours <= 24);
+        @endphp
+
+        <div class="absolute top-4 left-0 w-full z-50 px-4 pointer-events-none">
+            <div class="container mx-auto max-w-5xl pointer-events-auto">
+                @if($isUrgent)
+                    {{-- URGENT DESIGN: Floating Intense Island --}}
+                    <div class="relative group overflow-hidden bg-gradient-to-r from-blue-600/70 to-blue-600/70 backdrop-blur-lg border border-white/20 rounded-2xl p-4 shadow-[0_20px_50px_rgba(220,38,38,0.3)] transition-all duration-300 hover:scale-[1.01]">
+                        <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full animate-[shine_3s_infinite]"></div>
+                        
+                        <div class="flex items-center justify-between gap-4">
+                            <div class="flex items-center gap-4">
+                                <div class="relative">
+                                    <div class="absolute inset-0 bg-white rounded-lg animate-ping opacity-20"></div>
+                                    <div class="relative bg-white/20 p-2.5 rounded-xl border border-white/30">
+                                        <i class="fas fa-bolt text-white text-lg"></i>
+                                    </div>
+                                </div>
+                                
+                                <div class="flex flex-col">
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-white/80 text-[10px] font-black uppercase tracking-[0.2em]">Your booking</span>
+                                    </div>
+                                    <h3 class="text-white font-bold text-lg leading-tight">
+                                        Pickup {{ $reminderBooking->vehicle->model }}
+                                    </h3>
+                                </div>
+
+                                <div class="hidden sm:flex bg-black/20 backdrop-blur-md px-4 py-1.5 rounded-full border border-white/10 ml-2">
+                                    <span class="text-white text-xs font-black">
+                                        IN {{ $displayHours }} {{ Str::plural('HOUR', $displayHours) }}
+                                    </span>
+                                </div>
+                            </div>
+
+                            <a href="{{ route('book.index') }}" class="group/btn relative bg-white px-6 py-2.5 rounded-xl flex items-center gap-2 transition-all hover:bg-orange-50 hover:shadow-lg active:scale-95">
+                                <span class="text-red-600 font-black text-xs">VIEW NOW</span>
+                                <i class="fas fa-arrow-right text-red-600 text-[10px] group-hover/btn:translate-x-1 transition-transform"></i>
+                            </a>
+                        </div>
+                    </div>
+                @else
+                    {{-- NON-URGENT DESIGN: Minimalist Glass Island --}}
+                    <div class="bg-black/40 backdrop-blur-xl border border-white/10 rounded-2xl p-3 shadow-2xl transition-all hover:bg-black/50">
+                        <div class="flex items-center justify-between gap-4">
+                            <div class="flex items-center gap-4">
+                                <div class="bg-orange-500/20 p-2 rounded-xl border border-orange-500/30">
+                                    <i class="fas fa-calendar-check text-orange-400"></i>
+                                </div>
+                                <div class="flex flex-col">
+                                    <span class="text-gray-400 text-[10px] font-bold uppercase tracking-wider">Upcoming Trip</span>
+                                    <p class="text-white text-sm font-bold">
+                                        {{ $reminderBooking->vehicle->model }} <span class="text-orange-400 mx-1.5">•</span> <span class="text-gray-300 font-medium">{{ $startDate->diffForHumans() }}</span>
+                                    </p>
+                                </div>
+                            </div>
+                            
+                            <a href="{{ route('book.index') }}" class="text-white/70 hover:text-white px-4 py-2 rounded-lg text-xs font-bold transition-colors flex items-center gap-2 bg-white/5 border border-white/10">
+                                <span>Details</span>
+                                <i class="fas fa-chevron-right text-[8px]"></i>
+                            </a>
+                        </div>
+                    </div>
+                @endif
+            </div>
+        </div>
+    @endif
+@endauth
+
+    <div class="container mx-auto px-4">
+        {{-- Flash Messages --}}
+        @if(session('success'))
+            <div class="mt-4 bg-green-50 border-l-4 border-green-500 text-green-700 p-4 rounded shadow-sm flex items-center" role="alert">
+                <i class="fas fa-check-circle text-xl mr-3"></i>
+                <span class="font-medium">{{ session('success') }}</span>
+            </div>
+        @endif
+    </div>
+
+    @yield('content')
+</main>
 
     <footer class="bg-gray-900 text-white pt-12 pb-8 text-sm relative z-30">
         <div class="container mx-auto px-6">
@@ -279,14 +400,10 @@
 
 <script>
     function toggleNotificationMenu(event) {
-        // Stop the click from immediately triggering the "click outside" logic
         event.stopPropagation();
-        
         const menu = document.getElementById('notificationMenu');
         menu.classList.toggle('hidden');
     }
-
-    // Close the menu if the user clicks anywhere else on the page
     window.addEventListener('click', function(e) {
         const menu = document.getElementById('notificationMenu');
         if (!menu.contains(e.target)) {
@@ -294,5 +411,19 @@
         }
     });
 </script>
+
+<!-- Flash error message script -->
+<script>
+    @if(session('error'))
+        alert("{{ session('error') }}");
+    @endif
+</script>
+
+<!-- Custom animation keyframes -->
+<style>
+    @keyframes shine {
+        100% { transform: translateX(100%); }
+    }
+</style>
 </body>
 </html>

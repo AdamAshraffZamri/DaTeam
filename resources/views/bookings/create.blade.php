@@ -28,6 +28,24 @@
         <form action="{{ route('book.search') }}" method="GET" id="searchForm">
             <div class="bg-white/10 backdrop-blur-xl border border-white/20 rounded-[2rem] p-3 shadow-2xl flex flex-col md:flex-row items-center gap-2 md:gap-0">
 
+                {{-- DATALIST FOR SUGGESTIONS --}}
+                <datalist id="locationSuggestions">
+                    <option value="Student Mall, UTM">
+                    <option value="KTDI (Kolej Tun Dr Ismail)">
+                    <option value="KDOJ (Kolej Datin Halimah)">
+                    <option value="KTR (Kolej Tun Razak)">
+                    <option value="K9 (Kolej 9)">
+                    <option value="K10 (Kolej 10)">
+                    <option value="KRP (Kolej Rahman Putra)">
+                    <option value="KTHO (Kolej Tun Hussein Onn)">
+                    <option value="KTC (Kolej Tuanku Canselor)">
+                    <option value="KP (Kolej Perdana)">
+                    <option value="Scholar Inn, UTM">
+                    <option value="Senai Airport">
+                    <option value="Taman Universiti">
+                    <option value="Skudai Parade">
+                </datalist>
+
                 {{-- PICKUP LOCATION --}}
                 <div class="flex-1 px-6 py-2 w-full md:border-r border-white/10">
                     <label class="block text-[12px] font-bold text-white uppercase tracking-wider mb-1">PICKUP POINT</label>
@@ -36,7 +54,9 @@
                             <i class="fas fa-map-marker-alt"></i>
                         </button>
                         <input type="text" id="pickup_location" name="pickup_location" value="Student Mall, UTM"
-                               class="w-full bg-transparent font-bold text-white focus:outline-none border-none p-0 placeholder-gray-400 focus:ring-0">
+                               list="locationSuggestions"
+                               class="w-full bg-transparent font-bold text-white focus:outline-none border-none p-0 placeholder-gray-400 focus:ring-0"
+                               placeholder="Type or select location...">
                     </div>
                 </div>
 
@@ -48,7 +68,9 @@
                             <i class="fas fa-flag-checkered"></i>
                         </button>
                         <input type="text" id="return_location" name="return_location" value="Student Mall, UTM"
-                               class="w-full bg-transparent font-bold text-white focus:outline-none border-none p-0 placeholder-gray-400 focus:ring-0">
+                               list="locationSuggestions"
+                               class="w-full bg-transparent font-bold text-white focus:outline-none border-none p-0 placeholder-gray-400 focus:ring-0"
+                               placeholder="Type or select location...">
                     </div>
                 </div>
 

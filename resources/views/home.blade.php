@@ -95,6 +95,69 @@
     <div class="absolute bottom-0 left-0 w-full h-32 bg-gradient-to-t from-[#111] to-transparent z-20"></div>
 </div>
 
+{{-- SECTION: CURRENT DEALS (Smart Fit for Any Image Size) --}}
+<div class="bg-[#111] py-16 relative overflow-hidden border-b border-white/5">
+    <div class="container mx-auto px-4 relative z-10">
+        {{-- Title --}}
+        <div class="text-center mb-10">
+            <h2 class="text-3xl md:text-5xl font-black text-white mb-2">Current Deals</h2>
+            <p class="text-gray-400">Exclusive promotions tailored for you.</p>
+        </div>
+
+        {{-- Slideshow Container --}}
+        <div class="relative w-full max-w-6xl mx-auto h-[350px] md:h-[500px] rounded-[2rem] overflow-hidden shadow-[0_0_40px_rgba(234,88,12,0.15)] border border-white/10 group bg-black">
+            
+            {{-- Slide 1: Example of a Poster/Flyer --}}
+            <div class="deal-slide absolute inset-0 transition-opacity duration-1000 opacity-100" data-index="0">
+                {{-- 1. Blurred Background (Fills empty space) --}}
+                <div class="absolute inset-0">
+                    <img src="{{ asset('iklan1.png') }}" class="w-full h-full object-cover blur-2xl scale-110 opacity-50">
+                </div>
+                {{-- 2. Main Poster Image (Fully Visible) --}}
+                <img src="{{ asset('iklan1.png') }}" alt="Deal 1" class="relative z-10 w-full h-full object-contain p-4 md:p-0 drop-shadow-2xl">
+                
+                {{-- Optional Text Overlay (Delete this div if your image already has text) --}}
+                <div class="absolute bottom-0 left-0 w-full bg-gradient-to-t from-black/90 to-transparent p-8 z-20 flex flex-col items-center md:items-start">
+                    <span class="bg-orange-600 text-white px-3 py-1 rounded-full text-xs font-bold shadow-lg mb-2">LIMITED TIME</span>
+                    <h3 class="text-2xl md:text-4xl font-black text-white">Diwali Special Promotion</h3>
+                </div>
+            </div>
+
+            {{-- Slide 2 --}}
+            <div class="deal-slide absolute inset-0 transition-opacity duration-1000 opacity-0" data-index="1">
+                <div class="absolute inset-0">
+                    <img src="{{ asset('iklan2.png') }}" class="w-full h-full object-cover blur-2xl scale-110 opacity-50">
+                </div>
+                <img src="{{ asset('iklan2.png') }}" alt="Deal 2" class="relative z-10 w-full h-full object-contain p-4 md:p-0 drop-shadow-2xl">
+                
+                <div class="absolute bottom-0 left-0 w-full bg-gradient-to-t from-black/90 to-transparent p-8 z-20 flex flex-col items-center md:items-start">
+                     <span class="bg-blue-600 text-white px-3 py-1 rounded-full text-xs font-bold shadow-lg mb-2">Delivery</span>
+                    <h3 class="text-2xl md:text-4xl font-black text-white">Deliver Vehicle to your preferred location</h3>
+                </div>
+            </div>
+
+            {{-- Slide 3 --}}
+            <div class="deal-slide absolute inset-0 transition-opacity duration-1000 opacity-0" data-index="2">
+                <div class="absolute inset-0">
+                    <img src="{{ asset('iklan3.png') }}" class="w-full h-full object-cover blur-2xl scale-110 opacity-50">
+                </div>
+                <img src="{{ asset('iklan3.png') }}" alt="Deal 3" class="relative z-10 w-full h-full object-contain p-4 md:p-0 drop-shadow-2xl">
+                
+                <div class="absolute bottom-0 left-0 w-full bg-gradient-to-t from-black/90 to-transparent p-8 z-20 flex flex-col items-center md:items-start">
+                     <span class="bg-green-600 text-white px-3 py-1 rounded-full text-xs font-bold shadow-lg mb-2">REWARDS</span>
+                    <h3 class="text-2xl md:text-4xl font-black text-white">Free 1 hour rental</h3>
+                </div>
+            </div>
+
+            {{-- Indicators --}}
+            <div class="absolute bottom-6 right-8 flex gap-3 z-30">
+                <button class="w-12 h-1.5 rounded-full bg-orange-500 transition-all duration-300 deal-indicator" onclick="manualSetSlide(0)"></button>
+                <button class="w-3 h-1.5 rounded-full bg-white/30 hover:bg-white transition-all duration-300 deal-indicator" onclick="manualSetSlide(1)"></button>
+                <button class="w-3 h-1.5 rounded-full bg-white/30 hover:bg-white transition-all duration-300 deal-indicator" onclick="manualSetSlide(2)"></button>
+            </div>
+        </div>
+    </div>
+</div>
 
 {{-- SECTION 2: FLEET (Glass Design) --}}
 <div id="fleet-showcase" class="glass-section py-24 border-b border-white/5">
@@ -173,13 +236,13 @@
     <div class="container mx-auto px-4">
         <div class="glass-card rounded-[2rem] py-12 px-6 flex flex-wrap justify-center gap-16 text-center border border-white/5 bg-white/5">
             <div>
-                <h3 class="text-5xl font-black text-white mb-2">50+</h3>
-                <p class="text-gray-400 font-medium uppercase tracking-wider text-sm">Premium Vehicles</p>
+                <h3 class="text-5xl font-black text-white mb-2">10+</h3>
+                <p class="text-gray-400 font-medium uppercase tracking-wider text-sm">Affordable Vehicles</p>
             </div>
             {{-- Vertical Divider (Hidden on mobile) --}}
             <div class="hidden md:block w-px bg-white/10 h-20"></div>
             <div>
-                <h3 class="text-5xl font-black text-white mb-2">1k+</h3>
+                <h3 class="text-5xl font-black text-white mb-2">3k+</h3>
                 <p class="text-gray-400 font-medium uppercase tracking-wider text-sm">Happy Students</p>
             </div>
             {{-- Vertical Divider --}}
@@ -228,7 +291,7 @@
                     <i class="fas fa-bolt"></i>
                 </div>
                 <h3 class="text-2xl font-bold text-white mb-4">Instant Access</h3>
-                <p class="text-gray-400 leading-relaxed group-hover:text-gray-200 transition">Book in seconds using our digital platform. No paperwork, just drive.</p>
+                <p class="text-gray-400 leading-relaxed group-hover:text-gray-200 transition">Book in seconds using our digital platform. Drive the car whenever you need it.</p>
             </div>
         </div>
     </div>
@@ -236,6 +299,7 @@
 
 <script>
     document.addEventListener('DOMContentLoaded', () => {
+        // --- FLEET CAROUSEL LOGIC ---
         const track = document.getElementById('carouselTrack');
         const nextBtn = document.getElementById('slideNext');
         const prevBtn = document.getElementById('slidePrev');
@@ -271,6 +335,54 @@
 
             track.addEventListener('mouseenter', () => clearInterval(autoScrollInterval));
             track.addEventListener('mouseleave', () => autoScrollInterval = setInterval(autoScroll, 3000));
+        }
+
+        // --- NEW: DEALS SLIDESHOW LOGIC ---
+        const slides = document.querySelectorAll('.deal-slide');
+        const indicators = document.querySelectorAll('.deal-indicator');
+        let currentSlide = 0;
+        let dealInterval;
+
+        window.manualSetSlide = function(index) {
+            clearInterval(dealInterval);
+            showSlide(index);
+            startDealAutoPlay();
+        };
+
+        function showSlide(index) {
+            // Reset all slides
+            slides.forEach((slide) => {
+                slide.classList.remove('opacity-100');
+                slide.classList.add('opacity-0');
+            });
+            
+            // Reset indicators
+            indicators.forEach((ind) => {
+                ind.classList.remove('w-12', 'bg-orange-500');
+                ind.classList.add('w-3', 'bg-white/30');
+            });
+
+            // Activate current
+            slides[index].classList.remove('opacity-0');
+            slides[index].classList.add('opacity-100');
+            
+            indicators[index].classList.remove('w-3', 'bg-white/30');
+            indicators[index].classList.add('w-12', 'bg-orange-500');
+
+            currentSlide = index;
+        }
+
+        function nextSlide() {
+            let next = (currentSlide + 1) % slides.length;
+            showSlide(next);
+        }
+
+        function startDealAutoPlay() {
+            dealInterval = setInterval(nextSlide, 5000); // Change every 5 seconds
+        }
+
+        if(slides.length > 0) {
+            startDealAutoPlay();
         }
     });
 </script>
