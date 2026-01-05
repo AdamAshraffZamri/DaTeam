@@ -38,8 +38,9 @@ class Vehicle extends Model
         'owner_name',       // [cite: 748, 852, 1014]
         'owner_phone', 
         'owner_nric',       // NRIC or Company Reg Number 
-        // 'operating_state',  // Defaulted to 'Johor' per documents [cite: 764, 809]
-        // 'date_register_jpj' // JPJ Registration Date [cite: 754, 808, 1026]
+        'road_tax_image', // Add this
+        'grant_image',    // Add this
+        'insurance_image',// Add this
         'blocked_dates',
     ];
 

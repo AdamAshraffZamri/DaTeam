@@ -26,19 +26,23 @@ Thumbs.db
 /public/storage/inspections/*
 /public/storage/receipts/*
 /public/storage/uploads/*
+/public/storage/vehiclesDocs/*
 /storage/app/public/agreements/*
 /storage/app/public/inspections/*
 /storage/app/public/receipts/*
 /storage/app/public/uploads/*
+/storage/app/public/vehiclesDocs/*
 # 2. But keep the folders themselves (by tracking .gitkeep files)
 !/public/storage/agreements/.gitkeep
 !/public/storage/inspections/.gitkeep
 !/public/storage/receipts/.gitkeep
 !/public/storage/uploads/.gitkeep
+!/public/storage/vehiclesDocs/.gitkeep
 !/storage/app/public/agreements/.gitkeep
 !/storage/app/public/inspections/.gitkeep
 !/storage/app/public/receipts/.gitkeep
 !/storage/app/public/uploads/.gitkeep
+!/storage/app/public/vehiclesDocs/.gitkeep
 # 3. EXCEPTION: Track EVERYTHING in public/vehicles (Do not ignore)
 !/public/storage/vehicles/
 !/public/storage/vehicles/*

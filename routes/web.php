@@ -17,7 +17,6 @@ use App\Http\Controllers\ReportController;
 use App\Http\Controllers\PageController;
 
 
-
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -131,30 +130,26 @@ Route::prefix('staff')->middleware(['auth:staff'])->group(function () {
     // --- FLEET MANAGEMENT ---
     // List Vehicles
     Route::get('/fleet', [FleetController::class, 'index'])->name('staff.fleet.index');
-    
     // Create
     Route::get('/fleet/create', [FleetController::class, 'create'])->name('staff.fleet.create');
     Route::post('/fleet/store', [FleetController::class, 'store'])->name('staff.fleet.store');
-    
     // SHOW DETAILS (The new page)
     Route::get('/fleet/{id}', [FleetController::class, 'show'])->name('staff.fleet.show');
-    
     // Edit/Update
     Route::get('/fleet/{id}/edit', [FleetController::class, 'edit'])->name('staff.fleet.edit');
     Route::put('/fleet/{id}', [FleetController::class, 'update'])->name('staff.fleet.update');
-    
     // Status & Delete
     Route::post('/fleet/status/{id}', [FleetController::class, 'updateStatus'])->name('staff.fleet.status');
     Route::delete('/fleet/{id}', [FleetController::class, 'destroy'])->name('staff.fleet.destroy');
-
     // BLOCK DATE (Add to JSON)
     Route::post('/fleet/{id}/block', [FleetController::class, 'blockDate'])->name('staff.fleet.block');
-    
     // UNBLOCK DATE (Remove from JSON)
     Route::post('/fleet/{id}/unblock', [FleetController::class, 'unblockDate'])->name('staff.fleet.unblock');
     // LOG MAINTENANCE
     Route::post('/fleet/{id}/maintenance', [FleetController::class, 'storeMaintenance'])->name('staff.fleet.maintenance.store');
-    // Separate Inspection Mode
+    // Inside your staff middleware group
+    Route::delete('/fleet/maintenance/{id}', [App\Http\Controllers\FleetController::class, 'destroyMaintenance'])
+        ->name('staff.fleet.maintenance.destroy');
 
     // Customer Management
     Route::get('/customers', [App\Http\Controllers\StaffCustomerController::class, 'index'])->name('staff.customers.index');

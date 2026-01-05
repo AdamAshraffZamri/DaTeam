@@ -1,7 +1,5 @@
 @extends('layouts.staff')
 
-@section('title', 'Reporting & Analysis')
-
 @section('content')
 
 {{-- START: Alert Block --}}

@@ -14,9 +14,19 @@ class Maintenance extends Model
     protected $fillable = [
         'VehicleID', 
         'StaffID', 
-        'date', 
+        'date', // Keeping for legacy/backup
+        'start_time', // New
+        'end_time',   // New
+        'type',       // New
         'description', 
+        'reference_id', // New
         'cost'
+    ];
+    
+    protected $casts = [
+        'start_time' => 'datetime',
+        'end_time' => 'datetime',
+        'date' => 'date',
     ];
 
     public function vehicle()
