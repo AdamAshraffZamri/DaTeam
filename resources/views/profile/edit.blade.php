@@ -26,10 +26,9 @@
         </div>
         @endif
 
-        {{-- ==================== NEW STATUS SECTION ==================== --}}
+        {{-- ==================== STATUS SECTION ==================== --}}
         <div class="flex flex-col items-center mb-10">
-            
-            {{-- 1. BLACKLISTED --}}
+            {{-- (Status Logic kept same as before) --}}
             @if($user->blacklisted)
                 <div class="px-8 py-3 rounded-2xl bg-black/60 border border-red-500 text-red-500 font-black uppercase tracking-[0.2em] shadow-[0_0_20px_rgba(239,68,68,0.4)] flex items-center gap-4 text-lg">
                     <i class="fas fa-ban text-2xl"></i> Account Blacklisted
@@ -40,21 +39,15 @@
                         <p class="text-white font-medium">{{ $user->blacklist_reason }}</p>
                     </div>
                 @endif
-
-            {{-- 2. APPROVED --}}
             @elseif($user->accountStat == 'approved' || $user->accountStat == 'active')
                 <div class="px-8 py-3 rounded-2xl bg-green-500/20 border border-green-500 text-green-400 font-black uppercase tracking-[0.2em] shadow-[0_0_20px_rgba(34,197,94,0.3)] flex items-center gap-4">
                     <i class="fas fa-check-circle text-2xl"></i> Account Verified
                 </div>
-
-            {{-- 3. PENDING --}}
             @elseif($user->accountStat == 'pending')
                 <div class="px-8 py-3 rounded-2xl bg-yellow-500/20 border border-yellow-500 text-yellow-400 font-black uppercase tracking-[0.2em] shadow-[0_0_20px_rgba(234,179,8,0.3)] animate-pulse flex items-center gap-4">
                     <i class="fas fa-clock text-2xl"></i> Pending Verification
                 </div>
                 <p class="text-gray-400 text-xs mt-3">Staff is reviewing your details. This usually takes 24 hours.</p>
-
-            {{-- 4. REJECTED --}}
             @elseif($user->accountStat == 'rejected')
                 <div class="px-8 py-3 rounded-2xl bg-red-600/20 border border-red-500 text-red-400 font-black uppercase tracking-[0.2em] shadow-[0_0_20px_rgba(220,38,38,0.3)] flex items-center gap-4">
                     <i class="fas fa-times-circle text-2xl"></i> Verification Rejected
@@ -64,11 +57,8 @@
                         <div class="flex justify-center mb-2"><i class="fas fa-exclamation-triangle text-red-400 text-xl"></i></div>
                         <p class="text-xs text-red-300 uppercase font-bold mb-2 tracking-widest">Please fix the following:</p>
                         <p class="text-white font-bold text-lg leading-relaxed">"{{ $user->rejection_reason }}"</p>
-                        <p class="text-xs text-red-300/70 mt-4">Update your information below to re-submit.</p>
                     </div>
                 @endif
-
-            {{-- 5. UNVERIFIED (Default) --}}
             @else
                 <div class="px-8 py-3 rounded-2xl bg-white/10 border border-white/20 text-gray-300 font-black uppercase tracking-[0.2em] flex items-center gap-4">
                     <i class="fas fa-user-shield text-2xl"></i> Unverified
@@ -76,30 +66,35 @@
                 <p class="text-gray-400 text-xs mt-3">Please complete your profile to verify your account.</p>
             @endif
         </div>
-        {{-- ============================================================ --}}
 
 
-        {{-- PROFILE HEADER (Avatar) --}}
+        {{-- ==================== PROFILE HEADER (Avatar) ==================== --}}
         <div class="text-center mb-8 relative">
             <h1 class="text-3xl font-black text-white drop-shadow-md">Complete Your Profile</h1>
             <p class="text-gray-400 mt-2">These details are required for insurance and refunds.</p>
 
             <div class="relative mt-6 inline-block">
+                {{-- Avatar Display --}}
                 <div class="w-32 h-32 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center border-4 border-white/20 shadow-2xl overflow-hidden">
                     @if($user->avatar)
-                        <img src="{{ asset('storage/' . $user->avatar) }}" class="w-full h-full object-cover" id="avatar_preview">
+                        {{-- FIXED: Correct Path --}}
+                        <img src="{{ $user->avatar ? asset($user->avatar) : asset('login.png') }}" class="w-full h-full object-cover" id="avatar_preview">
                     @else
                         <i class="fas fa-user text-6xl text-gray-400" id="avatar_icon"></i>
                         <img src="" class="w-full h-full object-cover hidden" id="avatar_preview">
                     @endif
                 </div>
-                <button type="button" onclick="document.getElementById('avatar_input').click()" class="absolute bottom-0 right-0 bg-[#ea580c] hover:bg-orange-600 text-white p-2 rounded-full w-8 h-8 flex items-center justify-center transition shadow-lg cursor-pointer">
-                    <i class="fas fa-pencil-alt text-xs"></i>
-                </button>
-                <form action="{{ route('profile.update') }}" method="POST" enctype="multipart/form-data" id="avatar-form">
-                     @csrf
-                     @method('PUT')
-                     <input type="file" name="avatar" id="avatar_input" class="hidden" accept="image/*" onchange="previewAvatar(this)">
+
+                {{-- AVATAR FORM (Separate from Main Info) --}}
+                <form action="{{ route('profile.avatar.update') }}" method="POST" enctype="multipart/form-data" id="avatar-form">
+                    @csrf
+                    {{-- Hidden File Input --}}
+                    <input type="file" name="avatar" id="avatar_input" class="hidden" accept="image/*" onchange="document.getElementById('avatar-form').submit();">
+                    
+                    {{-- The Pencil Button --}}
+                    <button type="button" onclick="document.getElementById('avatar_input').click()" class="absolute bottom-0 right-0 bg-[#ea580c] hover:bg-orange-600 text-white p-2 rounded-full w-8 h-8 flex items-center justify-center transition shadow-lg cursor-pointer z-20">
+                        <i class="fas fa-pencil-alt text-xs"></i>
+                    </button>
                 </form>
             </div>
         </div>
@@ -116,10 +111,12 @@
             </div>
         @endif
         
-        {{-- ================= FORM 1: PROFILE INFO ================= --}}
+        {{-- ================= FORM 1: MAIN PROFILE INFO ================= --}}
         <form action="{{ route('profile.update') }}" method="POST" enctype="multipart/form-data" class="bg-black/25 backdrop-blur-xl border border-white/10 rounded-[2.5rem] shadow-2xl p-8 md:p-12 mb-8">
             @csrf
             @method('PUT')
+
+            {{-- DUPLICATE AVATAR INPUT REMOVED FROM HERE --}}
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6">
                 {{-- LEFT: Personal Info --}}
@@ -145,21 +142,14 @@
                         <h4 class="text-sm font-bold text-gray-500 uppercase tracking-widest mb-4 border-b border-white/10 pb-2">Emergency Contact</h4>
     
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            
                             <div>
                                 <label class="block text-gray-400 mb-2 font-bold text-xs uppercase tracking-wider">Name <span class="text-red-500">*</span></label>
-                                <input type="text" name="emergency_contact_name" value="{{ old('emergency_contact_name', $user->emergency_contact_name) }}" 
-                                    class="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white focus:outline-none focus:border-orange-500 focus:bg-white/10 transition placeholder-gray-500" 
-                                    placeholder="e.g. Parent Name">
+                                <input type="text" name="emergency_contact_name" value="{{ old('emergency_contact_name', $user->emergency_contact_name) }}" class="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white focus:outline-none focus:border-orange-500 focus:bg-white/10 transition placeholder-gray-500">
                             </div>
-
                             <div>
                                 <label class="block text-gray-400 mb-2 font-bold text-xs uppercase tracking-wider">Phone No. <span class="text-red-500">*</span></label>
-                                <input type="text" name="emergency_contact_no" value="{{ old('emergency_contact_no', $user->emergency_contact_no) }}" 
-                                    class="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white focus:outline-none focus:border-orange-500 focus:bg-white/10 transition placeholder-gray-500" 
-                                    placeholder="e.g. +6012...">
+                                <input type="text" name="emergency_contact_no" value="{{ old('emergency_contact_no', $user->emergency_contact_no) }}" class="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white focus:outline-none focus:border-orange-500 focus:bg-white/10 transition placeholder-gray-500">
                             </div>
-                            
                         </div>
                     </div>
 
@@ -329,7 +319,7 @@
 </div>
 
 <script>
-    // 1. File Upload Preview Logic
+    // 1. File Upload Preview Logic (For Documents)
     function fileSelected(type) {
         const input = document.getElementById(type + '_file');
         const icon = document.getElementById('icon_' + type);
@@ -345,23 +335,7 @@
         }
     }
 
-    // 2. Avatar Preview Logic
-    function previewAvatar(input) {
-        if (input.files && input.files[0]) {
-            var reader = new FileReader();
-            reader.onload = function(e) {
-                const icon = document.getElementById('avatar_icon');
-                if(icon) icon.classList.add('hidden');
-                
-                const img = document.getElementById('avatar_preview');
-                img.src = e.target.result;
-                img.classList.remove('hidden');
-            }
-            reader.readAsDataURL(input.files[0]);
-        }
-    }
-
-    // 3. Password Toggle Logic
+    // 2. Password Toggle Logic
     function togglePassword(inputId, iconId) {
         const input = document.getElementById(inputId);
         const icon = document.getElementById(iconId);

@@ -62,7 +62,11 @@ return [
 
         'google' => [
             'driver' => 'google',
-            'folder' => env('GOOGLE_DRIVE_FOLDER_ID'), 
+            'clientId' => env('GOOGLE_DRIVE_CLIENT_ID'),
+            'clientSecret' => env('GOOGLE_DRIVE_CLIENT_SECRET'),
+            'refreshToken' => env('GOOGLE_DRIVE_REFRESH_TOKEN'),
+            'folderId' => env('GOOGLE_DRIVE_FOLDER_ID'),
+            // REMOVE or NULL any reference to 'serviceAccount' or 'file'
         ],
         
     ],
