@@ -5,15 +5,14 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Payment;
 use App\Models\Booking;
-use App\Models\Feedback;;
-use App\Models\Vehicle;
+use App\Models\Feedback;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 use Barryvdh\DomPDF\Facade\Pdf;
-use Google\Client; 
+// Google API Imports
+use Google\Client;
 use Google\Service\Drive;
 use Google\Service\Drive\DriveFile;
-use GuzzleHttp\Client as GuzzleClient; 
 
 class ReportController extends Controller
 {
@@ -48,7 +47,7 @@ class ReportController extends Controller
             ->orderBy('date', 'ASC')
             ->get();
 
-        // 6. (NEW) Top Rented Vehicles (Same logic as PDF)
+        // 6. Top Rented Vehicles
         $monthBookings = Booking::with('vehicle')
             ->whereMonth('created_at', Carbon::now()->month)
             ->whereYear('created_at', Carbon::now()->year)
@@ -79,7 +78,7 @@ class ReportController extends Controller
             'statusRaw', 
             'bookingOverview', 
             'revenueData', 
-            'topVehicles', // <--- Pass the new data
+            'topVehicles',
             'reviews'
         ));
     }
@@ -87,8 +86,8 @@ class ReportController extends Controller
     public function exportToDrive()
     {
         try {
-            // --- 1. PREPARE DATA ---
-
+            // --- 1. RE-CALCULATE DATA FOR PDF (Restored Logic) ---
+            
             // A. KPI Cards
             $dailyIncome = Payment::whereDate('created_at', Carbon::today())->sum('amount');
             $monthlyIncome = Payment::whereMonth('created_at', Carbon::now()->month)
@@ -108,27 +107,23 @@ class ReportController extends Controller
                 ->orderBy('date', 'ASC')
                 ->get();
 
-            // D. (FIXED) Top Rented Vehicles (Collection Method)
-            // 1. Fetch all bookings for this month with the vehicle data
+            // D. Top Rented Vehicles
             $monthBookings = Booking::with('vehicle')
                 ->whereMonth('created_at', Carbon::now()->month)
                 ->whereYear('created_at', Carbon::now()->year)
                 ->get();
 
-            // 2. Group by Vehicle Model and Count in PHP (Bypasses the "Unknown Column" error)
             $topVehicles = $monthBookings->groupBy(function ($booking) {
-                    // Get the vehicle model name safely
                     return $booking->vehicle->model ?? 'Unknown Vehicle';
                 })
                 ->map(function ($group) {
-                    // Count how many bookings in this group
                     return [
-                        'model' => $group->first()->vehicle->model ?? 'Unknown', // Car Name
-                        'total_bookings' => $group->count() // Total Count
+                        'model' => $group->first()->vehicle->model ?? 'Unknown',
+                        'total_bookings' => $group->count()
                     ];
                 })
-                ->sortByDesc('total_bookings') // Sort Highest to Lowest
-                ->take(5); // Take Top 5
+                ->sortByDesc('total_bookings')
+                ->take(5);
 
             // E. Detailed Breakdowns
             $dailyBreakdown = Payment::select(DB::raw('DATE(created_at) as date'), DB::raw('sum(amount) as total'))
@@ -151,6 +146,7 @@ class ReportController extends Controller
                 ->get();
 
             // --- 2. GENERATE PDF ---
+            // Now we pass ALL the required variables
             $pdf = Pdf::loadView('staff.reports.pdf', compact(
                 'dailyIncome', 
                 'monthlyIncome', 
@@ -165,22 +161,18 @@ class ReportController extends Controller
             $pdfContent = $pdf->output();
             $filename = 'Management_Report_' . now()->format('Y-m-d_H-i') . '.pdf';
 
-            // --- 3. GOOGLE DRIVE UPLOAD ---
+            // --- 3. GOOGLE DRIVE UPLOAD (Manual API Mode) ---
             $client = new Client();
-            $httpClient = new GuzzleClient([
-                'verify' => false,
-                'curl' => [
-                    CURLOPT_CAINFO => __FILE__, 
-                    CURLOPT_SSL_VERIFYPEER => false,
-                ]
-            ]);
-            $client->setHttpClient($httpClient);
             $client->setClientId(env('GOOGLE_DRIVE_CLIENT_ID'));
             $client->setClientSecret(env('GOOGLE_DRIVE_CLIENT_SECRET'));
             $client->refreshToken(env('GOOGLE_DRIVE_REFRESH_TOKEN'));
             
+            // Fix for Localhost SSL (Uncomment if needed)
+            // $client->setHttpClient(new \GuzzleHttp\Client(['verify' => false]));
+
             $service = new Drive($client);
-            $folderId = env('GOOGLE_DRIVE_FOLDER_ID');
+            $folderId = env('GOOGLE_DRIVE_REPORTS'); // Target the Report Folder
+            
             $fileMetadata = new DriveFile([
                 'name' => $filename,
                 'parents' => [$folderId] 

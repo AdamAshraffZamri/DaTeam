@@ -53,6 +53,7 @@ Route::middleware('auth')->group(function () {
     // 1. Profile & Auth
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::post('/profile/avatar', [App\Http\Controllers\ProfileController::class, 'updateAvatar'])->name('profile.avatar.update');
     Route::put('/profile/password', [ProfileController::class, 'updatePassword'])->name('profile.password'); 
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
