@@ -230,146 +230,179 @@
         </div>
 
         {{-- TAB 3: COMBINED REWARDS & VOUCHERS MANAGEMENT --}}
-        <div id="rewards_vouchers-tab" class="tab-content hidden space-y-8">
-            
-            {{-- ========================================================= --}}
-            {{-- SECTION A: MANAGE DISPLAYED REWARDS (MENU) --}}
-            {{-- ========================================================= --}}
+            {{-- ... (Bahagian atas kekal sama) ... --}}
+
+{{-- TAB 3: REWARDS & VOUCHERS --}}
+<div id="rewards_vouchers-tab" class="tab-content hidden space-y-8">
+    
+            {{-- A. MANAGE REWARDS (INTERFACE DINAMIK) --}}
             <div class="bg-white rounded-2xl shadow-lg border-l-4 border-pink-500 overflow-hidden">
-                
-                {{-- Header Section --}}
-                <div class="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
-                    <div>
-                        <h3 class="text-xl font-black text-gray-900 flex items-center gap-2">
-                            <span class="w-8 h-8 rounded-lg bg-pink-100 flex items-center justify-center text-pink-600">
-                                <i class="fas fa-store"></i>
-                            </span>
-                            Manage Displayed Rewards
-                        </h3>
-                        <p class="text-sm text-gray-500 mt-1 ml-10">Set up the catalog of rewards visible to customers.</p>
-                    </div>
+                <div class="p-6 border-b border-gray-100 bg-gray-50/50">
+                    <h3 class="text-xl font-black text-gray-900 flex items-center gap-2">
+                        <span class="w-8 h-8 rounded-lg bg-pink-100 flex items-center justify-center text-pink-600"><i class="fas fa-store"></i></span>
+                        Manage Rewards & Milestones
+                    </h3>
+                    <p class="text-sm text-gray-500 mt-1 ml-10">Add merchant rewards (redeem points) OR milestones (auto-reward based on booking count).</p>
                 </div>
 
                 <div class="p-6">
-                    {{-- Add Reward Form --}}
-                    <div class="bg-gradient-to-r from-gray-50 to-white p-6 rounded-2xl border border-gray-200 mb-8 relative">
-                        <div class="absolute top-0 right-0 -mt-2 -mr-2 w-16 h-16 bg-pink-500/10 rounded-full blur-xl"></div>
-                        
-                        <h4 class="text-xs font-bold text-pink-600 uppercase tracking-widest mb-4">Add New Reward Item</h4>
-                        
+                    {{-- ADD REWARD FORM --}}
+                    <div class="bg-gradient-to-r from-gray-50 to-white p-6 rounded-2xl border border-gray-200 mb-8">
+                        <h4 class="text-xs font-bold text-pink-600 uppercase tracking-widest mb-4">Add New Reward / Milestone</h4>
                         <form action="{{ route('staff.loyalty.store_reward') }}" method="POST">
                             @csrf
                             <div class="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
+                                {{-- Name --}}
                                 <div class="md:col-span-3">
-                                    <label class="block text-xs font-bold text-gray-600 mb-1">Merchant Name</label>
-                                    <input 
-                                        type="text" 
-                                        name="name" 
-                                        placeholder="e.g. KFC" 
-                                        class="w-full bg-white border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition shadow-sm uppercase font-bold" 
-                                        required
-                                        oninput="this.value = this.value.toUpperCase()"
-                                    >
+                                    <label class="block text-xs font-bold text-gray-600 mb-1">Reward Name</label>
+                                    <input type="text" name="name" placeholder="e.g. Bronze Reward" class="w-full border rounded-xl px-3 py-2 text-sm font-bold uppercase" required oninput="this.value = this.value.toUpperCase()">
                                 </div>
-                                <div class="md:col-span-3">
-                                    <label class="block text-xs font-bold text-gray-600 mb-1">Offer Description</label>
-                                    <input type="text" name="offer" placeholder="RM5 OFF" class="w-full bg-white border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition shadow-sm" required oninput="this.value = this.value.toUpperCase()">
-                                </div>
+                                
+                                {{-- Offer --}}
                                 <div class="md:col-span-2">
-                                    <label class="block text-xs font-bold text-gray-600 mb-1">Points Cost</label>
-                                    <div class="relative">
-                                        <input type="number" name="points" placeholder="200" class="w-full bg-white border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition shadow-sm pl-8" required>
-                                        <span class="absolute left-3 top-2.5 text-gray-400 text-xs"><i class="fas fa-star"></i></span>
-                                    </div>
+                                    <label class="block text-xs font-bold text-gray-600 mb-1">Offer Desc</label>
+                                    <input type="text" name="offer" placeholder="20% OFF" class="w-full border rounded-xl px-3 py-2 text-sm" required>
                                 </div>
-                                <div class="md:col-span-2">
-                                    <label class="block text-xs font-bold text-gray-600 mb-1">Code Prefix</label>
-                                    <input type="text" name="code_prefix" placeholder="KFC" class="w-full bg-white border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition shadow-sm" required oninput="this.value = this.value.toUpperCase()">
+
+                                
+                                {{-- INPUT DINAMIK: PILIH SALAH SATU --}}
+                                <div class="md:col-span-2 bg-pink-50 p-2 rounded-lg border border-pink-100">
+                                    <label class="block text-[10px] font-bold text-pink-600 mb-1 uppercase">For Milestone (Step)</label>
+                                    
+                                    {{-- 1. Tambah ID 'milestoneInput' dan event 'oninput' --}}
+                                    <input type="number" 
+                                        id="milestoneInput" 
+                                        name="milestone_step" 
+                                        placeholder="e.g. 3" 
+                                        class="w-full border border-pink-200 rounded-lg px-2 py-1 text-sm text-center font-bold text-pink-600 focus:ring-pink-500 bg-white" 
+                                        title="Leave empty if this is a point-redeem reward"
+                                        oninput="togglePointsInput()">
                                 </div>
+
+                                <div class="md:col-span-2 bg-blue-50 p-2 rounded-lg border border-blue-100">
+                                    <label class="block text-[10px] font-bold text-blue-600 mb-1 uppercase">Or Point Cost</label>
+                                    
+                                    {{-- 2. Tambah ID 'pointsInput' --}}
+                                    <input type="number" 
+                                        id="pointsInput" 
+                                        name="points" 
+                                        placeholder="e.g. 500" 
+                                        class="w-full border border-blue-200 rounded-lg px-2 py-1 text-sm text-center font-bold text-blue-600 focus:ring-blue-500 bg-white transition-colors">
+                                </div>
+
+                                {{-- 3. Script untuk kawal input (Letak terus di bawah input tadi pun boleh) --}}
+                                <script>
+                                    function togglePointsInput() {
+                                        const milestone = document.getElementById('milestoneInput');
+                                        const points = document.getElementById('pointsInput');
+
+                                        // Jika ada nilai dalam Milestone
+                                        if (milestone.value.trim() !== "") {
+                                            points.value = "";              // Kosongkan nilai points
+                                            points.disabled = true;         // Matikan input (tak boleh klik)
+                                            points.placeholder = "N/A";     // Tukar placeholder
+                                            
+                                            // Tukar style jadi kelabu (nampak mati)
+                                            points.classList.add("bg-gray-200", "cursor-not-allowed", "text-gray-400", "border-gray-300");
+                                            points.classList.remove("bg-white", "text-blue-600", "border-blue-200");
+                                        } else {
+                                            // Jika Milestone kosong balik
+                                            points.disabled = false;        // Hidupkan semula
+                                            points.placeholder = "e.g. 500";
+                                            
+                                            // Kembalikan style asal (biru)
+                                            points.classList.remove("bg-gray-200", "cursor-not-allowed", "text-gray-400", "border-gray-300");
+                                            points.classList.add("bg-white", "text-blue-600", "border-blue-200");
+                                        }
+                                    }
+                                </script>
+
+                                {{-- Extra Fields --}}
+                                <div class="md:col-span-1">
+                                    <label class="block text-xs font-bold text-gray-600 mb-1">Discount %</label>
+                                    <input type="number" name="discount_percent" placeholder="%" class="w-full border rounded-xl px-3 py-2 text-sm text-center">
+                                </div>
+
                                 <div class="md:col-span-2">
-                                    <button type="submit" class="w-full bg-pink-600 hover:bg-pink-700 text-white font-bold py-2.5 px-4 rounded-xl shadow-lg shadow-pink-600/30 transition transform active:scale-95 flex items-center justify-center gap-2">
-                                        <i class="fas fa-plus-circle"></i> Add
+                                    <label class="block text-xs font-bold text-gray-600 mb-1">Prefix</label>
+                                    <input type="text" name="code_prefix" placeholder="AUTO" class="w-full border rounded-xl px-3 py-2 text-sm uppercase" required>
+                                </div>
+
+                                <div class="md:col-span-12 mt-2">
+                                    <button type="submit" class="w-full bg-pink-600 hover:bg-pink-700 text-white font-bold py-2 rounded-xl shadow-md transition flex items-center justify-center gap-2">
+                                        <i class="fas fa-plus-circle"></i> Add Reward
                                     </button>
                                 </div>
                             </div>
                         </form>
                     </div>
 
-                    {{-- List Rewards Table --}}
+                    {{-- REWARDS TABLE --}}
                     <div class="overflow-hidden rounded-xl border border-gray-200 shadow-sm">
                         <table class="w-full text-sm">
                             <thead class="bg-gray-100 text-gray-600 uppercase text-[10px] tracking-wider font-bold">
                                 <tr>
-                                    <th class="px-6 py-4 text-left">Merchant / Reward</th>
-                                    <th class="px-6 py-4 text-left">Offer Description</th>
-                                    <th class="px-6 py-4 text-center">Points Cost</th>
-                                    <th class="px-6 py-4 text-center">            </th>
-                                    <th class="px-6 py-4 text-center">Status</th>
-                                    <th class="px-6 py-4 text-center">Actions</th>
+                                    <th class="px-4 py-3 text-left">Reward Name</th>
+                                    <th class="px-4 py-3 text-left">Description</th>
+                                    <th class="px-4 py-3 text-center bg-pink-50 text-pink-600 border-x border-pink-100 w-24">Target Step</th>
+                                    <th class="px-4 py-3 text-center bg-blue-50 text-blue-600 border-r border-blue-100 w-24">Points Cost</th>
+                                    <th class="px-4 py-3 text-center">Discount %</th>
+                                    <th class="px-4 py-3 text-center">Active</th>
+                                    <th class="px-4 py-3 text-center">Actions</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-gray-100">
-                                @foreach($manageRewards as $reward)
-                                    <tr class="border-b border-gray-100">
-                                        <form action="{{ route('staff.loyalty.update_reward', $reward->id) }}" method="POST">
-                                            @csrf
-                                            @method('PUT')
-                                            
-                                            {{-- 1. Merchant Name --}}
-                                            <td class="px-6 py-3">
-                                                <input type="text" name="name" value="{{ $reward->name }}" class="bg-transparent font-bold text-gray-900 border-b border-transparent focus:border-pink-500 focus:ring-0 w-full transition px-0">
-                                            </td>
+                                    @foreach($manageRewards as $reward)
+                                        <tr class="hover:bg-gray-50 transition">
+                                            <form action="{{ route('staff.loyalty.update_reward', $reward->id) }}" method="POST">
+                                                @csrf @method('PUT')
+                                                
+                                                {{-- 1. Name --}}
+                                                <td class="px-4 py-3"><input type="text" name="name" value="{{ $reward->name }}" class="bg-transparent font-bold w-full focus:outline-none border-b border-transparent focus:border-pink-300"></td>
+                                                
+                                                {{-- 2. Offer --}}
+                                                <td class="px-4 py-3"><input type="text" name="offer" value="{{ $reward->offer_description }}" class="bg-transparent w-full focus:outline-none border-b border-transparent focus:border-pink-300"></td>
+                                                
+                                                {{-- 3. Target Step (Milestone) --}}
+                                                <td class="px-4 py-3 text-center bg-pink-50/30 border-x border-pink-50">
+                                                    <input type="number" name="milestone_step" value="{{ $reward->milestone_step }}" class="bg-transparent text-center font-bold text-pink-600 w-full focus:outline-none placeholder-gray-300" placeholder="-">
+                                                </td>
 
-                                            {{-- 2. Offer Description --}}
-                                            <td class="px-6 py-3">
-                                                <input type="text" name="offer" value="{{ $reward->offer_description }}" class="bg-transparent text-gray-600 border-b border-transparent focus:border-pink-500 focus:ring-0 w-full transition px-0">
-                                            </td>
+                                                {{-- 4. POINTS COST (LOGIC BARU: NOT APPLICABLE) --}}
+                                                <td class="px-4 py-3 text-center bg-blue-50/30 border-r border-blue-50">
+                                                    @if($reward->category == 'Milestone' || $reward->milestone_step > 0)
+                                                        {{-- Kalau Milestone, Tunjuk N/A dan hantar value 0 --}}
+                                                        <span class="text-[10px] font-black text-gray-400 italic bg-gray-100 px-2 py-1 rounded border border-gray-200 cursor-not-allowed">
+                                                            NOT APPLICABLE
+                                                        </span>
+                                                        <input type="hidden" name="points" value="0">
+                                                    @else
+                                                        {{-- Kalau Reward Biasa, Boleh Edit Points --}}
+                                                        <input type="number" name="points" value="{{ $reward->points_required }}" class="bg-transparent text-center font-bold text-blue-600 w-full focus:outline-none" placeholder="0">
+                                                    @endif
+                                                </td>
 
-                                            {{-- 3. Points Required --}}
-                                            <td class="px-6 py-3 text-center">
-                                                <div class="inline-flex items-center bg-gray-100 rounded-lg px-3 py-1">
-                                                    <i class="fas fa-star text-orange-400 text-xs mr-2"></i>
-                                                    <input type="number" name="points" value="{{ $reward->points_required }}" class="bg-transparent text-center w-12 text-gray-900 font-bold focus:outline-none p-0 border-none h-auto">
-                                                </div>
-                                            </td>
+                                                {{-- 5. Discount % --}}
+                                                <td class="px-4 py-3 text-center">
+                                                    <input type="number" name="discount_percent" value="{{ $reward->discount_percent }}" class="bg-transparent text-center w-12 border-b border-gray-200 focus:border-green-500 font-bold text-green-600"> %
+                                                </td>
 
-                                            {{-- 4. Discount % (Milestone Only) --}}
-                                            <td class="px-6 py-3 text-center">
-                                                @if($reward->category == 'Milestone')
-                                                    <div class="flex items-center justify-center gap-1">
-                                                        <span class="text-[10px] text-gray-400 font-bold bg-gray-100 px-1.5 py-0.5 rounded">STEP {{ $reward->milestone_step }}</span>
-                                                        <input type="number" name="discount_percent" value="{{ $reward->discount_percent }}" class="w-10 text-center font-bold text-green-600 border-b border-gray-300 focus:border-green-500 focus:ring-0 p-0">
-                                                        <span class="text-xs text-gray-500">%</span>
+                                                {{-- 6. Active --}}
+                                                <td class="px-4 py-3 text-center">
+                                                    <input type="checkbox" name="is_active" {{ $reward->is_active ? 'checked' : '' }}>
+                                                </td>
+
+                                                {{-- 7. Actions --}}
+                                                <td class="px-4 py-3 text-center align-middle whitespace-nowrap">
+                                                    <div class="flex items-center justify-center gap-2">
+                                                        <button type="submit" class="text-blue-500 hover:text-blue-700 p-1" title="Save"><i class="fas fa-save"></i></button>
+                                                        <a href="{{ route('staff.loyalty.delete_reward', $reward->id) }}" class="text-red-500 hover:text-red-700 p-1" onclick="return confirm('Delete?')"><i class="fas fa-trash"></i></a>
                                                     </div>
-                                                @else
-                                                    <span class="text-gray-300">-</span>
-                                                @endif
-                                            </td>
-
-                                            {{-- 5. Active Toggle --}}
-                                            <td class="px-6 py-3 text-center">
-                                                <label class="inline-flex items-center cursor-pointer">
-                                                    <input type="checkbox" name="is_active" {{ $reward->is_active ? 'checked' : '' }} class="sr-only peer">
-                                                    <div class="relative w-9 h-5 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-pink-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-pink-500"></div>
-                                                </label>
-                                            </td>
-
-                                            {{-- 6. Actions --}}
-                                            <td class="px-6 py-3 text-center">
-                                                {{-- Buang opacity-0 dan group-hover... supaya sentiasa nampak --}}
-                                                <div class="flex items-center justify-center gap-3">
-                                                    <button type="submit" class="text-blue-500 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 p-2 rounded-lg transition" title="Save Changes">
-                                                        <i class="fas fa-save"></i>
-                                                    </button>
-                                                    <a href="{{ route('staff.loyalty.delete_reward', $reward->id) }}" class="text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 p-2 rounded-lg transition" onclick="return confirm('Remove this reward?')" title="Delete Reward">
-                                                        <i class="fas fa-trash"></i>
-                                                    </a>
-                                                </div>
-                                            </td>
-                                        </form>
-                                    </tr>
-                                @endforeach
-                            </tbody>
+                                                </td>
+                                            </form>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
                         </table>
                     </div>
                 </div>

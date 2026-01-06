@@ -102,7 +102,9 @@ class LoyaltyController extends Controller
 
         // 7. [UPDATED] FETCH DYNAMIC REWARDS FROM DB
         // Ambil rewards yang aktif sahaja
-        $rewards = Reward::where('is_active', true)->get();
+        $rewards = Reward::where('is_active', true)
+        ->where('category', '!=', 'Milestone')
+        ->get();
 
         return view('loyalty.index', compact(
             'loyalty',
@@ -153,6 +155,10 @@ class LoyaltyController extends Controller
 
         if (!$reward || !$reward->is_active) {
             return response()->json(['success' => false, 'message' => 'Reward not found or inactive.']);
+        }
+
+        if ($reward->points_required <= 0 || $reward->category == 'Milestone') {
+            return response()->json(['success' => false, 'message' => 'This is a Milestone Reward and cannot be redeemed using points. It is awarded automatically upon booking completion.']);
         }
 
         // 3. Check Points
@@ -288,8 +294,9 @@ class LoyaltyController extends Controller
             ->get();
 
         // 7. [NEW] Manage Rewards Data
-        $manageRewards = Reward::all();
-
+        //$manageRewards = Reward::all();
+        $manageRewards = Reward::orderBy('category')->orderBy('milestone_step', 'asc')->get();
+        
         return view('staff.loyalty.index', compact(
             'loyaltyStats', 'totalPointsDistributed', 'totalPointsRedeemed',
             'recentActivities', 'rentalVouchers', 'merchantVouchers', 
@@ -302,6 +309,7 @@ class LoyaltyController extends Controller
     // Create Reward
     public function staffStoreReward(Request $request)
     {
+        //simple validation
         $request->validate([
             'name' => 'required',
             'offer' => 'required',
@@ -309,15 +317,31 @@ class LoyaltyController extends Controller
             'code_prefix' => 'required|max:10',
         ]);
 
+        $isMilestone = $request->filled('milestone_step');
+        $points = $isMilestone ? 0 : ($request->points ?? 0); // Kalau Milestone, Points = 0
+
+        $rewardColors = [
+                'bg-gradient-to-r from-purple-600/30 to-pink-600/30 border-purple-500/50',
+                'bg-gradient-to-r from-blue-600/30 to-cyan-600/30 border-blue-500/50',
+                'bg-gradient-to-r from-green-600/30 to-teal-600/30 border-green-500/50',
+                'bg-gradient-to-r from-yellow-600/30 to-orange-600/30 border-yellow-500/50',
+                'bg-gradient-to-r from-red-600/30 to-pink-600/30 border-red-500/50',
+            ];
+
         Reward::create([
             'name' => $request->name,
             'offer_description' => $request->offer,
-            'points_required' => $request->points,
+            'points_required' => $request->points ?? 0,
             'code_prefix' => strtoupper($request->code_prefix),
             'validity_months' => $request->validity ?? 3,
             'icon_class' => $request->icon ?? 'fa-utensils',
-            'color_class' => $request->color ?? 'bg-gray-600/20 border-gray-500/30',
-            'is_active' => true
+            'color_class' => $request->color ?? $rewardColors[array_rand($rewardColors)],
+            'is_active' => true,
+            
+            'category' => $request->filled('milestone_step') ? 'Milestone' : 'Food',
+            'milestone_step' => $request->milestone_step ?? null,
+            'discount_percent' => $request->discount_percent ?? 0
+
         ]);
 
         return back()->with('success', 'Reward added to Customer Site successfully!');
@@ -327,10 +351,19 @@ class LoyaltyController extends Controller
     public function staffUpdateReward(Request $request, $id)
     {
         $reward = Reward::findOrFail($id);
+
+        
+        // Kalau reward ni memang Milestone atau staff masukkan step baru, set jadi Milestone
+        $isMilestone = ($reward->category == 'Milestone' && $request->filled('milestone_step')) || $request->filled('milestone_step');
+        $category = $isMilestone ? 'Milestone' : 'Food';
+        $points = $isMilestone ? 0 : ($request->points ?? 0); // Paksa 0 jika Milestone
+
         $reward->update([
             'name' => $request->name,
             'offer_description' => $request->offer,
             'points_required' => $request->points,
+            'category' => $category,
+            'milestone_step' => $request->milestone_step,
             'discount_percent' => $request->discount_percent, // <--- Tambah ini
             'is_active' => $request->has('is_active') ? true : false
         ]);
@@ -523,6 +556,8 @@ class LoyaltyController extends Controller
         ]);
 
         // 3. Loyalty Road Logic (Dynamic from DB)
+        //CHECK MILESTONE (100% DYNAMIC)
+        //Kira total booking yang valid (>9 jam)
         $allBookings = Booking::where('customerID', $userId)
             ->where('bookingStatus', 'Completed')
             ->get();
@@ -541,7 +576,7 @@ class LoyaltyController extends Controller
 
             // Cari Reward dalam Database yang match step ini
             $milestoneReward = Reward::where('category', 'Milestone')
-                ->where('milestone_step', $positionInCycle)
+                ->where('milestone_step', $qualifiedCount)
                 ->where('is_active', true)
                 ->first();
 

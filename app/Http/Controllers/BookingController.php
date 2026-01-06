@@ -234,7 +234,7 @@ public function submitPayment(Request $request, $id)
             if ($voucher && !$voucher->isUsed) {
                 $voucherID = $voucher->voucherID ?? $voucher->id;
                 
-                // [BARU] VALIDASI HARI (BACKEND SAFETY CHECK)
+                // [BARU] VALIDATION HARI (BACKEND SAFETY CHECK)
                 // Pastikan tarikh pickup adalah Isnin - Khamis
                 $pickupDay = Carbon::parse($request->input('pickup_date'));
                 
