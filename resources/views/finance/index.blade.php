@@ -72,8 +72,9 @@
                                 <div>
                                     <i class="fas fa-money-bill-wave text-gray-500 mr-2"></i>
                                     Refund:
+                                    {{-- [FIXED] CALCULATE ACTUAL PAID AMOUNT INSTEAD OF TOTAL COST --}}
                                     <span class="text-white font-bold ml-1">
-                                        MYR {{ number_format($claim->totalCost, 2) }}
+                                        MYR {{ number_format($claim->payments->sum('amount'), 2) }}
                                     </span>
                                 </div>
                                 <div class="text-xs font-bold italic text-red-400">

@@ -62,6 +62,23 @@
                     </div>
                 </a>
                 
+                {{-- Deposit Management --}}
+                <a href="{{ route('staff.finance.deposits') }}" 
+                class="group flex items-center px-4 py-3.5 rounded-xl transition-all duration-300 font-bold text-sm relative overflow-hidden
+                {{ request()->routeIs('staff.finance.*') 
+                        ? 'text-white shadow-lg shadow-orange-500/25' 
+                        : 'text-gray-500 hover:bg-orange-50 hover:text-orange-600' }}">
+                    
+                    @if(request()->routeIs('staff.finance.*'))
+                        <div class="absolute inset-0 bg-gradient-to-br from-orange-500 to-orange-600 z-0"></div>
+                    @endif
+
+                    <div class="relative z-10 flex items-center w-full">
+                        <i class="fas fa-wallet w-6 text-center mr-3 text-lg {{ request()->routeIs('staff.finance.*') ? 'text-orange-100' : 'text-gray-400 group-hover:text-orange-500 transition-colors' }}"></i> 
+                        <span>Deposit Management</span>
+                    </div>
+                </a>
+
                 {{-- Fleet Management --}}
                 <a href="{{ route('staff.fleet.index') }}" 
                    class="group flex items-center px-4 py-3.5 rounded-xl transition-all duration-300 font-bold text-sm relative overflow-hidden

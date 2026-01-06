@@ -26,11 +26,7 @@
                 <div class="text-right">
                     <p class="text-xs font-bold text-orange-400 uppercase tracking-wider">Vehicle Selected</p>
                     <p class="font-bold text-xl leading-none">{{ $vehicle->model }}</p>
-                </div>
-                <div class="h-8 w-px bg-white/20"></div>
-                <div class="bg-[#ea580c] text-white font-bold px-3 py-1 rounded-lg text-sm shadow-sm uppercase tracking-tighter">
-                    {{ $vehicle->plateNo }}
-                </div>
+                </div>                
             </div>
         </div>
 

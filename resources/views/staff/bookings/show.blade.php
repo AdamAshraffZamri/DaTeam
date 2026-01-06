@@ -5,8 +5,9 @@
     <div class="max-w-6xl mx-auto">
         
         {{-- BACK BUTTON --}}
-        <a href="{{ route('staff.bookings.index') }}" class="inline-flex items-center text-gray-500 hover:text-gray-900 mb-6 transition">
-            <i class="fas fa-arrow-left mr-2"></i> Back to Dashboard
+        <a href="{{ url()->previous() }}"
+        class="inline-flex items-center text-gray-500 hover:text-gray-900 mb-6 transition">
+            <i class="fas fa-arrow-left mr-2"></i> Back
         </a>
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">

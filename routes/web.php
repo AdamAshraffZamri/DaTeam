@@ -199,4 +199,9 @@ Route::prefix('staff')->middleware(['auth:staff'])->group(function () {
     Route::post('/reports/export', [App\Http\Controllers\ReportController::class, 'exportToDrive'])->name('staff.reports.export');
 
     Route::get('/bookings/{id}/invoice', [StaffBookingController::class, 'streamInvoice'])->name('staff.bookings.invoice');
+
+    // --- FINANCE / DEPOSIT MANAGEMENT ---
+    Route::get('/finance/deposits', [App\Http\Controllers\StaffFinanceController::class, 'index'])->name('staff.finance.deposits');
+    Route::post('/finance/deposits/{id}/refund', [App\Http\Controllers\StaffFinanceController::class, 'processRefund'])->name('staff.finance.refund');
+    Route::post('/finance/deposits/{id}/forfeit', [App\Http\Controllers\StaffFinanceController::class, 'forfeit'])->name('staff.finance.forfeit');
 });
