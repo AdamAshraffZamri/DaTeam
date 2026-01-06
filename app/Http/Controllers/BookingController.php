@@ -228,25 +228,37 @@ public function submitPayment(Request $request, $id)
     $voucherID = null;
 
     if ($request->filled('voucher_id')) {
-        $voucher = Voucher::find($request->input('voucher_id'));
-        
-        // Basic validation to ensure voucher is still valid at moment of submission
-        if ($voucher) {
-            $voucherID = $voucher->id; // Save ID to link it later if needed
+            $voucher = \App\Models\Voucher::find($request->input('voucher_id'));
             
-            if ($voucher->discount_percentage > 0) {
-                // Percentage based discount (usually on Rental Charge only, not Deposit)
-                // But matching your frontend logic:
-                $discountAmount = ($grossTotal * $voucher->discount_percentage) / 100;
-            } else {
-                // Fixed amount discount
-                $discountAmount = $voucher->discount_amount;
+            // Check kewujudan voucher DAN pastikan belum digunakan (!isUsed)
+            if ($voucher && !$voucher->isUsed) {
+                $voucherID = $voucher->voucherID ?? $voucher->id;
+                
+                // [BARU] VALIDASI HARI (BACKEND SAFETY CHECK)
+                // Pastikan tarikh pickup adalah Isnin - Khamis
+                $pickupDay = Carbon::parse($request->input('pickup_date'));
+                
+                // Carbon: 1=Isnin, 4=Khamis, 5=Jumaat, 6=Sabtu, 7=Ahad
+                if ($voucher->voucherType == 'Rental Discount' && $pickupDay->dayOfWeekIso > 4) {
+                    return back()->with('error', 'Voucher invalid for this date (Mon-Thu only). Transaction cancelled.');
+                }
+
+                // Kira Diskaun
+                if ($voucher->discount_percent > 0) {
+                    // Percentage based discount (Diskaun atas Rental Charge sahaja, bukan Deposit)
+                    $discountAmount = ($rentalCharge * $voucher->discount_percent) / 100;
+                } else {
+                    // Fixed amount discount
+                    $discountAmount = $voucher->voucherAmount;
+                }
+                
+                // [PENTING] TANDAKAN VOUCHER SEBAGAI DIGUNAKAN
+                $voucher->update([
+                    'isUsed' => true,
+                    // 'used_at' => now() // Boleh uncomment jika ada column ini
+                ]);
             }
-            
-            // Optional: Mark voucher as used (if single-use)
-            // $voucher->decrement('usage_limit'); 
         }
-    }
 
     // Calculate Final Total Cost after Discount
     $finalTotalCost = max(0, $grossTotal - $discountAmount);

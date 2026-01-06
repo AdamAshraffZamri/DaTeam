@@ -88,7 +88,10 @@ Route::middleware('auth')->group(function () {
     Route::post('/voucher/apply', [VoucherController::class, 'apply'])->name('voucher.apply');
     Route::get('/voucher/available', [VoucherController::class, 'getAvailableVouchers'])->name('voucher.available');
 
+    Route::post('/voucher/use-now', [App\Http\Controllers\LoyaltyController::class, 'useVoucherNow'])->name('voucher.use_now');
     Route::resource('penalties', PenaltyController::class);
+
+    
 
     // Feedback
     Route::post('/bookings/{id}/feedback', [App\Http\Controllers\FeedbackController::class, 'store'])->name('feedback.store');
@@ -104,9 +107,12 @@ Route::middleware('auth')->group(function () {
 // ====================================================
 //  STAFF ROUTES (Middleware: auth:staff)
 // ====================================================
-Route::prefix('staff')->middleware(['auth:staff'])->group(function () {
+
+    Route::prefix('staff')->middleware(['auth:staff'])->group(function () {
+    //Route::prefix('staff')->name('staff.')->middleware(['auth:staff'])->group(function () {
 
     // Dashboard
+    //Route::get('/dashboard', [StaffBookingController::class, 'dashboard'])->name('dashboard');
     Route::get('/dashboard', [StaffBookingController::class, 'dashboard'])->name('staff.dashboard');
     
     Route::get('/profile', [App\Http\Controllers\StaffProfileController::class, 'edit'])->name('staff.profile.edit');
@@ -189,14 +195,30 @@ Route::prefix('staff')->middleware(['auth:staff'])->group(function () {
     Route::post('/bookings/{id}/complete', [LoyaltyController::class, 'bookingCompleted'])->name('staff.bookings.complete');
     Route::resource('penalty', PenaltyController::class);
     
-    // Staff Loyalty & Rewards Management
-    Route::get('/loyalty', [LoyaltyController::class, 'staffIndex'])->name('staff.loyalty.index');
-    Route::get('/loyalty/customer/{customerId}', [LoyaltyController::class, 'staffShowCustomer'])->name('staff.loyalty.show_customer');
-    Route::post('/loyalty/voucher/store', [LoyaltyController::class, 'staffStoreVoucher'])->name('staff.loyalty.store_voucher');
-    Route::get('/loyalty/voucher/{voucherId}/edit', [LoyaltyController::class, 'staffEditVoucher'])->name('staff.loyalty.edit_voucher');
-    Route::put('/loyalty/voucher/{voucherId}', [LoyaltyController::class, 'staffUpdateVoucher'])->name('staff.loyalty.update_voucher');
-    Route::delete('/loyalty/voucher/{voucherId}', [LoyaltyController::class, 'staffDeleteVoucher'])->name('staff.loyalty.delete_voucher');
     
+    
+    
+    // --- Staff Loyalty & Rewards Management ---
+
+     // Dashboard
+    Route::get('/loyalty', [LoyaltyController::class, 'staffIndex'])->name('staff.loyalty.index'); // Tambah 'staff.'
+
+    // View Customer Details & Their Loyalty Info
+    Route::get('/loyalty/customer/{customerId}', [LoyaltyController::class, 'staffShowCustomer'])->name('staff.loyalty.show_customer');
+
+     // Manage Rewards (The "Menu" for Customers)
+    Route::post('/loyalty/reward/store', [LoyaltyController::class, 'staffStoreReward'])->name('staff.loyalty.store_reward'); // Tambah 'staff.'
+
+    Route::put('/loyalty/reward/{id}/update', [LoyaltyController::class, 'staffUpdateReward'])->name('staff.loyalty.update_reward'); // Tambah 'staff.'
+
+    Route::get('/loyalty/reward/{id}/delete', [LoyaltyController::class, 'staffDeleteReward'])->name('staff.loyalty.delete_reward'); // Tambah 'staff.'
+
+    // Manage Vouchers (Specific codes for Users)
+    Route::post('/loyalty/voucher/store', [LoyaltyController::class, 'staffStoreVoucher'])->name('staff.loyalty.store_voucher'); // Tambah 'staff.'
+    Route::get('/loyalty/voucher/{id}/edit', [LoyaltyController::class, 'staffEditVoucher'])->name('staff.loyalty.edit_voucher'); // Tambah 'staff.'
+    Route::put('/loyalty/voucher/{id}', [LoyaltyController::class, 'staffUpdateVoucher'])->name('staff.loyalty.update_voucher'); // Tambah 'staff.'
+    Route::delete('/loyalty/voucher/{id}', [LoyaltyController::class, 'staffDeleteVoucher'])->name('staff.loyalty.delete_voucher'); // Tambah 'staff.'
+
     // Reporting Routes
     Route::get('/reports', [App\Http\Controllers\ReportController::class, 'index'])->name('staff.reports.index');
     Route::post('/reports/export', [App\Http\Controllers\ReportController::class, 'exportToDrive'])->name('staff.reports.export');

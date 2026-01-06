@@ -12,9 +12,6 @@
             <p class="text-gray-500 mt-1 text-sm">Monitor customer loyalty points, rewards activities, and manage vouchers</p>
         </div>
 
-        
-        
-
         {{-- KEY METRICS --}}
         <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
             {{-- Total Points Distributed --}}
@@ -71,18 +68,21 @@
         </div>
 
         {{-- TABS NAVIGATION --}}
-        <div class="mb-6">
-            <div class="flex gap-4 border-b border-gray-200">
-                <button onclick="showTab('customers')" class="tab-btn active px-6 py-3 font-bold text-gray-900 border-b-2 border-orange-500 transition">
-                    <i class="fas fa-list mr-2"></i> Customer Loyalty List
+        <div class="mb-6 overflow-x-auto">
+            <div class="flex gap-4 border-b border-gray-200 min-w-max">
+                <button id="btn-customers" onclick="showTab('customers')" class="tab-btn active px-6 py-3 font-bold text-gray-900 border-b-2 border-orange-500 transition">
+                    <i class="fas fa-list mr-2"></i> Customer List
                 </button>
-                <button onclick="showTab('tier')" class="tab-btn px-6 py-3 font-bold text-gray-500 border-b-2 border-transparent hover:text-gray-900 transition">
+                <button id="btn-tier" onclick="showTab('tier')" class="tab-btn px-6 py-3 font-bold text-gray-500 border-b-2 border-transparent hover:text-gray-900 transition">
                     <i class="fas fa-layer-group mr-2"></i> Tier Breakdown
                 </button>
-                <button onclick="showTab('vouchers')" class="tab-btn px-6 py-3 font-bold text-gray-500 border-b-2 border-transparent hover:text-gray-900 transition">
-                    <i class="fas fa-ticket-alt mr-2"></i> Manage Vouchers
+                
+                {{-- GABUNGAN TAB REWARDS & VOUCHERS --}}
+                <button id="btn-rewards_vouchers" onclick="showTab('rewards_vouchers')" class="tab-btn px-6 py-3 font-bold text-gray-500 border-b-2 border-transparent hover:text-gray-900 transition">
+                    <i class="fas fa-gift mr-2"></i> Rewards & Vouchers
                 </button>
-                <button onclick="showTab('activities')" class="tab-btn px-6 py-3 font-bold text-gray-500 border-b-2 border-transparent hover:text-gray-900 transition">
+
+                <button id="btn-activities" onclick="showTab('activities')" class="tab-btn px-6 py-3 font-bold text-gray-500 border-b-2 border-transparent hover:text-gray-900 transition">
                     <i class="fas fa-history mr-2"></i> Recent Activities
                 </button>
             </div>
@@ -229,168 +229,388 @@
             </div>
         </div>
 
-        {{-- TAB 3: MANAGE VOUCHERS --}}
-        <div id="vouchers-tab" class="tab-content hidden space-y-6">
-            {{-- ADD NEW VOUCHER FORM --}}
-            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-                <h3 class="text-lg font-bold text-gray-900 mb-6 flex items-center">
-                    <i class="fas fa-plus text-green-600 mr-3"></i> Add New Voucher
-                </h3>
+        {{-- TAB 3: COMBINED REWARDS & VOUCHERS MANAGEMENT --}}
+        <div id="rewards_vouchers-tab" class="tab-content hidden space-y-8">
+            
+            {{-- ========================================================= --}}
+            {{-- SECTION A: MANAGE DISPLAYED REWARDS (MENU) --}}
+            {{-- ========================================================= --}}
+            <div class="bg-white rounded-2xl shadow-lg border-l-4 border-pink-500 overflow-hidden">
+                
+                {{-- Header Section --}}
+                <div class="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+                    <div>
+                        <h3 class="text-xl font-black text-gray-900 flex items-center gap-2">
+                            <span class="w-8 h-8 rounded-lg bg-pink-100 flex items-center justify-center text-pink-600">
+                                <i class="fas fa-store"></i>
+                            </span>
+                            Manage Displayed Rewards
+                        </h3>
+                        <p class="text-sm text-gray-500 mt-1 ml-10">Set up the catalog of rewards visible to customers.</p>
+                    </div>
+                </div>
 
-                <form action="{{ route('staff.loyalty.store_voucher') }}" method="POST" class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    @csrf
-                    <div>
-                        <label class="block text-xs font-bold text-gray-600 mb-2">Voucher Code</label>
-                        <input type="text" name="code" class="w-full bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-lg p-3 focus:ring-indigo-500 focus:border-indigo-500" placeholder="e.g., HASTA10-ABC123" required>
+                <div class="p-6">
+                    {{-- Add Reward Form --}}
+                    <div class="bg-gradient-to-r from-gray-50 to-white p-6 rounded-2xl border border-gray-200 mb-8 relative">
+                        <div class="absolute top-0 right-0 -mt-2 -mr-2 w-16 h-16 bg-pink-500/10 rounded-full blur-xl"></div>
+                        
+                        <h4 class="text-xs font-bold text-pink-600 uppercase tracking-widest mb-4">Add New Reward Item</h4>
+                        
+                        <form action="{{ route('staff.loyalty.store_reward') }}" method="POST">
+                            @csrf
+                            <div class="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
+                                <div class="md:col-span-3">
+                                    <label class="block text-xs font-bold text-gray-600 mb-1">Merchant Name</label>
+                                    <input 
+                                        type="text" 
+                                        name="name" 
+                                        placeholder="e.g. KFC" 
+                                        class="w-full bg-white border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition shadow-sm uppercase font-bold" 
+                                        required
+                                        oninput="this.value = this.value.toUpperCase()"
+                                    >
+                                </div>
+                                <div class="md:col-span-3">
+                                    <label class="block text-xs font-bold text-gray-600 mb-1">Offer Description</label>
+                                    <input type="text" name="offer" placeholder="RM5 OFF" class="w-full bg-white border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition shadow-sm" required oninput="this.value = this.value.toUpperCase()">
+                                </div>
+                                <div class="md:col-span-2">
+                                    <label class="block text-xs font-bold text-gray-600 mb-1">Points Cost</label>
+                                    <div class="relative">
+                                        <input type="number" name="points" placeholder="200" class="w-full bg-white border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition shadow-sm pl-8" required>
+                                        <span class="absolute left-3 top-2.5 text-gray-400 text-xs"><i class="fas fa-star"></i></span>
+                                    </div>
+                                </div>
+                                <div class="md:col-span-2">
+                                    <label class="block text-xs font-bold text-gray-600 mb-1">Code Prefix</label>
+                                    <input type="text" name="code_prefix" placeholder="KFC" class="w-full bg-white border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition shadow-sm" required oninput="this.value = this.value.toUpperCase()">
+                                </div>
+                                <div class="md:col-span-2">
+                                    <button type="submit" class="w-full bg-pink-600 hover:bg-pink-700 text-white font-bold py-2.5 px-4 rounded-xl shadow-lg shadow-pink-600/30 transition transform active:scale-95 flex items-center justify-center gap-2">
+                                        <i class="fas fa-plus-circle"></i> Add
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
                     </div>
-                    <div>
-                        <label class="block text-xs font-bold text-gray-600 mb-2">Discount Amount (RM)</label>
-                        <input type="number" name="amount" step="0.01" class="w-full bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-lg p-3 focus:ring-indigo-500 focus:border-indigo-500" placeholder="50.00" required>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-gray-600 mb-2">Type</label>
-                        <select name="type" class="w-full bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-lg p-3 focus:ring-indigo-500 focus:border-indigo-500" required>
-                            <option value="Rental Discount">Rental Discount</option>
-                            <option value="Merchant Reward">Merchant Reward</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-gray-600 mb-2">Valid From</label>
-                        <input type="date" name="valid_from" class="w-full bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-lg p-3 focus:ring-indigo-500 focus:border-indigo-500" required>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-gray-600 mb-2">Valid Until</label>
-                        <input type="date" name="valid_until" class="w-full bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-lg p-3 focus:ring-indigo-500 focus:border-indigo-500" required>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-gray-600 mb-2">Description</label>
-                        <input type="text" name="description" class="w-full bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-lg p-3 focus:ring-indigo-500 focus:border-indigo-500" placeholder="Optional" maxlength="255">
-                    </div>
-                    <div class="md:col-span-3">
-                        <button type="submit" class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-4 rounded-lg transition">
-                            <i class="fas fa-plus mr-2"></i> Create Voucher
-                        </button>
-                    </div>
-                </form>
-            </div>
 
-            {{-- RENTAL DISCOUNT VOUCHERS --}}
-            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-                <h3 class="text-lg font-bold text-gray-900 mb-6 flex items-center">
-                    <i class="fas fa-car text-purple-600 mr-3"></i> Car Rental Discount Vouchers ({{ $rentalVouchers->count() }})
-                </h3>
-
-                <div class="overflow-x-auto">
-                    <table class="w-full text-sm">
-                        <thead>
-                            <tr class="border-b border-gray-200 bg-gray-50">
-                                <th class="px-6 py-3 text-left font-bold text-gray-700">Code</th>
-                                <th class="px-6 py-3 text-center font-bold text-gray-700">Amount (RM)</th>
-                                <th class="px-6 py-3 text-center font-bold text-gray-700">Valid From</th>
-                                <th class="px-6 py-3 text-center font-bold text-gray-700">Valid Until</th>
-                                <th class="px-6 py-3 text-center font-bold text-gray-700">Status</th>
-                                <th class="px-6 py-3 text-center font-bold text-gray-700">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @forelse($rentalVouchers as $voucher)
-                                <tr class="border-b border-gray-100 hover:bg-gray-50 transition">
-                                    <td class="px-6 py-4 font-bold text-gray-900">{{ $voucher->code }}</td>
-                                    <td class="px-6 py-4 text-center font-bold text-indigo-600">RM {{ number_format($voucher->voucherAmount, 2) }}</td>
-                                    <td class="px-6 py-4 text-center text-gray-700">{{ $voucher->validFrom?->format('M d, Y') ?? 'N/A' }}</td>
-                                    <td class="px-6 py-4 text-center text-gray-700">{{ $voucher->validUntil?->format('M d, Y') ?? 'N/A' }}</td>
-                                    <td class="px-6 py-4 text-center">
-                                        <span class="px-3 py-1 rounded-full text-xs font-bold {{ $voucher->isUsed ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700' }}">
-                                            {{ $voucher->isUsed ? 'Used' : 'Active' }}
-                                        </span>
-                                    </td>
-                                    <td class="px-6 py-4 text-center space-x-2">
-                                        <button onclick="editVoucher({{ $voucher->voucherID }})" class="text-blue-600 hover:text-blue-800 font-bold transition">
-                                            <i class="fas fa-edit"></i> Edit
-                                        </button>
-                                        <form action="{{ route('staff.loyalty.delete_voucher', $voucher->voucherID) }}" method="POST" class="inline">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="submit" class="text-red-600 hover:text-red-800 font-bold transition" onclick="return confirm('Delete this voucher?')">
-                                                <i class="fas fa-trash"></i> Delete
-                                            </button>
-                                        </form>
-                                    </td>
-                                </tr>
-                            @empty
+                    {{-- List Rewards Table --}}
+                    <div class="overflow-hidden rounded-xl border border-gray-200 shadow-sm">
+                        <table class="w-full text-sm">
+                            <thead class="bg-gray-100 text-gray-600 uppercase text-[10px] tracking-wider font-bold">
                                 <tr>
-                                    <td colspan="6" class="px-6 py-8 text-center text-gray-400">
-                                        <p>No rental vouchers yet</p>
-                                    </td>
+                                    <th class="px-6 py-4 text-left">Merchant / Reward</th>
+                                    <th class="px-6 py-4 text-left">Offer Description</th>
+                                    <th class="px-6 py-4 text-center">Points Cost</th>
+                                    <th class="px-6 py-4 text-center">            </th>
+                                    <th class="px-6 py-4 text-center">Status</th>
+                                    <th class="px-6 py-4 text-center">Actions</th>
                                 </tr>
-                            @endforelse
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody class="divide-y divide-gray-100">
+                                @foreach($manageRewards as $reward)
+                                    <tr class="border-b border-gray-100">
+                                        <form action="{{ route('staff.loyalty.update_reward', $reward->id) }}" method="POST">
+                                            @csrf
+                                            @method('PUT')
+                                            
+                                            {{-- 1. Merchant Name --}}
+                                            <td class="px-6 py-3">
+                                                <input type="text" name="name" value="{{ $reward->name }}" class="bg-transparent font-bold text-gray-900 border-b border-transparent focus:border-pink-500 focus:ring-0 w-full transition px-0">
+                                            </td>
+
+                                            {{-- 2. Offer Description --}}
+                                            <td class="px-6 py-3">
+                                                <input type="text" name="offer" value="{{ $reward->offer_description }}" class="bg-transparent text-gray-600 border-b border-transparent focus:border-pink-500 focus:ring-0 w-full transition px-0">
+                                            </td>
+
+                                            {{-- 3. Points Required --}}
+                                            <td class="px-6 py-3 text-center">
+                                                <div class="inline-flex items-center bg-gray-100 rounded-lg px-3 py-1">
+                                                    <i class="fas fa-star text-orange-400 text-xs mr-2"></i>
+                                                    <input type="number" name="points" value="{{ $reward->points_required }}" class="bg-transparent text-center w-12 text-gray-900 font-bold focus:outline-none p-0 border-none h-auto">
+                                                </div>
+                                            </td>
+
+                                            {{-- 4. Discount % (Milestone Only) --}}
+                                            <td class="px-6 py-3 text-center">
+                                                @if($reward->category == 'Milestone')
+                                                    <div class="flex items-center justify-center gap-1">
+                                                        <span class="text-[10px] text-gray-400 font-bold bg-gray-100 px-1.5 py-0.5 rounded">STEP {{ $reward->milestone_step }}</span>
+                                                        <input type="number" name="discount_percent" value="{{ $reward->discount_percent }}" class="w-10 text-center font-bold text-green-600 border-b border-gray-300 focus:border-green-500 focus:ring-0 p-0">
+                                                        <span class="text-xs text-gray-500">%</span>
+                                                    </div>
+                                                @else
+                                                    <span class="text-gray-300">-</span>
+                                                @endif
+                                            </td>
+
+                                            {{-- 5. Active Toggle --}}
+                                            <td class="px-6 py-3 text-center">
+                                                <label class="inline-flex items-center cursor-pointer">
+                                                    <input type="checkbox" name="is_active" {{ $reward->is_active ? 'checked' : '' }} class="sr-only peer">
+                                                    <div class="relative w-9 h-5 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-pink-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-pink-500"></div>
+                                                </label>
+                                            </td>
+
+                                            {{-- 6. Actions --}}
+                                            <td class="px-6 py-3 text-center">
+                                                {{-- Buang opacity-0 dan group-hover... supaya sentiasa nampak --}}
+                                                <div class="flex items-center justify-center gap-3">
+                                                    <button type="submit" class="text-blue-500 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 p-2 rounded-lg transition" title="Save Changes">
+                                                        <i class="fas fa-save"></i>
+                                                    </button>
+                                                    <a href="{{ route('staff.loyalty.delete_reward', $reward->id) }}" class="text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 p-2 rounded-lg transition" onclick="return confirm('Remove this reward?')" title="Delete Reward">
+                                                        <i class="fas fa-trash"></i>
+                                                    </a>
+                                                </div>
+                                            </td>
+                                        </form>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
 
-            {{-- MERCHANT REWARD VOUCHERS --}}
-            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-                <h3 class="text-lg font-bold text-gray-900 mb-6 flex items-center">
-                    <i class="fas fa-tag text-purple-600 mr-3"></i> Merchant Reward Vouchers ({{ $merchantVouchers->count() }})
-                </h3>
+            {{-- ========================================================= --}}
+            {{-- SECTION B: MANAGE VOUCHERS (SPECIFIC CODES) --}}
+            {{-- ========================================================= --}}
+            <div class="bg-white rounded-2xl shadow-lg border-l-4 border-green-500 overflow-hidden">
+                
+                {{-- Header Section --}}
+                <div class="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+                    <div>
+                        <h3 class="text-xl font-black text-gray-900 flex items-center gap-2">
+                            <span class="w-8 h-8 rounded-lg bg-green-100 flex items-center justify-center text-green-600">
+                                <i class="fas fa-ticket-alt"></i>
+                            </span>
+                            Manage Specific Vouchers
+                        </h3>
+                        <p class="text-sm text-gray-500 mt-1 ml-10">Create discount codes for rental or merchant redemptions.</p>
+                    </div>
+                </div>
 
-                <div class="overflow-x-auto">
-                    <table class="w-full text-sm">
-                        <thead>
-                            <tr class="border-b border-gray-200 bg-gray-50">
-                                <th class="px-6 py-3 text-left font-bold text-gray-700">Code</th>
-                                <th class="px-6 py-3 text-left font-bold text-gray-700">Merchant</th>
-                                <th class="px-6 py-3 text-center font-bold text-gray-700">Amount (RM)</th>
-                                <th class="px-6 py-3 text-center font-bold text-gray-700">Valid Until</th>
-                                <th class="px-6 py-3 text-center font-bold text-gray-700">Status</th>
-                                <th class="px-6 py-3 text-center font-bold text-gray-700">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @forelse($merchantVouchers as $voucher)
-                                <tr class="border-b border-gray-100 hover:bg-gray-50 transition">
-                                    <td class="px-6 py-4 font-bold text-gray-900">{{ $voucher->code }}</td>
-                                    <td class="px-6 py-4 text-gray-700">{{ $voucher->redeem_place ?? 'N/A' }}</td>
-                                    <td class="px-6 py-4 text-center font-bold text-indigo-600">RM {{ number_format($voucher->voucherAmount, 2) }}</td>
-                                    <td class="px-6 py-4 text-center text-gray-700">{{ $voucher->validUntil?->format('M d, Y') ?? 'N/A' }}</td>
-                                    <td class="px-6 py-4 text-center">
-                                        <span class="px-3 py-1 rounded-full text-xs font-bold {{ $voucher->isUsed ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700' }}">
-                                            {{ $voucher->isUsed ? 'Used' : 'Active' }}
-                                        </span>
-                                    </td>
-                                    <td class="px-6 py-4 text-center space-x-2">
-                                        <button onclick="editVoucher({{ $voucher->voucherID }})" class="text-blue-600 hover:text-blue-800 font-bold transition">
-                                            <i class="fas fa-edit"></i> Edit
-                                        </button>
-                                        <form action="{{ route('staff.loyalty.delete_voucher', $voucher->voucherID) }}" method="POST" class="inline">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="submit" class="text-red-600 hover:text-red-800 font-bold transition" onclick="return confirm('Delete this voucher?')">
-                                                <i class="fas fa-trash"></i> Delete
-                                            </button>
-                                        </form>
-                                    </td>
-                                </tr>
-                            @empty
-                                <tr>
-                                    <td colspan="6" class="px-6 py-8 text-center text-gray-400">
-                                        <p>No merchant vouchers yet</p>
-                                    </td>
-                                </tr>
-                            @endforelse
-                        </tbody>
-                    </table>
+                <div class="p-6">
+                    {{-- Add New Voucher Form --}}
+                    <div class="bg-gradient-to-r from-gray-50 to-white p-8 rounded-2xl border border-gray-200 mb-10">
+                        <h4 class="text-sm font-bold text-green-700 uppercase tracking-widest mb-6 border-b border-green-100 pb-2">Create New Voucher</h4>
+                        
+                        <form action="{{ route('staff.loyalty.store_voucher') }}" method="POST" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                            @csrf
+                            
+                            {{-- 1. Code --}}
+                            <div class="col-span-1 md:col-span-2">
+                                <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Voucher Code</label>
+                                <div class="relative">
+                                    <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+                                        <i class="fas fa-barcode"></i>
+                                    </span>
+                                    <input 
+                                        type="text" 
+                                        name="code" 
+                                        class="w-full pl-10 pr-4 py-3 bg-white border border-gray-200 rounded-xl text-gray-900 text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500 font-mono font-bold tracking-wider uppercase transition" 
+                                        placeholder="e.g. HASTA10-ABC" 
+                                        required
+                                        oninput="this.value = this.value.toUpperCase()" 
+                                    >
+                                </div>
+                            </div>
+
+                            {{-- 2. Amount --}}
+                            <div class="col-span-1">
+                                <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Discount (RM/%)</label>
+                                <input 
+                                    type="number" 
+                                    name="amount" 
+                                    class="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-gray-900 text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500 transition font-bold" 
+                                    placeholder="0.00"
+                                    required
+                                >
+                            </div>
+
+                            {{-- 3. Type (FIXED DISPLAY) --}}
+                            <div class="col-span-1">
+                                <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Type</label>
+                                {{-- Input Hidden --}}
+                                <input type="hidden" name="type" value="Rental Discount">
+                                {{-- Visual Display --}}
+                                <div class="w-full px-4 py-3 bg-green-50 border border-green-200 rounded-xl text-green-800 text-sm font-bold flex items-center shadow-inner cursor-not-allowed">
+                                    <i class="fas fa-car mr-2"></i> Rental Discount
+                                </div>
+                            </div>
+
+                            {{-- 4. Valid From --}}
+                            <div class="col-span-1">
+                                <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Valid From</label>
+                                <input type="datetime-local" name="valid_from" class="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-gray-600 text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500 transition" required>
+                            </div>
+
+                            {{-- 5. Valid Until --}}
+                            <div class="col-span-1">
+                                <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Valid Until</label>
+                                <input type="datetime-local" name="valid_until" class="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-gray-600 text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500 transition" required>
+                            </div>
+
+                            {{-- 6. Description --}}
+                            <div class="col-span-1 md:col-span-2">
+                                <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Internal Note (Optional)</label>
+                                <input type="text" name="description" class="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-gray-600 text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500 transition" placeholder="e.g. Promo Merdeka" maxlength="255">
+                            </div>
+
+                            {{-- Submit Button --}}
+                            <div class="col-span-1 md:col-span-4 mt-2">
+                                <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3.5 rounded-xl shadow-lg shadow-green-600/30 transition transform active:scale-[0.98] flex items-center justify-center gap-2 text-base">
+                                    <i class="fas fa-check-circle"></i> Create Voucher Code
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    {{-- Sub-Section: Rental Vouchers List --}}
+                    <div class="mb-8">
+                        <div class="flex items-center gap-3 mb-4">
+                            <div class="h-8 w-1 bg-green-500 rounded-full"></div>
+                            <h4 class="text-lg font-bold text-gray-800">Rental Discount Vouchers</h4>
+                            <span class="bg-green-100 text-green-700 px-2 py-0.5 rounded-md text-xs font-bold">{{ $rentalVouchers->count() }}</span>
+                        </div>
+
+                        <div class="overflow-hidden rounded-xl border border-gray-200 shadow-sm">
+                            <table class="w-full text-sm">
+                                <thead class="bg-gray-50 text-gray-500 uppercase text-[10px] tracking-wider font-bold">
+                                    <tr>
+                                        <th class="px-6 py-3 text-left">Code</th>
+                                        <th class="px-6 py-3 text-center">Amount (RM)</th>
+                                        <th class="px-6 py-3 text-center">Valid Range</th>
+                                        <th class="px-6 py-3 text-center">Status</th>
+                                        <th class="px-6 py-3 text-center">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-100 bg-white">
+                                    @forelse($rentalVouchers as $voucher)
+                                        <tr class="hover:bg-gray-50 transition">
+                                            <td class="px-6 py-4 font-mono font-bold text-gray-900 tracking-wide">{{ $voucher->code }}</td>
+                                            <td class="px-6 py-4 text-center">
+                                                <span class="font-bold text-green-600 bg-green-50 px-2 py-1 rounded">RM {{ number_format($voucher->voucherAmount, 2) }}</span>
+                                            </td>
+                                            <td class="px-6 py-4 text-center text-xs text-gray-500">
+                                                <div>{{ $voucher->validFrom?->format('d M') }} - {{ $voucher->validUntil?->format('d M Y') }}</div>
+                                            </td>
+                                            <td class="px-6 py-4 text-center">
+                                                <span class="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide border {{ $voucher->isUsed ? 'bg-red-50 text-red-600 border-red-100' : 'bg-green-50 text-green-600 border-green-100' }}">
+                                                    {{ $voucher->isUsed ? 'Used' : 'Active' }}
+                                                </span>
+                                            </td>
+                                            <td class="px-6 py-4 text-center space-x-2">
+                                                <button onclick="editVoucher({{ $voucher->voucherID }})" class="text-blue-600 hover:text-blue-800 transition" title="Edit">
+                                                    <i class="fas fa-edit"></i>
+                                                </button>
+                                                <form action="{{ route('staff.loyalty.delete_voucher', $voucher->voucherID) }}" method="POST" class="inline">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button type="submit" class="text-red-400 hover:text-red-600 transition" onclick="return confirm('Delete this voucher?')" title="Delete">
+                                                        <i class="fas fa-trash-alt"></i>
+                                                    </button>
+                                                </form>
+                                            </td>
+                                        </tr>
+                                    @empty
+                                        <tr>
+                                            <td colspan="6" class="px-6 py-10 text-center text-gray-400 italic bg-gray-50">
+                                                No rental vouchers created yet.
+                                            </td>
+                                        </tr>
+                                    @endforelse
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    {{-- Sub-Section: Merchant Vouchers List --}}
+                    <div>
+                        <div class="flex items-center gap-3 mb-4">
+                            <div class="h-8 w-1 bg-purple-500 rounded-full"></div>
+                            <h4 class="text-lg font-bold text-gray-800">Merchant Reward Vouchers</h4>
+                            <span class="bg-purple-100 text-purple-700 px-2 py-0.5 rounded-md text-xs font-bold">{{ $merchantVouchers->count() }}</span>
+                        </div>
+
+                        <div class="overflow-hidden rounded-xl border border-gray-200 shadow-sm">
+                            <table class="w-full text-sm">
+                                <thead class="bg-gray-50 text-gray-500 uppercase text-[10px] tracking-wider font-bold">
+                                    <tr>
+                                        <th class="px-6 py-3 text-left">Code</th>
+                                        <th class="px-6 py-3 text-left">Merchant</th>
+                                        <th class="px-6 py-3 text-center">Expires</th>
+                                        <th class="px-6 py-3 text-center">Status</th>
+                                        <th class="px-6 py-3 text-center">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-100 bg-white">
+                                    @forelse($merchantVouchers as $voucher)
+                                        <tr class="hover:bg-gray-50 transition">
+                                            <td class="px-6 py-4 font-mono font-bold text-gray-900 tracking-wide">{{ $voucher->code }}</td>
+                                            <td class="px-6 py-4 text-gray-700 font-medium">{{ $voucher->redeem_place ?? 'N/A' }}</td>
+                                            <td class="px-6 py-4 text-center text-xs text-gray-500">
+                                                {{ $voucher->validUntil?->format('d M Y') ?? 'N/A' }}
+                                            </td>
+                                            <td class="px-6 py-4 text-center">
+                                                <span class="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide border {{ $voucher->isUsed ? 'bg-red-50 text-red-600 border-red-100' : 'bg-green-50 text-green-600 border-green-100' }}">
+                                                    {{ $voucher->isUsed ? 'Used' : 'Active' }}
+                                                </span>
+                                            </td>
+                                            <td class="px-6 py-4 text-center space-x-2">
+                                                <button onclick="editVoucher({{ $voucher->voucherID }})" class="text-blue-600 hover:text-blue-800 transition">
+                                                    <i class="fas fa-edit"></i>
+                                                </button>
+                                                <form action="{{ route('staff.loyalty.delete_voucher', $voucher->voucherID) }}" method="POST" class="inline">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button type="submit" class="text-red-400 hover:text-red-600 transition" onclick="return confirm('Delete this voucher?')">
+                                                        <i class="fas fa-trash-alt"></i>
+                                                    </button>
+                                                </form>
+                                            </td>
+                                        </tr>
+                                    @empty
+                                        <tr>
+                                            <td colspan="6" class="px-6 py-10 text-center text-gray-400 italic bg-gray-50">
+                                                No merchant vouchers created yet.
+                                            </td>
+                                        </tr>
+                                    @endforelse
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
 
-        {{-- TAB 4: RECENT ACTIVITIES --}}
+        {{-- TAB 4: RECENT ACTIVITIES (UPDATED WITH FILTER) --}}
         <div id="activities-tab" class="tab-content hidden">
             <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-                <h3 class="text-lg font-bold text-gray-900 mb-6 flex items-center">
-                    <i class="fas fa-history text-blue-600 mr-3"></i> Recent Loyalty Activities
-                </h3>
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-lg font-bold text-gray-900 flex items-center">
+                        <i class="fas fa-history text-blue-600 mr-3"></i> Recent Loyalty Activities
+                    </h3>
+
+                    {{-- FILTER DROPDOWN --}}
+                    <form method="GET" action="{{ route('staff.loyalty.index') }}">
+                        <div class="flex gap-2">
+                            <select name="activity_type" class="bg-gray-50 border border-gray-200 text-sm rounded-lg p-2 focus:ring-orange-500" onchange="this.form.submit()">
+                                <option value="all" {{ request('activity_type') == 'all' ? 'selected' : '' }}>All Activities</option>
+                                <option value="earned" {{ request('activity_type') == 'earned' ? 'selected' : '' }}>Points Earned</option>
+                                <option value="redeemed" {{ request('activity_type') == 'redeemed' ? 'selected' : '' }}>Points Redeemed</option>
+                                <option value="rental" {{ request('activity_type') == 'rental' ? 'selected' : '' }}>Rental Rewards</option>
+                                <option value="merchant" {{ request('activity_type') == 'merchant' ? 'selected' : '' }}>Food Vouchers</option>
+                            </select>
+                            {{-- Hack to keep the tab active on reload --}}
+                            <input type="hidden" id="active_tab_input" name="tab" value="activities">
+                        </div>
+                    </form>
+                </div>
 
                 <div class="space-y-2 max-h-96 overflow-y-auto">
                     @forelse($recentActivities as $activity)
@@ -414,6 +634,7 @@
                 </div>
             </div>
         </div>
+
     </div>
 </div>
 
@@ -430,10 +651,27 @@
         });
 
         // Show selected tab
-        document.getElementById(tabName + '-tab').classList.remove('hidden');
-        event.target.closest('.tab-btn').classList.remove('border-transparent', 'text-gray-500');
-        event.target.closest('.tab-btn').classList.add('border-orange-500', 'text-gray-900');
+        const selectedTab = document.getElementById(tabName + '-tab');
+        if(selectedTab) {
+            selectedTab.classList.remove('hidden');
+        }
+
+        // Highlight Button
+        const btnId = 'btn-' + tabName;
+        const btn = document.getElementById(btnId);
+        if(btn) {
+            btn.classList.remove('border-transparent', 'text-gray-500');
+            btn.classList.add('border-orange-500', 'text-gray-900');
+        }
     }
+
+    // Auto-select tab if reloading from filter
+    document.addEventListener("DOMContentLoaded", function() {
+        const urlParams = new URLSearchParams(window.location.search);
+        if(urlParams.has('activity_type')) {
+            showTab('activities');
+        } 
+    });
 
     function editVoucher(voucherId) {
         // Fetch voucher data via AJAX
@@ -445,8 +683,11 @@
                 document.getElementById('editVoucherCode').value = data.voucherCode;
                 document.getElementById('editVoucherAmount').value = data.voucherAmount;
                 document.getElementById('editVoucherType').value = data.voucherType;
-                document.getElementById('editValidFrom').value = data.validFrom.split(' ')[0];
-                document.getElementById('editValidUntil').value = data.validUntil.split(' ')[0];
+                
+                // Adjust for datetime-local format (YYYY-MM-DDTHH:MM)
+                document.getElementById('editValidFrom').value = data.validFrom.replace(' ', 'T');
+                document.getElementById('editValidUntil').value = data.validUntil.replace(' ', 'T');
+                
                 document.getElementById('editVoucherDescription').value = data.conditions || '';
                 
                 // Show modal
@@ -510,12 +751,12 @@
             <div class="grid grid-cols-2 gap-4">
                 <div>
                     <label class="block text-sm font-semibold text-gray-700 mb-2">Valid From</label>
-                    <input type="date" id="editValidFrom" name="valid_from" required 
+                    <input type="datetime-local" id="editValidFrom" name="valid_from" required 
                         class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent">
                 </div>
                 <div>
                     <label class="block text-sm font-semibold text-gray-700 mb-2">Valid Until</label>
-                    <input type="date" id="editValidUntil" name="valid_until" required 
+                    <input type="datetime-local" id="editValidUntil" name="valid_until" required 
                         class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent">
                 </div>
             </div>

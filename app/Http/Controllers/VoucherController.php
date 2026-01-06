@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\Voucher;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
+use App\Models\Vehicle;
 
 class VoucherController extends Controller
 {
@@ -13,9 +14,26 @@ class VoucherController extends Controller
     {
         $code = $request->input('code');
         $currentTotal = $request->input('total_amount');
+        
+        // Terima pickup_date dari request untuk semakan hari
+        $pickupDate = $request->input('pickup_date'); 
+
+
+        // Ambil ID dari request dulu
+        $vehicleId = $request->input('vehicle_id');
+
+        // Pastikan vehicle wujud
+        // Gunakan try-catch atau check kalau ID wujud untuk elak error
+        if ($vehicleId) {
+            $vehicle = Vehicle::findOrFail($vehicleId);
+        } else {
+            return response()->json(['success' => false, 'message' => 'Vehicle data missing.']);
+        }
 
         // 1. Find the Voucher
         $voucher = Voucher::where('voucherCode', $code)->orWhere('code', $code)->first();
+
+
 
         // 2. Validate Voucher Existence
         if (!$voucher) {
@@ -33,27 +51,65 @@ class VoucherController extends Controller
             return response()->json(['success' => false, 'message' => 'This voucher has already been used.']);
         }
 
-        // 5. Calculate Discount (Assuming Fixed Amount based on your Schema)
-        $discountAmount = $voucher->voucherAmount;
+        // 5. [BARU] Semak Syarat Hari (Isnin - Khamis Sahaja) untuk Loyalty Voucher
+        // Kita anggap voucher loyalty jenis 'Rental Discount'. 
+        // Anda boleh tambah check specific type jika perlu.
+        if ($voucher->voucherType == 'Rental Discount') {
+            if (!$pickupDate) {
+                return response()->json(['success' => false, 'message' => 'Pickup date is required to validate this voucher.']);
+            }
+
+            $pickupDay = Carbon::parse($pickupDate);
+            
+            // Carbon: Monday=1, Thursday=4, Friday=5, Sunday=7
+            // Jika hari adalah Jumaat (5), Sabtu (6), atau Ahad (7) -> BLOCK
+            if ($pickupDay->dayOfWeekIso > 4) {
+                return response()->json(['success' => false, 'message' => 'Loyalty vouchers are only valid for bookings on Monday - Thursday.']);
+            }
+        }
+
+        // 6. Calculate Discount
+        // $discountAmount = 0;
+        // if ($voucher->discount_percent > 0) {
+        //     $discountAmount = ($currentTotal * $voucher->discount_percent) / 100;
+        // } else {
+        //     $discountAmount = $voucher->voucherAmount;
+        // }
+
+        // $newTotal = $currentTotal - $discountAmount;
+        // if ($newTotal < 0) $newTotal = 0;
+
+        // 6. Calculate Discount - EXCLUDE DEPOSIT FROM DISCOUNT CALCULATION
+        $baseDepo = $vehicle->baseDepo; // Ambil harga deposit dari database
+        $rentalOnlyCost = $currentTotal - $baseDepo; // Asingkan harga sewa
+
+        $discountAmount = 0;
+
+        if ($voucher->discount_percent > 0) {
+            // Kira % berdasarkan harga sewa sahaja
+            $discountAmount = ($rentalOnlyCost * $voucher->discount_percent) / 100;
+        } else {
+            $discountAmount = $voucher->voucherAmount;
+        }
+
         $newTotal = $currentTotal - $discountAmount;
 
-        // Ensure total doesn't go below 0
-        if ($newTotal < 0) { 
-            $newTotal = 0; 
-        }
 
         return response()->json([
             'success' => true,
             'message' => 'Voucher applied successfully!',
             'discount_amount' => number_format($discountAmount, 2),
             'new_total' => number_format($newTotal, 2),
-            'voucher_id' => $voucher->voucherID // Send back ID to store in hidden input
+            'voucher_id' => $voucher->voucherID 
         ]);
     }
 
     // Get available vouchers for logged-in customer
     public function getAvailableVouchers()
     {
+        // ... (Kekalkan kod sedia ada, tiada perubahan besar diperlukan di sini) ...
+        // ... Pastikan query mengambil voucher yang belum used ...
+        
         $userId = Auth::id();
         
         if (!$userId) {
@@ -63,13 +119,14 @@ class VoucherController extends Controller
         $vouchers = Voucher::where(function($query) use ($userId) {
                 $query->where('user_id', $userId)->orWhere('customerID', $userId);
             })
-            ->where('isUsed', false)
-            ->where('voucherType', 'Rental Discount') // Only rental discount vouchers
+            ->where('isUsed', false) // Pastikan belum digunakan
+            ->where('voucherType', 'Rental Discount')
             ->whereDate('validUntil', '>=', now())
             ->whereDate('validFrom', '<=', now())
             ->get()
             ->map(function($voucher) {
-                $code = $voucher->code ?? $voucher->voucherCode ?? 'N/A';
+                // ... (mapping data seperti asal) ...
+                 $code = $voucher->code ?? $voucher->voucherCode ?? 'N/A';
                 $amount = $voucher->voucherAmount ?? 0;
                 $discountPercent = $voucher->discount_percent ?? 0;
                 $type = $voucher->voucherType ?? 'Rental Discount';

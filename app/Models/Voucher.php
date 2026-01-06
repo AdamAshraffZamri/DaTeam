@@ -65,4 +65,6 @@ class Voucher extends Model
         $value = $this->attributes['user_id'] ?? null;
         return $value ?? $this->attributes['customerID'] ?? null;
     }
+
+    
 }
