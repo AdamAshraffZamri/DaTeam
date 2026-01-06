@@ -116,16 +116,17 @@
             @csrf
             @method('PUT')
 
-            {{-- DUPLICATE AVATAR INPUT REMOVED FROM HERE --}}
-
             <div class="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6">
                 {{-- LEFT: Personal Info --}}
                 <div class="space-y-6">
                     <h3 class="text-lg font-bold text-orange-500 border-b border-white/10 pb-2">Personal Information</h3>
                     
+                    {{-- FULL NAME: Uppercase --}}
                     <div>
                         <label class="block text-gray-400 mb-2 font-bold text-xs uppercase tracking-wider">Full Name</label>
-                        <input type="text" name="name" value="{{ old('name', $user->fullName) }}" class="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white focus:outline-none focus:border-orange-500 focus:bg-white/10 transition placeholder-gray-500">
+                        <input type="text" name="name" value="{{ old('name', $user->fullName) }}" 
+                               class="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white focus:outline-none focus:border-orange-500 focus:bg-white/10 transition placeholder-gray-500 uppercase"
+                               oninput="this.value = this.value.toUpperCase()">
                     </div>
 
                     <div>
@@ -137,10 +138,10 @@
                         <label class="block text-gray-400 mb-2 font-bold text-xs uppercase tracking-wider">Phone No. <span class="text-red-500">*</span></label>
                         <input type="text" name="phone" value="{{ old('phone', $user->phoneNo) }}" class="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white focus:outline-none focus:border-orange-500 focus:bg-white/10 transition placeholder-gray-500">
                     </div>
-                    
+
+                    {{-- EMERGENCY CONTACT --}}
                     <div class="col-span-1 md:col-span-2 mt-2 mb-2">
                         <h4 class="text-sm font-bold text-gray-500 uppercase tracking-widest mb-4 border-b border-white/10 pb-2">Emergency Contact</h4>
-    
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
                                 <label class="block text-gray-400 mb-2 font-bold text-xs uppercase tracking-wider">Name <span class="text-red-500">*</span></label>
@@ -158,9 +159,19 @@
                         <input type="date" name="dob" value="{{ old('dob', optional($user->dob)->format('Y-m-d')) }}" class="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white focus:outline-none focus:border-orange-500 focus:bg-white/10 transition [color-scheme:dark]">
                     </div>
 
+                    {{-- NATIONALITY: Country Dropdown --}}
                     <div>
                         <label class="block text-gray-400 mb-2 font-bold text-xs uppercase tracking-wider">Nationality</label>
-                        <input type="text" name="nationality" value="{{ old('nationality', $user->nationality) }}" class="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white focus:outline-none focus:border-orange-500 focus:bg-white/10 transition placeholder-gray-500">
+                        <select name="nationality" class="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white focus:outline-none focus:border-orange-500 focus:bg-white/10 transition cursor-pointer">
+                            <option value="" class="text-black">-- Select Country --</option>
+                            @php
+                                $countries = ["Malaysia","Indonesia","Singapore","Brunei","Thailand","Vietnam","Philippines","China","India","Pakistan","Bangladesh","Yemen","Saudi Arabia","United Kingdom","United States","Nigeria","Egypt","Japan","Korea, Republic of"]; 
+                            @endphp
+                            @foreach($countries as $country)
+                                <option value="{{ $country }}" class="text-black" {{ old('nationality', $user->nationality) == $country ? 'selected' : '' }}>{{ $country }}</option>
+                            @endforeach
+                            <option value="Other" class="text-black" {{ old('nationality', $user->nationality) == 'Other' ? 'selected' : '' }}>Other</option>
+                        </select>
                     </div>
                 </div>
 
@@ -168,10 +179,13 @@
                 <div class="space-y-6">
                     <h3 class="text-lg font-bold text-orange-500 border-b border-white/10 pb-2">Documents & Address</h3>
 
+                    {{-- STAFF/STUDENT ID: Uppercase --}}
                     <div>
                         <label class="block text-gray-400 mb-2 font-bold text-xs uppercase tracking-wider">Student/Staff ID</label>
                         <div class="flex">
-                            <input type="text" name="student_staff_id" value="{{ old('student_staff_id', $user->stustaffID) }}" class="w-full bg-white/5 border border-white/10 rounded-l-xl p-3 text-white focus:outline-none focus:border-orange-500 focus:bg-white/10 transition placeholder-gray-500">
+                            <input type="text" name="student_staff_id" value="{{ old('student_staff_id', $user->stustaffID) }}" 
+                                   class="w-full bg-white/5 border border-white/10 rounded-l-xl p-3 text-white focus:outline-none focus:border-orange-500 focus:bg-white/10 transition placeholder-gray-500 uppercase"
+                                   oninput="this.value = this.value.toUpperCase()">
                             <button type="button" onclick="document.getElementById('student_file').click()" class="bg-white/10 px-4 rounded-r-xl border border-l-0 border-white/10 text-gray-400 hover:bg-white/20 hover:text-white transition" id="btn_student">
                                 <i class="fas fa-camera" id="icon_student"></i>
                             </button>
@@ -179,10 +193,13 @@
                         </div>
                     </div>
 
+                    {{-- IC / PASSPORT: Uppercase String --}}
                     <div>
-                        <label class="block text-gray-400 mb-2 font-bold text-xs uppercase tracking-wider">IC/Passport No.</label>
+                        <label class="block text-gray-400 mb-2 font-bold text-xs uppercase tracking-wider">IC / Passport No.</label>
                         <div class="flex">
-                            <input type="text" name="ic_passport" value="{{ old('ic_passport', $user->ic_passport) }}" class="w-full bg-white/5 border border-white/10 rounded-l-xl p-3 text-white focus:outline-none focus:border-orange-500 focus:bg-white/10 transition placeholder-gray-500">
+                            <input type="text" name="ic_passport" value="{{ old('ic_passport', $user->ic_passport) }}" 
+                                   class="w-full bg-white/5 border border-white/10 rounded-l-xl p-3 text-white focus:outline-none focus:border-orange-500 focus:bg-white/10 transition placeholder-gray-500 uppercase"
+                                   oninput="this.value = this.value.toUpperCase()">
                             <button type="button" onclick="document.getElementById('ic_file').click()" class="bg-white/10 px-4 rounded-r-xl border border-l-0 border-white/10 text-gray-400 hover:bg-white/20 hover:text-white transition" id="btn_ic">
                                 <i class="fas fa-camera" id="icon_ic"></i>
                             </button>
@@ -190,10 +207,12 @@
                         </div>
                     </div>
 
+                    {{-- DRIVING LICENSE: Expiry Date (Replaced Number) --}}
                     <div>
-                        <label class="block text-gray-400 mb-2 font-bold text-xs uppercase tracking-wider">Driving License No. <span class="text-red-500">*</span></label>
+                        <label class="block text-gray-400 mb-2 font-bold text-xs uppercase tracking-wider">Driving License Expired Date <span class="text-red-500">*</span></label>
                         <div class="flex">
-                            <input type="text" name="driving_license_no" value="{{ old('driving_license_no', $user->drivingNo) }}" class="w-full bg-white/5 border border-white/10 rounded-l-xl p-3 text-white focus:outline-none focus:border-orange-500 focus:bg-white/10 transition placeholder-gray-500">
+                            <input type="date" name="driving_license_expiry" value="{{ old('driving_license_expiry', $user->driving_license_expiry) }}" 
+                                   class="w-full bg-white/5 border border-white/10 rounded-l-xl p-3 text-white focus:outline-none focus:border-orange-500 focus:bg-white/10 transition [color-scheme:dark]">
                              <button type="button" onclick="document.getElementById('license_file').click()" class="bg-white/10 px-4 rounded-r-xl border border-l-0 border-white/10 text-gray-400 hover:bg-white/20 hover:text-white transition" id="btn_license">
                                 <i class="fas fa-camera" id="icon_license"></i>
                             </button>
@@ -206,35 +225,83 @@
                         <input type="text" name="home_address" value="{{ old('home_address', $user->homeAddress) }}" class="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white focus:outline-none focus:border-orange-500 focus:bg-white/10 transition placeholder-gray-500">
                     </div>
 
+                    {{-- COLLEGE ADDRESS: UTM Colleges Dropdown --}}
                     <div>
-                        <label class="block text-gray-400 mb-2 font-bold text-xs uppercase tracking-wider">College Address</label>
-                        <input type="text" name="college_address" value="{{ old('college_address', $user->collegeAddress) }}" class="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white focus:outline-none focus:border-orange-500 focus:bg-white/10 transition placeholder-gray-500">
+                        <label class="block text-gray-400 mb-2 font-bold text-xs uppercase tracking-wider">College (UTM JB)</label>
+                        <select name="college_address" class="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white focus:outline-none focus:border-orange-500 focus:bg-white/10 transition cursor-pointer">
+                            <option value="" class="text-black">-- Select Residential College --</option>
+                            @php
+                                $colleges = [
+                                    "Kolej Rahman Putra (KRP)",
+                                    "Kolej Tun Fatimah (KTF)",
+                                    "Kolej Tun Razak (KTR)",
+                                    "Kolej Tun Hussein Onn (KTHO)",
+                                    "Kolej Tun Dr. Ismail (KTDI)",
+                                    "Kolej Tuanku Canselor (KTC)",
+                                    "Kolej Perdana (KP)",
+                                    "Kolej 9 & 10",
+                                    "Kolej Datin Seri Endon (KDSE)",
+                                    "Kolej Dato' Onn Jaafar (KDOJ)",
+                                    "Off-Campus (Rental/Family)"
+                                ];
+                            @endphp
+                            @foreach($colleges as $col)
+                                <option value="{{ $col }}" class="text-black" {{ old('college_address', $user->collegeAddress) == $col ? 'selected' : '' }}>{{ $col }}</option>
+                            @endforeach
+                        </select>
                     </div>
 
+                     {{-- FACULTY: UTM Faculties Dropdown --}}
                      <div>
                         <label class="block text-gray-400 mb-2 font-bold text-xs uppercase tracking-wider">Faculty</label>
-                        <input type="text" name="faculty" value="{{ old('faculty', $user->faculty) }}" placeholder="e.g. Faculty of Computing" class="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white focus:outline-none focus:border-orange-500 focus:bg-white/10 transition placeholder-gray-500">
+                        <select name="faculty" class="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white focus:outline-none focus:border-orange-500 focus:bg-white/10 transition cursor-pointer">
+                            <option value="" class="text-black">-- Select Faculty --</option>
+                            @php
+                                $faculties = [
+                                    "Faculty of Civil Engineering (FKA)",
+                                    "Faculty of Mechanical Engineering (FKM)",
+                                    "Faculty of Electrical Engineering (FKE)",
+                                    "Faculty of Chemical & Energy Engineering (FCEE)",
+                                    "Faculty of Computing (FC)",
+                                    "Faculty of Science (FS)",
+                                    "Faculty of Built Environment & Surveying (FABU)",
+                                    "Faculty of Social Sciences & Humanities (FSSH)",
+                                    "Faculty of Management (FM)",
+                                    "Razak Faculty of Technology and Informatics",
+                                    "MJIIT (Malaysia-Japan International Institute of Technology)",
+                                    "Azman Hashim International Business School (AHIBS)"
+                                ];
+                            @endphp
+                            @foreach($faculties as $fac)
+                                <option value="{{ $fac }}" class="text-black" {{ old('faculty', $user->faculty) == $fac ? 'selected' : '' }}>{{ $fac }}</option>
+                            @endforeach
+                        </select>
                     </div>
                 </div>
             </div>
             
-            {{-- BANK DETAILS --}}
+            {{-- BANK DETAILS: All Malaysia Banks --}}
             <div class="mt-10 pt-8 border-t border-white/10">
                  <h3 class="text-lg font-bold text-orange-500 mb-4">Refund Information (Bank Details)</h3>
-                 <p class="text-sm text-gray-400 mb-4">Required for refunding your deposit securely.</p>
                  
                  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                      <div>
                         <label class="block text-gray-400 mb-2 font-bold text-xs uppercase tracking-wider">Bank Name <span class="text-red-500">*</span></label>
                         <select name="bank_name" class="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white focus:outline-none focus:border-orange-500 focus:bg-white/10 transition cursor-pointer">
                             <option value="" class="text-black">-- Select Bank --</option>
-                            <option value="Maybank" class="text-black" {{ old('bank_name', $user->bankName) == 'Maybank' ? 'selected' : '' }}>Maybank</option>
-                            <option value="CIMB" class="text-black" {{ old('bank_name', $user->bankName) == 'CIMB' ? 'selected' : '' }}>CIMB Bank</option>
-                            <option value="Public Bank" class="text-black" {{ old('bank_name', $user->bankName) == 'Public Bank' ? 'selected' : '' }}>Public Bank</option>
-                            <option value="RHB" class="text-black" {{ old('bank_name', $user->bankName) == 'RHB' ? 'selected' : '' }}>RHB Bank</option>
-                            <option value="Hong Leong" class="text-black" {{ old('bank_name', $user->bankName) == 'Hong Leong' ? 'selected' : '' }}>Hong Leong Bank</option>
-                            <option value="AmBank" class="text-black" {{ old('bank_name', $user->bankName) == 'AmBank' ? 'selected' : '' }}>AmBank</option>
-                            <option value="Bank Islam" class="text-black" {{ old('bank_name', $user->bankName) == 'Bank Islam' ? 'selected' : '' }}>Bank Islam</option>
+                            @php
+                                $banks = [
+                                    "Maybank", "CIMB Bank", "Public Bank", "RHB Bank", "Hong Leong Bank", 
+                                    "AmBank", "UOB Malaysia", "Bank Rakyat", "OCBC Bank", "HSBC Bank", 
+                                    "Bank Islam", "Affin Bank", "Alliance Bank", "Standard Chartered", 
+                                    "MBSB Bank", "BSN (Bank Simpanan Nasional)", "Agrobank", "Bank Muamalat",
+                                    "Kuwait Finance House", "Al Rajhi Bank",
+                                    "GXBank (Digital)", "Aeon Bank (Digital)", "Boost Bank (Digital)"
+                                ];
+                            @endphp
+                            @foreach($banks as $bank)
+                                <option value="{{ $bank }}" class="text-black" {{ old('bank_name', $user->bankName) == $bank ? 'selected' : '' }}>{{ $bank }}</option>
+                            @endforeach
                         </select>
                      </div>
                      <div>
@@ -244,7 +311,6 @@
                  </div>
             </div>
 
-            {{-- FORM 1 SUBMIT BUTTON --}}
             <div class="flex justify-end items-center mt-8 pt-4 border-t border-white/10">
                 <button type="submit" class="bg-[#ea580c] hover:bg-orange-600 text-white font-bold py-3 px-10 rounded-xl shadow-lg transition transform hover:scale-[1.02]">
                     Save Profile Information

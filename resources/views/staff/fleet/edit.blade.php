@@ -267,7 +267,7 @@
                                     <input type="text" name="owner_nric" placeholder="XXXXXX-XX-XXXX" value="{{ old('owner_nric', $vehicle->owner_nric) }}" class="w-full bg-blue-50/50 border border-blue-100 rounded-xl px-4 py-3 font-medium text-gray-900 outline-none focus:bg-white focus:border-blue-500 transition-all">
                                 </div>
 
-                                {{-- === DOCUMENTS WITH PREVIEW & DELETE === --}}
+                                {{-- === DOCUMENTS WITH PREVIEW, DELETE & DRAG-DROP === --}}
                                 <div class="col-span-full space-y-4 pt-4">
                                     <label class="text-[10px] font-bold text-blue-900 uppercase tracking-widest block text-center">Legal Documents</label>
                                     
@@ -275,32 +275,32 @@
                                         
                                         {{-- 1. Road Tax --}}
                                         <div>
-                                            {{-- Hidden input to track deletion state --}}
                                             <input type="hidden" name="delete_road_tax" x-model="deleteRoadTax">
 
-                                            <div class="relative block bg-white border-2 border-dashed border-blue-200 rounded-xl p-1 h-32 flex flex-col items-center justify-center hover:border-blue-500 transition-all overflow-hidden group">
+                                            {{-- Added x-data for drag state, events for drag/drop, and dynamic classes --}}
+                                            <div x-data="{ isDragging: false }"
+                                                @dragover.prevent="isDragging = true"
+                                                @dragleave.prevent="isDragging = false"
+                                                @drop.prevent="isDragging = false; handleDrop($event, $refs.roadTaxInput, 'roadTaxPreview', 'roadTaxName', 'deleteRoadTax')"
+                                                :class="isDragging ? 'border-blue-500 bg-blue-50 ring-2 ring-blue-200 scale-[1.02]' : 'border-blue-200 bg-white'"
+                                                class="relative block border-2 border-dashed rounded-xl p-1 h-32 flex flex-col items-center justify-center hover:border-blue-500 transition-all duration-200 overflow-hidden group">
                                                 
-                                                {{-- DELETE BUTTON (Top Right) --}}
-                                                <button type="button" 
-                                                        x-show="roadTaxName" 
-                                                        @click.prevent="removeDoc('roadTax')"
-                                                        class="absolute top-2 right-2 z-20 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center shadow-md hover:bg-red-600 transition-transform hover:scale-110"
-                                                        title="Delete File">
+                                                {{-- Delete Button --}}
+                                                <button type="button" x-show="roadTaxName" @click.prevent="removeDoc('roadTax')" class="absolute top-2 right-2 z-20 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center shadow-md hover:bg-red-600 transition-transform hover:scale-110">
                                                     <i class="fas fa-times text-[10px]"></i>
                                                 </button>
 
-                                                {{-- File Input Label (Click to upload) --}}
                                                 <label class="w-full h-full flex flex-col items-center justify-center cursor-pointer">
-                                                    
-                                                    {{-- Placeholder (Show if NO file) --}}
-                                                    <div x-show="!roadTaxName" class="text-center">
+                                                    <div x-show="!roadTaxName" class="text-center pointer-events-none">
                                                         <i class="fas fa-file-invoice text-blue-200 text-2xl mb-2 group-hover:text-blue-500 transition-colors"></i>
-                                                        <span class="block text-[9px] font-bold text-gray-400 uppercase group-hover:text-blue-600">Upload</span>
+                                                        <span class="block text-[9px] font-bold text-gray-400 uppercase group-hover:text-blue-600">
+                                                            <span x-show="!isDragging">Upload or Drag</span>
+                                                            <span x-show="isDragging" class="text-blue-600">Drop Here</span>
+                                                        </span>
                                                     </div>
 
-                                                    {{-- Preview (Show if file EXISTS) --}}
                                                     <template x-if="roadTaxName">
-                                                        <div class="w-full h-full">
+                                                        <div class="w-full h-full pointer-events-none">
                                                             <template x-if="roadTaxPreview">
                                                                 <img :src="roadTaxPreview" class="absolute inset-0 w-full h-full object-cover rounded-lg">
                                                             </template>
@@ -313,10 +313,10 @@
                                                         </div>
                                                     </template>
 
-                                                    <input type="file" name="road_tax_image" @change="previewDoc($event, 'roadTaxPreview', 'roadTaxName', 'deleteRoadTax')" accept=".pdf,image/*" class="hidden">
+                                                    {{-- Added x-ref to target this input from the drop handler --}}
+                                                    <input x-ref="roadTaxInput" type="file" name="road_tax_image" @change="previewDoc($event, 'roadTaxPreview', 'roadTaxName', 'deleteRoadTax')" accept=".pdf,image/*" class="hidden">
                                                 </label>
                                             </div>
-                                            {{-- Filename display --}}
                                             <p x-show="roadTaxName" x-text="roadTaxName" class="text-[9px] text-blue-600 font-bold text-center uppercase tracking-widest truncate px-2 mt-2"></p>
                                             <p x-show="!roadTaxName" class="text-[9px] text-gray-400 font-bold text-center uppercase tracking-widest mt-2">Road Tax</p>
                                         </div>
@@ -325,20 +325,28 @@
                                         <div>
                                             <input type="hidden" name="delete_grant" x-model="deleteGrant">
 
-                                            <div class="relative block bg-white border-2 border-dashed border-blue-200 rounded-xl p-1 h-32 flex flex-col items-center justify-center hover:border-blue-500 transition-all overflow-hidden group">
+                                            <div x-data="{ isDragging: false }"
+                                                @dragover.prevent="isDragging = true"
+                                                @dragleave.prevent="isDragging = false"
+                                                @drop.prevent="isDragging = false; handleDrop($event, $refs.grantInput, 'grantPreview', 'grantName', 'deleteGrant')"
+                                                :class="isDragging ? 'border-blue-500 bg-blue-50 ring-2 ring-blue-200 scale-[1.02]' : 'border-blue-200 bg-white'"
+                                                class="relative block border-2 border-dashed rounded-xl p-1 h-32 flex flex-col items-center justify-center hover:border-blue-500 transition-all duration-200 overflow-hidden group">
                                                 
                                                 <button type="button" x-show="grantName" @click.prevent="removeDoc('grant')" class="absolute top-2 right-2 z-20 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center shadow-md hover:bg-red-600 transition-transform hover:scale-110">
                                                     <i class="fas fa-times text-[10px]"></i>
                                                 </button>
 
                                                 <label class="w-full h-full flex flex-col items-center justify-center cursor-pointer">
-                                                    <div x-show="!grantName" class="text-center">
+                                                    <div x-show="!grantName" class="text-center pointer-events-none">
                                                         <i class="fas fa-scroll text-blue-200 text-2xl mb-2 group-hover:text-blue-500 transition-colors"></i>
-                                                        <span class="block text-[9px] font-bold text-gray-400 uppercase group-hover:text-blue-600">Upload</span>
+                                                        <span class="block text-[9px] font-bold text-gray-400 uppercase group-hover:text-blue-600">
+                                                            <span x-show="!isDragging">Upload or Drag</span>
+                                                            <span x-show="isDragging" class="text-blue-600">Drop Here</span>
+                                                        </span>
                                                     </div>
 
                                                     <template x-if="grantName">
-                                                        <div class="w-full h-full">
+                                                        <div class="w-full h-full pointer-events-none">
                                                             <template x-if="grantPreview">
                                                                 <img :src="grantPreview" class="absolute inset-0 w-full h-full object-cover rounded-lg">
                                                             </template>
@@ -351,7 +359,7 @@
                                                         </div>
                                                     </template>
 
-                                                    <input type="file" name="grant_image" @change="previewDoc($event, 'grantPreview', 'grantName', 'deleteGrant')" accept=".pdf,image/*" class="hidden">
+                                                    <input x-ref="grantInput" type="file" name="grant_image" @change="previewDoc($event, 'grantPreview', 'grantName', 'deleteGrant')" accept=".pdf,image/*" class="hidden">
                                                 </label>
                                             </div>
                                             <p x-show="grantName" x-text="grantName" class="text-[9px] text-blue-600 font-bold text-center uppercase tracking-widest truncate px-2 mt-2"></p>
@@ -362,20 +370,28 @@
                                         <div>
                                             <input type="hidden" name="delete_insurance" x-model="deleteInsurance">
 
-                                            <div class="relative block bg-white border-2 border-dashed border-blue-200 rounded-xl p-1 h-32 flex flex-col items-center justify-center hover:border-blue-500 transition-all overflow-hidden group">
+                                            <div x-data="{ isDragging: false }"
+                                                @dragover.prevent="isDragging = true"
+                                                @dragleave.prevent="isDragging = false"
+                                                @drop.prevent="isDragging = false; handleDrop($event, $refs.insuranceInput, 'insurancePreview', 'insuranceName', 'deleteInsurance')"
+                                                :class="isDragging ? 'border-blue-500 bg-blue-50 ring-2 ring-blue-200 scale-[1.02]' : 'border-blue-200 bg-white'"
+                                                class="relative block border-2 border-dashed rounded-xl p-1 h-32 flex flex-col items-center justify-center hover:border-blue-500 transition-all duration-200 overflow-hidden group">
                                                 
                                                 <button type="button" x-show="insuranceName" @click.prevent="removeDoc('insurance')" class="absolute top-2 right-2 z-20 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center shadow-md hover:bg-red-600 transition-transform hover:scale-110">
                                                     <i class="fas fa-times text-[10px]"></i>
                                                 </button>
 
                                                 <label class="w-full h-full flex flex-col items-center justify-center cursor-pointer">
-                                                    <div x-show="!insuranceName" class="text-center">
+                                                    <div x-show="!insuranceName" class="text-center pointer-events-none">
                                                         <i class="fas fa-shield-alt text-blue-200 text-2xl mb-2 group-hover:text-blue-500 transition-colors"></i>
-                                                        <span class="block text-[9px] font-bold text-gray-400 uppercase group-hover:text-blue-600">Upload</span>
+                                                        <span class="block text-[9px] font-bold text-gray-400 uppercase group-hover:text-blue-600">
+                                                            <span x-show="!isDragging">Upload or Drag</span>
+                                                            <span x-show="isDragging" class="text-blue-600">Drop Here</span>
+                                                        </span>
                                                     </div>
 
                                                     <template x-if="insuranceName">
-                                                        <div class="w-full h-full">
+                                                        <div class="w-full h-full pointer-events-none">
                                                             <template x-if="insurancePreview">
                                                                 <img :src="insurancePreview" class="absolute inset-0 w-full h-full object-cover rounded-lg">
                                                             </template>
@@ -388,7 +404,7 @@
                                                         </div>
                                                     </template>
 
-                                                    <input type="file" name="insurance_image" @change="previewDoc($event, 'insurancePreview', 'insuranceName', 'deleteInsurance')" accept=".pdf,image/*" class="hidden">
+                                                    <input x-ref="insuranceInput" type="file" name="insurance_image" @change="previewDoc($event, 'insurancePreview', 'insuranceName', 'deleteInsurance')" accept=".pdf,image/*" class="hidden">
                                                 </label>
                                             </div>
                                             <p x-show="insuranceName" x-text="insuranceName" class="text-[9px] text-blue-600 font-bold text-center uppercase tracking-widest truncate px-2 mt-2"></p>
@@ -452,6 +468,19 @@
                 }
             },
 
+            // Handle Drag & Drop
+            handleDrop(event, inputElement, previewVar, nameVar, deleteVar) {
+                const files = event.dataTransfer.files;
+                if (files.length > 0) {
+                    // 1. Assign files to the input so they get submitted
+                    inputElement.files = files;
+                    
+                    // 2. reuse previewDoc logic by creating a mock event
+                    // We pass { target: { files: files } } to simulate the 'change' event structure
+                    this.previewDoc({ target: { files: files } }, previewVar, nameVar, deleteVar);
+                }
+            },
+
             // Handle Preview and reset delete flag if user uploads new file
             previewDoc(event, previewVar, nameVar, deleteVar) {
                 const file = event.target.files[0];
@@ -474,7 +503,6 @@
                 this[type + 'Preview'] = null;
 
                 // 2. Set the hidden input flag to 1
-                // Capitalize first letter for delete var (e.g. 'roadTax' -> 'deleteRoadTax')
                 let deleteVar = 'delete' + type.charAt(0).toUpperCase() + type.slice(1);
                 this[deleteVar] = 1;
             }

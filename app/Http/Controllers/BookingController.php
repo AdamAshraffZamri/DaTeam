@@ -73,7 +73,7 @@ class BookingController extends Controller
             empty($user->collegeAddress) ||
             empty($user->stustaffID) || // Student/Staff ID
             empty($user->ic_passport) || // IC or Passport
-            empty($user->drivingNo) || // License Number
+            empty($user->driving_license_expiry) || // License Number
             empty($user->nationality) ||
             empty($user->dob) ||
             empty($user->faculty) ||
@@ -103,65 +103,87 @@ class BookingController extends Controller
         return view('bookings.create', compact('vehicles')); 
     }
 
-    // --- 3. SEARCH RESULTS (UPDATED) ---
+    // --- 3. SEARCH RESULTS (UPDATED WITH 2-WAY 3-HOUR BUFFER) ---
     public function search(Request $request)
-{
-    // --- 1. Basic Validation ---
-    $request->validate([
-        'pickup_date' => 'required|date|after_or_equal:today',
-        'return_date' => 'required|date|after_or_equal:pickup_date', 
-    ]);
+    {
+        // 1. Validate Date AND Time
+        $request->validate([
+            'pickup_date' => 'required|date|after_or_equal:today',
+            'pickup_time' => 'required',
+            'return_date' => 'required|date|after_or_equal:pickup_date',
+            'return_time' => 'required',
+        ]);
 
-    $pickup = $request->pickup_date;
-    $return = $request->return_date;
+        // 2. Parse Requested Start & End Times
+        try {
+            $reqStart = Carbon::parse($request->pickup_date . ' ' . $request->pickup_time);
+            $reqEnd   = Carbon::parse($request->return_date . ' ' . $request->return_time);
+        } catch (\Exception $e) {
+            return back()->withErrors(['date_error' => 'Invalid date or time format.']);
+        }
 
-    // --- 2. Buffer Logic (1 Day Cooldown) ---
-    // We expand the search range by 1 day before and after to ensure a gap
-    $bufferPickup = Carbon::parse($pickup)->subDay();
-    $bufferReturn = Carbon::parse($return)->addDay();
+        // Basic Check: Return must be after Pickup
+        if ($reqEnd->lte($reqStart)) {
+            return back()->withErrors(['return_time' => 'Return time must be after pickup time.']);
+        }
 
-    // --- 3. Start Query Builder ---
-    // We break the chain here to allow conditional filtering
-    $query = Vehicle::where('availability', true);
+        // 3. Start Query (Eager load Bookings & Maintenances)
+        $query = Vehicle::where('availability', true)
+            ->with(['bookings', 'maintenances']); 
 
-    // --- 4. Apply Cooldown/Availability Check ---
-    $query->whereDoesntHave('bookings', function ($q) use ($bufferPickup, $bufferReturn) {
-        $q->whereIn('bookingStatus', ['Submitted', 'Deposit Paid', 'Paid', 'Approved', 'Active'])
-          ->where(function ($subQ) use ($bufferPickup, $bufferReturn) {
-              // Check for Overlap
-              $subQ->whereBetween('originalDate', [$bufferPickup, $bufferReturn])
-                   ->orWhereBetween('returnDate', [$bufferPickup, $bufferReturn])
-                   ->orWhere(function ($inner) use ($bufferPickup, $bufferReturn) {
-                       $inner->where('originalDate', '<', $bufferPickup)
-                             ->where('returnDate', '>', $bufferReturn);
-                   });
-          });
-    });
+        // 4. Apply Vehicle Type Filter (if selected)
+        if ($request->filled('types')) {
+            $query->whereIn('type', $request->types);
+        }
 
-    // --- 5. Apply Vehicle Type Filter (The New Part) ---
-    // This only runs if the user checked any boxes in the sidebar
-    if ($request->filled('types')) {
-        $query->whereIn('type', $request->types);
-    }
+        // 5. Fetch & Filter in Memory
+        $vehicles = $query->get()->filter(function($vehicle) use ($reqStart, $reqEnd) {
+            
+            // Define the Requested "Blocked" Block (Includes its own 3-hour cooldown tail)
+            // This represents: [Req Start] ------ [Req End] -- (3h Buffer) --|
+            $reqEndWithBuffer = $reqEnd->copy()->addHours(3);
 
-    // --- 6. Execute Query ---
-    $vehicles = $query->get();
-    $vehicles = $vehicles->filter(function($vehicle) use ($pickup, $return) {
-            $blockedDates = $vehicle->blocked_dates ?? []; 
-            $start = Carbon::parse($pickup);
-            $end = Carbon::parse($return);
+            // --- A. CHECK BOOKINGS ---
+            foreach ($vehicle->bookings as $booking) {
+                if (in_array($booking->bookingStatus, ['Cancelled', 'Rejected'])) {
+                    continue;
+                }
 
-            foreach($blockedDates as $date) {
-                $blocked = Carbon::parse($date);
-                // If a blocked date falls inside the requested range, remove vehicle
-                if($blocked->between($start, $end)) {
-                    return false; 
+                // Parse Existing Booking Times
+                $bookStart = Carbon::parse($booking->originalDate . ' ' . $booking->bookingTime);
+                $bookEnd   = Carbon::parse($booking->returnDate . ' ' . $booking->returnTime);
+                
+                // Define Existing "Blocked" Block (Includes its own 3-hour cooldown tail)
+                // This represents: [Book Start] ------ [Book End] -- (3h Buffer) --|
+                $bookEndWithBuffer = $bookEnd->copy()->addHours(3);
+
+                // --- 2-WAY COOLDOWN CHECK ---
+                // Conflict exists if the two extended periods overlap.
+                // 1. Check if New Request starts too soon after Existing Booking (Existing Cooldown violation)
+                // 2. Check if New Request ends too close to Existing Booking Start (New Request Cooldown violation)
+                
+                // Logic: (Request Start < Existing End+Buffer) AND (Request End+Buffer > Existing Start)
+                if ($reqStart->lt($bookEndWithBuffer) && $reqEndWithBuffer->gt($bookStart)) {
+                    return false; // Unavailable
                 }
             }
-            return true; 
+
+            // --- B. CHECK MAINTENANCE BLOCKS (Strict Start/End, usually no cooldown needed) ---
+            foreach ($vehicle->maintenances as $maintenance) {
+                $maintStart = \Carbon\Carbon::parse($maintenance->start_time);
+                $maintEnd   = \Carbon\Carbon::parse($maintenance->end_time);
+
+                // Standard overlap check for maintenance
+                if ($maintStart->lt($reqEnd) && $maintEnd->gt($reqStart)) {
+                    return false; // Unavailable
+                }
+            }
+
+            return true; // Available
         });
-    return view('bookings.search_results', compact('vehicles'));
-}
+
+        return view('bookings.search_results', compact('vehicles'));
+    }
 
     // --- 4. VEHICLE DETAILS ---
     public function show(Request $request, $id)

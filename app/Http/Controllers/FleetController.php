@@ -16,27 +16,69 @@ class FleetController extends Controller
      */
     public function index(Request $request)
     {
-        // Fetch vehicles with today's active bookings
-        $vehicles = Vehicle::with(['bookings' => function($q) {
-            $today = Carbon::now()->toDateString();
-            
-            // FIXED: Used 'originalDate' instead of 'pickupDate'
-            $q->whereIn('bookingStatus', ['Confirmed', 'Active', 'Deposit Paid']) 
-              ->whereDate('originalDate', '<=', $today) 
-              ->whereDate('returnDate', '>=', $today);
-        }])->orderBy('created_at', 'desc')->get();
+        $query = Vehicle::query();
 
-        // Calculate counts
-        $total = $vehicles->count();
-        $activeCount = $vehicles->where('availability', 1)->count();
-        $inactiveCount = $vehicles->where('availability', 0)->count();
-
-        // Check if currently booked
-        foreach($vehicles as $vehicle) {
-            $vehicle->isBookedToday = $vehicle->bookings->isNotEmpty();
+        // 1. Search Filter (Plate, Brand, Model)
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('brand', 'like', "%{$search}%")
+                  ->orWhere('model', 'like', "%{$search}%")
+                  ->orWhere('plateNo', 'like', "%{$search}%");
+            });
         }
 
-        return view('staff.fleet.index', compact('vehicles', 'total', 'activeCount', 'inactiveCount'));
+        // 2. Model Filter
+        if ($request->filled('model') && $request->model !== 'all') {
+            $query->where('model', $request->model);
+        }
+
+        // 3. Status Filter
+        if ($request->filled('status') && $request->status !== 'all') {
+            if ($request->status === 'active') {
+                $query->where('availability', 1);
+            } elseif ($request->status === 'inactive') {
+                $query->where('availability', 0);
+            }
+        }
+
+        // Fetch distinct models for the dropdown
+        $vehicleModels = Vehicle::select('model')->distinct()->orderBy('model')->pluck('model');
+
+        // Calculate Global Counts (for display/reference if needed, strictly speaking unrelated to current filter)
+        $total = Vehicle::count();
+        $activeCount = Vehicle::where('availability', 1)->count();
+        $inactiveCount = Vehicle::where('availability', 0)->count();
+
+        // Eager load active/future bookings to determine status and next booking
+        $vehicles = $query->with(['bookings' => function($q) {
+            $today = Carbon::now()->toDateString();
+            $q->whereIn('bookingStatus', ['Confirmed', 'Active', 'Deposit Paid'])
+              ->whereDate('returnDate', '>=', $today) // Active or Future
+              ->orderBy('originalDate', 'asc');
+        }])->orderBy('created_at', 'desc')->get();
+
+        // Process derived attributes
+        foreach($vehicles as $vehicle) {
+            $today = Carbon::now()->toDateString();
+
+            // Check if currently physically booked (Active intersection with Today)
+            $vehicle->isBookedToday = $vehicle->bookings->contains(function($b) use ($today) {
+                return $b->originalDate <= $today && $b->returnDate >= $today;
+            });
+
+            // Find Next Booking (First booking starting > today, or current one if relevant for display)
+            // We want the *next* start date usually.
+            $next = $vehicle->bookings->first(function($b) use ($today) {
+                return $b->originalDate > $today;
+            });
+            
+            // If no future booking, but is currently booked, maybe show current return date? 
+            // The prompt asks for "Next Booking Date". I'll prioritize a future start date.
+            $vehicle->nextBookingDate = $next ? Carbon::parse($next->originalDate) : null;
+        }
+
+        return view('staff.fleet.index', compact('vehicles', 'vehicleModels', 'total', 'activeCount', 'inactiveCount'));
     }
 
     /**
@@ -143,7 +185,8 @@ class FleetController extends Controller
 
     public function show($id)
     {
-        $vehicle = Vehicle::with(['bookings.customer', 'maintenances'])->findOrFail($id);
+        // [UPDATED] Eager load 'staff' for maintenance history
+        $vehicle = Vehicle::with(['bookings.customer', 'maintenances.staff'])->findOrFail($id);
         $currentMileage = $vehicle->mileage;
 
         // Financials
@@ -154,28 +197,26 @@ class FleetController extends Controller
 
         $events = [];
 
-        // --- 1. CUSTOMER BOOKINGS (Strict Fix) ---
+        // --- 1. CUSTOMER BOOKINGS ---
         foreach($vehicle->bookings as $booking) {
             if(in_array($booking->bookingStatus, ['Cancelled', 'Rejected'])) continue;
 
-            // Force parse Date and Time separately to avoid format confusion
             $startDate = \Carbon\Carbon::parse($booking->originalDate)->format('Y-m-d');
             $startTime = \Carbon\Carbon::parse($booking->bookingTime)->format('H:i:s');
             $endDate   = \Carbon\Carbon::parse($booking->returnDate)->format('Y-m-d');
             $endTime   = \Carbon\Carbon::parse($booking->returnTime)->format('H:i:s');
 
-            // Construct ISO string manually for 100% accuracy
             $startIso = $startDate . 'T' . $startTime;
             $endIso   = $endDate . 'T' . $endTime;
 
             $events[] = [
                 'id' => 'booking_' . $booking->bookingID,
-                'title' => $booking->customer->fullName ?? 'Booked', // Label
+                'title' => $booking->customer->fullName ?? 'Booked',
                 'start' => $startIso,
                 'end'   => $endIso,
                 'color' => '#f97316', // Orange
                 'textColor' => '#ffffff',
-                'allDay' => false, // STRICTLY FALSE for bookings
+                'allDay' => false, // Bookings are specific times
                 'type'  => 'booking',
                 'extendedProps' => [ 'status' => $booking->bookingStatus ]
             ];
@@ -189,27 +230,39 @@ class FleetController extends Controller
             if($block->type === 'delivery') { $color = '#3b82f6'; $title = 'Delivery'; }
             if($block->type === 'other') { $color = '#6b7280'; $title = 'Blocked'; }
 
-            // Maintenance is often Full Day
             $s = \Carbon\Carbon::parse($block->start_time);
             $e = \Carbon\Carbon::parse($block->end_time);
+            
+            // STRICT CHECK: Only treat as All Day if explicitly 00:00 to 23:59:59
             $isAllDay = $s->format('H:i:s') === '00:00:00' && $e->format('H:i:s') === '23:59:59';
 
-            // For full days, FullCalendar needs the END date to be +1 day
-            if($isAllDay) {
-                $e->addDay()->startOfDay(); 
+            if ($isAllDay) {
+                // For All Day, FullCalendar needs YYYY-MM-DD format
+                // End date must be exclusive (next day) for the visual bar to cover the full current day
+                $startStr = $s->format('Y-m-d');
+                $endStr   = $e->copy()->addDay()->startOfDay()->format('Y-m-d');
+            } else {
+                // FOR SPECIFIC TIMES:
+                // Use strict format 'YYYY-MM-DDTHH:mm:ss' without timezone offset.
+                // This forces the calendar to render exactly 09:00 if the DB says 09:00.
+                $startStr = $s->format('Y-m-d\TH:i:s');
+                $endStr   = $e->format('Y-m-d\TH:i:s');
             }
 
             $events[] = [
                 'id' => $block->MaintenanceID,
                 'title' => $title,
-                'start' => $s->toIso8601String(),
-                'end'   => $e->toIso8601String(),
+                'start' => $startStr,
+                'end'   => $endStr,
                 'color' => $color,
-                'allDay' => $isAllDay,
+                'textColor' => '#ffffff',
+                'allDay' => $isAllDay, // If false, the calendar will render the specific time label
                 'type'  => 'block',
                 'extendedProps' => [ 
                     'cost' => $block->cost, 
-                    'desc' => $block->description 
+                    'desc' => $block->description,
+                    'staff_name' => $block->staff->name ?? 'System',
+                    'created_at' => $block->created_at->format('d M Y, h:i A')
                 ]
             ];
         }
@@ -217,6 +270,8 @@ class FleetController extends Controller
         return view('staff.fleet.show', compact('vehicle', 'currentMileage', 'events', 'netProfit', 'totalEarnings', 'totalMaintenanceCost'));
     }
 
+    // ... [Rest of the controller methods destroyMaintenance, storeMaintenance, etc. remain unchanged]
+    
     // This method handles the "Unblock Date" button
     public function destroyMaintenance($id)
     {
@@ -234,10 +289,8 @@ class FleetController extends Controller
             'type' => 'required',
         ]);
 
-        // Check if "All Day" string "true" was sent
         $isAllDay = filter_var($request->all_day, FILTER_VALIDATE_BOOLEAN);
 
-        // Append seconds (:00) to ensure valid H:i:s format if not all day
         $startTime = $isAllDay ? '00:00:00' : ($request->start_time ? $request->start_time . ':00' : '00:00:00');
         $endTime   = $isAllDay ? '23:59:59' : ($request->end_time ? $request->end_time . ':00' : '23:59:59');
 
