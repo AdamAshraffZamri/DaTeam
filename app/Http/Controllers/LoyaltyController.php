@@ -313,11 +313,12 @@ class LoyaltyController extends Controller
         $request->validate([
             'name' => 'required',
             'offer' => 'required',
-            'points' => 'required|integer',
+            'points' => $request->filled('milestone_step') ? 'nullable' : 'required|integer',
             'code_prefix' => 'required|max:10',
         ]);
 
         $isMilestone = $request->filled('milestone_step');
+        $category = $isMilestone ? 'Milestone' : 'Food';
         $points = $isMilestone ? 0 : ($request->points ?? 0); // Kalau Milestone, Points = 0
 
         $rewardColors = [
@@ -331,17 +332,13 @@ class LoyaltyController extends Controller
         Reward::create([
             'name' => $request->name,
             'offer_description' => $request->offer,
-            'points_required' => $request->points ?? 0,
+            'points_required' => $points,
             'code_prefix' => strtoupper($request->code_prefix),
-            'validity_months' => $request->validity ?? 3,
-            'icon_class' => $request->icon ?? 'fa-utensils',
-            'color_class' => $request->color ?? $rewardColors[array_rand($rewardColors)],
-            'is_active' => true,
-            
-            'category' => $request->filled('milestone_step') ? 'Milestone' : 'Food',
+            'validity_months' => 3, // Default 3 bulan
+            'category' => $category,
             'milestone_step' => $request->milestone_step ?? null,
-            'discount_percent' => $request->discount_percent ?? 0
-
+            'discount_percent' => $request->discount_percent ?? 0,
+            'is_active' => true
         ]);
 
         return back()->with('success', 'Reward added to Customer Site successfully!');
@@ -390,20 +387,32 @@ class LoyaltyController extends Controller
             'description' => 'nullable|string|max:255',
         ]);
 
+        // 1. Tentukan masuk column mana (RM atau %)
+        $voucherAmount = 0;
+        $discountPercent = 0;
+
+        if ($request->type == 'Rental Discount') {
+            // Kalau Rental, kita anggap input tu adalah % (Contoh: 20 = 20%)
+            $discountPercent = $request->amount;
+        } else {
+            // Kalau Merchant, kita anggap input tu adalah RM/Value dummy
+            $voucherAmount = $request->amount;
+        }
+
         Voucher::create([
-            'voucherCode' => $request->code,
-            'code' => $request->code,
-            'voucherAmount' => $request->amount,
+            'voucherCode' => strtoupper($request->code),
+            'code' => strtoupper($request->code),
+            'voucherAmount' => $voucherAmount,      // Simpan RM (jika ada)
+            'discount_percent' => $discountPercent, // Simpan % (jika rental)
             'voucherType' => $request->type,
-            // Carbon::parse akan handle datetime-local input
-            'validFrom' => Carbon::parse($request->valid_from), 
+            'validFrom' => Carbon::parse($request->valid_from),
             'validUntil' => Carbon::parse($request->valid_until),
             'conditions' => $request->description,
             'isUsed' => false,
             'status' => 'active'
         ]);
 
-        return back()->with('success', 'Voucher created successfully with exact time!');
+        return back()->with('success', ' Manual Voucher created successfully with exact time!');
     }
 
     // --- STAFF: VIEW CUSTOMER LOYALTY DETAILS ---

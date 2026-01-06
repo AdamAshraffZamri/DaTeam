@@ -420,89 +420,19 @@
                             <span class="w-8 h-8 rounded-lg bg-green-100 flex items-center justify-center text-green-600">
                                 <i class="fas fa-ticket-alt"></i>
                             </span>
-                            Manage Specific Vouchers
+                            List of Vouchers
                         </h3>
-                        <p class="text-sm text-gray-500 mt-1 ml-10">Create discount codes for rental or merchant redemptions.</p>
+                        <p class="text-sm text-gray-500 mt-1 ml-10">List of discount codes for rental or merchant redemptions.</p>
                     </div>
                 </div>
 
                 <div class="p-6">
                     {{-- Add New Voucher Form --}}
-                    <div class="bg-gradient-to-r from-gray-50 to-white p-8 rounded-2xl border border-gray-200 mb-10">
-                        <h4 class="text-sm font-bold text-green-700 uppercase tracking-widest mb-6 border-b border-green-100 pb-2">Create New Voucher</h4>
-                        
-                        <form action="{{ route('staff.loyalty.store_voucher') }}" method="POST" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                            @csrf
+                    
                             
-                            {{-- 1. Code --}}
-                            <div class="col-span-1 md:col-span-2">
-                                <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Voucher Code</label>
-                                <div class="relative">
-                                    <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
-                                        <i class="fas fa-barcode"></i>
-                                    </span>
-                                    <input 
-                                        type="text" 
-                                        name="code" 
-                                        class="w-full pl-10 pr-4 py-3 bg-white border border-gray-200 rounded-xl text-gray-900 text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500 font-mono font-bold tracking-wider uppercase transition" 
-                                        placeholder="e.g. HASTA10-ABC" 
-                                        required
-                                        oninput="this.value = this.value.toUpperCase()" 
-                                    >
-                                </div>
-                            </div>
+                            
 
-                            {{-- 2. Amount --}}
-                            <div class="col-span-1">
-                                <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Discount (RM/%)</label>
-                                <input 
-                                    type="number" 
-                                    name="amount" 
-                                    class="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-gray-900 text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500 transition font-bold" 
-                                    placeholder="0.00"
-                                    required
-                                >
-                            </div>
-
-                            {{-- 3. Type (FIXED DISPLAY) --}}
-                            <div class="col-span-1">
-                                <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Type</label>
-                                {{-- Input Hidden --}}
-                                <input type="hidden" name="type" value="Rental Discount">
-                                {{-- Visual Display --}}
-                                <div class="w-full px-4 py-3 bg-green-50 border border-green-200 rounded-xl text-green-800 text-sm font-bold flex items-center shadow-inner cursor-not-allowed">
-                                    <i class="fas fa-car mr-2"></i> Rental Discount
-                                </div>
-                            </div>
-
-                            {{-- 4. Valid From --}}
-                            <div class="col-span-1">
-                                <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Valid From</label>
-                                <input type="datetime-local" name="valid_from" class="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-gray-600 text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500 transition" required>
-                            </div>
-
-                            {{-- 5. Valid Until --}}
-                            <div class="col-span-1">
-                                <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Valid Until</label>
-                                <input type="datetime-local" name="valid_until" class="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-gray-600 text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500 transition" required>
-                            </div>
-
-                            {{-- 6. Description --}}
-                            <div class="col-span-1 md:col-span-2">
-                                <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Internal Note (Optional)</label>
-                                <input type="text" name="description" class="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-gray-600 text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500 transition" placeholder="e.g. Promo Merdeka" maxlength="255">
-                            </div>
-
-                            {{-- Submit Button --}}
-                            <div class="col-span-1 md:col-span-4 mt-2">
-                                <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3.5 rounded-xl shadow-lg shadow-green-600/30 transition transform active:scale-[0.98] flex items-center justify-center gap-2 text-base">
-                                    <i class="fas fa-check-circle"></i> Create Voucher Code
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-
-                    {{-- Sub-Section: Rental Vouchers List --}}
+                   {{-- Sub-Section: Rental Vouchers List --}}
                     <div class="mb-8">
                         <div class="flex items-center gap-3 mb-4">
                             <div class="h-8 w-1 bg-green-500 rounded-full"></div>
@@ -515,7 +445,8 @@
                                 <thead class="bg-gray-50 text-gray-500 uppercase text-[10px] tracking-wider font-bold">
                                     <tr>
                                         <th class="px-6 py-3 text-left">Code</th>
-                                        <th class="px-6 py-3 text-center">Amount (RM)</th>
+                                        {{-- UBAH SINI: Amount (RM) -> Discount --}}
+                                        <th class="px-6 py-3 text-center">Discount</th>
                                         <th class="px-6 py-3 text-center">Valid Range</th>
                                         <th class="px-6 py-3 text-center">Status</th>
                                         <th class="px-6 py-3 text-center">Actions</th>
@@ -525,9 +456,16 @@
                                     @forelse($rentalVouchers as $voucher)
                                         <tr class="hover:bg-gray-50 transition">
                                             <td class="px-6 py-4 font-mono font-bold text-gray-900 tracking-wide">{{ $voucher->code }}</td>
+                                            
+                                            {{-- UBAH SINI: Logic paparan % atau RM --}}
                                             <td class="px-6 py-4 text-center">
-                                                <span class="font-bold text-green-600 bg-green-50 px-2 py-1 rounded">RM {{ number_format($voucher->voucherAmount, 2) }}</span>
+                                                @if($voucher->discount_percent > 0)
+                                                    <span class="font-bold text-green-600 bg-green-50 px-2 py-1 rounded">{{ $voucher->discount_percent }}% OFF</span>
+                                                @else
+                                                    <span class="font-bold text-green-600 bg-green-50 px-2 py-1 rounded">RM {{ number_format($voucher->voucherAmount, 2) }}</span>
+                                                @endif
                                             </td>
+
                                             <td class="px-6 py-4 text-center text-xs text-gray-500">
                                                 <div>{{ $voucher->validFrom?->format('d M') }} - {{ $voucher->validUntil?->format('d M Y') }}</div>
                                             </td>
@@ -575,6 +513,10 @@
                                     <tr>
                                         <th class="px-6 py-3 text-left">Code</th>
                                         <th class="px-6 py-3 text-left">Merchant</th>
+                                        
+                                        {{-- TAMBAH SINI: Column Amount --}}
+                                        <th class="px-6 py-3 text-center">Amount</th>
+                                        
                                         <th class="px-6 py-3 text-center">Expires</th>
                                         <th class="px-6 py-3 text-center">Status</th>
                                         <th class="px-6 py-3 text-center">Actions</th>
@@ -585,6 +527,12 @@
                                         <tr class="hover:bg-gray-50 transition">
                                             <td class="px-6 py-4 font-mono font-bold text-gray-900 tracking-wide">{{ $voucher->code }}</td>
                                             <td class="px-6 py-4 text-gray-700 font-medium">{{ $voucher->redeem_place ?? 'N/A' }}</td>
+                                            
+                                            {{-- TAMBAH SINI: Data Amount --}}
+                                            <td class="px-6 py-4 text-center">
+                                                <span class="font-bold text-purple-600 bg-purple-50 px-2 py-1 rounded">RM {{ number_format($voucher->voucherAmount, 2) }}</span>
+                                            </td>
+
                                             <td class="px-6 py-4 text-center text-xs text-gray-500">
                                                 {{ $voucher->validUntil?->format('d M Y') ?? 'N/A' }}
                                             </td>
@@ -617,9 +565,7 @@
                             </table>
                         </div>
                     </div>
-                </div>
-            </div>
-        </div>
+                    
 
         {{-- TAB 4: RECENT ACTIVITIES (UPDATED WITH FILTER) --}}
         <div id="activities-tab" class="tab-content hidden">
