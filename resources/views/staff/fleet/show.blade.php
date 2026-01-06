@@ -14,9 +14,11 @@
     .fc-daygrid-day-number { color: #374151; font-size: 13px; font-weight: 600; padding: 8px; }
     .fc-day-today .fc-daygrid-day-number { background: #f97316; color: white; border-radius: 50%; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; margin: 4px; }
     .fc-day-today { background: transparent !important; }
+    
+    /* Base Event Styling */
     .fc-event { border-radius: 6px; padding: 2px 4px; font-size: 10px; border: none; box-shadow: 0 1px 2px rgba(0,0,0,0.05); cursor: pointer; transition: transform 0.1s; }
     .fc-event:hover { transform: scale(1.02); }
-    .fc-event-title { font-weight: 500 !important; } 
+    .fc-event-title { font-weight: 700 !important; } 
     .fc-event-time { font-weight: 700 !important; margin-right: 4px; }
     
     .custom-scrollbar::-webkit-scrollbar { width: 4px; }
@@ -33,19 +35,17 @@
                     <i class="fas fa-arrow-left mr-2"></i> Back to Fleet
                 </a>
             </div>
-            
+
             <div class="flex gap-3">
-                <a href="{{ route('staff.fleet.edit', $vehicle->VehicleID) }}" 
-                   class="bg-gray-500 hover:bg-gray-500 text-white px-8 py-3 rounded-full font-bold text-sm shadow-lg shadow-gray-900/20 transition-all transform hover:scale-105 flex items-center gap-3 shrink-0 whitespace-nowrap">
-                    <div class="bg-white/20 p-1.5 rounded-full flex items-center justify-center"><i class="fas fa-edit text-xs"></i></div>
+                <a href="{{ route('staff.fleet.edit', $vehicle->VehicleID) }}" class="bg-gray-600 hover:bg-gray-500 text-white px-6 py-3.5 rounded-2xl font-bold text-xs shadow-lg shadow-gray-900/20 transition-all transform hover:scale-105 flex items-center gap-2 shrink-0 whitespace-nowrap">
+                    <i class="fas fa-edit"></i>
                     <span>Edit</span>
                 </a>
-                
-                <form action="{{ route('staff.fleet.destroy', $vehicle->VehicleID) }}" method="POST" onsubmit="return confirm('Delete vehicle?');">
+                <form action="{{ route('staff.fleet.destroy', $vehicle->VehicleID) }}" method="POST" onsubmit="return confirm('Confirm to delete this vehicle? This action can\'t be undone.');">
                     @csrf @method('DELETE')
-                    <button type="submit" 
-                            class="bg-red-500 hover:bg-red-500 text-white px-8 py-3 rounded-full font-bold text-sm shadow-lg shadow-red-900/20 transition-all transform hover:scale-105 flex items-center gap-3 shrink-0 whitespace-nowrap">
-                        <div class="bg-white/20 p-1.5 rounded-full flex items-center justify-center"><i class="fas fa-trash-alt text-xs"></i></div> <span>Delete</span>
+                    <button type="submit" class="bg-red-600 hover:bg-red-500 text-white px-6 py-3.5 rounded-2xl font-bold text-xs shadow-lg shadow-red-900/20 transition-all transform hover:scale-105 flex items-center gap-2 shrink-0 whitespace-nowrap">
+                        <i class="fas fa-trash-alt"></i>
+                        <span>Delete</span>
                     </button>
                 </form>
             </div>
@@ -57,7 +57,7 @@
                 
                 {{-- 1. VEHICLE DETAILS --}}
                 <div class="bg-white rounded-[2rem] shadow-sm border border-gray-100 p-8 flex flex-col gap-8 relative">
-                    <div class="absolute top-8 right-8 z-10">
+                    <div class="absolute top-4 right-5 z-10">
                         @if($vehicle->availability)
                             <span class="px-3 py-1.5 rounded-full bg-green-50 text-green-700 text-[10px] font-black uppercase tracking-wider border border-green-100 shadow-sm">Available</span>
                         @else
@@ -101,24 +101,24 @@
                         <div class="flex-1 flex flex-col justify-between gap-6 text-left">
                             <div class="grid grid-cols-2 gap-y-5 gap-x-4">
                                 <div class="col-span-2">
-                                    <span class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Make & Model</span>
-                                    <span class="font-bold text-gray-900 text-2xl leading-tight">{{ $vehicle->brand }} {{ $vehicle->model }}</span>
+                                    <span class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Brand & Model</span>
+                                    <span class="text-3xl font-black font-bold-20 leading-tight">{{ $vehicle->brand }} {{ $vehicle->model }}</span>
                                 </div>
                                 <div>
                                     <span class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Plate Number</span>
-                                    <span class="font-bold text-gray-900 text-lg bg-gray-100 px-2 rounded inline-block font-mono border border-gray-200">{{ $vehicle->plateNo }}</span>
+                                    <span class="font-bold text-gray-700 text-lg bg-gray-100 px-2 rounded inline-block font-mono border border-gray-200">{{ $vehicle->plateNo }}</span>
                                 </div>
                                 <div>
                                     <span class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Type & Year</span>
-                                    <span class="font-bold text-gray-700">{{ $vehicle->type }} ({{ $vehicle->year }})</span>
+                                    <span class="font-bold text-gray-500">{{ $vehicle->type }} ({{ $vehicle->year }})</span>
                                 </div>
                                 <div>
-                                    <span class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Spec</span>
-                                    <span class="font-bold text-gray-700">{{ $vehicle->color }} • {{ $vehicle->fuelType }}</span>
+                                    <span class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Color</span>
+                                    <span class="font-bold text-gray-500">{{ $vehicle->color }}</span>
                                 </div>
                                 <div>
                                     <span class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Current Mileage</span>
-                                    <span class="font-bold text-gray-900">{{ number_format($currentMileage) }} km</span>
+                                    <span class="font-bold text-orange-500">{{ number_format($currentMileage) }} km</span>
                                 </div>
                             </div>
 
@@ -232,7 +232,8 @@
                     @endif
                 </div>
 
-                <div class="bg-white rounded-[2rem] shadow-sm border border-orange-100 p-8">
+                {{-- 2. CALENDAR SECTION --}}
+                <div class="bg-white rounded-[2rem] shadow-sm border border-orange-100 p-8 relative">
                     <div class="flex justify-between items-end mb-6">
                         <div>
                             <h2 id="customCalendarTitle" class="text-2xl font-bold text-gray-900 tracking-tight"></h2>
@@ -240,25 +241,33 @@
                         </div>
                         <div class="flex items-center gap-1 bg-white p-1 rounded-xl shadow-sm border border-orange-100">
                             <button id="prevBtn" class="w-8 h-8 rounded-lg hover:bg-orange-50 flex items-center justify-center text-gray-600 transition"><i class="fas fa-chevron-left text-xs"></i></button>
-                            <button id="todayBtn" class="text-xs font-bold text-gray-900 hover:bg-orange-50 px-3 py-1.5 rounded-lg transition uppercase tracking-wide">Today</button>
                             <button id="nextBtn" class="w-8 h-8 rounded-lg hover:bg-orange-50 flex items-center justify-center text-gray-600 transition"><i class="fas fa-chevron-right text-xs"></i></button>
                         </div>
                     </div>
 
-                    <div class="bg-white rounded-xl p-4 border border-orange-300 shadow-sm">
+                    <div class="bg-white rounded-xl p-4 border border-orange-200 shadow-sm">
                         <div id="calendar" class="apple-calendar text-xs"></div>
                     </div>
 
-                    <div class="flex flex-wrap gap-4 mt-6 pt-4 border-t border-dashed border-orange-200">
-                         <div class="flex items-center gap-2"><div class="w-2 h-2 rounded-full bg-orange-500"></div><span class="text-[10px] font-medium text-gray-500 uppercase">Booked</span></div>
-                         <div class="flex items-center gap-2"><div class="w-2 h-2 rounded-full bg-red-500"></div><span class="text-[10px] font-medium text-gray-500 uppercase">Maintenance</span></div>
-                         <div class="flex items-center gap-2"><div class="w-2 h-2 rounded-full bg-blue-500"></div><span class="text-[10px] font-medium text-gray-500 uppercase">Delivery</span></div>
-                         <div class="flex items-center gap-2"><div class="w-2 h-2 rounded-full bg-purple-500"></div><span class="text-[10px] font-medium text-gray-500 uppercase">Holiday</span></div>
-                         <div class="flex items-center gap-2"><div class="w-2 h-2 rounded-full bg-gray-500"></div><span class="text-[10px] font-medium text-gray-500 uppercase">Blocked</span></div>
+                    <div class="flex flex-col md:flex-row justify-between items-end gap-4 mt-6 pt-4 border-t border-dashed border-orange-200">
+                        {{-- Legend --}}
+                        <div class="flex flex-wrap gap-4">
+                             <div class="flex items-center gap-2"><div class="w-2 h-2 rounded-full bg-orange-500"></div><span class="text-[10px] font-medium text-gray-500 uppercase">Booked</span></div>
+                             <div class="flex items-center gap-2"><div class="w-2 h-2 rounded-full bg-red-500"></div><span class="text-[10px] font-medium text-gray-500 uppercase">Maintenance</span></div>
+                             <div class="flex items-center gap-2"><div class="w-2 h-2 rounded-full bg-blue-500"></div><span class="text-[10px] font-medium text-gray-500 uppercase">Delivery</span></div>
+                             <div class="flex items-center gap-2"><div class="w-2 h-2 rounded-full bg-purple-500"></div><span class="text-[10px] font-medium text-gray-500 uppercase">Holiday</span></div>
+                             <div class="flex items-center gap-2"><div class="w-2 h-2 rounded-full bg-gray-500"></div><span class="text-[10px] font-medium text-gray-500 uppercase">Blocked</span></div>
+                        </div>
+                        
+                        {{-- History Button (Bottom Right) --}}
+                        <button @click="historyModalOpen = true" class="text-[10px] font-bold text-gray-500 hover:text-gray-900 bg-gray-100 hover:bg-gray-200 px-3 py-1.5 rounded-lg transition flex items-center gap-2">
+                            <i class="fas fa-history"></i> History Log
+                        </button>
                     </div>
                 </div>
             </div>
 
+            {{-- RIGHT COL: Financials --}}
             <div class="flex flex-col gap-6 h-full">
                 <div class="bg-white rounded-[2rem] shadow-sm border border-gray-100 p-6 text-center shrink-0">
                     <h3 class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Net Profit</h3>
@@ -297,11 +306,11 @@
                     <div class="p-4 flex-1 overflow-y-auto custom-scrollbar">
                         <div x-show="activeTab === 'bookings'" class="space-y-3">
                             @forelse($vehicle->bookings->sortByDesc('created_at') as $booking)
-                                <a href="{{ route('staff.bookings.show', $booking->bookingID) }}" class="block bg-white p-4 rounded-2xl border border-gray-100 shadow-sm hover:border-orange-200 hover:shadow-md transition group">
+                                <a href="{{ route('staff.bookings.show', $booking->bookingID) }}" class="block bg-orange-50 p-4 rounded-2xl border border-gray-100 shadow-sm hover:border-orange-200 hover:shadow-md transition group">
                                     <div class="flex justify-between items-start mb-2">
                                         <div>
-                                            <span class="text-xs font-black text-gray-900 block group-hover:text-orange-600">#{{ $booking->bookingID }}</span>
-                                            <span class="text-[10px] text-gray-400">{{ \Carbon\Carbon::parse($booking->pickupDate)->format('d M Y') }}</span>
+                                            <span class="text-lg font-black text-gray-900 block group-hover:text-orange-600">#{{ $booking->bookingID }}</span>
+                                            <span class="text-s text-gray-400">{{ \Carbon\Carbon::parse($booking->pickupDate)->format('d M Y') }}</span>
                                         </div>
                                         @php
                                             $statusColor = match($booking->bookingStatus) {
@@ -311,14 +320,14 @@
                                                 default => 'bg-gray-50 text-gray-600'
                                             };
                                         @endphp
-                                        <span class="text-[10px] font-bold px-2 py-1 rounded-lg {{ $statusColor }}">{{ $booking->bookingStatus }}</span>
+                                        <span class="text-xs font-bold px-2 py-1 rounded-lg {{ $statusColor }}">{{ $booking->bookingStatus }}</span>
                                     </div>
                                     <div class="flex justify-between items-end border-t border-gray-50 pt-2 mt-2">
                                         <div class="flex items-center gap-2">
                                             <div class="w-5 h-5 rounded-full bg-gray-100 flex items-center justify-center text-[10px] font-bold text-gray-500">
                                                 {{ substr($booking->customer->fullName, 0, 1) }}
                                             </div>
-                                            <span class="text-[10px] font-bold text-gray-600 truncate max-w-[80px]">{{ $booking->customer->fullName }}</span>
+                                            <span class="text-[12px] font-bold text-gray-600 truncate max-w-[80px]">{{ $booking->customer->fullName }}</span>
                                         </div>
                                         <span class="text-xs font-bold text-gray-800">{{ $booking->return_mileage ? number_format($booking->return_mileage).' km' : '-' }}</span>
                                     </div>
@@ -333,15 +342,15 @@
 
                         <div x-show="activeTab === 'service'" class="space-y-3">
                             @forelse($vehicle->maintenances->whereIn('type', ['maintenance', null])->sortByDesc('start_time') as $maint)
-                                <div class="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm hover:border-red-200 transition">
+                                <div class="bg-red-50 p-4 rounded-2xl border border-gray-100 shadow-sm hover:border-red-200 transition">
                                     <div class="flex justify-between items-start mb-2">
                                         <div>
-                                            <span class="text-xs font-black text-gray-900 block">{{ \Carbon\Carbon::parse($maint->start_time)->format('d M Y') }}</span>
-                                            <span class="text-[10px] text-gray-400">Ref: #{{ $maint->MaintenanceID }}</span>
+                                            <span class="text-lg font-black text-gray-900 block">{{ \Carbon\Carbon::parse($maint->start_time)->format('d M Y') }}</span>
+                                            <span class="text-s text-gray-400">Ref: #{{ $maint->MaintenanceID }}</span>
                                         </div>
-                                        <span class="text-xs font-bold text-red-600 bg-red-50 px-2 py-1 rounded-lg">RM {{ number_format($maint->cost, 2) }}</span>
+                                        <span class="text-s font-bold text-red-600 bg-red-50 px-2 py-1 rounded-lg">RM {{ number_format($maint->cost, 2) }}</span>
                                     </div>
-                                    <p class="text-xs text-gray-600 leading-relaxed font-medium">{{ $maint->description }}</p>
+                                    <p class="text-[12px] text-gray-600 leading-relaxed font-medium">{{ $maint->description }}</p>
                                 </div>
                             @empty
                                 <div class="flex flex-col items-center justify-center py-10 text-gray-400 h-full">
@@ -356,19 +365,20 @@
         </div>
     </div>
 
+    {{-- VIEWER MODAL --}}
     <div x-show="viewerOpen" class="fixed inset-0 z-[70] flex items-center justify-center bg-gray-900/60 backdrop-blur-md p-4" x-transition.opacity x-cloak>
         <div class="bg-white rounded-[2rem] shadow-2xl w-full max-w-4xl h-[85vh] flex flex-col overflow-hidden" @click.away="viewerOpen = false">
             <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-white">
                 <div class="flex items-center gap-4">
-                    <div>
-                        <h3 class="text-2xl font-black text-gray-900" x-text="viewerTitle"></h3>
-                        <p class="text-[10px] text-gray-400 font-bold uppercase tracking-widest">{{ $vehicle->plateNo }}</p>
-                    </div>
+                    <h3 class="text-2xl font-black text-gray-900" x-text="viewerTitle"></h3>
+                    <p class="text-[10px] text-gray-400 font-bold uppercase tracking-widest">{{ $vehicle->plateNo }}</p>
+                </div>
+                <div class="flex items-center gap-4">
                     <a :href="viewerSrc" download class="text-[10px] font-bold text-blue-600 bg-blue-50 px-3 py-1.5 rounded-lg hover:bg-blue-100 transition flex items-center gap-1">
                         <i class="fas fa-download"></i> Download
                     </a>
+                    <button @click="viewerOpen = false" class="w-8 h-8 rounded-full bg-gray-50 text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition"><i class="fas fa-times"></i></button>
                 </div>
-                <button @click="viewerOpen = false" class="w-8 h-8 rounded-full bg-gray-50 text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition"><i class="fas fa-times"></i></button>
             </div>
             <div class="flex-1 bg-gray-100 p-4 flex items-center justify-center overflow-auto">
                 <template x-if="viewerSrc">
@@ -396,6 +406,7 @@
         </div>
     </div>
 
+    {{-- BLOCK SCHEDULE MODAL --}}
     <div x-show="blockModalOpen" class="fixed inset-0 z-[60] flex items-center justify-center bg-gray-900/60 backdrop-blur-sm px-4" x-transition.opacity x-cloak>
         <form action="{{ route('staff.fleet.maintenance.store', $vehicle->VehicleID) }}" method="POST" 
               class="bg-white/95 backdrop-blur-xl border border-white/50 rounded-[2rem] shadow-2xl w-full max-w-sm overflow-hidden transform transition-all" 
@@ -424,9 +435,7 @@
                                         <option value="{{ sprintf('%02d:00', $i) }}">{{ sprintf('%02d:00', $i) }}</option>
                                     @endfor
                                 </select>
-                                <div class="absolute inset-y-0 right-3 flex items-center pointer-events-none text-gray-400">
-                                    <i class="fas fa-chevron-down text-[10px]"></i>
-                                </div>
+                                <div class="absolute inset-y-0 right-3 flex items-center pointer-events-none text-gray-400"><i class="fas fa-chevron-down text-[10px]"></i></div>
                             </div>
                         </div>
                         <div>
@@ -437,9 +446,7 @@
                                         <option value="{{ sprintf('%02d:00', $i) }}" {{ $i == 23 ? 'selected' : '' }}>{{ sprintf('%02d:00', $i) }}</option>
                                     @endfor
                                 </select>
-                                <div class="absolute inset-y-0 right-3 flex items-center pointer-events-none text-gray-400">
-                                    <i class="fas fa-chevron-down text-[10px]"></i>
-                                </div>
+                                <div class="absolute inset-y-0 right-3 flex items-center pointer-events-none text-gray-400"><i class="fas fa-chevron-down text-[10px]"></i></div>
                             </div>
                         </div>
                     </div>
@@ -456,33 +463,20 @@
                 <div>
                     <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-2">Select Reason</label>
                     <div class="flex flex-col gap-2">
-                        <button type="button" @click="blockType = 'maintenance'" class="w-full text-left px-4 py-3 rounded-xl text-xs font-bold border transition-all capitalize flex justify-between items-center group" :class="blockType === 'maintenance' ? 'bg-red-50 border-red-200 text-red-600 shadow-sm' : 'bg-white text-gray-600 border-gray-200 hover:border-red-300 hover:text-red-500'">
-                            <div class="flex items-center gap-2"><div class="w-2 h-2 rounded-full bg-red-500"></div> Maintenance</div>
-                            <i class="fas fa-check text-red-600" x-show="blockType === 'maintenance'"></i>
+                        @foreach(['maintenance' => ['red', 'Maintenance'], 'delivery' => ['blue', 'Delivery'], 'holiday' => ['purple', 'Holiday'], 'other' => ['gray', 'Other']] as $key => $details)
+                        <button type="button" @click="blockType = '{{ $key }}'" class="w-full text-left px-4 py-3 rounded-xl text-xs font-bold border transition-all capitalize flex justify-between items-center group" 
+                            :class="blockType === '{{ $key }}' ? 'bg-{{ $details[0] }}-50 border-{{ $details[0] }}-200 text-{{ $details[0] }}-600 shadow-sm' : 'bg-white text-gray-600 border-gray-200 hover:border-{{ $details[0] }}-300 hover:text-{{ $details[0] }}-500'">
+                            <div class="flex items-center gap-2"><div class="w-2 h-2 rounded-full bg-{{ $details[0] }}-500"></div> {{ $details[1] }}</div>
+                            <i class="fas fa-check text-{{ $details[0] }}-600" x-show="blockType === '{{ $key }}'"></i>
                         </button>
-                        <button type="button" @click="blockType = 'delivery'" class="w-full text-left px-4 py-3 rounded-xl text-xs font-bold border transition-all capitalize flex justify-between items-center group" :class="blockType === 'delivery' ? 'bg-blue-50 border-blue-200 text-blue-600 shadow-sm' : 'bg-white text-gray-600 border-gray-200 hover:border-blue-300 hover:text-blue-500'">
-                            <div class="flex items-center gap-2"><div class="w-2 h-2 rounded-full bg-blue-500"></div> Delivery</div>
-                            <i class="fas fa-check text-blue-600" x-show="blockType === 'delivery'"></i>
-                        </button>
-                        <button type="button" @click="blockType = 'holiday'" class="w-full text-left px-4 py-3 rounded-xl text-xs font-bold border transition-all capitalize flex justify-between items-center group" :class="blockType === 'holiday' ? 'bg-purple-50 border-purple-200 text-purple-600 shadow-sm' : 'bg-white text-gray-600 border-gray-200 hover:border-purple-300 hover:text-purple-500'">
-                            <div class="flex items-center gap-2"><div class="w-2 h-2 rounded-full bg-purple-500"></div> Holiday</div>
-                            <i class="fas fa-check text-purple-600" x-show="blockType === 'holiday'"></i>
-                        </button>
-                        <button type="button" @click="blockType = 'other'" class="w-full text-left px-4 py-3 rounded-xl text-xs font-bold border transition-all capitalize flex justify-between items-center group" :class="blockType === 'other' ? 'bg-gray-100 border-gray-300 text-gray-800 shadow-sm' : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300 hover:text-gray-800'">
-                            <div class="flex items-center gap-2"><div class="w-2 h-2 rounded-full bg-gray-500"></div> Other</div>
-                            <i class="fas fa-check text-gray-800" x-show="blockType === 'other'"></i>
-                        </button>
+                        @endforeach
                     </div>
                     <input type="hidden" name="type" x-model="blockType">
                 </div>
 
                 <div x-show="blockType === 'maintenance'" class="space-y-3 pt-2 border-t border-gray-100">
                     <select name="maintenance_desc" class="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-sm font-bold text-gray-800 outline-none focus:border-red-500 transition-colors">
-                        <option>Regular Service</option>
-                        <option>Tire Change</option>
-                        <option>Battery Replacement</option>
-                        <option>Major Repair</option>
-                        <option>Inspection</option>
+                        <option>Regular Service</option><option>Tire Change</option><option>Battery Replacement</option><option>Major Repair</option><option>Inspection</option>
                     </select>
                     <input type="number" name="maintenance_cost" placeholder="Cost (RM)" class="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-sm font-bold text-gray-800 outline-none focus:border-red-500 transition-colors">
                 </div>
@@ -503,6 +497,79 @@
         </form>
     </div>
 
+    {{-- HISTORY MODAL --}}
+    <div x-show="historyModalOpen" class="fixed inset-0 z-[80] flex items-center justify-center bg-gray-900/60 backdrop-blur-sm px-4" x-transition.opacity x-cloak>
+        <div class="bg-white rounded-[2rem] shadow-2xl w-full max-w-md h-[60vh] flex flex-col overflow-hidden" @click.away="historyModalOpen = false">
+            
+            <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
+                <h3 class="text-lg font-black text-gray-900">History Log</h3>
+                <button @click="historyModalOpen = false" class="w-8 h-8 rounded-full bg-white text-gray-400 hover:text-gray-600 shadow-sm flex items-center justify-center transition hover:scale-105"><i class="fas fa-times"></i></button>
+            </div>
+            
+            <div class="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar bg-gray-50/30">
+                @forelse($vehicle->maintenances->sortByDesc('updated_at') as $log)
+                    <div class="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden">
+                        
+                        {{-- Unblocked Badge --}}
+                        @if($log->type === 'unblocked')
+                            <div class="absolute top-0 right-0 bg-green-500 text-white text-[9px] font-bold px-2 py-1 rounded-bl-xl">UNBLOCKED</div>
+                        @endif
+
+                        <div class="flex justify-between items-start mb-2 pr-12">
+                            @php
+                                $badgeColor = match($log->type) {
+                                    'maintenance' => 'bg-red-100 text-red-600',
+                                    'delivery' => 'bg-blue-100 text-blue-600',
+                                    'holiday' => 'bg-purple-100 text-purple-600',
+                                    'unblocked' => 'bg-gray-100 text-gray-400 line-through opacity-70',
+                                    default => 'bg-gray-100 text-gray-600'
+                                };
+                            @endphp
+                            <span class="px-2 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wide {{ $badgeColor }}">{{ $log->type === 'unblocked' ? 'Archived' : $log->type }}</span>
+                            <span class="text-[10px] font-medium text-gray-400">{{ $log->created_at->format('d M, h:i A') }}</span>
+                        </div>
+
+                        {{-- Parse Description to separate original reason from unblocker info --}}
+                        @php
+                            $parts = explode('| [UNBLOCKED]', $log->description);
+                            $cleanDesc = $parts[0];
+                            // Reconstruct the unblock message if it exists
+                            $unblockInfo = isset($parts[1]) ? '[UNBLOCKED]' . $parts[1] : null;
+                        @endphp
+
+                        <p class="text-sm font-bold text-gray-900 mb-1 leading-tight {{ $log->type === 'unblocked' ? 'opacity-50' : '' }}">
+                            {{ $cleanDesc ?? 'No Description' }}
+                        </p>
+                        
+                        <div class="flex items-center gap-2 text-xs text-gray-500 mt-2">
+                            <i class="fas fa-user-lock text-gray-300"></i> Blocked by: 
+                            <span class="font-bold text-gray-700">{{ $log->staff->name ?? 'System' }}</span>
+                        </div>
+
+                        {{-- Show Unblocker Info Highlighted --}}
+                        @if($unblockInfo)
+                            <div class="mt-2 p-2 bg-green-50 rounded-lg border border-green-100 flex items-center gap-2 text-xs text-green-700">
+                                <i class="fas fa-unlock"></i>
+                                <span class="font-medium">{{ str_replace('[UNBLOCKED] by ', 'Unblocked by: ', $unblockInfo) }}</span>
+                            </div>
+                        @endif
+                        
+                        <div class="mt-2 pt-2 border-t border-gray-50 flex justify-between text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                            <span><i class="fas fa-calendar-alt mr-1"></i> {{ \Carbon\Carbon::parse($log->start_time)->format('d M') }}</span>
+                            <span class="text-gray-300 mx-2"><i class="fas fa-arrow-right"></i></span>
+                            <span>{{ \Carbon\Carbon::parse($log->end_time)->format('d M') }}</span>
+                        </div>
+                    </div>
+                @empty
+                    <div class="flex flex-col items-center justify-center py-10 text-gray-400 h-full">
+                        <i class="fas fa-history text-3xl mb-2 opacity-50"></i>
+                        <p class="text-xs font-bold">No history found.</p>
+                    </div>
+                @endforelse
+            </div>
+        </div>
+    </div>
+
 </div>
 
 <script>
@@ -510,6 +577,7 @@
         return {
             viewerOpen: false,
             blockModalOpen: false,
+            historyModalOpen: false,
             
             viewerTitle: '',
             viewerSrc: '',
@@ -527,11 +595,9 @@
                 if(!path) return;
                 this.viewerTitle = title;
                 this.viewerSrc = path; 
-                
                 const cleanPath = path.split('?')[0];
                 const extension = cleanPath.split('.').pop().toLowerCase();
                 this.viewerType = extension === 'pdf' ? 'pdf' : 'image';
-                
                 this.viewerOpen = true;
             }
         }
@@ -541,21 +607,21 @@
         var calendarEl = document.getElementById('calendar');
         var events = @json($events);
         
-        console.table(events); 
-
         var calendar = new FullCalendar.Calendar(calendarEl, {
             initialView: 'dayGridMonth',
             headerToolbar: false,
             height: 'auto',
             selectable: true,
-            eventDisplay: 'block', // FORCE LABELS
+            eventDisplay: 'block',
+            // Ensure 24h format for labels
             eventTimeFormat: { hour: '2-digit', minute: '2-digit', meridiem: false, hour12: false },
-            nextDayThreshold: '00:00:00', // Ensures times ending at midnight don't bleed into next day
+            nextDayThreshold: '00:00:00',
             
             select: function(info) {
                 let alpine = Alpine.$data(document.querySelector('[x-data]'));
                 alpine.selectedStart = info.startStr;
                 
+                // Adjust end date because FullCalendar select end is exclusive
                 let endDate = new Date(info.endStr);
                 endDate.setDate(endDate.getDate() - 1);
                 alpine.selectedEnd = endDate.toISOString().split('T')[0];
@@ -572,33 +638,65 @@
 
             events: events,
             
-            // POPUP & CLICK LOGIC
+            eventDidMount: function(info) {
+                // 1. PARTIAL DAY (Specific Time) -> SOLID COLOR with TRANSPARENCY
+                if (!info.event.allDay) {
+                    info.el.style.backgroundColor = info.event.backgroundColor;
+                    info.el.style.borderColor = info.event.backgroundColor;
+                    info.el.style.color = '#ffffff'; // White Text
+                    
+                    // === ADDED TRANSPARENCY HERE ===
+                    info.el.style.opacity = '1';
+                    
+                    // Force text white
+                    let titleEl = info.el.querySelector('.fc-event-title');
+                    let timeEl  = info.el.querySelector('.fc-event-time');
+                    if(titleEl) titleEl.style.color = '#ffffffff';
+                    if(timeEl)  timeEl.style.color  = '#000000ff';
+                } 
+                // 2. WHOLE DAY -> LIGHT GRAY BACKGROUND (No Transparency change)
+                else {
+                    info.el.style.backgroundColor = info.event.backgroundColor; // Light Gray
+                    info.el.style.borderColor = info.event.backgroundColor; // Colored Border
+                    info.el.style.color = '#000000ff'; // Colored Text
+                    info.el.style.borderWidth = '1px';
+                    info.el.style.borderStyle = 'solid';
+                    info.el.style.fontWeight = 'bold';
+                    
+                    // Ensure opacity is full for readability
+                    info.el.style.opacity = '1';
+
+                    // Force text color
+                    let titleEl = info.el.querySelector('.fc-event-title');
+                    if(titleEl) titleEl.style.color = '#000000ff';
+                }
+            },
+            
+            
             eventClick: function(info) {
                 var props = info.event.extendedProps;
                 
                 // 1. BOOKING POPUP
-                if (info.event.extendedProps.type === 'booking') {
-                    // Format dates for display
+                if (props.type === 'booking') {
                     let start = info.event.start.toLocaleString([], {month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'});
                     let end = info.event.end ? info.event.end.toLocaleString([], {month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'}) : '';
 
                     Swal.fire({
-                        title: info.event.title, // Customer Name
+                        title: info.event.title, 
                         html: `<div class="text-left text-sm text-gray-600 font-sans">
                                 <div class="bg-orange-50 p-3 rounded-lg border border-orange-100 mb-3">
                                     <p class="font-bold text-orange-800 text-xs uppercase tracking-wider mb-1">Booking Time</p>
-                                    <p class="font-bold text-gray-900">${start} <span class="text-gray-400 mx-1">to</span> ${end}</p>
+                                    <p class="font-bold text-gray-900">${start} to ${end}</p>
                                 </div>
                                 <p><strong>Status:</strong> ${props.status}</p>
                                </div>`,
                         showCancelButton: true,
-                        confirmButtonText: 'View Full Details',
+                        confirmButtonText: 'View Details',
                         cancelButtonText: 'Close',
                         confirmButtonColor: '#f97316',
                         cancelButtonColor: '#1f2937',
                     }).then((result) => {
                         if (result.isConfirmed) {
-                            // Extract booking ID from event ID "booking_123"
                             let bookingId = info.event.id.replace('booking_', '');
                             window.location.href = `/staff/bookings/${bookingId}`;
                         }
@@ -606,10 +704,27 @@
                 }
                 // 2. MAINTENANCE/BLOCK POPUP
                 else if (props.type === 'block') {
-                    let desc = props.description || props.reason || '-';
+                    let desc = props.desc || '-';
                     let extraHtml = '';
                     if(props.cost > 0) extraHtml += `<div class="mt-2 text-red-600 font-bold">Cost: RM ${props.cost}</div>`;
                     if(props.ref_id) extraHtml += `<div class="mt-2 text-blue-600 font-bold">Ref: ${props.ref_id}</div>`;
+
+                    // Generate History Html for the Popup
+                    let historyHtml = '';
+                    if (props.staff_name && props.created_at) {
+                        historyHtml = `
+                            <div class="mt-4 pt-3 border-t border-gray-100 text-xs text-gray-500">
+                                <div class="flex items-center gap-2 mb-1">
+                                    <i class="fas fa-user-lock text-gray-400"></i>
+                                    <span>Blocked by: <strong class="text-gray-700">${props.staff_name}</strong></span>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <i class="fas fa-clock text-gray-400"></i>
+                                    <span>On: ${props.created_at}</span>
+                                </div>
+                            </div>
+                        `;
+                    }
 
                     Swal.fire({
                         title: info.event.title,
@@ -618,6 +733,7 @@
                                 <hr class="my-3 border-gray-100">
                                 <p><strong>Details:</strong> ${desc}</p>
                                 ${extraHtml}
+                                ${historyHtml}
                                </div>`,
                         showCancelButton: true,
                         confirmButtonText: 'Unblock Date',
@@ -636,23 +752,6 @@
                         }
                     });
                 }
-            },
-            
-            eventDidMount: function(info) {
-                if (!info.event.allDay) {
-                    // Partial Day Events: White background, Colored Text, Dotted Border
-                    info.el.style.backgroundColor = info.event.backgroundColor;
-                    info.el.style.opacity = '0.6'; // Lower opacity
-                    info.el.style.color = info.event.backgroundColor; 
-                    info.el.style.border = '2px dotted ' + info.event.backgroundColor; // Fixed missing space
-                    info.el.style.fontWeight = 'bold';
-                } else {
-                    // Full Day Events: Normal Solid Color
-                    info.el.style.opacity = '1';
-                    info.el.style.border = 'none';
-                    info.el.style.color = '#ffffff';
-                    info.el.style.backgroundColor = info.event.backgroundColor;
-                }
             }
         });
         
@@ -661,7 +760,6 @@
         document.getElementById('customCalendarTitle').innerText = calendar.view.title;
         document.getElementById('prevBtn').addEventListener('click', function() { calendar.prev(); document.getElementById('customCalendarTitle').innerText = calendar.view.title; });
         document.getElementById('nextBtn').addEventListener('click', function() { calendar.next(); document.getElementById('customCalendarTitle').innerText = calendar.view.title; });
-        document.getElementById('todayBtn').addEventListener('click', function() { calendar.today(); document.getElementById('customCalendarTitle').innerText = calendar.view.title; });
     });
 </script>
 @endsection
