@@ -265,8 +265,8 @@
                  <div class="mb-6 max-w-md"> 
                     <label class="block text-gray-400 mb-2 font-bold text-xs uppercase tracking-wider">Current Password</label>
                     <div>
-                        <input type="text" name="current_password" id="current_password" placeholder="Enter current password to confirm" 
-                            class="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white focus:outline-none focus:border-orange-500 focus:bg-white/10 transition placeholder-gray-500">
+                        <input type="password" name="current_password" id="current_password" placeholder="Enter current password to confirm" 
+                            autocomplete="off" class="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white focus:outline-none focus:border-orange-500 focus:bg-white/10 transition placeholder-gray-500">
                     </div>
                  </div>
 
@@ -278,7 +278,7 @@
                         <label class="block text-gray-400 mb-2 font-bold text-xs uppercase tracking-wider">New Password</label>
                         <div class="relative">
                             <input type="password" name="password" id="password" placeholder="Min. 8 characters" 
-                                class="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white focus:outline-none focus:border-orange-500 focus:bg-white/10 transition placeholder-gray-500 pr-10">
+                                autocomplete="new-password" class="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white focus:outline-none focus:border-orange-500 focus:bg-white/10 transition placeholder-gray-500 pr-10">
                             
                             <button type="button" onclick="togglePassword('password', 'icon_pass')" class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-white">
                                 <i class="fas fa-eye" id="icon_pass"></i>
@@ -291,7 +291,7 @@
                         <label class="block text-gray-400 mb-2 font-bold text-xs uppercase tracking-wider">Confirm Password</label>
                         <div class="relative">
                             <input type="password" name="password_confirmation" id="password_confirmation" placeholder="Retype new password" 
-                                class="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white focus:outline-none focus:border-orange-500 focus:bg-white/10 transition placeholder-gray-500 pr-10">
+                                autocomplete="new-password" class="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white focus:outline-none focus:border-orange-500 focus:bg-white/10 transition placeholder-gray-500 pr-10">
                             
                             <button type="button" onclick="togglePassword('password_confirmation', 'icon_confirm')" class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-white">
                                 <i class="fas fa-eye" id="icon_confirm"></i>

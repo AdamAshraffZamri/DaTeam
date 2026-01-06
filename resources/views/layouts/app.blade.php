@@ -187,20 +187,23 @@
     </button>
 
     <div id="help-modal" class="fixed inset-0 z-[10000] hidden bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
-        <div class="bg-[#1a1a1a] border border-white/10 rounded-[2.5rem] max-w-lg w-full p-8 relative shadow-2xl overflow-hidden">
+        <div class="bg-[#1a1a1a] border border-white/10 rounded-[2.5rem] max-w-3xl w-full p-8 relative shadow-2xl overflow-hidden">
             <div class="absolute -top-24 -right-24 w-48 h-48 bg-orange-600/20 blur-[80px] rounded-full"></div>
             <button onclick="document.getElementById('help-modal').classList.add('hidden')" class="absolute top-6 right-6 text-gray-500 hover:text-white transition">
                 <i class="fas fa-times text-xl"></i>
             </button>
             <div class="mb-8">
-                <h3 class="text-3xl font-black text-white tracking-tighter">Rental <span class="text-orange-500">Journey</span></h3>
-                <p class="text-gray-400 text-sm mt-1">Follow these steps for a smooth experience.</p>
+                <h3 class="text-4xl font-black text-white tracking-tighter">Rental <span class="text-orange-500">Journey</span></h3>
+                <p class="text-gray-400 text-base mt-2">Follow these steps for a smooth experience.</p>
             </div>
-            <div class="relative space-y-8 max-h-[65vh] overflow-y-auto pr-4 custom-scrollbar">
+            <div class="relative space-y-8 max-h-[70vh] overflow-y-auto pr-4 custom-scrollbar">
                 <div class="absolute left-[15px] top-2 bottom-2 w-0.5 bg-gradient-to-b from-orange-500 via-blue-500 to-emerald-500 opacity-20"></div>
                 <div class="relative flex gap-6 group">
                     <div class="z-10 w-8 h-8 rounded-full bg-orange-500 text-white flex items-center justify-center shadow-[0_0_15px_rgba(234,88,12,0.4)] shrink-0 transition group-hover:scale-110"><i class="fas fa-user-edit text-[10px]"></i></div>
                     <div class="bg-white/5 border border-white/10 p-4 rounded-2xl flex-1 hover:bg-white/10 transition">
+                        <div class="mb-3 bg-gray-800/50 rounded-xl overflow-hidden border border-white/10 aspect-video">
+                            <img src="{{ asset('profile.png') }}" alt="Complete Profile" class="w-full h-full object-cover">
+                        </div>
                         <h4 class="text-white font-bold text-sm">Complete Profile</h4>
                         <p class="text-xs text-gray-400 mt-1">Upload a valid driving license and ID/Passport in your profile settings.</p>
                     </div>
@@ -208,6 +211,9 @@
                 <div class="relative flex gap-6 group">
                     <div class="z-10 w-8 h-8 rounded-full bg-orange-500 text-white flex items-center justify-center shadow-[0_0_15px_rgba(234,88,12,0.4)] shrink-0 transition group-hover:scale-110"><i class="fas fa-calendar-check text-[10px]"></i></div>
                     <div class="bg-white/5 border border-white/10 p-4 rounded-2xl flex-1 hover:bg-white/10 transition">
+                        <div class="mb-3 bg-gray-800/50 rounded-xl overflow-hidden border border-white/10 aspect-video">
+                            <img src="{{ asset('bookcar.png') }}" alt="Book a Vehicle" class="w-full h-full object-cover">
+                        </div>
                         <h4 class="text-white font-bold text-sm">Book a Vehicle</h4>
                         <p class="text-xs text-gray-400 mt-1">Select your car and dates. Note: Every vehicle has a <span class="text-orange-400">1-day cooldown</span> between bookings.</p>
                     </div>
@@ -215,6 +221,9 @@
                 <div class="relative flex gap-6 group">
                     <div class="z-10 w-8 h-8 rounded-full bg-orange-500 text-white flex items-center justify-center shadow-[0_0_15px_rgba(234,88,12,0.4)] shrink-0 transition group-hover:scale-110"><i class="fas fa-wallet text-[10px]"></i></div>
                     <div class="bg-white/5 border border-white/10 p-4 rounded-2xl flex-1 hover:bg-white/10 transition">
+                        <div class="mb-3 bg-gray-800/50 rounded-xl overflow-hidden border border-white/10 aspect-video ">
+                            <img src="{{ asset('payment.png') }}" alt="Secure Slot" class="w-full h-full object-cover">
+                        </div>
                         <h4 class="text-white font-bold text-sm">Secure Slot</h4>
                         <p class="text-xs text-gray-400 mt-1">Pay within <span class="text-orange-400">30 minutes</span> to avoid auto-cancellation.</p>
                     </div>
@@ -222,6 +231,9 @@
                 <div class="relative flex gap-6 group">
                     <div class="z-10 w-8 h-8 rounded-full bg-blue-500 text-white flex items-center justify-center shadow-[0_0_15px_rgba(59,130,246,0.4)] shrink-0 transition group-hover:scale-110"><i class="fas fa-user-shield text-[10px]"></i></div>
                     <div class="bg-white/5 border border-white/10 p-4 rounded-2xl flex-1 hover:bg-white/10 transition border-l-4 border-l-blue-500">
+                        <div class="mb-3 bg-gray-800/50 rounded-xl overflow-hidden border border-white/10 aspect-video ">
+                            <img src="{{ asset('confirmed.png') }}" alt="Staff Verification" class="w-full h-full object-cover">
+                        </div>
                         <h4 class="text-white font-bold text-sm">Staff Verification</h4>
                         <p class="text-xs text-gray-400 mt-1">Wait for verification. Status changes to <span class="text-green-400">Approved</span>.</p>
                     </div>
@@ -229,6 +241,9 @@
                 <div class="relative flex gap-6 group">
                     <div class="z-10 w-8 h-8 rounded-full bg-blue-500 text-white flex items-center justify-center shadow-[0_0_15px_rgba(59,130,246,0.4)] shrink-0 transition group-hover:scale-110"><i class="fas fa-camera text-[10px]"></i></div>
                     <div class="bg-white/5 border border-white/10 p-4 rounded-2xl flex-1 hover:bg-white/10 transition border-l-4 border-l-blue-500">
+                        <div class="mb-3 bg-gray-800/50 rounded-xl overflow-hidden border border-white/10 aspect-video">
+                            <img src="{{ asset('pickup.png') }}" alt="Pickup Inspection" class="w-full h-full object-cover">
+                        </div>
                         <h4 class="text-white font-bold text-sm">Pickup Inspection</h4>
                         <p class="text-xs text-gray-400 mt-1">Upload <span class="font-bold text-white">5 specific photos</span> to activate your rental.</p>
                     </div>
@@ -236,6 +251,9 @@
                 <div class="relative flex gap-6 group">
                     <div class="z-10 w-8 h-8 rounded-full bg-blue-500 text-white flex items-center justify-center shadow-[0_0_15px_rgba(59,130,246,0.4)] shrink-0 transition group-hover:scale-110"><i class="fas fa-key text-[10px]"></i></div>
                     <div class="bg-white/5 border border-white/10 p-4 rounded-2xl flex-1 hover:bg-white/10 transition border-l-4 border-l-blue-500">
+                        <div class="mb-3 bg-gray-800/50 rounded-xl overflow-hidden border border-white/10 aspect-video ">
+                            <img src="{{ asset('return.png') }}" alt="Return & Key Check" class="w-full h-full object-cover">
+                        </div>
                         <h4 class="text-white font-bold text-sm">Return & Key Check</h4>
                         <p class="text-xs text-gray-400 mt-1">Upload <span class="font-bold text-white">6 photos</span> upon return to end the session.</p>
                     </div>
@@ -243,6 +261,9 @@
                 <div class="relative flex gap-6 group pb-4">
                     <div class="z-10 w-8 h-8 rounded-full bg-emerald-500 text-white flex items-center justify-center shadow-[0_0_15px_rgba(16,185,129,0.4)] shrink-0 transition group-hover:scale-110"><i class="fas fa-check-circle text-[10px]"></i></div>
                     <div class="bg-emerald-500/10 border border-emerald-500/20 p-4 rounded-2xl flex-1 hover:bg-emerald-500/20 transition">
+                        <div class="mb-3 bg-gray-800/50 rounded-xl overflow-hidden border border-emerald-500/20 aspect-video">
+                            <img src="{{ asset('done.png') }}" alt="Completion" class="w-full h-full object-cover">
+                        </div>
                         <h4 class="text-emerald-400 font-bold text-sm">Completion</h4>
                         <p class="text-xs text-gray-300 mt-1">Staff performs final verification and deposit is refunded shortly.</p>
                     </div>
