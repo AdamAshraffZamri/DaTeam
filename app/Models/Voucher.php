@@ -11,6 +11,7 @@ class Voucher extends Model
     protected $fillable = [
         'customerID',
         'user_id',
+        'reward_id',
         'voucherCode',
         'code',
         'voucherAmount',
@@ -65,4 +66,6 @@ class Voucher extends Model
         $value = $this->attributes['user_id'] ?? null;
         return $value ?? $this->attributes['customerID'] ?? null;
     }
+
+    
 }

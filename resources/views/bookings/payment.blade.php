@@ -96,7 +96,7 @@
                 </div>
 
                 {{-- B. PAYMENT SUMMARY & VOUCHER CARD --}}
-                <div class="bg-black/50 backdrop-blur-md rounded-[2.5rem] p-8 border border-white/10 shadow-2xl relative overflow-hidden">
+                <div class="bg-black/50 backdrop-blur-md rounded-[2.5rem] p-8 border border-white/10 shadow-2xl relative">
                     {{-- Decorative Glow --}}
                     <div class="absolute top-0 right-0 w-64 h-64 bg-orange-500/10 rounded-full blur-3xl pointer-events-none -mr-32 -mt-32"></div>
 
@@ -416,6 +416,9 @@
         const btn = document.getElementById('btn_apply_voucher');
         const msg = document.getElementById('voucher_message');
 
+        // Dapatkan nilai pickup date dari hidden input atau PHP variable
+        const pickupDate = "{{ $pickupDate }}"; // Pastikan variable ini ada di view
+
         if(!code) {
             msg.innerText = "Please enter a code.";
             msg.className = "text-xs mt-2 font-bold text-red-500";
@@ -434,7 +437,9 @@
             },
             body: JSON.stringify({
                 code: code,
-                total_amount: fullTotal 
+                total_amount: fullTotal,
+                pickup_date: pickupDate,
+                vehicle_id: "{{ $vehicle->VehicleID }}"
             })
         })
         .then(response => response.json())
@@ -530,7 +535,7 @@
     }
 
     function showNoVouchersMessage() {
-        voucherDropdown.innerHTML = `<div class="p-4 text-center"><p class="text-sm text-gray-400">Tiada voucher tersedia</p></div>`;
+        voucherDropdown.innerHTML = `<div class="p-4 text-center"><p class="text-sm text-gray-400">No Available Vouchers</p></div>`;
         voucherDropdown.classList.remove('hidden');
     }
 

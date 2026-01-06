@@ -53,6 +53,13 @@ class BookingController extends Controller
     {
         $user = auth()->user();
 
+        if ($user instanceof \App\Models\Customer && $user->unpaidPenalties()) {
+        
+        // 2. Kalau ada saman, PAKSA dia pergi ke page Finance (Payment Tab)
+        return redirect()->route('finance.index')
+            ->with('error', '⛔ ACTION BLOCKED: You have unpaid penalties. Please settle them before making a new booking.');
+    }
+
         // 1. BLACKLIST CHECK (NEW)
         // If the user is blacklisted, block them immediately.
         if ($user->blacklisted) {
@@ -99,7 +106,7 @@ class BookingController extends Controller
             ->orderBy('priceHour', 'asc')
             ->get();
 
-        // Pass $vehicles to the view
+
         return view('bookings.create', compact('vehicles')); 
     }
 
@@ -252,36 +259,52 @@ class BookingController extends Controller
             $request->input('return_date'), $request->input('return_time')
         );
 
-        $baseDepo = $vehicle->baseDepo;
-        $grossTotal = $rentalCharge + $baseDepo;
-        
-        // Voucher Logic (Existing)
-        $discountAmount = 0;
-        $voucherID = null;
-        if ($request->filled('voucher_id')) {
-            $voucher = Voucher::find($request->input('voucher_id'));
-            if ($voucher) {
-                $voucherID = $voucher->id; 
-                if ($voucher->discount_percentage > 0) {
-                    $discountAmount = ($grossTotal * $voucher->discount_percentage) / 100;
-                } else {
-                    $discountAmount = $voucher->discount_amount;
+    if ($request->filled('voucher_id')) {
+            $voucher = \App\Models\Voucher::find($request->input('voucher_id'));
+            
+            // Check kewujudan voucher DAN pastikan belum digunakan (!isUsed)
+            if ($voucher && !$voucher->isUsed) {
+                $voucherID = $voucher->voucherID ?? $voucher->id;
+                
+                // [BARU] VALIDATION HARI (BACKEND SAFETY CHECK)
+                // Pastikan tarikh pickup adalah Isnin - Khamis
+                $pickupDay = Carbon::parse($request->input('pickup_date'));
+                
+                // Carbon: 1=Isnin, 4=Khamis, 5=Jumaat, 6=Sabtu, 7=Ahad
+                if ($voucher->voucherType == 'Rental Discount' && $pickupDay->dayOfWeekIso > 4) {
+                    return back()->with('error', 'Voucher invalid for this date (Mon-Thu only). Transaction cancelled.');
                 }
+
+                // Kira Diskaun
+                if ($voucher->discount_percent > 0) {
+                    // Percentage based discount (Diskaun atas Rental Charge sahaja, bukan Deposit)
+                    $discountAmount = ($rentalCharge * $voucher->discount_percent) / 100;
+                } else {
+                    // Fixed amount discount
+                    $discountAmount = $voucher->voucherAmount;
+                }
+                
+                // [PENTING] TANDAKAN VOUCHER SEBAGAI DIGUNAKAN
+                $voucher->update([
+                    'isUsed' => true,
+                    // 'used_at' => now() // Boleh uncomment jika ada column ini
+                ]);
             }
         }
-        $finalTotalCost = max(0, $grossTotal - $discountAmount);
 
-        // 3. Determine Amount (Existing)
-        if ($request->input('payment_type') == 'deposit') {
-            $amountToPayNow = $baseDepo;
-            $bookingStatus = 'Deposit Paid';
-            if ($amountToPayNow >= $finalTotalCost) {
-                 $amountToPayNow = $finalTotalCost;
-                 $bookingStatus = 'Submitted'; 
-            }
-        } else {
-            $amountToPayNow = $finalTotalCost;
-            $bookingStatus = 'Submitted';
+    // Calculate Final Total Cost after Discount
+    $finalTotalCost = max(0, $grossTotal - $discountAmount);
+    // --- NEW: VOUCHER LOGIC END ---
+
+    // 3. Determine Amount to Pay NOW
+    if ($request->input('payment_type') == 'deposit') {
+        $amountToPayNow = $baseDepo;
+        $bookingStatus = 'Deposit Paid';
+        
+        // Safety: If deposit is greater than total (e.g. huge discount), pay full
+        if ($amountToPayNow >= $finalTotalCost) {
+             $amountToPayNow = $finalTotalCost;
+             $bookingStatus = 'Submitted'; 
         }
 
         // --- 4. GOOGLE DRIVE UPLOAD LOGIC (NEW) ---

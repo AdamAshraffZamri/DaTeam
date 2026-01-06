@@ -28,6 +28,9 @@ class DatabaseSeeder extends Seeder
 
         // 4. Generate Bookings for the 4 Customers
         $this->seedBookings();
+
+        // 5. Seed Rewards
+        $this->seedRewards();
     }
 
     /**
@@ -225,7 +228,7 @@ class DatabaseSeeder extends Seeder
         ];
 
         foreach ($vehicles as $v) {
-            Vehicle::create(array_merge($v, [
+            \App\Models\Vehicle::create(array_merge($v, [
                 'availability' => 1, 
                 'priceHour' => $v['hourly_rates']['1']
             ]));
@@ -404,4 +407,100 @@ class DatabaseSeeder extends Seeder
             }
         }
     }
+
+    /**
+     * Seed Rewards (Merchant + Loyalty Road Milestones)
+     */
+    private function seedRewards(): void
+    {
+        // A. MERCHANT REWARDS (Untuk ditebus guna points)
+        $merchantRewards = [
+            [
+                'name' => 'SEDAP KITCHEN',
+                'offer_description' => 'RM 5 OFF Discount',
+                'points_required' => 200,
+                'code_prefix' => 'SDKTN',
+                'validity_months' => 3,
+                'category' => 'Food',
+                'icon_class' => 'fa-utensils',
+                'color_class' => 'bg-yellow-600/20 border-yellow-500/30'
+            ],
+            [
+                'name' => 'PAK ATONG',
+                'offer_description' => 'RM 5 OFF Discount',
+                'points_required' => 200,
+                'code_prefix' => 'PKATNG',
+                'validity_months' => 3,
+                'category' => 'Food',
+                'icon_class' => 'fa-utensils',
+                'color_class' => 'bg-gray-600/20 border-gray-500/30'
+            ],
+            [
+                'name' => 'RESTORAN RAFI',
+                'offer_description' => 'RM 5 OFF Discount',
+                'points_required' => 200,
+                'code_prefix' => 'RSTRN',
+                'validity_months' => 3,
+                'category' => 'Food',
+                'icon_class' => 'fa-utensils',
+                'color_class' => 'bg-green-600/20 border-green-500/30'
+            ],
+            [
+                'name' => 'PAK LAH',
+                'offer_description' => 'RM 5 OFF Discount',
+                'points_required' => 200,
+                'code_prefix' => 'PKLH',
+                'validity_months' => 3,
+                'category' => 'Food',
+                'icon_class' => 'fa-utensils',
+                'color_class' => 'bg-red-600/20 border-red-500/30'
+            ],
+            [
+                'name' => 'GRAB FOOD',
+                'offer_description' => 'RM 10 Voucher',
+                'points_required' => 750,
+                'code_prefix' => 'GRB',
+                'validity_months' => 4,
+                'category' => 'Voucher',
+                'icon_class' => 'fa-motorcycle',
+                'color_class' => 'bg-green-500/20 border-green-400/30'
+            ]
+        ];
+
+        foreach ($merchantRewards as $reward) {
+            Reward::firstOrCreate(['code_prefix' => $reward['code_prefix']], array_merge($reward, ['is_active' => true]));
+        }
+
+        // B. MILESTONE REWARDS (Untuk Loyalty Road - Automatik)
+        // Nota: Pastikan column 'milestone_step' & 'discount_percent' dah wujud dalam table (via migration tadi)
+        $milestones = [
+            [3, 20, 'Bronze Tier Reward'],
+            [6, 50, 'Silver Tier Reward'],
+            [9, 70, 'Gold Tier Reward'],
+            [12, 100, 'Platinum Tier Reward (Free Half Day)'],
+        ];
+
+        foreach ($milestones as $m) {
+            Reward::firstOrCreate(
+                ['code_prefix' => 'AUTO' . $m[0]], 
+                [
+                    'name' => $m[2],
+                    'offer_description' => $m[1] . '% OFF Rental',
+                    'points_required' => 0, // Free (Auto)
+                    'validity_months' => 2,
+                    'category' => 'Milestone',
+                    'icon_class' => 'fa-road',
+                    'color_class' => 'bg-purple-600/20 border-purple-500/30',
+                    'milestone_step' => $m[0],
+                    'discount_percent' => $m[1],
+                    'is_active' => true
+                ]
+            );
+        }
+    }
+
+
+
+
+
 }

@@ -166,6 +166,38 @@ class StaffCustomerController extends Controller
         return back()->with('success', 'Penalty imposed successfully. Customer must pay before making new bookings.');
     }
 
+    // Show penalty history for a customer
+    public function penaltyHistory($id)
+    {
+        $customer = Customer::findOrFail($id);
+        
+        // Get all penalties for this customer (both booking-based and customer-level)
+        $penalties = Penalties::where('customerID', $customer->customerID)
+            ->with(['booking.vehicle', 'customer'])
+            ->orderBy('date_imposed', 'desc')
+            ->paginate(15);
+        
+        // Calculate statistics
+        $totalPenalties = Penalties::where('customerID', $customer->customerID)->count();
+        $unpaidPenalties = Penalties::where('customerID', $customer->customerID)
+            ->where(function($query) {
+                $query->where('status', 'Pending')
+                      ->orWhere('penaltyStatus', 'Unpaid');
+            })
+            ->count();
+        $totalAmount = Penalties::where('customerID', $customer->customerID)
+            ->where(function($query) {
+                $query->where('status', 'Pending')
+                      ->orWhere('penaltyStatus', 'Unpaid');
+            })
+            ->get()
+            ->sum(function($penalty) {
+                return $penalty->amount ?? ($penalty->penaltyFees + $penalty->fuelSurcharge + $penalty->mileageSurcharge);
+            });
+        
+        return view('staff.customers.penalty-history', compact('customer', 'penalties', 'totalPenalties', 'unpaidPenalties', 'totalAmount'));
+    }
+
     public function store(Request $request, GoogleDriveService $driveService)
     {
         // 1. Validate the input
