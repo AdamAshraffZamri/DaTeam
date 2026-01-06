@@ -44,6 +44,13 @@ class BookingController extends Controller
     {
         $user = auth()->user();
 
+        if ($user instanceof \App\Models\Customer && $user->unpaidPenalties()) {
+        
+        // 2. Kalau ada saman, PAKSA dia pergi ke page Finance (Payment Tab)
+        return redirect()->route('finance.index')
+            ->with('error', '⛔ ACTION BLOCKED: You have unpaid penalties. Please settle them before making a new booking.');
+    }
+
         // 1. BLACKLIST CHECK (NEW)
         // If the user is blacklisted, block them immediately.
         if ($user->blacklisted) {
@@ -90,7 +97,7 @@ class BookingController extends Controller
             ->orderBy('priceHour', 'asc')
             ->get();
 
-        // Pass $vehicles to the view
+
         return view('bookings.create', compact('vehicles')); 
     }
 

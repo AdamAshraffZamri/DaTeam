@@ -1,6 +1,23 @@
 @extends('layouts.staff')
 
 @section('content')
+
+{{-- LOGIC PHP: TENTUKAN TAB MANA AKTIF --}}
+@php
+    // Default tab
+    $activeTab = 'customers'; 
+
+    // Jika ada request 'tab' dari URL
+    if (request()->has('tab')) {
+        $activeTab = request('tab');
+    }
+
+    // Jika ada filter 'activity_type' atau 'date', PAKSA buka tab activities
+    if (request()->has('activity_type') || request()->has('date')) {
+        $activeTab = 'activities';
+    }
+@endphp
+
 <div class="min-h-screen bg-gray-100 rounded-2xl p-6">
     <div class="max-w-7xl mx-auto">
         
@@ -70,26 +87,29 @@
         {{-- TABS NAVIGATION --}}
         <div class="mb-6 overflow-x-auto">
             <div class="flex gap-4 border-b border-gray-200 min-w-max">
-                <button id="btn-customers" onclick="showTab('customers')" class="tab-btn active px-6 py-3 font-bold text-gray-900 border-b-2 border-orange-500 transition">
+                <button id="btn-customers" onclick="showTab('customers')" 
+                    class="tab-btn px-6 py-3 font-bold transition border-b-2 {{ $activeTab == 'customers' ? 'text-gray-900 border-orange-500' : 'text-gray-500 border-transparent hover:text-gray-900' }}">
                     <i class="fas fa-list mr-2"></i> Customer List
                 </button>
-                <button id="btn-tier" onclick="showTab('tier')" class="tab-btn px-6 py-3 font-bold text-gray-500 border-b-2 border-transparent hover:text-gray-900 transition">
+                <button id="btn-tier" onclick="showTab('tier')" 
+                    class="tab-btn px-6 py-3 font-bold transition border-b-2 {{ $activeTab == 'tier' ? 'text-gray-900 border-orange-500' : 'text-gray-500 border-transparent hover:text-gray-900' }}">
                     <i class="fas fa-layer-group mr-2"></i> Tier Breakdown
                 </button>
                 
-                {{-- GABUNGAN TAB REWARDS & VOUCHERS --}}
-                <button id="btn-rewards_vouchers" onclick="showTab('rewards_vouchers')" class="tab-btn px-6 py-3 font-bold text-gray-500 border-b-2 border-transparent hover:text-gray-900 transition">
+                <button id="btn-rewards_vouchers" onclick="showTab('rewards_vouchers')" 
+                    class="tab-btn px-6 py-3 font-bold transition border-b-2 {{ $activeTab == 'rewards_vouchers' ? 'text-gray-900 border-orange-500' : 'text-gray-500 border-transparent hover:text-gray-900' }}">
                     <i class="fas fa-gift mr-2"></i> Rewards & Vouchers
                 </button>
 
-                <button id="btn-activities" onclick="showTab('activities')" class="tab-btn px-6 py-3 font-bold text-gray-500 border-b-2 border-transparent hover:text-gray-900 transition">
+                <button id="btn-activities" onclick="showTab('activities')" 
+                    class="tab-btn px-6 py-3 font-bold transition border-b-2 {{ $activeTab == 'activities' ? 'text-gray-900 border-orange-500' : 'text-gray-500 border-transparent hover:text-gray-900' }}">
                     <i class="fas fa-history mr-2"></i> Recent Activities
                 </button>
             </div>
         </div>
 
         {{-- TAB 1: CUSTOMER LOYALTY LIST --}}
-        <div id="customers-tab" class="tab-content">
+        <div id="customers-tab" class="tab-content {{ $activeTab == 'customers' ? '' : 'hidden' }}">
             <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
                 <h3 class="text-lg font-bold text-gray-900 mb-6 flex items-center">
                     <i class="fas fa-users text-indigo-600 mr-3"></i> All Customers Loyalty Points
@@ -156,7 +176,7 @@
         </div>
 
         {{-- TAB 2: TIER BREAKDOWN --}}
-        <div id="tier-tab" class="tab-content hidden">
+        <div id="tier-tab" class="tab-content {{ $activeTab == 'tier' ? '' : 'hidden' }}">
             <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
                 <h3 class="text-lg font-bold text-gray-900 mb-6 flex items-center">
                     <i class="fas fa-layer-group text-indigo-600 mr-3"></i> Member Tier Distribution
@@ -229,12 +249,9 @@
             </div>
         </div>
 
-        {{-- TAB 3: COMBINED REWARDS & VOUCHERS MANAGEMENT --}}
-            {{-- ... (Bahagian atas kekal sama) ... --}}
-
-{{-- TAB 3: REWARDS & VOUCHERS --}}
-<div id="rewards_vouchers-tab" class="tab-content hidden space-y-8">
-    
+        {{-- TAB 3: REWARDS & VOUCHERS --}}
+        <div id="rewards_vouchers-tab" class="tab-content space-y-8 {{ $activeTab == 'rewards_vouchers' ? '' : 'hidden' }}">
+            
             {{-- A. MANAGE REWARDS (INTERFACE DINAMIK) --}}
             <div class="bg-white rounded-2xl shadow-lg border-l-4 border-pink-500 overflow-hidden">
                 <div class="p-6 border-b border-gray-100 bg-gray-50/50">
@@ -251,6 +268,7 @@
                         <h4 class="text-xs font-bold text-pink-600 uppercase tracking-widest mb-4">Add New Reward / Milestone</h4>
                         <form action="{{ route('staff.loyalty.store_reward') }}" method="POST">
                             @csrf
+                            <input type="hidden" name="tab" value="rewards_vouchers">
                             <div class="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
                                 {{-- Name --}}
                                 <div class="md:col-span-3">
@@ -269,7 +287,6 @@
                                 <div class="md:col-span-2 bg-pink-50 p-2 rounded-lg border border-pink-100">
                                     <label class="block text-[10px] font-bold text-pink-600 mb-1 uppercase">For Milestone (Step)</label>
                                     
-                                    {{-- 1. Tambah ID 'milestoneInput' dan event 'oninput' --}}
                                     <input type="number" 
                                         id="milestoneInput" 
                                         name="milestone_step" 
@@ -282,7 +299,6 @@
                                 <div class="md:col-span-2 bg-blue-50 p-2 rounded-lg border border-blue-100">
                                     <label class="block text-[10px] font-bold text-blue-600 mb-1 uppercase">Or Point Cost</label>
                                     
-                                    {{-- 2. Tambah ID 'pointsInput' --}}
                                     <input type="number" 
                                         id="pointsInput" 
                                         name="points" 
@@ -290,7 +306,6 @@
                                         class="w-full border border-blue-200 rounded-lg px-2 py-1 text-sm text-center font-bold text-blue-600 focus:ring-blue-500 bg-white transition-colors">
                                 </div>
 
-                                {{-- 3. Script untuk kawal input (Letak terus di bawah input tadi pun boleh) --}}
                                 <script>
                                     function togglePointsInput() {
                                         const milestone = document.getElementById('milestoneInput');
@@ -356,6 +371,7 @@
                                         <tr class="hover:bg-gray-50 transition">
                                             <form action="{{ route('staff.loyalty.update_reward', $reward->id) }}" method="POST">
                                                 @csrf @method('PUT')
+                                                <input type="hidden" name="tab" value="rewards_vouchers">
                                                 
                                                 {{-- 1. Name --}}
                                                 <td class="px-4 py-3"><input type="text" name="name" value="{{ $reward->name }}" class="bg-transparent font-bold w-full focus:outline-none border-b border-transparent focus:border-pink-300"></td>
@@ -402,7 +418,7 @@
                                             </form>
                                         </tr>
                                     @endforeach
-                                </tbody>
+                            </tbody>
                         </table>
                     </div>
                 </div>
@@ -427,12 +443,7 @@
                 </div>
 
                 <div class="p-6">
-                    {{-- Add New Voucher Form --}}
-                    
-                            
-                            
-
-                   {{-- Sub-Section: Rental Vouchers List --}}
+                    {{-- Sub-Section: Rental Vouchers List --}}
                     <div class="mb-8">
                         <div class="flex items-center gap-3 mb-4">
                             <div class="h-8 w-1 bg-green-500 rounded-full"></div>
@@ -445,7 +456,6 @@
                                 <thead class="bg-gray-50 text-gray-500 uppercase text-[10px] tracking-wider font-bold">
                                     <tr>
                                         <th class="px-6 py-3 text-left">Code</th>
-                                        {{-- UBAH SINI: Amount (RM) -> Discount --}}
                                         <th class="px-6 py-3 text-center">Discount</th>
                                         <th class="px-6 py-3 text-center">Valid Range</th>
                                         <th class="px-6 py-3 text-center">Status</th>
@@ -457,7 +467,6 @@
                                         <tr class="hover:bg-gray-50 transition">
                                             <td class="px-6 py-4 font-mono font-bold text-gray-900 tracking-wide">{{ $voucher->code }}</td>
                                             
-                                            {{-- UBAH SINI: Logic paparan % atau RM --}}
                                             <td class="px-6 py-4 text-center">
                                                 @if($voucher->discount_percent > 0)
                                                     <span class="font-bold text-green-600 bg-green-50 px-2 py-1 rounded">{{ $voucher->discount_percent }}% OFF</span>
@@ -513,10 +522,7 @@
                                     <tr>
                                         <th class="px-6 py-3 text-left">Code</th>
                                         <th class="px-6 py-3 text-left">Merchant</th>
-                                        
-                                        {{-- TAMBAH SINI: Column Amount --}}
                                         <th class="px-6 py-3 text-center">Amount</th>
-                                        
                                         <th class="px-6 py-3 text-center">Expires</th>
                                         <th class="px-6 py-3 text-center">Status</th>
                                         <th class="px-6 py-3 text-center">Actions</th>
@@ -528,7 +534,6 @@
                                             <td class="px-6 py-4 font-mono font-bold text-gray-900 tracking-wide">{{ $voucher->code }}</td>
                                             <td class="px-6 py-4 text-gray-700 font-medium">{{ $voucher->redeem_place ?? 'N/A' }}</td>
                                             
-                                            {{-- TAMBAH SINI: Data Amount --}}
                                             <td class="px-6 py-4 text-center">
                                                 <span class="font-bold text-purple-600 bg-purple-50 px-2 py-1 rounded">RM {{ number_format($voucher->voucherAmount, 2) }}</span>
                                             </td>
@@ -565,51 +570,149 @@
                             </table>
                         </div>
                     </div>
-                    
+                </div>
+            </div>
+        </div>
 
-        {{-- TAB 4: RECENT ACTIVITIES (UPDATED WITH FILTER) --}}
-        <div id="activities-tab" class="tab-content hidden">
+        {{-- TAB 4: RECENT ACTIVITIES --}}
+        <div id="activities-tab" class="tab-content {{ $activeTab == 'activities' ? '' : 'hidden' }}">
             <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-                <div class="flex justify-between items-center mb-6">
+                
+                {{-- HEADER & FILTERS --}}
+                <div class="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
                     <h3 class="text-lg font-bold text-gray-900 flex items-center">
-                        <i class="fas fa-history text-blue-600 mr-3"></i> Recent Loyalty Activities
+                        <div class="w-10 h-10 rounded-full bg-indigo-50 flex items-center justify-center mr-3">
+                            <i class="fas fa-history text-indigo-600"></i>
+                        </div>
+                        Activity Log
                     </h3>
 
-                    {{-- FILTER DROPDOWN --}}
-                    <form method="GET" action="{{ route('staff.loyalty.index') }}">
-                        <div class="flex gap-2">
-                            <select name="activity_type" class="bg-gray-50 border border-gray-200 text-sm rounded-lg p-2 focus:ring-orange-500" onchange="this.form.submit()">
+                    {{-- FILTER FORM --}}
+                    <form method="GET" action="{{ route('staff.loyalty.index') }}" class="flex flex-wrap gap-3 items-center w-full md:w-auto">
+                        
+                        {{-- Hidden Input untuk kekalkan tab aktif selepas reload --}}
+                        <input type="hidden" name="tab" value="activities">
+
+                        {{-- Filter: Date --}}
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                                <i class="fas fa-calendar text-gray-400 text-xs"></i>
+                            </div>
+                            <input type="date" name="date" value="{{ request('date') }}" 
+                                class="bg-gray-50 border border-gray-200 text-gray-900 text-sm rounded-lg focus:ring-orange-500 focus:border-orange-500 block w-full pl-8 p-2"
+                                onchange="this.form.submit()">
+                        </div>
+
+                        {{-- Filter: Type --}}
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                                <i class="fas fa-filter text-gray-400 text-xs"></i>
+                            </div>
+                            <select name="activity_type" class="bg-gray-50 border border-gray-200 text-gray-900 text-sm rounded-lg focus:ring-orange-500 focus:border-orange-500 block w-full pl-8 p-2 pr-8 appearance-none" onchange="this.form.submit()">
                                 <option value="all" {{ request('activity_type') == 'all' ? 'selected' : '' }}>All Activities</option>
                                 <option value="earned" {{ request('activity_type') == 'earned' ? 'selected' : '' }}>Points Earned</option>
                                 <option value="redeemed" {{ request('activity_type') == 'redeemed' ? 'selected' : '' }}>Points Redeemed</option>
-                                <option value="rental" {{ request('activity_type') == 'rental' ? 'selected' : '' }}>Rental Rewards</option>
-                                <option value="merchant" {{ request('activity_type') == 'merchant' ? 'selected' : '' }}>Food Vouchers</option>
+                                <option value="rental" {{ request('activity_type') == 'rental' ? 'selected' : '' }}>Rental Voucher</option>
+                                <option value="merchant" {{ request('activity_type') == 'merchant' ? 'selected' : '' }}>Merchant Reward</option>
                             </select>
-                            {{-- Hack to keep the tab active on reload --}}
-                            <input type="hidden" id="active_tab_input" name="tab" value="activities">
                         </div>
+                        
+                        {{-- Reset Button (Muncul jika ada filter) --}}
+                        @if(request('activity_type') && request('activity_type') != 'all' || request('date'))
+                            <a href="{{ route('staff.loyalty.index', ['tab' => 'activities']) }}" class="text-xs text-red-500 hover:text-red-700 font-bold underline">
+                                Reset
+                            </a>
+                        @endif
                     </form>
                 </div>
 
-                <div class="space-y-2 max-h-96 overflow-y-auto">
-                    @forelse($recentActivities as $activity)
-                        <div class="flex items-start justify-between p-4 rounded-lg hover:bg-gray-50 transition border border-gray-100">
-                            <div class="flex-1">
-                                <p class="text-sm font-bold text-gray-900">{{ $activity->reason }}</p>
-                                <p class="text-xs text-gray-600 mt-1">
-                                    <i class="fas fa-user mr-1"></i> {{ $activity->customer->fullName ?? 'Unknown' }}
-                                </p>
-                                <p class="text-xs text-gray-400 mt-1">{{ $activity->created_at->format('M d, Y H:i') }}</p>
-                            </div>
-                            <span class="font-bold text-lg {{ $activity->points_change > 0 ? 'text-green-600' : 'text-red-600' }} ml-4">
-                                {{ $activity->points_change > 0 ? '+' : '' }}{{ number_format($activity->points_change) }}
-                            </span>
-                        </div>
-                    @empty
-                        <div class="text-center py-8 text-gray-400">
-                            <p class="text-sm">No recent activities</p>
-                        </div>
-                    @endforelse
+                {{-- ACTIVITY TABLE --}}
+                <div class="overflow-x-auto rounded-xl border border-gray-100">
+                    <table class="w-full text-sm text-left">
+                        <thead class="bg-gray-50 text-gray-500 uppercase text-[10px] tracking-wider font-bold">
+                            <tr>
+                                <th class="px-6 py-3">Date & Time</th>
+                                <th class="px-6 py-3">Customer</th>
+                                <th class="px-6 py-3">Activity Type</th>
+                                <th class="px-6 py-3">Description</th>
+                                <th class="px-6 py-3 text-right">Points</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-100 bg-white">
+                            @forelse($recentActivities as $activity)
+                                <tr class="hover:bg-gray-50 transition group">
+                                    {{-- DATE --}}
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="font-medium text-gray-900">{{ $activity->created_at->format('d M Y') }}</div>
+                                        <div class="text-xs text-gray-400">{{ $activity->created_at->format('h:i A') }}</div>
+                                    </td>
+
+                                    {{-- CUSTOMER --}}
+                                    <td class="px-6 py-4">
+                                        <div class="flex items-center gap-2">
+                                            <div class="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center text-[10px] font-bold text-gray-600">
+                                                {{ substr($activity->customer->fullName ?? '?', 0, 1) }}
+                                            </div>
+                                            <span class="font-medium text-gray-700">{{ $activity->customer->fullName ?? 'Unknown User' }}</span>
+                                        </div>
+                                    </td>
+
+                                    {{-- TYPE BADGE --}}
+                                    <td class="px-6 py-4">
+                                        @php
+                                            $badgeColor = 'bg-gray-100 text-gray-600';
+                                            $icon = 'fa-circle';
+                                            
+                                            if($activity->points_change > 0) {
+                                                $badgeColor = 'bg-green-100 text-green-700 border border-green-200';
+                                                $icon = 'fa-arrow-down'; // Masuk
+                                            } elseif($activity->points_change < 0) {
+                                                $badgeColor = 'bg-orange-100 text-orange-700 border border-orange-200';
+                                                $icon = 'fa-arrow-up'; // Keluar/Redeem
+                                            }
+                                        @endphp
+                                        <span class="px-2.5 py-1 rounded-md text-xs font-bold flex items-center gap-2 w-fit {{ $badgeColor }}">
+                                            <i class="fas {{ $icon }} text-[10px]"></i>
+                                            {{ $activity->points_change > 0 ? 'EARNED' : 'REDEEMED' }}
+                                        </span>
+                                    </td>
+
+                                    {{-- DESCRIPTION --}}
+                                    <td class="px-6 py-4">
+                                        <p class="text-gray-900 font-medium text-sm">{{ $activity->reason }}</p>
+                                        @if($activity->reference_id)
+                                            <p class="text-[10px] text-gray-400 font-mono mt-0.5">REF: {{ $activity->reference_id }}</p>
+                                        @endif
+                                    </td>
+
+                                    {{-- POINTS CHANGE --}}
+                                    <td class="px-6 py-4 text-right">
+                                        <span class="font-black text-lg {{ $activity->points_change > 0 ? 'text-green-600' : 'text-red-500' }}">
+                                            {{ $activity->points_change > 0 ? '+' : '' }}{{ number_format($activity->points_change) }}
+                                        </span>
+                                        <span class="text-[10px] text-gray-400 block">pts</span>
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="5" class="px-6 py-12 text-center text-gray-400">
+                                        <div class="flex flex-col items-center justify-center">
+                                            <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-3">
+                                                <i class="fas fa-search text-gray-400 text-xl"></i>
+                                            </div>
+                                            <p class="font-medium">No activities found.</p>
+                                            <p class="text-xs mt-1">Try adjusting your filters.</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+
+                {{-- PAGINATION --}}
+                <div class="mt-4">
+                    {{-- {{ $recentActivities->links() }} --}}
                 </div>
             </div>
         </div>
@@ -619,23 +722,26 @@
 
 {{-- SCRIPTS --}}
 <script>
+    // FUNGSI UTAMA TAB (JAVASCRIPT UNTUK KLIK MANUAL)
     function showTab(tabName) {
-        // Hide all tabs
+        // 1. Hide all contents
         document.querySelectorAll('.tab-content').forEach(tab => {
             tab.classList.add('hidden');
         });
+        
+        // 2. Reset all buttons
         document.querySelectorAll('.tab-btn').forEach(btn => {
             btn.classList.remove('border-orange-500', 'text-gray-900');
             btn.classList.add('border-transparent', 'text-gray-500');
         });
 
-        // Show selected tab
+        // 3. Show selected content
         const selectedTab = document.getElementById(tabName + '-tab');
         if(selectedTab) {
             selectedTab.classList.remove('hidden');
         }
 
-        // Highlight Button
+        // 4. Highlight selected button
         const btnId = 'btn-' + tabName;
         const btn = document.getElementById(btnId);
         if(btn) {
@@ -644,32 +750,21 @@
         }
     }
 
-    // Auto-select tab if reloading from filter
-    document.addEventListener("DOMContentLoaded", function() {
-        const urlParams = new URLSearchParams(window.location.search);
-        if(urlParams.has('activity_type')) {
-            showTab('activities');
-        } 
-    });
-
+    // --- HELPER LAIN (MODAL) ---
     function editVoucher(voucherId) {
-        // Fetch voucher data via AJAX
         fetch(`/staff/loyalty/voucher/${voucherId}/edit`)
             .then(response => response.json())
             .then(data => {
-                // Populate modal with voucher data
                 document.getElementById('editVoucherId').value = data.voucherID;
                 document.getElementById('editVoucherCode').value = data.voucherCode;
                 document.getElementById('editVoucherAmount').value = data.voucherAmount;
                 document.getElementById('editVoucherType').value = data.voucherType;
                 
-                // Adjust for datetime-local format (YYYY-MM-DDTHH:MM)
                 document.getElementById('editValidFrom').value = data.validFrom.replace(' ', 'T');
                 document.getElementById('editValidUntil').value = data.validUntil.replace(' ', 'T');
                 
                 document.getElementById('editVoucherDescription').value = data.conditions || '';
                 
-                // Show modal
                 document.getElementById('editModal').classList.remove('hidden');
             })
             .catch(error => {
@@ -682,15 +777,19 @@
         document.getElementById('editModal').classList.add('hidden');
     }
 
-    // Close modal when clicking outside
     document.getElementById('editModal')?.addEventListener('click', function(e) {
         if (e.target === this) {
             closeEditModal();
         }
     });
+
+    document.getElementById('editVoucherForm')?.addEventListener('submit', function(e) {
+        const voucherId = document.getElementById('editVoucherId').value;
+        this.action = `/staff/loyalty/voucher/${voucherId}`;
+    });
 </script>
 
-{{-- EDIT VOUCHER MODAL --}}
+{{-- EDIT VOUCHER MODAL (Keep Existing) --}}
 <div id="editModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
     <div class="bg-white rounded-lg shadow-lg w-full max-w-md mx-4">
         <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
@@ -759,12 +858,4 @@
         </form>
     </div>
 </div>
-
-<script>
-    // Update form action when editing
-    document.getElementById('editVoucherForm')?.addEventListener('submit', function(e) {
-        const voucherId = document.getElementById('editVoucherId').value;
-        this.action = `/staff/loyalty/voucher/${voucherId}`;
-    });
-</script>
 @endsection

@@ -68,28 +68,64 @@ class VoucherController extends Controller
             }
         }
 
-        // 6. Calculate Discount
-        // $discountAmount = 0;
-        // if ($voucher->discount_percent > 0) {
-        //     $discountAmount = ($currentTotal * $voucher->discount_percent) / 100;
-        // } else {
-        //     $discountAmount = $voucher->voucherAmount;
-        // }
-
-        // $newTotal = $currentTotal - $discountAmount;
-        // if ($newTotal < 0) $newTotal = 0;
-
         // 6. Calculate Discount - EXCLUDE DEPOSIT FROM DISCOUNT CALCULATION
         $baseDepo = $vehicle->baseDepo; // Ambil harga deposit dari database
         $rentalOnlyCost = $currentTotal - $baseDepo; // Asingkan harga sewa
 
         $discountAmount = 0;
 
-        if ($voucher->discount_percent > 0) {
+        // --- [MULA TAMBAH SINI] ---
+        // Kita check column 'conditions' ada tak tulis FREE HALF DAY
+        $conditionText = strtoupper($voucher->conditions ?? '');
+
+        if (str_contains($conditionText, 'FREE HALF DAY')) {
+            // LOGIC: TOLAK HARGA PAKEJ 12 JAM (VERSION ANTI-CRASH)
+            
+            $discountAmount = 0; // Default
+
+            try {
+                // 1. Ambil raw data dari database
+                $rates = $vehicle->hourly_rates;
+
+                // 2. CHECK JENIS DATA (Ini yg buat error tadi)
+                // Kalau dia string (teks JSON), baru kita decode.
+                if (is_string($rates)) {
+                    $rates = json_decode($rates, true);
+                }
+                // Kalau dia dah memang array (Laravel dah cast), kita guna terus.
+
+                // 3. Ambil rate 12 Jam
+                if (is_array($rates) && isset($rates['12'])) {
+                    // Tukar value jadi float/number siap2
+                    $discountAmount = (float)$rates['12']; 
+                } else {
+                    // Fallback: Kalau tak jumpa rate 12, kira manual
+                    $discountAmount = ($vehicle->priceHour ?? 0) * 12;
+                }
+
+            } catch (\Exception $e) {
+                // 4. JIKA ADA ERROR PELIK, GUNA FALLBACK (JANGAN CRASH)
+                // Kalau JSON rosak ke apa, dia akan masuk sini
+                $discountAmount = ($vehicle->priceHour ?? 0) * 12;
+            }
+
+        } elseif ($voucher->discount_percent > 0) {
+             // ... Sambung coding asal ...
+
+        } elseif ($voucher->discount_percent > 0) { 
+            // ... (sambung coding asal bawah ni) ...
+
+        // --- [HABIS TAMBAH SINI, BAWAH NI SAMBUNG CODING ASAL (Tukar if jadi elseif)] ---
+        } elseif ($voucher->discount_percent > 0) {
             // Kira % berdasarkan harga sewa sahaja
             $discountAmount = ($rentalOnlyCost * $voucher->discount_percent) / 100;
         } else {
             $discountAmount = $voucher->voucherAmount;
+        }
+
+        // Safety: Jangan bagi diskaun lebih dari harga sewa
+        if ($discountAmount > $rentalOnlyCost) {
+            $discountAmount = $rentalOnlyCost;
         }
 
         $newTotal = $currentTotal - $discountAmount;
@@ -125,19 +161,38 @@ class VoucherController extends Controller
             ->whereDate('validFrom', '<=', now())
             ->get()
             ->map(function($voucher) {
-                // ... (mapping data seperti asal) ...
-                 $code = $voucher->code ?? $voucher->voucherCode ?? 'N/A';
+                
+                $code = $voucher->code ?? $voucher->voucherCode ?? 'N/A';
                 $amount = $voucher->voucherAmount ?? 0;
                 $discountPercent = $voucher->discount_percent ?? 0;
                 $type = $voucher->voucherType ?? 'Rental Discount';
                 $expires = $voucher->validUntil ?? $voucher->expires_at;
                 
+                // --- [LOGIC BARU: TENTUKAN NAMA DISPLAY] ---
+                $conditionText = strtoupper($voucher->conditions ?? '');
+                $displayTitle = "";
+
+                if (str_contains($conditionText, 'FREE HALF DAY')) {
+                    // Kalau voucher ni jenis Free Half Day
+                    $displayTitle = "FREE HALF DAY";
+                } 
+                elseif ($discountPercent > 0) {
+                    // Kalau voucher percent biasa (20%, 50%)
+                    $displayTitle = $discountPercent . "% OFF";
+                } 
+                else {
+                    // Kalau voucher tolak duit (RM5 OFF)
+                    $displayTitle = "RM" . number_format($amount, 0) . " OFF";
+                }
+
                 return [
                     'id' => $voucher->voucherID ?? $voucher->id ?? 0,
                     'code' => $code,
                     'amount' => $amount,
                     'discount_percent' => $discountPercent,
                     'type' => $type,
+                    // Hantar ayat ni ke frontend
+                    'display_title' => $displayTitle, 
                     'expires' => $expires ? $expires->format('d M Y') : 'No expiry',
                 ];
             })->values();

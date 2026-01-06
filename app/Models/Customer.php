@@ -68,4 +68,10 @@ class Customer extends Authenticatable
             'password' => 'hashed',
         ];
     }
+    public function unpaidPenalties()
+{
+    // Kita check table penalties, cari row yang status dia BUKAN 'Paid'
+    return $this->hasMany(Penalties::class, 'customerID', 'customerID')
+                ->where('penaltyStatus', '!=', 'Paid')->exists(); 
+}
 }

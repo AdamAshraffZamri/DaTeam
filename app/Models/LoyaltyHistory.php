@@ -11,7 +11,12 @@ class LoyaltyHistory extends Model
     // Relationship to Customer
     public function customer()
     {
-        return $this->belongsTo(Customer::class, 'user_id', 'customerID');
+        return $this->belongsTo(Customer::class, 'user_id');
     }
+
+    // App/Models/LoyaltyHistory.php
+    // public function customer() {
+    //     return $this->belongsTo(User::class, 'user_id'); 
+    // }
 }
 

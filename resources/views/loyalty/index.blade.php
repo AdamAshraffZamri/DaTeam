@@ -109,6 +109,9 @@
                     {{-- Grid Content (UPDATED WITH DB LOOP) --}}
                     <div class="grid grid-cols-2 gap-4 h-full overflow-y-auto custom-scrollbar pr-1">
                         @foreach($rewards as $reward)
+                        @if($reward->name == 'HASTAHD' || $reward->category == 'Milestone') 
+                            @continue 
+                        @endif
                             <div onclick="redeemReward('{{ $reward->id }}', '{{ $reward->name }}', {{ $reward->points_required }})" 
                                  class="relative {{ $reward->color_class }} backdrop-blur-md border rounded-[1.5rem] p-5 text-center group cursor-pointer hover:scale-[1.02] transition-all duration-300 hover:shadow-lg flex flex-col justify-center items-center h-full min-h-[180px]">
 
@@ -245,7 +248,14 @@
                                     @if($voucher->voucherType == 'Merchant Reward')
                                         <p class="text-white font-black text-sm uppercase tracking-wide leading-tight truncate">{{ $voucher->redeem_place }}</p>
                                     @else
-                                        <p class="text-white font-black text-lg leading-none">{{ $voucher->discount_percent }}% OFF</p>
+                                        {{-- [LOGIC BARU] Check dulu conditions dia --}}
+                                        @if(str_contains(strtoupper($voucher->conditions ?? ''), 'FREE HALF DAY'))
+                                            {{-- Kalau jumpa keyword FREE HALF DAY --}}
+                                            <p class="text-white font-black text-lg leading-none">FREE HALF DAY</p>
+                                        @else
+                                            {{-- Kalau tak jumpa, baru tunjuk % --}}
+                                            <p class="text-white font-black text-lg leading-none">{{ $voucher->discount_percent }}% OFF</p>
+                                        @endif
                                     @endif
 
                                     {{-- KOD DIPAPARKAN TERUS DI SINI --}}

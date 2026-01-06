@@ -19,7 +19,7 @@ class LoyaltyController extends Controller
     // =========================================================================
 
     // --- DISPLAY DASHBOARD ---
-    public function index()
+    public function index(Request $request)
     {
         $userId = Auth::id();
 
@@ -106,6 +106,25 @@ class LoyaltyController extends Controller
         ->where('category', '!=', 'Milestone')
         ->get();
 
+        $query = LoyaltyHistory::with('customer')->latest();
+
+        // Filter by Type
+        if ($request->activity_type && $request->activity_type != 'all') {
+            if ($request->activity_type == 'earned') {
+                $query->where('points_change', '>', 0);
+            } elseif ($request->activity_type == 'redeemed') {
+                $query->where('points_change', '<', 0);
+            }
+            // Tambah logic lain jika ada column 'type' spesifik
+        }
+
+        // Filter by Date
+        if ($request->date) {
+            $query->whereDate('created_at', $request->date);
+        }
+
+    $recentActivities = $query->take(20)->get(); // Atau ->paginate(10);
+
         return view('loyalty.index', compact(
             'loyalty',
             'vouchers',
@@ -120,8 +139,10 @@ class LoyaltyController extends Controller
             'totalUsers',
             'rewards', // Ini sekarang data dari DB
             'pointsEarned',
-            'pointsRedeemed'
+            'pointsRedeemed',
+            'recentActivities'
         ));
+        
     }
 
     // --- LOGIC: REDEEM REWARD (Non-Rental Vouchers) [UPDATED] ---
@@ -251,6 +272,7 @@ class LoyaltyController extends Controller
         $totalPointsRedeemed = abs(LoyaltyHistory::where('points_change', '<', 0)->sum('points_change'));
 
         // 3. [UPDATED] Recent Activities with Filtering
+        
         $activityQuery = LoyaltyHistory::with('customer')->orderByDesc('created_at');
 
         if ($request->filled('activity_type') && $request->activity_type != 'all') {
@@ -264,6 +286,10 @@ class LoyaltyController extends Controller
             } elseif ($type == 'merchant') {
                 $activityQuery->where('reason', 'LIKE', '%Redeemed%Voucher%');
             }
+        }
+
+        if ($request->filled('date')) {
+            $activityQuery->whereDate('created_at', $request->date);
         }
         
         $recentActivities = $activityQuery->take(50)->get();
@@ -518,6 +544,14 @@ class LoyaltyController extends Controller
         $percent = $reward->discount_percent;
         $codePrefix = $reward->code_prefix;
         $desc = $reward->offer_description;
+        $voucherType = 'Rental Discount';
+
+        // LOGIC KHAS: Jika reward ini adalah untuk Milestone ke-12
+        // Kita paksa jadi type 'Free Half Day' supaya BookingController boleh baca
+        if ($reward->milestone_step == 12) {
+            $voucherType = 'Free Half Day'; 
+            $percent = 0; // Percent 0 sebab kiraan dia manual (tolak 12 jam)
+        }
 
         Voucher::create([
             'customerID' => $userId,

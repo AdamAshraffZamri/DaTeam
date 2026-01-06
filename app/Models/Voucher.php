@@ -11,6 +11,7 @@ class Voucher extends Model
     protected $fillable = [
         'customerID',
         'user_id',
+        'reward_id',
         'voucherCode',
         'code',
         'voucherAmount',
