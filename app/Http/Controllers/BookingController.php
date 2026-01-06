@@ -64,7 +64,7 @@ class BookingController extends Controller
             empty($user->collegeAddress) ||
             empty($user->stustaffID) || // Student/Staff ID
             empty($user->ic_passport) || // IC or Passport
-            empty($user->drivingNo) || // License Number
+            empty($user->driving_license_expiry) || // License Number
             empty($user->nationality) ||
             empty($user->dob) ||
             empty($user->faculty) ||

@@ -135,7 +135,7 @@ class ProfileController extends Controller
             'college_address' => ['required', 'string', 'max:500'],
             'student_staff_id' => ['required', 'string', 'max:50', Rule::unique('customers', 'stustaffID')->ignore($user->customerID, 'customerID')],
             'ic_passport' => ['required', 'string', 'max:50', Rule::unique('customers', 'ic_passport')->ignore($user->customerID, 'customerID')],
-            'driving_license_no' => ['required', 'string', 'max:50', Rule::unique('customers', 'drivingNo')->ignore($user->customerID, 'customerID')],
+            'driving_license_expiry' => ['required', 'date', 'after:today'],
             'nationality' => ['required', 'string', 'max:100'],
             'dob' => ['required', 'date'],
             'faculty' => ['required', 'string', 'max:255'],
@@ -143,9 +143,9 @@ class ProfileController extends Controller
             'bank_account_no' => ['required', 'string', 'max:50'],
             
             // Files
-            'student_card_image' => ['nullable', 'file', 'mimes:jpeg,png,jpg,pdf', 'max:5120'],
-            'ic_passport_image' => ['nullable', 'file', 'mimes:jpeg,png,jpg,pdf', 'max:5120'],
-            'driving_license_image' => ['nullable', 'file', 'mimes:jpeg,png,jpg,pdf', 'max:5120'],
+            'student_card_image' => ['nullable', 'file', 'mimes:jpeg,png,jpg', 'max:5120'],
+            'ic_passport_image' => ['nullable', 'file', 'mimes:jpeg,png,jpg', 'max:5120'],
+            'driving_license_image' => ['nullable', 'file', 'mimes:jpeg,png,jpg', 'max:5120'],
         ]);
 
         // 2. GOOGLE DRIVE UPLOADS (Documents)
@@ -204,12 +204,12 @@ class ProfileController extends Controller
         }
 
         // 3. UPDATE TEXT FIELDS
-        $user->fullName = $request->name;       
+        $user->fullName = strtoupper($request->name);       
+        $user->stustaffID = strtoupper($request->student_staff_id); 
+        $user->ic_passport = strtoupper($request->ic_passport); // Changed to Uppercase String
         $user->email = $request->email;
         $user->phoneNo = $request->phone;
-        $user->stustaffID = $request->student_staff_id; 
-        $user->ic_passport = $request->ic_passport;     
-        $user->drivingNo = $request->driving_license_no; 
+        $user->driving_license_expiry = $request->driving_license_expiry; 
         $user->homeAddress = $request->home_address;
         $user->collegeAddress = $request->college_address;
         $user->nationality = $request->nationality;

@@ -85,65 +85,89 @@ class DatabaseSeeder extends Seeder
     private function seedCustomersWithLoyalty(): void
     {
         $customers = [
-            // 1. ADAM: The VIP (High usage)
+            // 1. ADAM
             [
                 'email' => 'adam@hasta.com',
                 'fullName' => 'Muhammad Adam Ashraff Bin Zamri',
                 'phoneNo' => '011-12345678',
-                'drivingNo' => 'D-12345678',
+                'driving_license_expiry' => '2030-12-31',
                 'ic_passport' => '990101-01-5555',
+                'stustaffID' => 'A12345',
                 'nationality' => 'Malaysia',
                 'homeAddress' => 'Johor Bahru, Johor',
-                'collegeAddress' => 'Kolej Tun Dr Ismail (KTDI), UTM',
+                'collegeAddress' => 'Kolej Tun Dr. Ismail (KTDI)',
                 'accountStat' => 'active',
+                'faculty' => 'Faculty of Computing (FC)',
+                'dob' => '1999-01-01',
+                'bankName' => 'Maybank',
+                'bankAccountNo' => '162234567890',
+                'emergency_contact_name' => 'Zamri Bin Ahmad',
+                'emergency_contact_no' => '011-87654321',
                 'points' => 5500,
                 'tier' => 'Platinum',
-                'faculty' => 'Computing'
             ],
-            // 2. WILDAN: The Regular (Medium usage)
+            // 2. WILDAN
             [
                 'email' => 'wildan@hasta.com',
                 'fullName' => 'Ahmad Wildan Bin Mazani',
                 'phoneNo' => '012-23456789',
-                'drivingNo' => 'D-23456789',
+                'driving_license_expiry' => '2029-05-20',
                 'ic_passport' => '000202-02-6666',
+                'stustaffID' => 'W23456',
                 'nationality' => 'Malaysia',
                 'homeAddress' => 'Skudai, Johor',
-                'collegeAddress' => 'Kolej Tun Razak (KTR), UTM',
+                'collegeAddress' => 'Kolej Tun Dr. Ismail (KTDI)',
                 'accountStat' => 'active',
+                'faculty' => 'Faculty of Computing (FC)',
+                'dob' => '2000-02-02',
+                'bankName' => 'CIMB',
+                'bankAccountNo' => '172345678901',
+                'emergency_contact_name' => 'Mazani Binti Hussein',
+                'emergency_contact_no' => '012-76543210',
                 'points' => 3000,
                 'tier' => 'Gold',
-                'faculty' => 'Electrical'
             ],
-            // 3. MIKAEL: The Casual (Low usage)
+            // 3. MIKAEL
             [
                 'email' => 'mikael@hasta.com',
                 'fullName' => 'Mikael Haqimi Bin Nahar Junaidi',
                 'phoneNo' => '013-34567890',
-                'drivingNo' => 'D-34567890',
+                'driving_license_expiry' => '2028-11-15',
                 'ic_passport' => '010303-03-7777',
+                'stustaffID' => 'M34567',
                 'nationality' => 'Malaysia',
                 'homeAddress' => 'Kulai, Johor',
-                'collegeAddress' => 'Kolej 9, UTM',
+                'collegeAddress' => 'Kolej Tun Dr. Ismail (KTDI)',
                 'accountStat' => 'active',
+                'faculty' => 'Faculty of Computing (FC)',
+                'dob' => '2001-03-03',
+                'bankName' => 'Public Bank',
+                'bankAccountNo' => '182456789012',
+                'emergency_contact_name' => 'Nahar Bin Junaidi',
+                'emergency_contact_no' => '013-65432109',
                 'points' => 800,
                 'tier' => 'Silver',
-                'faculty' => 'Mechanical'
             ],
-            // 4. JOSHUA: The New User (Just started)
+            // 4. JOSHUA
             [
                 'email' => 'joshua@hasta.com',
                 'fullName' => 'Joshua Ling Shang Yang',
                 'phoneNo' => '014-45678901',
-                'drivingNo' => 'D-45678901',
+                'driving_license_expiry' => '2031-01-01',
                 'ic_passport' => '020404-04-8888',
+                'stustaffID' => 'J45678',
                 'nationality' => 'Malaysia',
                 'homeAddress' => 'Kuching, Sarawak',
-                'collegeAddress' => 'Kolej Perdana, UTM',
-                'accountStat' => 'active', // Verified but new
+                'collegeAddress' => 'Kolej Tun Dr. Ismail (KTDI)',
+                'accountStat' => 'active',
+                'faculty' => 'Civil',
+                'dob' => '2002-04-04',
+                'bankName' => 'RHB',
+                'bankAccountNo' => '192567890123',
+                'emergency_contact_name' => 'Ling Keng Seng',
+                'emergency_contact_no' => '014-54321098',
                 'points' => 0,
                 'tier' => 'Bronze',
-                'faculty' => 'Civil'
             ],
         ];
 
@@ -154,13 +178,19 @@ class DatabaseSeeder extends Seeder
                     'fullName'      => $data['fullName'],
                     'phoneNo'       => $data['phoneNo'],
                     'password'      => Hash::make('password'),
-                    'drivingNo'     => $data['drivingNo'],
+                    'driving_license_expiry' => $data['driving_license_expiry'],
                     'ic_passport'   => $data['ic_passport'],
+                    'stustaffID'    => $data['stustaffID'],
                     'nationality'   => $data['nationality'],
                     'homeAddress'   => $data['homeAddress'],
                     'collegeAddress'=> $data['collegeAddress'],
                     'accountStat'   => $data['accountStat'],
                     'faculty'       => $data['faculty'],
+                    'dob'           => $data['dob'],
+                    'bankName'      => $data['bankName'],
+                    'bankAccountNo' => $data['bankAccountNo'],
+                    'emergency_contact_name' => $data['emergency_contact_name'],
+                    'emergency_contact_no'   => $data['emergency_contact_no'],
                     'blacklisted'   => false,
                 ]
             );

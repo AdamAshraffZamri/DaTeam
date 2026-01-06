@@ -57,7 +57,7 @@
                         
                         <div class="flex justify-between">
                             <span class="text-gray-500">License No</span>
-                            <span class="font-medium text-gray-900">{{ $booking->customer->drivingNo }}</span>
+                            <span class="font-medium text-gray-900">{{ $booking->customer->driving_license_expiry }}</span>
                         </div>
                         
                         <div class="flex justify-between">
