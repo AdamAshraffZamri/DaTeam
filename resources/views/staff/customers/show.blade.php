@@ -1,7 +1,5 @@
 @extends('layouts.staff')
 
-@section('title', 'Customer Details')
-
 @section('content')
 <div x-data="{ 
     showRejectModal: false, 
@@ -217,7 +215,7 @@
                         </div>
                         <div class="p-4 bg-gray-50 rounded-2xl border border-gray-100">
                             <p class="text-[10px] text-gray-400 uppercase font-bold mb-1">Driving License No</p>
-                            <p class="text-lg font-black text-gray-900">{{ $customer->drivingNo ?? 'Not Provided' }}</p>
+                            <p class="text-lg font-black text-gray-900">{{ $customer->driving_license_expiry ?? 'Not Provided' }}</p>
                         </div>
                         <div class="p-4 bg-gray-50 rounded-2xl border border-gray-100">
                             <p class="text-[10px] text-gray-400 uppercase font-bold mb-1">Student / Staff ID</p>

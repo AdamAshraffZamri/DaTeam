@@ -26,11 +26,7 @@
                 <div class="text-right">
                     <p class="text-xs font-bold text-orange-400 uppercase tracking-wider">Vehicle Selected</p>
                     <p class="font-bold text-xl leading-none">{{ $vehicle->model }}</p>
-                </div>
-                <div class="h-8 w-px bg-white/20"></div>
-                <div class="bg-[#ea580c] text-white font-bold px-3 py-1 rounded-lg text-sm shadow-sm uppercase tracking-tighter">
-                    {{ $vehicle->plateNo }}
-                </div>
+                </div>                
             </div>
         </div>
 
@@ -213,8 +209,7 @@
                  RIGHT COLUMN: FORM & ACTION
                  ============================== --}}
             <div class="lg:col-span-5">
-                <form action="{{ route('book.payment.submit', ['id' => $vehicle->VehicleID]) }}" method="POST" enctype="multipart/form-data">
-                    @csrf 
+                <form id="paymentForm" action="{{ route('book.payment.submit', ['id' => $vehicle->VehicleID]) }}" method="POST" enctype="multipart/form-data" novalidate>                    @csrf 
                     {{-- Hidden Info Inputs --}}
                     <input type="hidden" name="pickup_location" value="{{ $pickupLoc }}">
                     <input type="hidden" name="return_location" value="{{ $returnLoc }}">
@@ -314,6 +309,29 @@
             </div>
 
         </div>
+    </div>
+</div>
+
+{{-- VALIDATION ERROR MODAL --}}
+<div id="validation-modal" class="fixed inset-0 z-50 hidden bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 transition-opacity duration-300">
+    <div class="bg-[#1a1a1a] border border-white/20 rounded-2xl p-8 max-w-sm w-full shadow-2xl text-center transform scale-100 transition-transform duration-300">
+        <div class="w-16 h-16 bg-red-500/10 rounded-full flex items-center justify-center mx-auto mb-4 border border-red-500/20">
+            <i class="fas fa-exclamation-triangle text-red-500 text-2xl"></i>
+        </div>
+        
+        <h3 class="text-xl font-bold text-white mb-2">Missing Documents</h3>
+        <p class="text-gray-400 text-sm mb-6">
+            Please upload the following documents to proceed:
+        </p>
+        
+        {{-- Error List Container --}}
+        <div id="validation-list" class="bg-black/30 rounded-lg p-4 mb-6 text-left space-y-2 border border-white/5">
+            {{-- Content injected via JS --}}
+        </div>
+
+        <button type="button" onclick="closeValidationModal()" class="w-full bg-white hover:bg-gray-200 text-black font-bold py-3 rounded-xl transition">
+            Okay, I'll Upload Them
+        </button>
     </div>
 </div>
 
@@ -530,6 +548,53 @@
     document.addEventListener('click', (e) => {
         if (e.target !== voucherInput && !voucherDropdown.contains(e.target)) {
             voucherDropdown.classList.add('hidden');
+        }
+    });
+
+    // 5. FORM VALIDATION LOGIC
+    const paymentForm = document.getElementById('paymentForm');
+    const modal = document.getElementById('validation-modal');
+    const errorList = document.getElementById('validation-list');
+
+    paymentForm.addEventListener('submit', function(e) {
+        let errors = [];
+        
+        // Check Agreement File
+        const agreementInput = document.querySelector('input[name="agreement_proof"]');
+        if (!agreementInput.files || agreementInput.files.length === 0) {
+            errors.push("Signed Rental Agreement PDF");
+        }
+
+        // Check Payment Receipt File
+        const receiptInput = document.getElementById('proof_upload');
+        if (!receiptInput.files || receiptInput.files.length === 0) {
+            errors.push("Payment Receipt Image");
+        }
+
+        // If there are missing files, stop submission and show modal
+        if (errors.length > 0) {
+            e.preventDefault(); // Stop the form
+            
+            // Build the error list HTML
+            errorList.innerHTML = errors.map(err => `
+                <div class="flex items-center text-sm text-red-400 font-bold">
+                    <i class="fas fa-times-circle mr-2"></i> ${err}
+                </div>
+            `).join('');
+
+            // Show Modal
+            modal.classList.remove('hidden');
+        }
+    });
+
+    function closeValidationModal() {
+        modal.classList.add('hidden');
+    }
+
+    // Close modal if clicking outside
+    modal.addEventListener('click', function(e) {
+        if (e.target === modal) {
+            closeValidationModal();
         }
     });
 </script>

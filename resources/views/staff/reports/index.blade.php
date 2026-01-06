@@ -1,7 +1,5 @@
 @extends('layouts.staff')
 
-@section('title', 'Reporting & Analysis')
-
 @section('content')
 
 {{-- START: Alert Block --}}
@@ -35,7 +33,7 @@
             <div class="flex justify-between items-center">
                 <div>
                     <p class="text-gray-500 text-sm font-medium uppercase">Daily Income</p>
-                    <p class="text-3xl font-bold text-gray-800">${{ number_format($dailyIncome, 2) }}</p>
+                    <p class="text-3xl font-bold text-gray-800">RM{{ number_format($dailyIncome, 2) }}</p>
                 </div>
                 <div class="bg-green-100 p-3 rounded-full">
                     <i class="fas fa-dollar-sign text-green-500 text-xl"></i>
@@ -48,7 +46,7 @@
             <div class="flex justify-between items-center">
                 <div>
                     <p class="text-gray-500 text-sm font-medium uppercase">Monthly Income</p>
-                    <p class="text-3xl font-bold text-gray-800">${{ number_format($monthlyIncome, 2) }}</p>
+                    <p class="text-3xl font-bold text-gray-800">RM{{ number_format($monthlyIncome, 2) }}</p>
                 </div>
                 <div class="bg-blue-100 p-3 rounded-full">
                     <i class="fas fa-chart-line text-blue-500 text-xl"></i>

@@ -72,14 +72,26 @@
                                 <div>
                                     <i class="fas fa-money-bill-wave text-gray-500 mr-2"></i>
                                     Refund:
+                                    {{-- [FIXED] CALCULATE ACTUAL PAID AMOUNT INSTEAD OF TOTAL COST --}}
                                     <span class="text-white font-bold ml-1">
-                                        MYR {{ number_format($claim->totalCost, 2) }}
+                                        MYR {{ number_format($claim->payments->sum('amount'), 2) }}
                                     </span>
                                 </div>
                                 <div class="text-xs font-bold italic text-red-400">
                                     Status: {{ $claim->bookingStatus }}
                                 </div>
                             </div>
+
+                            @if($claim->remarks)
+                                <div class="bg-white/5 p-3 rounded-xl border border-white/10 mb-4">
+                                    <p class="text-[10px] font-bold text-blue-400 uppercase mb-1">
+                                        <i class="fas fa-info-circle mr-1"></i> Notes / Deduction Details
+                                    </p>
+                                    <p class="text-xs text-gray-300 italic leading-relaxed whitespace-pre-line">
+                                        {{ $claim->remarks }}
+                                    </p>
+                                </div>
+                            @endif
 
                             <div class="flex justify-end">
                                 @if($claim->payment && $claim->payment->depoStatus === 'Requested')

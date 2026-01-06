@@ -38,7 +38,7 @@ class FinanceController extends Controller
                  ->get();
 
         $balanceBookings = Booking::where('customerID', $user->customerID)
-                              ->whereIn('bookingStatus', ['Submitted', 'Deposit Paid', 'Approved', 'Active'])
+                              ->whereIn('bookingStatus', ['Deposit Paid'])
                               ->with(['vehicle', 'payments'])
                               ->get();
 

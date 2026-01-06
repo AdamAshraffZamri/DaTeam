@@ -5,8 +5,9 @@
     <div class="max-w-6xl mx-auto">
         
         {{-- BACK BUTTON --}}
-        <a href="{{ route('staff.bookings.index') }}" class="inline-flex items-center text-gray-500 hover:text-gray-900 mb-6 transition">
-            <i class="fas fa-arrow-left mr-2"></i> Back to Dashboard
+        <a href="{{ url()->previous() }}"
+        class="inline-flex items-center text-gray-500 hover:text-gray-900 mb-6 transition">
+            <i class="fas fa-arrow-left mr-2"></i> Back
         </a>
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -56,7 +57,7 @@
                         
                         <div class="flex justify-between">
                             <span class="text-gray-500">License No</span>
-                            <span class="font-medium text-gray-900">{{ $booking->customer->drivingNo }}</span>
+                            <span class="font-medium text-gray-900">{{ $booking->customer->driving_license_expiry }}</span>
                         </div>
                         
                         <div class="flex justify-between">
@@ -189,7 +190,7 @@
                         </form>
                     </div>
 
-                    {{-- 4. PAYMENT & DOCUMENTS --}}
+                    {{-- 4. PAYMENT & DOCUMENTS (MODIFIED SECTION) --}}
                     <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 flex flex-col justify-between">
                         <div>
                             <div class="flex justify-between items-center mb-2">
@@ -209,10 +210,16 @@
                             </div>
                         </div>
                         
-                        <div class="grid grid-cols-2 gap-2">
-                            {{-- Receipt --}}
+                        <div class="grid grid-cols-3 gap-2"> 
+                            
+                            {{-- Receipt Link Logic --}}
                             @if($booking->payment && $booking->payment->installmentDetails)
-                                <a href="{{ asset('storage/' . $booking->payment->installmentDetails) }}" target="_blank" class="flex flex-col items-center justify-center bg-blue-50 border border-blue-200 text-blue-700 py-2 rounded-lg text-xs font-bold hover:bg-blue-100 transition text-center h-full">
+                                @php
+                                    $receiptUrl = str_contains($booking->payment->installmentDetails, 'drive.google.com') 
+                                                ? $booking->payment->installmentDetails 
+                                                : asset('storage/' . $booking->payment->installmentDetails);
+                                @endphp
+                                <a href="{{ $receiptUrl }}" target="_blank" class="flex flex-col items-center justify-center bg-blue-50 border border-blue-200 text-blue-700 py-2 rounded-lg text-xs font-bold hover:bg-blue-100 transition text-center h-full">
                                     <i class="fas fa-receipt mb-1 text-lg"></i> Receipt
                                 </a>
                             @else
@@ -221,14 +228,37 @@
                                 </div>
                             @endif
 
-                            {{-- Agreement --}}
+                            {{-- Agreement Link Logic --}}
                             @if($booking->aggreementLink)
-                                <a href="{{ asset('storage/' . $booking->aggreementLink) }}" target="_blank" class="flex flex-col items-center justify-center bg-purple-50 border border-purple-200 text-purple-700 py-2 rounded-lg text-xs font-bold hover:bg-purple-100 transition text-center h-full">
+                                @php
+                                    $agreementUrl = str_contains($booking->aggreementLink, 'drive.google.com') 
+                                                  ? $booking->aggreementLink 
+                                                  : asset('storage/' . $booking->aggreementLink);
+                                @endphp
+                                <a href="{{ $agreementUrl }}" target="_blank" class="flex flex-col items-center justify-center bg-purple-50 border border-purple-200 text-purple-700 py-2 rounded-lg text-xs font-bold hover:bg-purple-100 transition text-center h-full">
                                     <i class="fas fa-file-signature mb-1 text-lg"></i> Agreement
                                 </a>
                             @else
                                 <div class="flex flex-col items-center justify-center bg-gray-50 border border-gray-200 text-gray-400 py-2 rounded-lg text-xs font-bold text-center h-full opacity-60">
                                     <i class="fas fa-times mb-1 text-lg"></i> No Doc
+                                </div>
+                            @endif
+
+                            {{-- Invoice Link Logic --}}
+                            @if(!empty($booking->invoiceLink))
+                                {{-- Case 1: Already uploaded to Drive --}}
+                                <a href="{{ $booking->invoiceLink }}" target="_blank" class="flex flex-col items-center justify-center bg-emerald-50 border border-emerald-200 text-emerald-700 py-2 rounded-lg text-xs font-bold hover:bg-emerald-100 transition text-center h-full">
+                                    <i class="fas fa-file-invoice mb-1 text-lg"></i> Invoice
+                                </a>
+                            @elseif($booking->bookingStatus == 'Completed')
+                                {{-- Case 2: Completed but not on Drive (Generate Stream) --}}
+                                <a href="{{ route('staff.bookings.invoice', $booking->bookingID) }}" target="_blank" class="flex flex-col items-center justify-center bg-emerald-50 border border-emerald-200 text-emerald-700 py-2 rounded-lg text-xs font-bold hover:bg-emerald-100 transition text-center h-full">
+                                    <i class="fas fa-file-invoice mb-1 text-lg"></i> Gen Invoice
+                                </a>
+                            @else
+                                {{-- Case 3: Not Ready --}}
+                                <div class="flex flex-col items-center justify-center bg-gray-50 border border-gray-200 text-gray-400 py-2 rounded-lg text-xs font-bold text-center h-full opacity-60" title="Available after completion">
+                                    <i class="fas fa-clock mb-1 text-lg"></i> Invoice
                                 </div>
                             @endif
                         </div>
@@ -288,28 +318,92 @@
                         {{-- Staff Uploads --}}
                         <div>
                             <h4 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Staff Verifications</h4>
-                            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                                @forelse($booking->inspections->whereNotNull('staffID') as $inspection)
-                                    @php $photos = json_decode($inspection->photosBefore ?? $inspection->photosAfter); @endphp
-                                    @if($photos)
-                                        @foreach($photos as $photo)
-                                            <a href="{{ asset('storage/'.$photo) }}" target="_blank" class="block relative group overflow-hidden rounded-lg border border-gray-200 aspect-square">
-                                                <img src="{{ asset('storage/'.$photo) }}" class="w-full h-full object-cover transition transform group-hover:scale-110">
-                                                <div class="absolute bottom-0 left-0 right-0 bg-blue-900/80 text-white text-[10px] p-1 text-center truncate">
-                                                    Staff: {{ $inspection->inspectionType }}
-                                                </div>
-                                            </a>
-                                        @endforeach
-                                    @endif
-                                @empty
-                                    <div class="col-span-full text-center py-4 bg-gray-50 rounded-lg text-gray-400 text-xs italic">
-                                        No verification photos yet.
+                            @forelse($booking->inspections->whereNotNull('staffID') as $inspection)
+                                <div class="mb-6 bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
+                                    
+                                    {{-- Header with Mileage Logic --}}
+                                    <div class="flex justify-between items-center mb-3 border-b border-gray-100 pb-2">
+                                        <span class="text-xs font-bold uppercase text-gray-500 flex items-center gap-2">
+                                            @if($inspection->inspectionType == 'Pickup')
+                                                <i class="fas fa-arrow-circle-right text-green-500"></i>
+                                            @else
+                                                <i class="fas fa-arrow-circle-left text-red-500"></i>
+                                            @endif
+                                            {{ $inspection->inspectionType }} Inspection
+                                        </span>
+
+                                        {{-- MILEAGE DISPLAY LOGIC --}}
+                                        <div class="flex items-center gap-3">
+                                            @php
+                                                $currentMileage = $inspection->mileageBefore ?? $inspection->mileageAfter;
+                                                $fuelLevel = $inspection->fuelBefore ?? $inspection->fuelAfter;
+                                            @endphp
+
+                                            {{-- Fuel Badge --}}
+                                            <span class="text-[10px] font-bold text-gray-500 bg-gray-100 px-2 py-0.5 rounded border border-gray-200" title="Fuel Level">
+                                                <i class="fas fa-gas-pump mr-1 text-gray-400"></i> {{ $fuelLevel }}
+                                            </span>
+
+                                            {{-- Mileage & Calculation --}}
+                                            @if($inspection->inspectionType == 'Return')
+                                                @php
+                                                    // Find the corresponding Pickup inspection to calculate distance
+                                                    $pickupIns = $booking->inspections->where('inspectionType', 'Pickup')->first();
+                                                    $startMileage = $pickupIns ? ($pickupIns->mileageBefore ?? $pickupIns->mileageAfter) : 0;
+                                                    $distance = $startMileage > 0 ? ($currentMileage - $startMileage) : 0;
+                                                @endphp
+
+                                                @if($startMileage > 0)
+                                                    <div class="text-[10px] text-gray-400 font-medium hidden sm:block">
+                                                        {{ $startMileage }} <i class="fas fa-long-arrow-alt-right mx-1"></i> {{ $currentMileage }}
+                                                    </div>
+                                                    <span class="text-xs font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-100 flex items-center">
+                                                        <i class="fas fa-road mr-1.5"></i> +{{ $distance }} km
+                                                    </span>
+                                                @else
+                                                    <span class="text-xs font-bold text-gray-700">
+                                                        {{ $currentMileage }} km
+                                                    </span>
+                                                @endif
+                                            @else
+                                                {{-- Just show mileage for Pickup --}}
+                                                <span class="text-xs font-bold text-gray-700">
+                                                    <i class="fas fa-tachometer-alt text-gray-400 mr-1"></i> {{ $currentMileage }} km
+                                                </span>
+                                            @endif
+                                        </div>
                                     </div>
-                                @endforelse
-                            </div>
+
+                                    {{-- Photos Grid --}}
+                                    <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
+                                        @php
+                                            $photos = json_decode($inspection->photosBefore ?? $inspection->photosAfter);
+                                        @endphp
+                                        @if($photos)
+                                            @foreach($photos as $photo)
+                                                <a href="{{ asset('storage/'.$photo) }}" target="_blank"
+                                                class="block relative group overflow-hidden rounded-lg border border-gray-200 aspect-square shadow-sm hover:shadow-md transition">
+                                                    <img src="{{ asset('storage/'.$photo) }}"
+                                                        class="w-full h-full object-cover transition transform group-hover:scale-110">
+                                                    <div class="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition"></div>
+                                                </a>
+                                            @endforeach
+                                        @else
+                                            <div class="col-span-full text-center py-4 bg-gray-50 rounded-lg text-gray-400 text-xs italic border border-dashed border-gray-200">
+                                                No photos uploaded by staff.
+                                            </div>
+                                        @endif
+                                    </div>
+                                </div>
+                            @empty
+                                <div class="col-span-full text-center py-8 bg-gray-50 rounded-xl border border-dashed border-gray-200">
+                                    <div class="inline-flex items-center justify-center w-10 h-10 rounded-full bg-gray-100 mb-2">
+                                        <i class="fas fa-camera text-gray-400"></i>
+                                    </div>
+                                    <p class="text-gray-400 text-xs italic">No staff verification performed yet.</p>
+                                </div>
+                            @endforelse
                         </div>
-                    </div>
-                </div>
 
                 {{-- 6. CUSTOMER FEEDBACK --}}
                 @if($booking->feedback)
@@ -415,11 +509,9 @@
 
                         {{-- STEP 4: CANCELLATIONS --}}
                         @elseif($booking->bookingStatus == 'Cancelled' && $booking->payment && $booking->payment->depoStatus == 'Requested')
-                            <form action="{{ route('staff.bookings.refund', $booking->bookingID) }}" method="POST" onsubmit="return confirm('Issue refund to customer?');">@csrf
-                                <button class="bg-red-500 hover:bg-red-600 text-white px-6 py-3 rounded-xl font-bold transition shadow-lg shadow-red-500/20 flex items-center">
-                                    <i class="fas fa-hand-holding-usd mr-2"></i> Approve Refund
-                                </button>
-                            </form>
+                            <button onclick="document.getElementById('refund-modal').classList.remove('hidden')" class="bg-emerald-500 hover:bg-emerald-600 text-white px-6 py-3 rounded-xl font-bold transition shadow-lg shadow-emerald-500/20 flex items-center">
+                                <i class="fas fa-hand-holding-usd mr-2"></i> Process Refund
+                            </button>
                         @endif
                     </div>
                 </div>
@@ -433,15 +525,51 @@
 <div id="staff-upload-modal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
     <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl">
         <h3 class="text-lg font-bold mb-4">Staff Verification Upload</h3>
-        <form action="{{ route('staff.inspections.store', $booking->bookingID) }}" method="POST" enctype="multipart/form-data">            @csrf
+        
+        <form action="{{ route('staff.inspections.store', $booking->bookingID) }}" method="POST" enctype="multipart/form-data">
+            @csrf
+            
+            {{-- HIDDEN: Pickup Mileage for Calculation --}}
+            @php
+                $pickupIns = $booking->inspections->where('inspectionType', 'Pickup')->first();
+                $startMileage = $pickupIns ? ($pickupIns->mileageBefore ?? $pickupIns->mileageAfter ?? 0) : 0;
+            @endphp
+            <input type="hidden" id="start-mileage-data" value="{{ $startMileage }}">
+
             <div class="space-y-4">
+                {{-- Type Selection --}}
                 <div>
                     <label class="block text-xs font-bold text-gray-400 uppercase mb-2">Inspection Type</label>
-                    <select name="type" id="staff-ins-type" class="w-full border-gray-200 rounded-lg text-sm" onchange="updateHint(this.value)">
+                    <select name="type" id="staff-ins-type" class="w-full border-gray-200 rounded-lg text-sm" onchange="updateHint(this.value); calculateMileageDiff();">
                         <option value="Pickup">Pickup (5 Photos)</option>
                         <option value="Return">Return (6 Photos)</option>
                     </select>
                 </div>
+
+                {{-- NEW: Mileage & Fuel Inputs --}}
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-400 uppercase mb-2">Mileage (km)</label>
+                        <input type="number" name="mileage" id="staff-mileage" 
+                               class="w-full border-gray-200 rounded-lg text-sm font-mono font-bold text-gray-800" 
+                               placeholder="e.g. {{ $booking->vehicle->mileage }}" required 
+                               oninput="calculateMileageDiff()">
+                        {{-- Calculation Result Display --}}
+                        <p id="mileage-diff-display" class="text-[10px] mt-1 font-bold hidden"></p>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-400 uppercase mb-2">Fuel Level</label>
+                        <select name="fuel_level" class="w-full border-gray-200 rounded-lg text-sm" required>
+                            <option value="Full">Full</option>
+                            <option value="3/4">3/4</option>
+                            <option value="1/2">1/2</option>
+                            <option value="1/4">1/4</option>
+                            <option value="Reserve">Reserve</option>
+                        </select>
+                    </div>
+                </div>
+
+                {{-- Photos --}}
                 <div>
                     <label class="block text-xs font-bold text-gray-400 uppercase mb-2">Photos</label>
                     <input type="file" name="photos[]" multiple required class="text-sm">
@@ -449,9 +577,10 @@
                         Required: Front, Back, Left, Right, Dashboard.
                     </p>
                 </div>
+
                 <div class="flex justify-end gap-2 pt-4">
                     <button type="button" onclick="this.closest('#staff-upload-modal').classList.add('hidden')" class="px-4 py-2 text-sm font-bold text-gray-500">Cancel</button>
-                    <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded-lg text-sm font-bold">Upload</button>
+                    <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded-lg text-sm font-bold shadow-lg shadow-blue-500/30 hover:bg-blue-700 transition">Upload Verification</button>
                 </div>
             </div>
         </form>
@@ -503,6 +632,41 @@
         </form>
     </div>
 </div>
+{{-- REFUND MODAL --}}
+<div id="refund-modal" class="fixed inset-0 z-50 hidden bg-black/80 flex items-center justify-center p-4 backdrop-blur-sm">
+    <div class="bg-white rounded-2xl w-full max-w-md p-6 shadow-2xl border border-gray-100">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="font-bold text-gray-900 text-lg flex items-center">
+                <i class="fas fa-hand-holding-usd text-emerald-600 mr-2"></i> Process Refund
+            </h3>
+            <button onclick="document.getElementById('refund-modal').classList.add('hidden')" class="text-gray-400 hover:text-gray-900"><i class="fas fa-times"></i></button>
+        </div>
+        
+        <form action="{{ route('staff.bookings.refund', $booking->bookingID) }}" method="POST">
+            @csrf
+            
+            {{-- Info Box --}}
+            <div class="bg-blue-50 border border-blue-100 rounded-xl p-4 mb-4">
+                <p class="text-xs text-blue-800 font-bold mb-1">
+                    <i class="fas fa-info-circle mr-1"></i> Refund Policy
+                </p>
+                <p class="text-xs text-blue-700 leading-relaxed">
+                    If you are deducting any amount (e.g. for damages, late fees, or cancellation policy), please explain clearly in the remarks below. This will be recorded in the booking details.
+                </p>
+            </div>
+
+            {{-- Remarks Input --}}
+            <div class="mb-6">
+                <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Remarks / Deduction Reason</label>
+                <textarea name="refund_remarks" rows="3" class="w-full border border-gray-300 rounded-lg p-3 text-sm focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none placeholder-gray-400" placeholder="e.g. Full refund issued via Transfer... OR RM50 deducted for cleaning fee..."></textarea>
+            </div>
+
+            <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl shadow-lg transition flex items-center justify-center gap-2">
+                <i class="fas fa-check-circle"></i> Confirm Refund
+            </button>
+        </form>
+    </div>
+</div>
 
 <script>
 function toggleCustomerDetails() {
@@ -530,6 +694,29 @@ function updateHint(val) {
         hint.innerText = "Required: Front, Back, Left, Right, Dashboard + Car Key Location.";
     } else {
         hint.innerText = "Required: Front, Back, Left, Right, Dashboard.";
+    }
+}
+
+function calculateMileageDiff() {
+    const type = document.getElementById('staff-ins-type').value;
+    const start = parseFloat(document.getElementById('start-mileage-data').value);
+    const current = parseFloat(document.getElementById('staff-mileage').value);
+    const display = document.getElementById('mileage-diff-display');
+
+    // Only calculate if Return mode and we have valid numbers
+    if (type === 'Return' && start > 0 && !isNaN(current)) {
+        const diff = current - start;
+        display.classList.remove('hidden');
+        
+        if (diff >= 0) {
+            display.className = "text-[10px] mt-1 font-bold text-green-600";
+            display.innerHTML = `<i class="fas fa-road"></i> Distance Used: ${diff} km`;
+        } else {
+            display.className = "text-[10px] mt-1 font-bold text-red-500";
+            display.innerHTML = `<i class="fas fa-exclamation-circle"></i> Error: Lower than pickup (${start} km)`;
+        }
+    } else {
+        display.classList.add('hidden');
     }
 }
 </script>

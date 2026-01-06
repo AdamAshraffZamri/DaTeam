@@ -62,6 +62,23 @@
                     </div>
                 </a>
                 
+                {{-- Deposit Management --}}
+                <a href="{{ route('staff.finance.deposits') }}" 
+                class="group flex items-center px-4 py-3.5 rounded-xl transition-all duration-300 font-bold text-sm relative overflow-hidden
+                {{ request()->routeIs('staff.finance.*') 
+                        ? 'text-white shadow-lg shadow-orange-500/25' 
+                        : 'text-gray-500 hover:bg-orange-50 hover:text-orange-600' }}">
+                    
+                    @if(request()->routeIs('staff.finance.*'))
+                        <div class="absolute inset-0 bg-gradient-to-br from-orange-500 to-orange-600 z-0"></div>
+                    @endif
+
+                    <div class="relative z-10 flex items-center w-full">
+                        <i class="fas fa-wallet w-6 text-center mr-3 text-lg {{ request()->routeIs('staff.finance.*') ? 'text-orange-100' : 'text-gray-400 group-hover:text-orange-500 transition-colors' }}"></i> 
+                        <span>Deposit Management</span>
+                    </div>
+                </a>
+
                 {{-- Fleet Management --}}
                 <a href="{{ route('staff.fleet.index') }}" 
                    class="group flex items-center px-4 py-3.5 rounded-xl transition-all duration-300 font-bold text-sm relative overflow-hidden
@@ -98,11 +115,21 @@
                 </a>
 
                 {{-- Reporting --}}
-                <a href="{{ route('staff.reports.index') }}" 
-                        class="flex items-center px-4 py-3 rounded-xl transition font-bold text-sm
-                        {{ request()->routeIs('staff.reports.*') ? 'bg-orange-600 text-white shadow-lg shadow-orange-500/30' : 'text-gray-500 hover:bg-orange-50 hover:text-orange-600' }}">
-                            <i class="fas fa-chart-bar w-5 mr-3"></i> Reporting & Analysis
-                    </a>
+                <a href="{{ route('staff.reports.index') }}"
+                   class="group flex items-center px-4 py-3.5 rounded-xl transition-all duration-300 font-bold text-sm relative overflow-hidden
+                   {{ request()->routeIs('staff.reports.*') 
+                        ? 'text-white shadow-lg shadow-orange-500/25' 
+                        : 'text-gray-500 hover:bg-orange-50 hover:text-orange-600' }}">
+                    
+                    @if(request()->routeIs('staff.reports.*'))
+                        <div class="absolute inset-0 bg-gradient-to-br from-orange-500 to-orange-600 z-0"></div>
+                    @endif
+
+                    <div class="relative z-10 flex items-center w-full">
+                        <i class="fas fa-chart-bar w-6 text-center mr-3 text-lg {{ request()->routeIs('staff.reports.*') ? 'text-orange-100' : 'text-gray-400 group-hover:text-orange-500 transition-colors' }}"></i> 
+                        <span>Reporting & Analysis</span>
+                    </div>
+                </a>
 
                 {{-- Loyalty --}}
                 <a href="{{ route('staff.loyalty.index') }}" 
@@ -157,7 +184,7 @@
         <div class="flex-1 flex flex-col h-screen overflow-hidden md:ml-64">
             
             <header class="h-20 bg-gray-100 border-b border-gray-100 flex justify-between items-center px-8 sticky top-0 z-10">
-                <h2 class="text-2xl font-bold text-gray-800">@yield('title', 'Staff Overview')</h2>
+                <h2 class="text-2xl font-medium text-gray-800">@yield('title', 'Staff Overview')</h2>
                 
                 <div class="flex items-center space-x-6">
 

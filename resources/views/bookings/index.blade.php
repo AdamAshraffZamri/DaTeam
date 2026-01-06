@@ -185,7 +185,27 @@
                             </button>
                         </div>
                     @endif
+                    
+                    {{-- 3. INVOICE BUTTON (NEW) --}}
+                    @if($booking->bookingStatus == 'Completed')
+                    <div class="border-t border-white/10 pt-4 mt-2">
+                        <td>
+                            {{-- Existing Agreement/Receipt Buttons... --}}
 
+                            {{-- NEW: View Invoice Button --}}
+                            @if($booking->bookingStatus == 'Completed' && $booking->invoiceLink)
+                                <a href="{{ $booking->invoiceLink }}" target="_blank" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-3 rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 shadow-lg">
+                                <i class="fas fa-file-invoice-dollar"></i> View Invoice
+                                </a>
+                            @elseif($booking->bookingStatus == 'Completed')
+                                {{-- Fallback if generation failed (or for old bookings) --}}
+                                <a href="{{ route('book.invoice', $booking->bookingID) }}" target="_blank" class="btn btn-sm btn-outline-secondary mt-1">
+                                    Generate Invoice
+                                </a>
+                            @endif
+                        </td>
+                    </div>
+                    @endif
                 </div>
             @empty
                 {{-- Empty State --}}
@@ -400,6 +420,21 @@
                         </div>
                     </div>
                 @endif    
+
+                {{-- NOTES / REFUND REMARKS (NEW SECTION) --}}
+                @if($booking->bookingStatus != 'Rejected' && $booking->remarks)
+                    <div class="bg-white/5 border border-white/10 rounded-2xl p-4 flex items-start gap-4">
+                        <div class="bg-blue-500/20 text-blue-400 rounded-full p-2 mt-0.5 shrink-0">
+                            <i class="fas fa-info"></i>
+                        </div>
+                        <div>
+                            <h4 class="text-blue-300 font-bold uppercase text-xs tracking-wider mb-1">Notes / Remarks</h4>
+                            <div class="text-gray-300 text-sm leading-relaxed whitespace-pre-line">
+                                {{ $booking->remarks }}
+                            </div>
+                        </div>
+                    </div>
+                @endif
                 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-7">
                         {{-- LEFT COLUMN: Dates & Person In Charge --}}
@@ -499,18 +534,34 @@
                             <div>
                                 <p class="text-[10px] text-gray-400 uppercase font-bold mb-3 tracking-wider">Documents</p>
                                 <div class="grid grid-cols-2 gap-3">
-                                    <a href="{{ asset('storage/' . $booking->aggreementLink) }}" target="_blank" class="flex items-center justify-center gap-2 p-3.5 bg-blue-500/10 rounded-xl border border-blue-500/20 hover:bg-blue-500 hover:text-white text-blue-300 text-sm transition-all duration-200">
-                                            <i class="fas fa-file-signature"></i> <span>View Agreement</span>
-                                    </a>
-                                    @if($booking->payments && $booking->payments->count() > 0)
-                                        <a href="{{ asset('storage/'.$booking->payments->last()->installmentDetails) }}" target="_blank" class="flex items-center justify-center gap-2 p-3.5 bg-black/25 rounded-xl border border-dashed border-white/20 hover:border-orange-500 hover:text-orange-400 text-gray-300 text-sm transition-colors duration-200">
-                                                <i class="fas fa-receipt"></i> <span>View Receipt</span>
-                                        </a>
-                                    @else
-                                        <div class="flex items-center justify-center gap-2 p-3.5 bg-red-500/10 rounded-xl border border-red-500/20 text-red-400 text-xs font-bold">
-                                            <i class="fas fa-times-circle"></i> No Receipt
-                                        </div>
-                                    @endif
+                                    <td>
+                                        {{-- Agreement Link --}}
+                                        @if(str_contains($booking->aggreementLink, 'drive.google.com'))
+                                            <a href="{{ $booking->aggreementLink }}" target="_blank" class="flex items-center justify-center gap-2 p-3.5 bg-blue-500/10 rounded-xl border border-blue-500/20 hover:bg-blue-500 hover:text-white text-blue-300 text-sm transition-all duration-200">
+                                                <i class="bi bi-file-earmark-pdf"></i> View Agreement
+                                            </a>
+                                        @elseif($booking->aggreementLink)
+                                            {{-- Fallback for old local files --}}
+                                            <a href="{{ route('book.agreement', $booking->bookingID) }}" target="_blank" class="flex items-center justify-center gap-2 p-3.5 bg-blue-500/10 rounded-xl border border-blue-500/20 hover:bg-blue-500 hover:text-white text-blue-300 text-sm transition-all duration-200">
+                                                View Agreement
+                                            </a>
+                                        @endif
+
+                                        {{-- Receipt Link (Assuming the first payment contains the receipt) --}}
+                                        @php
+                                            $receipt = $booking->payments->first(); // Get the initial payment
+                                        @endphp
+
+                                        @if($receipt && str_contains($receipt->installmentDetails, 'drive.google.com'))
+                                            <a href="{{ $receipt->installmentDetails }}" target="_blank" class="flex items-center justify-center gap-2 p-3.5 bg-black/25 rounded-xl border border-dashed border-white/20 hover:border-orange-500 hover:text-orange-400 text-gray-300 text-sm transition-colors duration-200">
+                                                <i class="bi bi-receipt"></i> View Receipt
+                                            </a>
+                                        @elseif($receipt && $receipt->installmentDetails)
+                                            <a href="{{ asset('storage/' . $receipt->installmentDetails) }}" target="_blank" class="flex items-center justify-center gap-2 p-3.5 bg-black/25 rounded-xl border border-dashed border-white/20 hover:border-orange-500 hover:text-orange-400 text-gray-300 text-sm transition-colors duration-200">
+                                                View Receipt
+                                            </a>
+                                        @endif
+                                    </td>
                                 </div>
                             </div>
                         </div>

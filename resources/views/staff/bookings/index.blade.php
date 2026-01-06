@@ -142,6 +142,17 @@
                         <span class="block w-28 text-center px-0 py-1.5 rounded-full text-[10px] font-bold border uppercase tracking-wider {{ $statusColor }}">
                             {{ $booking->bookingStatus }}
                         </span>
+
+                        {{-- [ADDED] REFUND STATUS INDICATOR --}}
+                        @if($booking->payment && ($booking->payment->depoStatus == 'Refunded' || $booking->payment->depoStatus == 'Requested'))
+                            <div class="mt-1.5 w-28 flex justify-center">
+                                <span class="text-[9px] font-bold px-2 py-0.5 rounded border flex items-center gap-1 uppercase tracking-wide
+                                    {{ $booking->payment->depoStatus == 'Refunded' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-red-50 text-red-600 border-red-100 animate-pulse' }}">
+                                    <i class="fas fa-hand-holding-usd"></i> {{ $booking->payment->depoStatus }}
+                                </span>
+                            </div>
+                        @endif
+
                     </div>
 
                     {{-- 6. ACTION --}}

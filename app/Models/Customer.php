@@ -24,7 +24,7 @@ class Customer extends Authenticatable
     'password',
     'phoneNo',
     'stustaffID',
-    'drivingNo',
+    'driving_license_expiry',
     'homeAddress',
     'collegeAddress',
     'accountStat',

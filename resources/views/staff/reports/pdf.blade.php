@@ -32,7 +32,7 @@
 </head>
 <body>
     <div class="header">
-        <h1>Reporting & Analysis</h1>
+        <h1>Reporting & Analysis [Hasta Travel & Tours]</h1>
         <p>Generated on: {{ now()->toDayDateTimeString() }} | Staff: {{ auth()->user()->name ?? 'System' }}</p>
     </div>
 

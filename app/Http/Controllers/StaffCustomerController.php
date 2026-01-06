@@ -6,6 +6,9 @@ use App\Http\Controllers\Controller;
 use App\Models\Customer;
 use App\Models\Penalties;
 use Illuminate\Http\Request;
+use App\Services\GoogleDriveService;
+use Illuminate\Support\Facades\Storage;
+use Carbon\Carbon;
 
 class StaffCustomerController extends Controller
 {
@@ -123,7 +126,7 @@ class StaffCustomerController extends Controller
     }
 
     // ACTION 4: Impose Penalty
-    public function imposePenalty(Request $request, $id)
+    public function imposePenalty(Request $request, $id, GoogleDriveService $driveService)
     {
         $customer = Customer::findOrFail($id);
         
@@ -137,6 +140,12 @@ class StaffCustomerController extends Controller
         $finalReason = $request->penalty_reason;
         if ($request->filled('penalty_custom')) {
             $finalReason .= " - " . $request->penalty_custom;
+        }
+
+        $evidenceId = null;
+        if ($request->hasFile('evidence_photo')) {
+            $folderId = env('GOOGLE_DRIVE_CUSTOMER_INFORMATION'); // or a new folder for Penalties
+            $evidenceId = $driveService->uploadFile($request->file('evidence_photo'), $folderId);
         }
 
         // Create penalty record
@@ -189,4 +198,94 @@ class StaffCustomerController extends Controller
         return view('staff.customers.penalty-history', compact('customer', 'penalties', 'totalPenalties', 'unpaidPenalties', 'totalAmount'));
     }
 
+    public function store(Request $request, GoogleDriveService $driveService)
+    {
+        // 1. Validate the input
+        $request->validate([
+            'name' => 'required',
+            'document' => 'required|file|mimes:pdf,jpg,png|max:2048', // Example validation
+        ]);
+
+        // 2. Upload to Google Drive
+        if ($request->hasFile('document')) {
+            try {
+                // Get folder ID from .env
+                $folderId = env('GOOGLE_DRIVE_CUSTOMER_INFORMATION'); 
+                
+                // Perform the upload
+                $fileId = $driveService->uploadFile($request->file('document'), $folderId);
+                
+                // 3. Save the File ID to your database (Example)
+                // Customer::create([
+                //     'name' => $request->name,
+                //     'document_id' => $fileId
+                // ]);
+
+                return back()->with('success', 'File uploaded successfully! Drive ID: ' . $fileId);
+
+            } catch (\Exception $e) {
+                return back()->with('error', 'Google Drive Upload Failed: ' . $e->getMessage());
+            }
+        }
+
+        return back()->with('error', 'No file uploaded.');
+    }
+
+    // ACTION 5: Upload File to Drive
+    public function uploadFileToDrive(Request $request, $id)
+    {
+        $customer = Customer::findOrFail($id);
+        $request->validate([
+            'photo' => 'required|image|max:10240',
+            'description' => 'required|string|max:50',
+        ]);
+
+        try {
+            // 1. Connect
+            $client = new \Google\Client();
+            $client->setClientId(env('GOOGLE_DRIVE_CLIENT_ID'));
+            $client->setClientSecret(env('GOOGLE_DRIVE_CLIENT_SECRET'));
+            $client->refreshToken(env('GOOGLE_DRIVE_REFRESH_TOKEN'));
+            $service = new \Google\Service\Drive($client);
+
+            // 2. Find Folder
+            $parentFolderId = env('GOOGLE_DRIVE_CUSTOMER_INFORMATION');
+            $folderName = trim("{$customer->stustaffID} - {$customer->fullName}");
+            
+            $query = "mimeType='application/vnd.google-apps.folder' and name = '" . str_replace("'", "\'", $folderName) . "' and '$parentFolderId' in parents and trashed = false";
+            $files = $service->files->listFiles(['q' => $query]);
+
+            if (count($files->getFiles()) > 0) {
+                $folderId = $files->getFiles()[0]->getId();
+            } else {
+                $folderMeta = new \Google\Service\Drive\DriveFile([
+                    'name' => $folderName,
+                    'mimeType' => 'application/vnd.google-apps.folder',
+                    'parents' => [$parentFolderId]
+                ]);
+                $folderId = $service->files->create($folderMeta, ['fields' => 'id'])->id;
+            }
+
+            // 3. Upload
+            $file = $request->file('photo');
+            $fileName = Carbon::now()->format('Y-m-d') . " - " . $request->description . " (" . Carbon::now()->format('H-i-s') . ")." . $file->getClientOriginalExtension();
+
+            $fileMetadata = new \Google\Service\Drive\DriveFile([
+                'name' => $fileName,
+                'parents' => [$folderId]
+            ]);
+            
+            $content = file_get_contents($file->getRealPath());
+            $service->files->create($fileMetadata, [
+                'data' => $content,
+                'mimeType' => $file->getMimeType(),
+                'uploadType' => 'multipart'
+            ]);
+
+            return back()->with('success', 'File uploaded to Customer Folder on Drive!');
+
+        } catch (\Exception $e) {
+            return back()->with('error', 'Upload Failed: ' . $e->getMessage());
+        }
+    }
 }

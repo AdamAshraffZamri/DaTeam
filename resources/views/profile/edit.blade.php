@@ -26,10 +26,9 @@
         </div>
         @endif
 
-        {{-- ==================== NEW STATUS SECTION ==================== --}}
+        {{-- ==================== STATUS SECTION ==================== --}}
         <div class="flex flex-col items-center mb-10">
-            
-            {{-- 1. BLACKLISTED --}}
+            {{-- (Status Logic kept same as before) --}}
             @if($user->blacklisted)
                 <div class="px-8 py-3 rounded-2xl bg-black/60 border border-red-500 text-red-500 font-black uppercase tracking-[0.2em] shadow-[0_0_20px_rgba(239,68,68,0.4)] flex items-center gap-4 text-lg">
                     <i class="fas fa-ban text-2xl"></i> Account Blacklisted
@@ -40,21 +39,15 @@
                         <p class="text-white font-medium">{{ $user->blacklist_reason }}</p>
                     </div>
                 @endif
-
-            {{-- 2. APPROVED --}}
             @elseif($user->accountStat == 'approved' || $user->accountStat == 'active')
                 <div class="px-8 py-3 rounded-2xl bg-green-500/20 border border-green-500 text-green-400 font-black uppercase tracking-[0.2em] shadow-[0_0_20px_rgba(34,197,94,0.3)] flex items-center gap-4">
                     <i class="fas fa-check-circle text-2xl"></i> Account Verified
                 </div>
-
-            {{-- 3. PENDING --}}
             @elseif($user->accountStat == 'pending')
                 <div class="px-8 py-3 rounded-2xl bg-yellow-500/20 border border-yellow-500 text-yellow-400 font-black uppercase tracking-[0.2em] shadow-[0_0_20px_rgba(234,179,8,0.3)] animate-pulse flex items-center gap-4">
                     <i class="fas fa-clock text-2xl"></i> Pending Verification
                 </div>
                 <p class="text-gray-400 text-xs mt-3">Staff is reviewing your details. This usually takes 24 hours.</p>
-
-            {{-- 4. REJECTED --}}
             @elseif($user->accountStat == 'rejected')
                 <div class="px-8 py-3 rounded-2xl bg-red-600/20 border border-red-500 text-red-400 font-black uppercase tracking-[0.2em] shadow-[0_0_20px_rgba(220,38,38,0.3)] flex items-center gap-4">
                     <i class="fas fa-times-circle text-2xl"></i> Verification Rejected
@@ -64,11 +57,8 @@
                         <div class="flex justify-center mb-2"><i class="fas fa-exclamation-triangle text-red-400 text-xl"></i></div>
                         <p class="text-xs text-red-300 uppercase font-bold mb-2 tracking-widest">Please fix the following:</p>
                         <p class="text-white font-bold text-lg leading-relaxed">"{{ $user->rejection_reason }}"</p>
-                        <p class="text-xs text-red-300/70 mt-4">Update your information below to re-submit.</p>
                     </div>
                 @endif
-
-            {{-- 5. UNVERIFIED (Default) --}}
             @else
                 <div class="px-8 py-3 rounded-2xl bg-white/10 border border-white/20 text-gray-300 font-black uppercase tracking-[0.2em] flex items-center gap-4">
                     <i class="fas fa-user-shield text-2xl"></i> Unverified
@@ -76,30 +66,35 @@
                 <p class="text-gray-400 text-xs mt-3">Please complete your profile to verify your account.</p>
             @endif
         </div>
-        {{-- ============================================================ --}}
 
 
-        {{-- PROFILE HEADER (Avatar) --}}
+        {{-- ==================== PROFILE HEADER (Avatar) ==================== --}}
         <div class="text-center mb-8 relative">
             <h1 class="text-3xl font-black text-white drop-shadow-md">Complete Your Profile</h1>
             <p class="text-gray-400 mt-2">These details are required for insurance and refunds.</p>
 
             <div class="relative mt-6 inline-block">
+                {{-- Avatar Display --}}
                 <div class="w-32 h-32 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center border-4 border-white/20 shadow-2xl overflow-hidden">
                     @if($user->avatar)
-                        <img src="{{ asset('storage/' . $user->avatar) }}" class="w-full h-full object-cover" id="avatar_preview">
+                        {{-- FIXED: Correct Path --}}
+                        <img src="{{ $user->avatar ? asset($user->avatar) : asset('login.png') }}" class="w-full h-full object-cover" id="avatar_preview">
                     @else
                         <i class="fas fa-user text-6xl text-gray-400" id="avatar_icon"></i>
                         <img src="" class="w-full h-full object-cover hidden" id="avatar_preview">
                     @endif
                 </div>
-                <button type="button" onclick="document.getElementById('avatar_input').click()" class="absolute bottom-0 right-0 bg-[#ea580c] hover:bg-orange-600 text-white p-2 rounded-full w-8 h-8 flex items-center justify-center transition shadow-lg cursor-pointer">
-                    <i class="fas fa-pencil-alt text-xs"></i>
-                </button>
-                <form action="{{ route('profile.update') }}" method="POST" enctype="multipart/form-data" id="avatar-form">
-                     @csrf
-                     @method('PUT')
-                     <input type="file" name="avatar" id="avatar_input" class="hidden" accept="image/*" onchange="previewAvatar(this)">
+
+                {{-- AVATAR FORM (Separate from Main Info) --}}
+                <form action="{{ route('profile.avatar.update') }}" method="POST" enctype="multipart/form-data" id="avatar-form">
+                    @csrf
+                    {{-- Hidden File Input --}}
+                    <input type="file" name="avatar" id="avatar_input" class="hidden" accept="image/*" onchange="document.getElementById('avatar-form').submit();">
+                    
+                    {{-- The Pencil Button --}}
+                    <button type="button" onclick="document.getElementById('avatar_input').click()" class="absolute bottom-0 right-0 bg-[#ea580c] hover:bg-orange-600 text-white p-2 rounded-full w-8 h-8 flex items-center justify-center transition shadow-lg cursor-pointer z-20">
+                        <i class="fas fa-pencil-alt text-xs"></i>
+                    </button>
                 </form>
             </div>
         </div>
@@ -116,7 +111,7 @@
             </div>
         @endif
         
-        {{-- ================= FORM 1: PROFILE INFO ================= --}}
+        {{-- ================= FORM 1: MAIN PROFILE INFO ================= --}}
         <form action="{{ route('profile.update') }}" method="POST" enctype="multipart/form-data" class="bg-black/25 backdrop-blur-xl border border-white/10 rounded-[2.5rem] shadow-2xl p-8 md:p-12 mb-8">
             @csrf
             @method('PUT')
@@ -126,9 +121,12 @@
                 <div class="space-y-6">
                     <h3 class="text-lg font-bold text-orange-500 border-b border-white/10 pb-2">Personal Information</h3>
                     
+                    {{-- FULL NAME: Uppercase --}}
                     <div>
                         <label class="block text-gray-400 mb-2 font-bold text-xs uppercase tracking-wider">Full Name</label>
-                        <input type="text" name="name" value="{{ old('name', $user->fullName) }}" class="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white focus:outline-none focus:border-orange-500 focus:bg-white/10 transition placeholder-gray-500">
+                        <input type="text" name="name" value="{{ old('name', $user->fullName) }}" 
+                               class="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white focus:outline-none focus:border-orange-500 focus:bg-white/10 transition placeholder-gray-500 uppercase"
+                               oninput="this.value = this.value.toUpperCase()">
                     </div>
 
                     <div>
@@ -140,26 +138,19 @@
                         <label class="block text-gray-400 mb-2 font-bold text-xs uppercase tracking-wider">Phone No. <span class="text-red-500">*</span></label>
                         <input type="text" name="phone" value="{{ old('phone', $user->phoneNo) }}" class="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white focus:outline-none focus:border-orange-500 focus:bg-white/10 transition placeholder-gray-500">
                     </div>
-                    
+
+                    {{-- EMERGENCY CONTACT --}}
                     <div class="col-span-1 md:col-span-2 mt-2 mb-2">
                         <h4 class="text-sm font-bold text-gray-500 uppercase tracking-widest mb-4 border-b border-white/10 pb-2">Emergency Contact</h4>
-    
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            
                             <div>
                                 <label class="block text-gray-400 mb-2 font-bold text-xs uppercase tracking-wider">Name <span class="text-red-500">*</span></label>
-                                <input type="text" name="emergency_contact_name" value="{{ old('emergency_contact_name', $user->emergency_contact_name) }}" 
-                                    class="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white focus:outline-none focus:border-orange-500 focus:bg-white/10 transition placeholder-gray-500" 
-                                    placeholder="e.g. Parent Name">
+                                <input type="text" name="emergency_contact_name" value="{{ old('emergency_contact_name', $user->emergency_contact_name) }}" class="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white focus:outline-none focus:border-orange-500 focus:bg-white/10 transition placeholder-gray-500">
                             </div>
-
                             <div>
                                 <label class="block text-gray-400 mb-2 font-bold text-xs uppercase tracking-wider">Phone No. <span class="text-red-500">*</span></label>
-                                <input type="text" name="emergency_contact_no" value="{{ old('emergency_contact_no', $user->emergency_contact_no) }}" 
-                                    class="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white focus:outline-none focus:border-orange-500 focus:bg-white/10 transition placeholder-gray-500" 
-                                    placeholder="e.g. +6012...">
+                                <input type="text" name="emergency_contact_no" value="{{ old('emergency_contact_no', $user->emergency_contact_no) }}" class="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white focus:outline-none focus:border-orange-500 focus:bg-white/10 transition placeholder-gray-500">
                             </div>
-                            
                         </div>
                     </div>
 
@@ -168,9 +159,19 @@
                         <input type="date" name="dob" value="{{ old('dob', optional($user->dob)->format('Y-m-d')) }}" class="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white focus:outline-none focus:border-orange-500 focus:bg-white/10 transition [color-scheme:dark]">
                     </div>
 
+                    {{-- NATIONALITY: Country Dropdown --}}
                     <div>
                         <label class="block text-gray-400 mb-2 font-bold text-xs uppercase tracking-wider">Nationality</label>
-                        <input type="text" name="nationality" value="{{ old('nationality', $user->nationality) }}" class="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white focus:outline-none focus:border-orange-500 focus:bg-white/10 transition placeholder-gray-500">
+                        <select name="nationality" class="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white focus:outline-none focus:border-orange-500 focus:bg-white/10 transition cursor-pointer">
+                            <option value="" class="text-black">-- Select Country --</option>
+                            @php
+                                $countries = ["Malaysia","Indonesia","Singapore","Brunei","Thailand","Vietnam","Philippines","China","India","Pakistan","Bangladesh","Yemen","Saudi Arabia","United Kingdom","United States","Nigeria","Egypt","Japan","Korea, Republic of"]; 
+                            @endphp
+                            @foreach($countries as $country)
+                                <option value="{{ $country }}" class="text-black" {{ old('nationality', $user->nationality) == $country ? 'selected' : '' }}>{{ $country }}</option>
+                            @endforeach
+                            <option value="Other" class="text-black" {{ old('nationality', $user->nationality) == 'Other' ? 'selected' : '' }}>Other</option>
+                        </select>
                     </div>
                 </div>
 
@@ -178,10 +179,13 @@
                 <div class="space-y-6">
                     <h3 class="text-lg font-bold text-orange-500 border-b border-white/10 pb-2">Documents & Address</h3>
 
+                    {{-- STAFF/STUDENT ID: Uppercase --}}
                     <div>
                         <label class="block text-gray-400 mb-2 font-bold text-xs uppercase tracking-wider">Student/Staff ID</label>
                         <div class="flex">
-                            <input type="text" name="student_staff_id" value="{{ old('student_staff_id', $user->stustaffID) }}" class="w-full bg-white/5 border border-white/10 rounded-l-xl p-3 text-white focus:outline-none focus:border-orange-500 focus:bg-white/10 transition placeholder-gray-500">
+                            <input type="text" name="student_staff_id" value="{{ old('student_staff_id', $user->stustaffID) }}" 
+                                   class="w-full bg-white/5 border border-white/10 rounded-l-xl p-3 text-white focus:outline-none focus:border-orange-500 focus:bg-white/10 transition placeholder-gray-500 uppercase"
+                                   oninput="this.value = this.value.toUpperCase()">
                             <button type="button" onclick="document.getElementById('student_file').click()" class="bg-white/10 px-4 rounded-r-xl border border-l-0 border-white/10 text-gray-400 hover:bg-white/20 hover:text-white transition" id="btn_student">
                                 <i class="fas fa-camera" id="icon_student"></i>
                             </button>
@@ -189,10 +193,13 @@
                         </div>
                     </div>
 
+                    {{-- IC / PASSPORT: Uppercase String --}}
                     <div>
-                        <label class="block text-gray-400 mb-2 font-bold text-xs uppercase tracking-wider">IC/Passport No.</label>
+                        <label class="block text-gray-400 mb-2 font-bold text-xs uppercase tracking-wider">IC / Passport No.</label>
                         <div class="flex">
-                            <input type="text" name="ic_passport" value="{{ old('ic_passport', $user->ic_passport) }}" class="w-full bg-white/5 border border-white/10 rounded-l-xl p-3 text-white focus:outline-none focus:border-orange-500 focus:bg-white/10 transition placeholder-gray-500">
+                            <input type="text" name="ic_passport" value="{{ old('ic_passport', $user->ic_passport) }}" 
+                                   class="w-full bg-white/5 border border-white/10 rounded-l-xl p-3 text-white focus:outline-none focus:border-orange-500 focus:bg-white/10 transition placeholder-gray-500 uppercase"
+                                   oninput="this.value = this.value.toUpperCase()">
                             <button type="button" onclick="document.getElementById('ic_file').click()" class="bg-white/10 px-4 rounded-r-xl border border-l-0 border-white/10 text-gray-400 hover:bg-white/20 hover:text-white transition" id="btn_ic">
                                 <i class="fas fa-camera" id="icon_ic"></i>
                             </button>
@@ -200,10 +207,12 @@
                         </div>
                     </div>
 
+                    {{-- DRIVING LICENSE: Expiry Date (Replaced Number) --}}
                     <div>
-                        <label class="block text-gray-400 mb-2 font-bold text-xs uppercase tracking-wider">Driving License No. <span class="text-red-500">*</span></label>
+                        <label class="block text-gray-400 mb-2 font-bold text-xs uppercase tracking-wider">Driving License Expired Date <span class="text-red-500">*</span></label>
                         <div class="flex">
-                            <input type="text" name="driving_license_no" value="{{ old('driving_license_no', $user->drivingNo) }}" class="w-full bg-white/5 border border-white/10 rounded-l-xl p-3 text-white focus:outline-none focus:border-orange-500 focus:bg-white/10 transition placeholder-gray-500">
+                            <input type="date" name="driving_license_expiry" value="{{ old('driving_license_expiry', $user->driving_license_expiry) }}" 
+                                   class="w-full bg-white/5 border border-white/10 rounded-l-xl p-3 text-white focus:outline-none focus:border-orange-500 focus:bg-white/10 transition [color-scheme:dark]">
                              <button type="button" onclick="document.getElementById('license_file').click()" class="bg-white/10 px-4 rounded-r-xl border border-l-0 border-white/10 text-gray-400 hover:bg-white/20 hover:text-white transition" id="btn_license">
                                 <i class="fas fa-camera" id="icon_license"></i>
                             </button>
@@ -216,35 +225,83 @@
                         <input type="text" name="home_address" value="{{ old('home_address', $user->homeAddress) }}" class="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white focus:outline-none focus:border-orange-500 focus:bg-white/10 transition placeholder-gray-500">
                     </div>
 
+                    {{-- COLLEGE ADDRESS: UTM Colleges Dropdown --}}
                     <div>
-                        <label class="block text-gray-400 mb-2 font-bold text-xs uppercase tracking-wider">College Address</label>
-                        <input type="text" name="college_address" value="{{ old('college_address', $user->collegeAddress) }}" class="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white focus:outline-none focus:border-orange-500 focus:bg-white/10 transition placeholder-gray-500">
+                        <label class="block text-gray-400 mb-2 font-bold text-xs uppercase tracking-wider">College (UTM JB)</label>
+                        <select name="college_address" class="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white focus:outline-none focus:border-orange-500 focus:bg-white/10 transition cursor-pointer">
+                            <option value="" class="text-black">-- Select Residential College --</option>
+                            @php
+                                $colleges = [
+                                    "Kolej Rahman Putra (KRP)",
+                                    "Kolej Tun Fatimah (KTF)",
+                                    "Kolej Tun Razak (KTR)",
+                                    "Kolej Tun Hussein Onn (KTHO)",
+                                    "Kolej Tun Dr. Ismail (KTDI)",
+                                    "Kolej Tuanku Canselor (KTC)",
+                                    "Kolej Perdana (KP)",
+                                    "Kolej 9 & 10",
+                                    "Kolej Datin Seri Endon (KDSE)",
+                                    "Kolej Dato' Onn Jaafar (KDOJ)",
+                                    "Off-Campus (Rental/Family)"
+                                ];
+                            @endphp
+                            @foreach($colleges as $col)
+                                <option value="{{ $col }}" class="text-black" {{ old('college_address', $user->collegeAddress) == $col ? 'selected' : '' }}>{{ $col }}</option>
+                            @endforeach
+                        </select>
                     </div>
 
+                     {{-- FACULTY: UTM Faculties Dropdown --}}
                      <div>
                         <label class="block text-gray-400 mb-2 font-bold text-xs uppercase tracking-wider">Faculty</label>
-                        <input type="text" name="faculty" value="{{ old('faculty', $user->faculty) }}" placeholder="e.g. Faculty of Computing" class="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white focus:outline-none focus:border-orange-500 focus:bg-white/10 transition placeholder-gray-500">
+                        <select name="faculty" class="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white focus:outline-none focus:border-orange-500 focus:bg-white/10 transition cursor-pointer">
+                            <option value="" class="text-black">-- Select Faculty --</option>
+                            @php
+                                $faculties = [
+                                    "Faculty of Civil Engineering (FKA)",
+                                    "Faculty of Mechanical Engineering (FKM)",
+                                    "Faculty of Electrical Engineering (FKE)",
+                                    "Faculty of Chemical & Energy Engineering (FCEE)",
+                                    "Faculty of Computing (FC)",
+                                    "Faculty of Science (FS)",
+                                    "Faculty of Built Environment & Surveying (FABU)",
+                                    "Faculty of Social Sciences & Humanities (FSSH)",
+                                    "Faculty of Management (FM)",
+                                    "Razak Faculty of Technology and Informatics",
+                                    "MJIIT (Malaysia-Japan International Institute of Technology)",
+                                    "Azman Hashim International Business School (AHIBS)"
+                                ];
+                            @endphp
+                            @foreach($faculties as $fac)
+                                <option value="{{ $fac }}" class="text-black" {{ old('faculty', $user->faculty) == $fac ? 'selected' : '' }}>{{ $fac }}</option>
+                            @endforeach
+                        </select>
                     </div>
                 </div>
             </div>
             
-            {{-- BANK DETAILS --}}
+            {{-- BANK DETAILS: All Malaysia Banks --}}
             <div class="mt-10 pt-8 border-t border-white/10">
                  <h3 class="text-lg font-bold text-orange-500 mb-4">Refund Information (Bank Details)</h3>
-                 <p class="text-sm text-gray-400 mb-4">Required for refunding your deposit securely.</p>
                  
                  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                      <div>
                         <label class="block text-gray-400 mb-2 font-bold text-xs uppercase tracking-wider">Bank Name <span class="text-red-500">*</span></label>
                         <select name="bank_name" class="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white focus:outline-none focus:border-orange-500 focus:bg-white/10 transition cursor-pointer">
                             <option value="" class="text-black">-- Select Bank --</option>
-                            <option value="Maybank" class="text-black" {{ old('bank_name', $user->bankName) == 'Maybank' ? 'selected' : '' }}>Maybank</option>
-                            <option value="CIMB" class="text-black" {{ old('bank_name', $user->bankName) == 'CIMB' ? 'selected' : '' }}>CIMB Bank</option>
-                            <option value="Public Bank" class="text-black" {{ old('bank_name', $user->bankName) == 'Public Bank' ? 'selected' : '' }}>Public Bank</option>
-                            <option value="RHB" class="text-black" {{ old('bank_name', $user->bankName) == 'RHB' ? 'selected' : '' }}>RHB Bank</option>
-                            <option value="Hong Leong" class="text-black" {{ old('bank_name', $user->bankName) == 'Hong Leong' ? 'selected' : '' }}>Hong Leong Bank</option>
-                            <option value="AmBank" class="text-black" {{ old('bank_name', $user->bankName) == 'AmBank' ? 'selected' : '' }}>AmBank</option>
-                            <option value="Bank Islam" class="text-black" {{ old('bank_name', $user->bankName) == 'Bank Islam' ? 'selected' : '' }}>Bank Islam</option>
+                            @php
+                                $banks = [
+                                    "Maybank", "CIMB Bank", "Public Bank", "RHB Bank", "Hong Leong Bank", 
+                                    "AmBank", "UOB Malaysia", "Bank Rakyat", "OCBC Bank", "HSBC Bank", 
+                                    "Bank Islam", "Affin Bank", "Alliance Bank", "Standard Chartered", 
+                                    "MBSB Bank", "BSN (Bank Simpanan Nasional)", "Agrobank", "Bank Muamalat",
+                                    "Kuwait Finance House", "Al Rajhi Bank",
+                                    "GXBank (Digital)", "Aeon Bank (Digital)", "Boost Bank (Digital)"
+                                ];
+                            @endphp
+                            @foreach($banks as $bank)
+                                <option value="{{ $bank }}" class="text-black" {{ old('bank_name', $user->bankName) == $bank ? 'selected' : '' }}>{{ $bank }}</option>
+                            @endforeach
                         </select>
                      </div>
                      <div>
@@ -254,7 +311,6 @@
                  </div>
             </div>
 
-            {{-- FORM 1 SUBMIT BUTTON --}}
             <div class="flex justify-end items-center mt-8 pt-4 border-t border-white/10">
                 <button type="submit" class="bg-[#ea580c] hover:bg-orange-600 text-white font-bold py-3 px-10 rounded-xl shadow-lg transition transform hover:scale-[1.02]">
                     Save Profile Information
@@ -275,8 +331,8 @@
                  <div class="mb-6 max-w-md"> 
                     <label class="block text-gray-400 mb-2 font-bold text-xs uppercase tracking-wider">Current Password</label>
                     <div>
-                        <input type="text" name="current_password" id="current_password" placeholder="Enter current password to confirm" 
-                            class="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white focus:outline-none focus:border-orange-500 focus:bg-white/10 transition placeholder-gray-500">
+                        <input type="password" name="current_password" id="current_password" placeholder="Enter current password to confirm" 
+                            autocomplete="off" class="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white focus:outline-none focus:border-orange-500 focus:bg-white/10 transition placeholder-gray-500">
                     </div>
                  </div>
 
@@ -288,7 +344,7 @@
                         <label class="block text-gray-400 mb-2 font-bold text-xs uppercase tracking-wider">New Password</label>
                         <div class="relative">
                             <input type="password" name="password" id="password" placeholder="Min. 8 characters" 
-                                class="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white focus:outline-none focus:border-orange-500 focus:bg-white/10 transition placeholder-gray-500 pr-10">
+                                autocomplete="new-password" class="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white focus:outline-none focus:border-orange-500 focus:bg-white/10 transition placeholder-gray-500 pr-10">
                             
                             <button type="button" onclick="togglePassword('password', 'icon_pass')" class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-white">
                                 <i class="fas fa-eye" id="icon_pass"></i>
@@ -301,7 +357,7 @@
                         <label class="block text-gray-400 mb-2 font-bold text-xs uppercase tracking-wider">Confirm Password</label>
                         <div class="relative">
                             <input type="password" name="password_confirmation" id="password_confirmation" placeholder="Retype new password" 
-                                class="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white focus:outline-none focus:border-orange-500 focus:bg-white/10 transition placeholder-gray-500 pr-10">
+                                autocomplete="new-password" class="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white focus:outline-none focus:border-orange-500 focus:bg-white/10 transition placeholder-gray-500 pr-10">
                             
                             <button type="button" onclick="togglePassword('password_confirmation', 'icon_confirm')" class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-white">
                                 <i class="fas fa-eye" id="icon_confirm"></i>
@@ -329,7 +385,7 @@
 </div>
 
 <script>
-    // 1. File Upload Preview Logic
+    // 1. File Upload Preview Logic (For Documents)
     function fileSelected(type) {
         const input = document.getElementById(type + '_file');
         const icon = document.getElementById('icon_' + type);
@@ -345,23 +401,7 @@
         }
     }
 
-    // 2. Avatar Preview Logic
-    function previewAvatar(input) {
-        if (input.files && input.files[0]) {
-            var reader = new FileReader();
-            reader.onload = function(e) {
-                const icon = document.getElementById('avatar_icon');
-                if(icon) icon.classList.add('hidden');
-                
-                const img = document.getElementById('avatar_preview');
-                img.src = e.target.result;
-                img.classList.remove('hidden');
-            }
-            reader.readAsDataURL(input.files[0]);
-        }
-    }
-
-    // 3. Password Toggle Logic
+    // 2. Password Toggle Logic
     function togglePassword(inputId, iconId) {
         const input = document.getElementById(inputId);
         const icon = document.getElementById(iconId);

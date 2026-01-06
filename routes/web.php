@@ -17,7 +17,6 @@ use App\Http\Controllers\ReportController;
 use App\Http\Controllers\PageController;
 
 
-
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -53,6 +52,7 @@ Route::middleware('auth')->group(function () {
     // 1. Profile & Auth
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::post('/profile/avatar', [App\Http\Controllers\ProfileController::class, 'updateAvatar'])->name('profile.avatar.update');
     Route::put('/profile/password', [ProfileController::class, 'updatePassword'])->name('profile.password'); 
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
@@ -98,6 +98,8 @@ Route::middleware('auth')->group(function () {
 
 
     Route::post('/notifications/mark-read', [App\Http\Controllers\BookingController::class, 'markNotificationsRead'])->name('notifications.markRead');
+
+    Route::get('/book/invoice/{id}', [BookingController::class, 'streamInvoice'])->name('book.invoice');
 });
 
  // <--- PENUTUP UNTUK CUSTOMER AUTH (JANGAN PADAM)
@@ -137,30 +139,26 @@ Route::middleware('auth')->group(function () {
     // --- FLEET MANAGEMENT ---
     // List Vehicles
     Route::get('/fleet', [FleetController::class, 'index'])->name('staff.fleet.index');
-    
     // Create
     Route::get('/fleet/create', [FleetController::class, 'create'])->name('staff.fleet.create');
     Route::post('/fleet/store', [FleetController::class, 'store'])->name('staff.fleet.store');
-    
     // SHOW DETAILS (The new page)
     Route::get('/fleet/{id}', [FleetController::class, 'show'])->name('staff.fleet.show');
-    
     // Edit/Update
     Route::get('/fleet/{id}/edit', [FleetController::class, 'edit'])->name('staff.fleet.edit');
     Route::put('/fleet/{id}', [FleetController::class, 'update'])->name('staff.fleet.update');
-    
     // Status & Delete
     Route::post('/fleet/status/{id}', [FleetController::class, 'updateStatus'])->name('staff.fleet.status');
     Route::delete('/fleet/{id}', [FleetController::class, 'destroy'])->name('staff.fleet.destroy');
-
     // BLOCK DATE (Add to JSON)
     Route::post('/fleet/{id}/block', [FleetController::class, 'blockDate'])->name('staff.fleet.block');
-    
     // UNBLOCK DATE (Remove from JSON)
     Route::post('/fleet/{id}/unblock', [FleetController::class, 'unblockDate'])->name('staff.fleet.unblock');
     // LOG MAINTENANCE
     Route::post('/fleet/{id}/maintenance', [FleetController::class, 'storeMaintenance'])->name('staff.fleet.maintenance.store');
-    // Separate Inspection Mode
+    // Inside your staff middleware group
+    Route::delete('/fleet/maintenance/{id}', [App\Http\Controllers\FleetController::class, 'destroyMaintenance'])
+        ->name('staff.fleet.maintenance.destroy');
 
     // Customer Management
     Route::get('/customers', [App\Http\Controllers\StaffCustomerController::class, 'index'])->name('staff.customers.index');
@@ -223,5 +221,10 @@ Route::middleware('auth')->group(function () {
     Route::get('/reports', [App\Http\Controllers\ReportController::class, 'index'])->name('staff.reports.index');
     Route::post('/reports/export', [App\Http\Controllers\ReportController::class, 'exportToDrive'])->name('staff.reports.export');
 
-    
+    Route::get('/bookings/{id}/invoice', [StaffBookingController::class, 'streamInvoice'])->name('staff.bookings.invoice');
+
+    // --- FINANCE / DEPOSIT MANAGEMENT ---
+    Route::get('/finance/deposits', [App\Http\Controllers\StaffFinanceController::class, 'index'])->name('staff.finance.deposits');
+    Route::post('/finance/deposits/{id}/refund', [App\Http\Controllers\StaffFinanceController::class, 'processRefund'])->name('staff.finance.refund');
+    Route::post('/finance/deposits/{id}/forfeit', [App\Http\Controllers\StaffFinanceController::class, 'forfeit'])->name('staff.finance.forfeit');
 });

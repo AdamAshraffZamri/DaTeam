@@ -8,9 +8,21 @@ use App\Models\Staff;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Notifications\BookingStatusUpdated;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Storage;
+use App\Services\GoogleDriveService;
+use Illuminate\Support\Facades\Log;
 
 class StaffBookingController extends Controller
 {
+    protected $driveService;
+
+    // 1. Inject the Service
+    public function __construct(GoogleDriveService $driveService)
+    {
+        $this->driveService = $driveService;
+    }
     // --- 1. STAFF DASHBOARD ---
     public function dashboard()
     {
@@ -43,7 +55,7 @@ class StaffBookingController extends Controller
         if ($request->filled('status') && $request->status != 'all') {
             $query->where('bookingStatus', $request->status);
         }
-        
+
         // Search Logic
         if ($request->filled('search')) {
             $term = $request->search;
@@ -129,50 +141,177 @@ class StaffBookingController extends Controller
     }
     public function processReturn(Request $request, $id) {
         $booking = Booking::findOrFail($id);
+        
+        // 1. Update Status to Completed
         $booking->update([
             'bookingStatus' => 'Completed',
             'actualReturnDate' => now()->toDateString(),
             'actualReturnTime' => now()->toTimeString(),
         ]);
+
+        // 2. Refund Deposit & Complete Payment
         if ($booking->payment) {
             $booking->payment->update(['depoStatus' => 'Refunded', 'paymentStatus' => 'Completed']);
         }
+
+        // 3. Trigger Loyalty Points
         $loyaltyController = new \App\Http\Controllers\LoyaltyController();
         $loyaltyController->bookingCompleted($id);
-        return back()->with('success', 'Vehicle returned & Loyalty Points Awarded.');
-    }
-    public function processRefund($id) {
-        $booking = Booking::findOrFail($id);
-        if ($booking->payment && $booking->payment->depoStatus == 'Requested') {
-            $booking->payment->update(['depoStatus' => 'Refunded', 'paymentStatus' => 'Refund Completed']);
-            return back()->with('success', 'Refund issued.');
+
+        try {
+            // --- INVOICE GENERATION START ---
+            
+            // A. Generate PDF Content
+            // Load necessary relationships to ensure PDF has data
+            $booking->loadMissing(['customer', 'vehicle', 'payment']);
+            
+            $pdf = Pdf::loadView('pdf.invoice', compact('booking'));
+            $pdfContent = $pdf->output(); // Get raw PDF string
+
+            // B. Email Invoice to Customer (EXISTING)
+            Mail::send([], [], function ($message) use ($booking, $pdfContent) {
+                $message->to($booking->customer->email)
+                        ->subject('Invoice for Booking #' . $booking->bookingID)
+                        ->attachData($pdfContent, 'Invoice-'.$booking->bookingID.'.pdf', [
+                            'mime' => 'application/pdf',
+                        ]);
+            });
+
+            // C. Upload to Google Drive & Save Link (NEW)
+            // Use app() to resolve the service without constructor injection
+            $driveService = app(\App\Services\GoogleDriveService::class);
+            
+            $timestamp = now()->format('Ymd_Hi');
+            $safeName = preg_replace('/[^A-Za-z0-9 ]/', '', $booking->customer->fullName);
+            $fileName = "Invoice_{$booking->bookingID}_{$safeName}_{$timestamp}.pdf";
+
+            // Upload using the raw content method
+            // Uses GOOGLE_DRIVE_INVOICES from your .env
+            $invoiceLink = $driveService->uploadFromString(
+                $pdfContent, 
+                $fileName, 
+                env('GOOGLE_DRIVE_INVOICES') 
+            );
+
+            // D. Save Link to Database for Customer Dashboard
+            if ($invoiceLink) {
+                $booking->invoiceLink = $invoiceLink;
+                $booking->save();
+            }
+            
+        } catch (\Exception $e) {
+            // Log error but allow the return process to finish
+            \Log::error("Invoice Generation/Upload Failed: " . $e->getMessage());
         }
+
+        return back()->with('success', 'Vehicle returned, Loyalty Points Awarded & Invoice Sent.');
+    }
+    public function processRefund(Request $request, $id) {
+        $booking = Booking::findOrFail($id);
+        
+        if ($booking->payment && $booking->payment->depoStatus == 'Requested') {
+            
+            // 1. Handle Remarks (if provided)
+            if ($request->filled('refund_remarks')) {
+                $oldRemarks = $booking->remarks ? $booking->remarks . "\n\n" : "";
+                // Add a timestamped note
+                $refundNote = "[REFUND " . now()->format('d/m/y H:i') . "]: " . $request->refund_remarks;
+                $booking->update(['remarks' => $oldRemarks . $refundNote]);
+            }
+
+            // 2. Update Status
+            $booking->payment->update([
+                'depoStatus' => 'Refunded', 
+                'paymentStatus' => 'Refund Completed',
+                'depoRefundedDate' => now()
+            ]);
+            
+            // 3. Notify Customer (Optional: Pass remarks to notification if your notification class supports it)
+            // $booking->customer->notify(new \App\Notifications\BookingStatusUpdated($booking, "Your refund has been processed."));
+
+            return back()->with('success', 'Refund issued successfully.');
+        }
+        
         return back()->with('error', 'Error processing refund.');
     }
+
+    // INSPECTION UPLOAD
     public function storeInspection(Request $request, $id) {
-        $requiredCount = ($request->type == 'Pickup') ? 5 : 6;
+        $booking = Booking::with('vehicle')->findOrFail($id);
+        $type = $request->input('type');
+
+        // 1. Determine photo requirements
+        $requiredCount = ($type == 'Pickup') ? 5 : 6;
+        
+        // 2. Validate inputs (Matches your Modal fields)
         $request->validate([
-                'type' => 'required',
-                'photos' => "required|array|size:$requiredCount",
-                'photos.*' => 'image|max:4048',
-            ], [
-                'photos.size' => "Exactly $requiredCount photos are required for $request->type inspection."
-            ]);        
-        $booking = Booking::findOrFail($id);
+            'type' => 'required',
+            'photos' => "required|array|size:$requiredCount",
+            'photos.*' => 'image|max:4048',
+            'mileage' => 'required|numeric',
+            'fuel_level' => 'required',
+        ], [
+            'photos.size' => "Exactly $requiredCount photos are required for $type inspection."
+        ]);
+
+        // 3. Handle File Uploads
         $photoPaths = [];
         if ($request->hasFile('photos')) {
-            foreach ($request->file('photos') as $photo) $photoPaths[] = $photo->store('inspections', 'public');
+            foreach ($request->file('photos') as $photo) {
+                $photoPaths[] = $photo->store('inspections', 'public');
+            }
         }
+        $photoString = json_encode($photoPaths);
+
+        // 4. PREPARE REMARKS & UPDATE FLEET
+        $remarks = "";
+        
+        // Only update vehicle mileage if it is a "Return" inspection
+        if ($type == 'Return') {
+            // A. Update the Master Vehicle Record
+            $booking->vehicle->update([
+                'mileage' => $request->mileage
+            ]);
+
+            // B. Calculate Mileage Used (History Lookup)
+            // We look for the "Pickup" inspection for this specific booking
+            $pickupInspection = \App\Models\Inspection::where('bookingID', $booking->bookingID)
+                ->where('inspectionType', 'Pickup')
+                ->latest()
+                ->first();
+
+            // Determine start mileage: usage from Pickup Inspection, fallback to 0 if missing
+            $startMileage = $pickupInspection ? ($pickupInspection->mileageBefore ?? $pickupInspection->mileageAfter) : 0;
+
+            if ($startMileage > 0) {
+                $diff = $request->mileage - $startMileage;
+                $remarks = "[MILEAGE REPORT]\nStart: {$startMileage} km\nEnd: {$request->mileage} km\nTotal Used: {$diff} km";
+            }
+        }
+
+        // 5. Create Inspection Record
         \App\Models\Inspection::create([
             'bookingID' => $booking->bookingID,
             'staffID' => Auth::guard('staff')->id(), 
-            'inspectionType' => $request->type,
+            'inspectionType' => $type,
             'inspectionDate' => now(),
-            'photosBefore' => $request->type == 'Pickup' ? json_encode($photoPaths) : null,
-            'photosAfter' => $request->type == 'Return' ? json_encode($photoPaths) : null,
+            
+            // Map the new fields
+            'fuelBefore' => ($type == 'Pickup') ? $request->fuel_level : null,
+            'fuelAfter' => ($type == 'Return') ? $request->fuel_level : null,
+            'mileageBefore' => ($type == 'Pickup') ? $request->mileage : null,
+            'mileageAfter' => ($type == 'Return') ? $request->mileage : null,
+            
+            'photosBefore' => ($type == 'Pickup') ? $photoString : null,
+            'photosAfter' => ($type == 'Return') ? $photoString : null,
+
+            'remarks' => $remarks, // Save the calculated mileage text here
         ]);
-        return back()->with('success', 'Inspection uploaded.');
+
+        return back()->with('success', 'Inspection uploaded & vehicle mileage updated.');
     }
+
+    // ASSIGN STAFF TO BOOKING
     public function assignStaff(Request $request, $id) {
         $request->validate(['staff_id' => 'required']);
         Booking::findOrFail($id)->update(['staffID' => $request->staff_id]);
@@ -242,5 +381,19 @@ class StaffBookingController extends Controller
         $notification = auth()->guard('staff')->user()->notifications()->findOrFail($id);
         $notification->markAsRead();
         return back();
+    }
+
+    // STREAM INVOICE AS PDF
+    public function streamInvoice($id)
+    {
+        // 1. Find booking (No customerID check needed for staff)
+        $booking = Booking::with(['customer', 'vehicle', 'payment', 'voucher'])
+                    ->findOrFail($id);
+
+        // 2. Generate and Stream
+        // Staff can preview it even if not strictly "Completed" yet if needed, 
+        // but typically invoice is for completed/paid jobs.
+        $pdf = Pdf::loadView('pdf.invoice', compact('booking'));
+        return $pdf->stream('Invoice-' . $booking->bookingID . '.pdf');
     }
 }

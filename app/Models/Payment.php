@@ -25,4 +25,8 @@ class Payment extends Model
         'installmentDetails', // This stores your proof image path
         'isInstallment'
     ];
+    public function booking()
+    {
+        return $this->belongsTo(Booking::class, 'bookingID', 'bookingID');
+    }
 }

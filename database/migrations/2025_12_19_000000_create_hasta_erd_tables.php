@@ -83,7 +83,7 @@ return new class extends Migration
             $table->string('email')->unique();
             $table->string('phoneNo')->nullable();
             $table->string('stustaffID')->nullable();
-            $table->string('drivingNo')->nullable()->unique();
+            $table->string('driving_license_expiry')->nullable()->unique();
             $table->text('homeAddress')->nullable();
             $table->text('collegeAddress')->nullable();
             $table->string('password');
