@@ -234,30 +234,84 @@ class StaffBookingController extends Controller
         
         return back()->with('error', 'Error processing refund.');
     }
+
+    // INSPECTION UPLOAD
     public function storeInspection(Request $request, $id) {
-        $requiredCount = ($request->type == 'Pickup') ? 5 : 6;
+        $booking = Booking::with('vehicle')->findOrFail($id);
+        $type = $request->input('type');
+
+        // 1. Determine photo requirements
+        $requiredCount = ($type == 'Pickup') ? 5 : 6;
+        
+        // 2. Validate inputs (Matches your Modal fields)
         $request->validate([
-                'type' => 'required',
-                'photos' => "required|array|size:$requiredCount",
-                'photos.*' => 'image|max:4048',
-            ], [
-                'photos.size' => "Exactly $requiredCount photos are required for $request->type inspection."
-            ]);        
-        $booking = Booking::findOrFail($id);
+            'type' => 'required',
+            'photos' => "required|array|size:$requiredCount",
+            'photos.*' => 'image|max:4048',
+            'mileage' => 'required|numeric',
+            'fuel_level' => 'required',
+        ], [
+            'photos.size' => "Exactly $requiredCount photos are required for $type inspection."
+        ]);
+
+        // 3. Handle File Uploads
         $photoPaths = [];
         if ($request->hasFile('photos')) {
-            foreach ($request->file('photos') as $photo) $photoPaths[] = $photo->store('inspections', 'public');
+            foreach ($request->file('photos') as $photo) {
+                $photoPaths[] = $photo->store('inspections', 'public');
+            }
         }
+        $photoString = json_encode($photoPaths);
+
+        // 4. PREPARE REMARKS & UPDATE FLEET
+        $remarks = "";
+        
+        // Only update vehicle mileage if it is a "Return" inspection
+        if ($type == 'Return') {
+            // A. Update the Master Vehicle Record
+            $booking->vehicle->update([
+                'mileage' => $request->mileage
+            ]);
+
+            // B. Calculate Mileage Used (History Lookup)
+            // We look for the "Pickup" inspection for this specific booking
+            $pickupInspection = \App\Models\Inspection::where('bookingID', $booking->bookingID)
+                ->where('inspectionType', 'Pickup')
+                ->latest()
+                ->first();
+
+            // Determine start mileage: usage from Pickup Inspection, fallback to 0 if missing
+            $startMileage = $pickupInspection ? ($pickupInspection->mileageBefore ?? $pickupInspection->mileageAfter) : 0;
+
+            if ($startMileage > 0) {
+                $diff = $request->mileage - $startMileage;
+                $remarks = "[MILEAGE REPORT]\nStart: {$startMileage} km\nEnd: {$request->mileage} km\nTotal Used: {$diff} km";
+            }
+        }
+
+        // 5. Create Inspection Record
         \App\Models\Inspection::create([
             'bookingID' => $booking->bookingID,
             'staffID' => Auth::guard('staff')->id(), 
-            'inspectionType' => $request->type,
+            'inspectionType' => $type,
             'inspectionDate' => now(),
-            'photosBefore' => $request->type == 'Pickup' ? json_encode($photoPaths) : null,
-            'photosAfter' => $request->type == 'Return' ? json_encode($photoPaths) : null,
+            
+            // Map the new fields
+            'fuelBefore' => ($type == 'Pickup') ? $request->fuel_level : null,
+            'fuelAfter' => ($type == 'Return') ? $request->fuel_level : null,
+            'mileageBefore' => ($type == 'Pickup') ? $request->mileage : null,
+            'mileageAfter' => ($type == 'Return') ? $request->mileage : null,
+            
+            'photosBefore' => ($type == 'Pickup') ? $photoString : null,
+            'photosAfter' => ($type == 'Return') ? $photoString : null,
+
+            'remarks' => $remarks, // Save the calculated mileage text here
         ]);
-        return back()->with('success', 'Inspection uploaded.');
+
+        return back()->with('success', 'Inspection uploaded & vehicle mileage updated.');
     }
+
+    // ASSIGN STAFF TO BOOKING
     public function assignStaff(Request $request, $id) {
         $request->validate(['staff_id' => 'required']);
         Booking::findOrFail($id)->update(['staffID' => $request->staff_id]);
