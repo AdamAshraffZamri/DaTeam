@@ -98,11 +98,21 @@
                 </a>
 
                 {{-- Reporting --}}
-                <a href="{{ route('staff.reports.index') }}" 
-                        class="flex items-center px-4 py-3 rounded-xl transition font-bold text-sm
-                        {{ request()->routeIs('staff.reports.*') ? 'bg-orange-600 text-white shadow-lg shadow-orange-500/30' : 'text-gray-500 hover:bg-orange-50 hover:text-orange-600' }}">
-                            <i class="fas fa-chart-bar w-5 mr-3"></i> Reporting & Analysis
-                    </a>
+                <a href="{{ route('staff.reports.index') }}"
+                   class="group flex items-center px-4 py-3.5 rounded-xl transition-all duration-300 font-bold text-sm relative overflow-hidden
+                   {{ request()->routeIs('staff.reports.*') 
+                        ? 'text-white shadow-lg shadow-orange-500/25' 
+                        : 'text-gray-500 hover:bg-orange-50 hover:text-orange-600' }}">
+                    
+                    @if(request()->routeIs('staff.reports.*'))
+                        <div class="absolute inset-0 bg-gradient-to-br from-orange-500 to-orange-600 z-0"></div>
+                    @endif
+
+                    <div class="relative z-10 flex items-center w-full">
+                        <i class="fas fa-chart-bar w-6 text-center mr-3 text-lg {{ request()->routeIs('staff.reports.*') ? 'text-orange-100' : 'text-gray-400 group-hover:text-orange-500 transition-colors' }}"></i> 
+                        <span>Reporting & Analysis</span>
+                    </div>
+                </a>
 
                 {{-- Loyalty --}}
                 <a href="{{ route('staff.loyalty.index') }}" 

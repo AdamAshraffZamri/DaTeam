@@ -33,4 +33,10 @@ class Maintenance extends Model
     {
         return $this->belongsTo(Vehicle::class, 'VehicleID', 'VehicleID');
     }
+
+    // [ADDED] Relationship to Staff
+    public function staff()
+    {
+        return $this->belongsTo(Staff::class, 'StaffID', 'staffID');
+    }
 }
