@@ -65,7 +65,7 @@ class InspectionController extends Controller
             }
         }
         $photoString = json_encode($photoPaths);
-
+        
         // 3. Append Digital Signature (Staff Only)
         $staffName = Auth::guard('staff')->user()->name ?? 'Staff';
         
