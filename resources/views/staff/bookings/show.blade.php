@@ -190,7 +190,7 @@
                         </form>
                     </div>
 
-                    {{-- 4. PAYMENT & DOCUMENTS --}}
+                    {{-- 4. PAYMENT & DOCUMENTS (MODIFIED SECTION) --}}
                     <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 flex flex-col justify-between">
                         <div>
                             <div class="flex justify-between items-center mb-2">
@@ -210,11 +210,16 @@
                             </div>
                         </div>
                         
-                        <div class="grid grid-cols-3 gap-2"> {{-- Changed from grid-cols-2 to grid-cols-3 --}}
+                        <div class="grid grid-cols-3 gap-2"> 
                             
-                            {{-- Receipt --}}
+                            {{-- Receipt Link Logic --}}
                             @if($booking->payment && $booking->payment->installmentDetails)
-                                <a href="{{ asset('storage/' . $booking->payment->installmentDetails) }}" target="_blank" class="flex flex-col items-center justify-center bg-blue-50 border border-blue-200 text-blue-700 py-2 rounded-lg text-xs font-bold hover:bg-blue-100 transition text-center h-full">
+                                @php
+                                    $receiptUrl = str_contains($booking->payment->installmentDetails, 'drive.google.com') 
+                                                ? $booking->payment->installmentDetails 
+                                                : asset('storage/' . $booking->payment->installmentDetails);
+                                @endphp
+                                <a href="{{ $receiptUrl }}" target="_blank" class="flex flex-col items-center justify-center bg-blue-50 border border-blue-200 text-blue-700 py-2 rounded-lg text-xs font-bold hover:bg-blue-100 transition text-center h-full">
                                     <i class="fas fa-receipt mb-1 text-lg"></i> Receipt
                                 </a>
                             @else
@@ -223,9 +228,14 @@
                                 </div>
                             @endif
 
-                            {{-- Agreement --}}
+                            {{-- Agreement Link Logic --}}
                             @if($booking->aggreementLink)
-                                <a href="{{ asset('storage/' . $booking->aggreementLink) }}" target="_blank" class="flex flex-col items-center justify-center bg-purple-50 border border-purple-200 text-purple-700 py-2 rounded-lg text-xs font-bold hover:bg-purple-100 transition text-center h-full">
+                                @php
+                                    $agreementUrl = str_contains($booking->aggreementLink, 'drive.google.com') 
+                                                  ? $booking->aggreementLink 
+                                                  : asset('storage/' . $booking->aggreementLink);
+                                @endphp
+                                <a href="{{ $agreementUrl }}" target="_blank" class="flex flex-col items-center justify-center bg-purple-50 border border-purple-200 text-purple-700 py-2 rounded-lg text-xs font-bold hover:bg-purple-100 transition text-center h-full">
                                     <i class="fas fa-file-signature mb-1 text-lg"></i> Agreement
                                 </a>
                             @else
@@ -234,12 +244,19 @@
                                 </div>
                             @endif
 
-                            {{-- Invoice (NEW) --}}
-                            @if($booking->bookingStatus == 'Completed')
-                                <a href="{{ route('staff.bookings.invoice', $booking->bookingID) }}" target="_blank" class="flex flex-col items-center justify-center bg-emerald-50 border border-emerald-200 text-emerald-700 py-2 rounded-lg text-xs font-bold hover:bg-emerald-100 transition text-center h-full">
+                            {{-- Invoice Link Logic --}}
+                            @if(!empty($booking->invoiceLink))
+                                {{-- Case 1: Already uploaded to Drive --}}
+                                <a href="{{ $booking->invoiceLink }}" target="_blank" class="flex flex-col items-center justify-center bg-emerald-50 border border-emerald-200 text-emerald-700 py-2 rounded-lg text-xs font-bold hover:bg-emerald-100 transition text-center h-full">
                                     <i class="fas fa-file-invoice mb-1 text-lg"></i> Invoice
                                 </a>
+                            @elseif($booking->bookingStatus == 'Completed')
+                                {{-- Case 2: Completed but not on Drive (Generate Stream) --}}
+                                <a href="{{ route('staff.bookings.invoice', $booking->bookingID) }}" target="_blank" class="flex flex-col items-center justify-center bg-emerald-50 border border-emerald-200 text-emerald-700 py-2 rounded-lg text-xs font-bold hover:bg-emerald-100 transition text-center h-full">
+                                    <i class="fas fa-file-invoice mb-1 text-lg"></i> Gen Invoice
+                                </a>
                             @else
+                                {{-- Case 3: Not Ready --}}
                                 <div class="flex flex-col items-center justify-center bg-gray-50 border border-gray-200 text-gray-400 py-2 rounded-lg text-xs font-bold text-center h-full opacity-60" title="Available after completion">
                                     <i class="fas fa-clock mb-1 text-lg"></i> Invoice
                                 </div>

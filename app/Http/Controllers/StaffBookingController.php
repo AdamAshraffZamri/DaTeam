@@ -11,9 +11,18 @@ use App\Notifications\BookingStatusUpdated;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
+use App\Services\GoogleDriveService;
+use Illuminate\Support\Facades\Log;
 
 class StaffBookingController extends Controller
 {
+    protected $driveService;
+
+    // 1. Inject the Service
+    public function __construct(GoogleDriveService $driveService)
+    {
+        $this->driveService = $driveService;
+    }
     // --- 1. STAFF DASHBOARD ---
     public function dashboard()
     {
@@ -132,53 +141,70 @@ class StaffBookingController extends Controller
     }
     public function processReturn(Request $request, $id) {
         $booking = Booking::findOrFail($id);
+        
+        // 1. Update Status to Completed
         $booking->update([
             'bookingStatus' => 'Completed',
             'actualReturnDate' => now()->toDateString(),
             'actualReturnTime' => now()->toTimeString(),
         ]);
+
+        // 2. Refund Deposit & Complete Payment
         if ($booking->payment) {
             $booking->payment->update(['depoStatus' => 'Refunded', 'paymentStatus' => 'Completed']);
         }
+
+        // 3. Trigger Loyalty Points
         $loyaltyController = new \App\Http\Controllers\LoyaltyController();
         $loyaltyController->bookingCompleted($id);
 
         try {
-            $pdf = Pdf::loadView('pdf.invoice', compact('booking'));
+            // --- INVOICE GENERATION START ---
             
-            // 1. (Optional) Save to storage
-            // Storage::put('public/invoices/INV-' . $booking->bookingID . '.pdf', $pdf->output());
+            // A. Generate PDF Content
+            // Load necessary relationships to ensure PDF has data
+            $booking->loadMissing(['customer', 'vehicle', 'payment']);
+            
+            $pdf = Pdf::loadView('pdf.invoice', compact('booking'));
+            $pdfContent = $pdf->output(); // Get raw PDF string
 
-            // 2. Email to Customer
-            Mail::send([], [], function ($message) use ($booking, $pdf) {
+            // B. Email Invoice to Customer (EXISTING)
+            Mail::send([], [], function ($message) use ($booking, $pdfContent) {
                 $message->to($booking->customer->email)
                         ->subject('Invoice for Booking #' . $booking->bookingID)
-                        ->attachData($pdf->output(), 'Invoice-'.$booking->bookingID.'.pdf', [
+                        ->attachData($pdfContent, 'Invoice-'.$booking->bookingID.'.pdf', [
                             'mime' => 'application/pdf',
                         ]);
             });
-           // 3. Upload to Google Drive (NEW LOGIC)
-            // Connect to the specific Invoice Folder
-            $googleDisk = Storage::build([
-                'driver' => 'google',
-                'clientId' => env('GOOGLE_DRIVE_CLIENT_ID'),
-                'clientSecret' => env('GOOGLE_DRIVE_CLIENT_SECRET'),
-                'refreshToken' => env('GOOGLE_DRIVE_REFRESH_TOKEN'),
-                'folderId' => env('GOOGLE_DRIVE_INVOICE'), // Uses the ID you provided
-            ]);
 
-            // Define Folder Name (Creates new folder automatically if it doesn't exist)
-            // Format: "Booking #123 - Customer Name"
-            $folderName = 'Booking #' . $booking->bookingID . ' - ' . preg_replace('/[^A-Za-z0-9 ]/', '', $booking->customer->fullName);
-            $fileName = 'Invoice-' . $booking->bookingID . '.pdf';
+            // C. Upload to Google Drive & Save Link (NEW)
+            // Use app() to resolve the service without constructor injection
+            $driveService = app(\App\Services\GoogleDriveService::class);
+            
+            $timestamp = now()->format('Ymd_Hi');
+            $safeName = preg_replace('/[^A-Za-z0-9 ]/', '', $booking->customer->fullName);
+            $fileName = "Invoice_{$booking->bookingID}_{$safeName}_{$timestamp}.pdf";
 
-            // Upload the file
-            $googleDisk->put($folderName . '/' . $fileName, $pdfContent);
+            // Upload using the raw content method
+            // Uses GOOGLE_DRIVE_INVOICES from your .env
+            $invoiceLink = $driveService->uploadFromString(
+                $pdfContent, 
+                $fileName, 
+                env('GOOGLE_DRIVE_INVOICES') 
+            );
 
+            // D. Save Link to Database for Customer Dashboard
+            if ($invoiceLink) {
+                $booking->invoiceLink = $invoiceLink;
+                $booking->save();
+            }
+            
         } catch (\Exception $e) {
+            // Log error but allow the return process to finish
             \Log::error("Invoice Generation/Upload Failed: " . $e->getMessage());
         }
-        return back()->with('success', 'Vehicle returned & Loyalty Points Awarded.');
+
+        return back()->with('success', 'Vehicle returned, Loyalty Points Awarded & Invoice Sent.');
     }
     public function processRefund(Request $request, $id) {
         $booking = Booking::findOrFail($id);
