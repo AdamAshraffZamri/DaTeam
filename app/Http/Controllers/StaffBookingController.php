@@ -26,171 +26,133 @@ class StaffBookingController extends Controller
     {
         $this->driveService = $driveService;
     }
-    // --- 1. STAFF DASHBOARD ---
+
     public function dashboard(Request $request)
     {
-        // ==========================================
-        // 1. FLEET PULSE & UTILIZATION (For Pie/Bar Widget)
-        // ==========================================
-        $totalVehicles = \App\Models\Vehicle::count();
+        // 1. === GLOBAL METRICS ===
+        $totalRevenue = Booking::where('bookingStatus', '!=', 'Cancelled')->sum('totalCost');
         
-        $activeRentalsCount = Booking::where('bookingStatus', 'Active')->count();
-        
-        // Count vehicles currently in maintenance (Start <= Now <= End)
-        $maintenanceCount = \App\Models\Maintenance::where('start_time', '<=', now())
-                                           ->where('end_time', '>=', now())
-                                           ->count();
+        // Revenue Growth
+        $thisMonthRev = Booking::where('bookingStatus', '!=', 'Cancelled')
+            ->whereMonth('created_at', Carbon::now()->month)
+            ->sum('totalCost');
+            
+        $lastMonthRev = Booking::where('bookingStatus', '!=', 'Cancelled')
+            ->whereMonth('created_at', Carbon::now()->subMonth()->month)
+            ->sum('totalCost');
 
-        // Calculate Percentages (Prevent Division by Zero)
-        $utilizationRate = $totalVehicles > 0 ? ($activeRentalsCount / $totalVehicles) * 100 : 0;
-        $maintenanceRate = $totalVehicles > 0 ? ($maintenanceCount / $totalVehicles) * 100 : 0;
+        $revenueGrowth = ($lastMonthRev > 0) ? round((($thisMonthRev - $lastMonthRev) / $lastMonthRev) * 100, 1) : ($thisMonthRev > 0 ? 100 : 0);
 
+        // Counts
+        $activeRentalsCount = Booking::whereIn('bookingStatus', ['Active', 'Ongoing', 'Picked Up'])->count();
+        $pendingBookingsCount = Booking::whereIn('bookingStatus', ['Pending', 'Submitted', 'Deposit Paid'])->count();
+        $totalCustomers = \App\Models\Customer::count(); 
 
-        // ==========================================
-        // 2. CRITICAL ALERTS & FINANCIALS
-        // ==========================================
-        $pendingBookingsCount = Booking::whereIn('bookingStatus', ['Submitted', 'Deposit Paid'])->count();
-        $totalCustomers = \App\Models\Customer::count();
-        
-        // Total Lifetime Revenue
-        $totalRevenue = Payment::where('paymentStatus', 'Verified')->sum('amount');
-        $revenueGrowth = 12; // Static placeholder for UI
-
-        // Revenue Collected TODAY (Verified today)
-        $todayRevenue = Payment::where('paymentStatus', 'Verified')
-                               ->whereDate('updated_at', Carbon::today())
-                               ->sum('amount');
-
-        // Overdue Returns Logic
-        $overdueCount = Booking::where('bookingStatus', 'Active')
-            ->where(function($q) {
-                // Return Date is in the past (Yesterday or before)
-                $q->where('returnDate', '<', now()->toDateString())
-                  // OR Return Date is Today BUT Time has passed
-                  ->orWhere(function($sub) {
-                      $sub->where('returnDate', '=', now()->toDateString())
-                          ->where('returnTime', '<', now()->format('H:i:s'));
-                  });
-            })
-            ->count();
-
-
-        // ==========================================
-        // 3. OPERATIONAL LISTS (Tabs)
-        // ==========================================
-        $today = Carbon::today();
-        
-        // Pickups Today: Confirmed/Paid bookings starting today
-        $pickupsToday = Booking::with(['customer', 'vehicle'])
-            ->whereDate('originalDate', $today)
-            ->whereIn('bookingStatus', ['Confirmed', 'Paid']) 
-            ->orderBy('bookingTime', 'asc')
-            ->get();
-
-        // Returns Today: Active bookings ending today
-        $returnsToday = Booking::with(['customer', 'vehicle'])
-            ->whereDate('returnDate', $today)
-            ->where('bookingStatus', 'Active') 
-            ->orderBy('returnTime', 'asc')
-            ->get();
-
-        // Recent Activity (Last 5)
-        $recentBookings = Booking::with(['customer', 'vehicle'])
-            ->orderBy('created_at', 'desc')
-            ->take(5)
-            ->get();
-
-
-        // ==========================================
-        // 4. CHART DATA (Last 7 Days)
-        // ==========================================
+        // 2. === CHART DATA ===
+        $period = $request->input('chart_period', 'daily'); 
         $chartLabels = [];
         $chartRevenue = [];
         $chartBookings = [];
 
-        for ($i = 6; $i >= 0; $i--) {
-            $date = Carbon::now()->subDays($i);
-            $chartLabels[] = $date->format('d M'); // "05 Jan"
-            
-            // Daily Revenue
-            $chartRevenue[] = Payment::whereDate('transactionDate', $date)
-                ->where('paymentStatus', 'Verified')
-                ->sum('amount');
-                
-            // Daily Bookings
-            $chartBookings[] = Booking::whereDate('created_at', $date)->count();
+        if ($period === 'monthly') {
+            for ($i = 5; $i >= 0; $i--) {
+                $date = Carbon::now()->subMonths($i);
+                $chartLabels[] = $date->format('M Y');
+                $stats = Booking::whereYear('created_at', $date->year)->whereMonth('created_at', $date->month)->where('bookingStatus', '!=', 'Cancelled')
+                    ->selectRaw('sum(totalCost) as total_money, count(*) as total_count')->first();
+                $chartRevenue[] = $stats->total_money ?? 0;
+                $chartBookings[] = $stats->total_count ?? 0;
+            }
+        } elseif ($period === 'weekly') {
+            for ($i = 7; $i >= 0; $i--) {
+                $date = Carbon::now()->subWeeks($i);
+                $startOfWeek = $date->copy()->startOfWeek();
+                $endOfWeek = $date->copy()->endOfWeek();
+                $chartLabels[] = $startOfWeek->format('d M') . ' - ' . $endOfWeek->format('d M');
+                $stats = Booking::whereBetween('created_at', [$startOfWeek, $endOfWeek])->where('bookingStatus', '!=', 'Cancelled')
+                    ->selectRaw('sum(totalCost) as total_money, count(*) as total_count')->first();
+                $chartRevenue[] = $stats->total_money ?? 0;
+                $chartBookings[] = $stats->total_count ?? 0;
+            }
+        } else {
+            for ($i = 6; $i >= 0; $i--) {
+                $date = Carbon::today()->subDays($i);
+                $chartLabels[] = $date->format('d M');
+                $stats = Booking::whereDate('created_at', $date)->where('bookingStatus', '!=', 'Cancelled')
+                    ->selectRaw('sum(totalCost) as total_money, count(*) as total_count')->first();
+                $chartRevenue[] = $stats->total_money ?? 0;
+                $chartBookings[] = $stats->total_count ?? 0;
+            }
         }
 
+        // 3. === OPERATIONAL LISTS ===
+        $today = Carbon::today();
+        $pickupsToday = Booking::whereDate('originalDate', $today)->where('bookingStatus', '!=', 'Cancelled')->get();
+        $returnsToday = Booking::whereDate('returnDate', $today)->where('bookingStatus', '!=', 'Cancelled')->get();
+        $recentBookings = Booking::latest()->take(5)->get();
+        
+        // 4. === FLEET PULSE ===
+        $totalVehicles = Vehicle::count();
+        $activeVehicles = Booking::whereIn('bookingStatus', ['Active', 'Ongoing'])->count();
+        $utilizationRate = $totalVehicles > 0 ? ($activeVehicles / $totalVehicles) * 100 : 0;
+        $maintenanceRate = 5; 
+        $todayRevenue = Booking::whereDate('created_at', $today)->where('bookingStatus', '!=', 'Cancelled')->sum('totalCost');
+        $overdueCount = Booking::where('returnDate', '<', $today)->whereIn('bookingStatus', ['Active', 'Ongoing'])->count();
 
-        // ==========================================
-        // 5. AVAILABILITY CHECKER LOGIC
-        // ==========================================
+        // 5. === CALENDAR EVENTS ===
+        $calendarEvents = [];
+        $allBookings = Booking::with(['vehicle', 'customer'])
+            ->where('bookingStatus', '!=', 'Cancelled')
+            ->get();
+
+        foreach ($allBookings as $b) {
+            $calendarEvents[] = [
+                'id' => $b->bookingID,
+                'title' => $b->vehicle->plateNo ?? 'Unknown', // <--- JUST PLATE NO
+                'start' => $b->originalDate . 'T' . $b->bookingTime,
+                'end' => $b->returnDate . 'T' . $b->returnTime,
+                'extendedProps' => [
+                    'type' => 'booking',
+                    'plate' => $b->vehicle->plateNo ?? 'Unknown',
+                    'status' => $b->bookingStatus,
+                    'customer_name' => $b->customer->fullName ?? 'Guest' // Store Name Here for Popup
+                ]
+            ];
+        }
+
+        // 6. === SEARCH AVAILABILITY ===
         $searchResults = null;
-        $searchParams = null;
+        $vehicleModels = Vehicle::select('model')->distinct()->pluck('model');
 
-        if ($request->filled(['pickup_date', 'return_date'])) {
-            // Parse inputs with fallback time if not provided
-            $pickupTimeStr = $request->pickup_time ?? '09:00';
-            $returnTimeStr = $request->return_time ?? '09:00';
+        if ($request->has('pickup_date') && $request->has('return_date')) {
+            $pDate = $request->pickup_date . ' ' . ($request->pickup_time ?? '09:00:00');
+            $rDate = $request->return_date . ' ' . ($request->return_time ?? '09:00:00');
+            $reqModel = $request->model;
 
-            $reqStart = Carbon::parse($request->pickup_date . ' ' . $pickupTimeStr);
-            $reqEnd   = Carbon::parse($request->return_date . ' ' . $returnTimeStr);
-            
-            // Query Available Vehicles
-            $searchResults = \App\Models\Vehicle::where('availability', true)
-                ->where(function($q) use ($request) {
-                    if($request->filled('model') && $request->model != 'all') {
-                        $q->where('model', $request->model);
-                    }
+            // Note: 'originalDate' is used for pickup in your DB schema
+            $searchResults = Vehicle::where('availability', 1) // Assuming 1 = available
+                ->whereDoesntHave('bookings', function($q) use ($pDate, $rDate) {
+                    $q->where(function($query) use ($pDate, $rDate) {
+                        $query->whereBetween('originalDate', [$pDate, $rDate])
+                              ->orWhereBetween('returnDate', [$pDate, $rDate])
+                              ->orWhere(function($sub) use ($pDate, $rDate) {
+                                  $sub->where('originalDate', '<', $pDate)
+                                      ->where('returnDate', '>', $rDate);
+                              });
+                    })->where('bookingStatus', '!=', 'Cancelled'); // FIX
                 })
-                ->with(['bookings', 'maintenances'])
-                ->get()
-                ->filter(function($vehicle) use ($reqStart, $reqEnd) {
-                    
-                    // Define Requested Block with 3-hour buffer
-                    $reqEndWithBuffer = $reqEnd->copy()->addHours(3);
-
-                    // A. Check Bookings Overlap
-                    foreach ($vehicle->bookings as $booking) {
-                        if (in_array($booking->bookingStatus, ['Cancelled', 'Rejected'])) continue;
-                        
-                        $bookStart = Carbon::parse($booking->originalDate . ' ' . $booking->bookingTime);
-                        $bookEnd   = Carbon::parse($booking->returnDate . ' ' . $booking->returnTime);
-                        $bookEndWithBuffer = $bookEnd->copy()->addHours(3);
-
-                        // 2-Way Conflict Check
-                        if ($reqStart->lt($bookEndWithBuffer) && $reqEndWithBuffer->gt($bookStart)) {
-                            return false; 
-                        }
-                    }
-
-                    // B. Check Maintenance Overlap
-                    foreach ($vehicle->maintenances as $maint) {
-                        $mStart = Carbon::parse($maint->start_time);
-                        $mEnd   = Carbon::parse($maint->end_time);
-                        
-                        if ($mStart->lt($reqEnd) && $mEnd->gt($reqStart)) {
-                            return false; 
-                        }
-                    }
-
-                    return true; // Vehicle Available
-                });
-            
-            $searchParams = $request->all();
+                ->when($reqModel && $reqModel != 'all', function($q) use ($reqModel) {
+                    return $q->where('model', $reqModel);
+                })
+                ->get();
         }
-
-        // Dropdown options
-        $vehicleModels = \App\Models\Vehicle::select('model')->distinct()->pluck('model');
 
         return view('staff.dashboard', compact(
-            'activeRentalsCount', 'pendingBookingsCount', 'totalCustomers', 
-            'totalRevenue', 'revenueGrowth', 
-            'totalVehicles', 'maintenanceCount', 'utilizationRate', 'maintenanceRate',
-            'overdueCount', 'todayRevenue',
-            'pickupsToday', 'returnsToday', 'recentBookings',
-            'chartLabels', 'chartRevenue', 'chartBookings',
-            'vehicleModels', 'searchResults', 'searchParams'
+            'totalRevenue', 'revenueGrowth', 'activeRentalsCount', 'pendingBookingsCount',
+            'totalCustomers', 'chartLabels', 'chartRevenue', 'chartBookings',
+            'pickupsToday', 'returnsToday', 'recentBookings', 
+            'totalVehicles', 'utilizationRate', 'maintenanceRate', 'todayRevenue', 'overdueCount',
+            'vehicleModels', 'searchResults', 'calendarEvents' 
         ));
     }
 

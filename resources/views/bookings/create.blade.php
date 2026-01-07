@@ -93,7 +93,7 @@
 
                             <select id="pickup_hour" 
                                     onchange="updateHiddenTime('pickup')"
-                                    class="bg-transparent text-white font-bold text-sm border-none p-0 focus:ring-0 cursor-pointer appearance-none text-center w-8">
+                                    class="bg-transparent text-white font-bold text-sm border-none p-0 focus:ring-0 cursor-pointer appearance-none text-center w-6">
                                 @for ($i = 1; $i <= 12; $i++)
                                     <option value="{{ $i }}" {{ $i == 10 ? 'selected' : '' }} class="text-black">
                                         {{ $i }}
@@ -101,7 +101,7 @@
                                 @endfor
                             </select>
 
-                            <span class="text-white font-bold text-sm leading-none">:00</span>
+                            <span class="text-white font-bold text-sm leading-none">: 00</span>
 
                             <select id="pickup_ampm"
                                     class="bg-transparent text-white font-bold text-sm border-none p-0 focus:ring-0 cursor-pointer ml-1 leading-none"
@@ -132,7 +132,7 @@
 
                             <select id="return_hour" 
                                     onchange="updateHiddenTime('return')"
-                                    class="bg-transparent text-white font-bold text-sm border-none p-0 focus:ring-0 cursor-pointer appearance-none text-center w-8">
+                                    class="bg-transparent text-white font-bold text-sm border-none p-0 focus:ring-0 cursor-pointer appearance-none text-center w-6">
                                 @for ($i = 1; $i <= 12; $i++)
                                     <option value="{{ $i }}" {{ $i == 10 ? 'selected' : '' }} class="text-black">
                                         {{ $i }}
@@ -140,7 +140,7 @@
                                 @endfor
                             </select>
 
-                            <span class="text-white font-bold text-sm leading-none">:00</span>
+                            <span class="text-white font-bold text-sm leading-none">: 00</span>
 
                             <select id="return_ampm"
                                     class="bg-transparent text-white font-bold text-sm border-none p-0 focus:ring-0 cursor-pointer ml-1 leading-none"
