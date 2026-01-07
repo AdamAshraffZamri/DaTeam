@@ -6,6 +6,7 @@ use App\Models\Booking;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Notification;
 use Illuminate\Notifications\Messages\MailMessage;
+use Carbon\Carbon;
 
 class BookingStatusUpdated extends Notification
 {
@@ -29,15 +30,32 @@ class BookingStatusUpdated extends Notification
     {
         $statusUpper = strtoupper($this->booking->bookingStatus);
         
+        // Format Dates professionally (e.g., 05 Jan 2026, 10:30 AM)
+        $pickup = Carbon::parse($this->booking->originalDate . ' ' . $this->booking->bookingTime)->format('d M Y, h:i A');
+        $dropoff = Carbon::parse($this->booking->returnDate . ' ' . $this->booking->returnTime)->format('d M Y, h:i A');
+        
+        // Determine color based on status (Optional visual cue)
+        $color = match($this->booking->bookingStatus) {
+            'Confirmed', 'Active', 'Completed' => 'success',
+            'Cancelled', 'Rejected' => 'error',
+            default => 'primary',
+        };
+
         return (new MailMessage)
-            ->subject("Booking #{$this->booking->bookingID}: {$statusUpper}")
-            ->greeting('Hello ' . ($notifiable->fullName ?? 'Customer') . ',') // Customer has 'fullName'
+            ->subject("Update: Booking #{$this->booking->bookingID} is {$statusUpper}")
+            ->greeting('Dear ' . ($notifiable->fullName ?? 'Valued Customer') . ',')
             ->line($this->message)
-            ->line('**Booking Details:**')
-            ->line('Vehicle: ' . ($this->booking->vehicle->model ?? 'Vehicle'))
-            ->line('Status: ' . $this->booking->bookingStatus)
-            ->action('View Details', url('/bookings'))
-            ->line('Thank you for choosing DaTeam!');
+            ->line('') // Spacing
+            ->line('**Reservation Summary**')
+            ->line('🚗 **Vehicle:** ' . ($this->booking->vehicle->model ?? 'Vehicle') . ' (' . ($this->booking->vehicle->plateNo ?? 'N/A') . ')')
+            ->line('📍 **Pickup:** ' . $pickup . ' (' . $this->booking->pickupLocation . ')')
+            ->line('📍 **Return:** ' . $dropoff . ' (' . $this->booking->returnLocation . ')')
+            ->line('💰 **Total Cost:** RM ' . number_format($this->booking->totalCost, 2))
+            ->line('📊 **Current Status:** ' . $this->booking->bookingStatus)
+            ->line('')
+            ->action('View Booking Details', url('/bookings'))
+            ->line('If you have any questions or require further assistance, please do not hesitate to contact our support team.')
+            ->salutation('Best regards,' . "\n" . 'The DaTeam Management');
     }
 
     public function toArray($notifiable)

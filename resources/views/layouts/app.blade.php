@@ -205,7 +205,7 @@
                             <img src="{{ asset('profile.png') }}" alt="Complete Profile" class="w-full h-full object-cover">
                         </div>
                         <h4 class="text-white font-bold text-sm">Complete Profile</h4>
-                        <p class="text-xs text-gray-400 mt-1">Upload a valid driving license and ID/Passport in your profile settings.</p>
+                        <p class="text-xs text-gray-400 mt-1">Please complete all information in your profile settings to verify your account. Account verification is required before booking a vehicle. Any failure to complete this step will result in your booking being denied.</p>
                     </div>
                 </div>
                 <div class="relative flex gap-6 group">
@@ -215,7 +215,7 @@
                             <img src="{{ asset('bookcar.png') }}" alt="Book a Vehicle" class="w-full h-full object-cover">
                         </div>
                         <h4 class="text-white font-bold text-sm">Book a Vehicle</h4>
-                        <p class="text-xs text-gray-400 mt-1">Select your car and dates. Note: Every vehicle has a <span class="text-orange-400">1-day cooldown</span> between bookings.</p>
+                        <p class="text-xs text-gray-400 mt-1">Select pickup location, return location, and dates. Browse your favourable car. Note: Every vehicle has a <span class="text-orange-400">3 hour cooldown</span> between bookings. Please choose your booking date wisely.</p>
                     </div>
                 </div>
                 <div class="relative flex gap-6 group">
@@ -232,40 +232,40 @@
                     <div class="z-10 w-8 h-8 rounded-full bg-blue-500 text-white flex items-center justify-center shadow-[0_0_15px_rgba(59,130,246,0.4)] shrink-0 transition group-hover:scale-110"><i class="fas fa-user-shield text-[10px]"></i></div>
                     <div class="bg-white/5 border border-white/10 p-4 rounded-2xl flex-1 hover:bg-white/10 transition border-l-4 border-l-blue-500">
                         <div class="mb-3 bg-gray-800/50 rounded-xl overflow-hidden border border-white/10 aspect-video ">
-                            <img src="{{ asset('confirmed.png') }}" alt="Staff Verification" class="w-full h-full object-cover">
+                            <img src="{{ asset('confirmed1.png') }}" alt="Staff Verification" class="w-full h-full object-cover">
                         </div>
                         <h4 class="text-white font-bold text-sm">Staff Verification</h4>
-                        <p class="text-xs text-gray-400 mt-1">Wait for verification. Status changes to <span class="text-green-400">Confirmed</span>.</p>
+                        <p class="text-xs text-gray-400 mt-1">Your status after submit is submitted. Please wait for verification. Status changes to <span class="text-green-400">Confirmed</span>.</p>
                     </div>
                 </div>
                 <div class="relative flex gap-6 group">
                     <div class="z-10 w-8 h-8 rounded-full bg-blue-500 text-white flex items-center justify-center shadow-[0_0_15px_rgba(59,130,246,0.4)] shrink-0 transition group-hover:scale-110"><i class="fas fa-camera text-[10px]"></i></div>
                     <div class="bg-white/5 border border-white/10 p-4 rounded-2xl flex-1 hover:bg-white/10 transition border-l-4 border-l-blue-500">
                         <div class="mb-3 bg-gray-800/50 rounded-xl overflow-hidden border border-white/10 aspect-video">
-                            <img src="{{ asset('pickup.png') }}" alt="Pickup Inspection" class="w-full h-full object-cover">
+                            <img src="{{ asset('pickup1.png') }}" alt="Pickup Inspection" class="w-full h-full object-cover">
                         </div>
                         <h4 class="text-white font-bold text-sm">Pickup Inspection</h4>
-                        <p class="text-xs text-gray-400 mt-1">Upload <span class="font-bold text-white">5 specific photos</span> to activate your rental.</p>
+                        <p class="text-xs text-gray-400 mt-1">Upload <span class="font-bold text-white">5 specific photos and some information</span> to activate your rental.</p>
                     </div>
                 </div>
                 <div class="relative flex gap-6 group">
                     <div class="z-10 w-8 h-8 rounded-full bg-blue-500 text-white flex items-center justify-center shadow-[0_0_15px_rgba(59,130,246,0.4)] shrink-0 transition group-hover:scale-110"><i class="fas fa-key text-[10px]"></i></div>
                     <div class="bg-white/5 border border-white/10 p-4 rounded-2xl flex-1 hover:bg-white/10 transition border-l-4 border-l-blue-500">
                         <div class="mb-3 bg-gray-800/50 rounded-xl overflow-hidden border border-white/10 aspect-video ">
-                            <img src="{{ asset('return.png') }}" alt="Return & Key Check" class="w-full h-full object-cover">
+                            <img src="{{ asset('return1.png') }}" alt="Return & Key Check" class="w-full h-full object-cover">
                         </div>
                         <h4 class="text-white font-bold text-sm">Return & Key Check</h4>
-                        <p class="text-xs text-gray-400 mt-1">Upload <span class="font-bold text-white">6 photos</span> upon return to end the session.</p>
+                        <p class="text-xs text-gray-400 mt-1">Upload <span class="font-bold text-white">6 photos and some information</span> upon return to end the session.</p>
                     </div>
                 </div>
                 <div class="relative flex gap-6 group pb-4">
                     <div class="z-10 w-8 h-8 rounded-full bg-emerald-500 text-white flex items-center justify-center shadow-[0_0_15px_rgba(16,185,129,0.4)] shrink-0 transition group-hover:scale-110"><i class="fas fa-check-circle text-[10px]"></i></div>
                     <div class="bg-emerald-500/10 border border-emerald-500/20 p-4 rounded-2xl flex-1 hover:bg-emerald-500/20 transition">
                         <div class="mb-3 bg-gray-800/50 rounded-xl overflow-hidden border border-emerald-500/20 aspect-video">
-                            <img src="{{ asset('done.png') }}" alt="Completion" class="w-full h-full object-cover">
+                            <img src="{{ asset('completed1.png') }}" alt="Completion" class="w-full h-full object-cover">
                         </div>
                         <h4 class="text-emerald-400 font-bold text-sm">Completion</h4>
-                        <p class="text-xs text-gray-300 mt-1">Staff performs final verification and deposit is refunded shortly.</p>
+                        <p class="text-xs text-gray-300 mt-1">Staff performs final verification and deposit is refunded shortly. Your deposit will burn if you break any rules in agreement.</p>
                     </div>
                 </div>
             </div>
