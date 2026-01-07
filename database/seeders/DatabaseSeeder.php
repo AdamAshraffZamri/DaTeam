@@ -29,8 +29,8 @@ class DatabaseSeeder extends Seeder
         // 4. Generate Bookings for the 4 Customers
         $this->seedBookings();
 
-        // 5. Seed Rewards
-        $this->seedRewards();
+        // 5. Seed Rewards (Optional - uncomment if Reward model exists)
+        // $this->seedRewards();
     }
 
     /**
