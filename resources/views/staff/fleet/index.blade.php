@@ -1,7 +1,7 @@
 @extends('layouts.staff')
 
 @section('content')
-<div class="min-h-screen bg-gray-100 rounded-2xl p-6">
+<div class="min-h-screen bg-slate-100 rounded-2xl p-6">
     <div class="max-w-7xl mx-auto">
 
         {{-- HEADER & ACTIONS --}}
@@ -99,7 +99,6 @@
         <div class="space-y-3">
             @foreach($vehicles as $vehicle)
             {{-- LINK TO SHOW PAGE --}}
-            {{-- Added 'animate-fade-in' class here --}}
             <a href="{{ route('staff.fleet.show', $vehicle->VehicleID) }}" class="animate-fade-in fleet-item block bg-white rounded-xl p-2 pr-4 border border-gray-100 shadow-sm hover:shadow-md transition-all group">
                 
                 <div class="flex flex-col md:flex-row items-center gap-4 md:gap-8">
@@ -110,7 +109,9 @@
                         @else
                             <i class="fas fa-car text-gray-300 text-2xl"></i>
                         @endif
-                        @if(!$vehicle->availability)
+                        
+                        {{-- UPDATED OVERLAY LOGIC: Only show Inactive if NOT Rented AND NOT Available --}}
+                        @if(!$vehicle->availability && !$vehicle->isBookedToday)
                             <div class="absolute inset-0 bg-gray-900/60 backdrop-blur-[1px] flex items-center justify-center">
                                 <span class="text-[10px] font-bold text-white bg-black/50 px-2 py-0.5 rounded border border-white/20">Inactive</span>
                             </div>
@@ -141,13 +142,13 @@
                     {{-- STATUS & TOGGLE (Click.stop prevents navigation when toggling) --}}
                     <div class="flex items-center justify-between w-full md:w-auto md:justify-end gap-6 border-t md:border-t-0 border-gray-100 pt-3 md:pt-0 mt-2 md:mt-0">
                         <div class="text-right">
-                            @if($vehicle->availability == 0)
-                                <div class="flex items-center bg-gray-100 px-3 py-1.5 rounded-lg border border-gray-200">
-                                    <span class="w-1.5 h-1.5 rounded-full bg-gray-400 mr-2"></span><span class="text-[10px] font-bold text-gray-500 uppercase">Offline</span>
-                                </div>
-                            @elseif($vehicle->isBookedToday)
+                            @if($vehicle->isBookedToday)
                                 <div class="flex items-center bg-orange-50 px-3 py-1.5 rounded-lg border border-orange-100">
                                     <span class="w-1.5 h-1.5 rounded-full bg-orange-500 mr-2 animate-pulse"></span><span class="text-[10px] font-bold text-orange-600 uppercase">Rented</span>
+                                </div>
+                            @elseif($vehicle->availability == 0)
+                                <div class="flex items-center bg-gray-100 px-3 py-1.5 rounded-lg border border-gray-200">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-gray-400 mr-2"></span><span class="text-[10px] font-bold text-gray-500 uppercase">Offline</span>
                                 </div>
                             @else
                                 <div class="flex items-center bg-green-50 px-3 py-1.5 rounded-lg border border-green-100">
@@ -157,7 +158,8 @@
                         </div>
                         <form action="{{ route('staff.fleet.status', $vehicle->VehicleID) }}" method="POST" @click.stop>
                             @csrf
-                            <button type="submit" class="w-9 h-9 rounded-lg flex items-center justify-center transition-all border shadow-sm {{ $vehicle->availability ? 'bg-white text-gray-300 border-gray-200 hover:bg-red-50 hover:text-red-500' : 'bg-gray-800 text-white border-transparent hover:bg-gray-700' }}">
+                            {{-- UPDATED BUTTON LOGIC: Show Active (White) if Available OR Rented --}}
+                            <button type="submit" class="w-9 h-9 rounded-lg flex items-center justify-center transition-all border shadow-sm {{ ($vehicle->availability || $vehicle->isBookedToday) ? 'bg-white text-gray-300 border-gray-200 hover:bg-red-50 hover:text-red-500' : 'bg-gray-800 text-white border-transparent hover:bg-gray-700' }}">
                                 <i class="fas fa-power-off text-sm"></i>
                             </button>
                         </form>
@@ -187,7 +189,7 @@
         if (menu.classList.contains('hidden')) {
             // Open
             menu.classList.remove('hidden');
-            menu.classList.add('animate-fade-in-down'); // Added Animation here
+            menu.classList.add('animate-fade-in-down');
             if(arrow) arrow.style.transform = 'rotate(180deg)';
         } else {
             // Close
@@ -197,10 +199,7 @@
     }
 
     function selectStatus(value) {
-        // 1. Set hidden input value
         document.getElementById('statusInput').value = value;
-        
-        // 2. Submit form immediately
         document.getElementById('filterForm').submit();
     }
 
@@ -221,7 +220,6 @@
     .no-scrollbar::-webkit-scrollbar { display: none; } 
     .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     
-    /* ADDED ANIMATION STYLES */
     @keyframes fade-in { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
     .animate-fade-in { animation: fade-in 0.2s ease-out forwards; }
     .animate-fade-in-down { animation: fade-in 0.15s ease-out forwards; }

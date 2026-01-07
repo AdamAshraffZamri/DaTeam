@@ -2,7 +2,7 @@
 
 @section('content')
 
-<div class="min-h-screen bg-gray-100 rounded-2xl p-6">
+<div class="min-h-screen bg-slate-100 rounded-2xl p-6">
     <div class="max-w-7xl mx-auto">
 
         {{-- HEADER WITH SEARCH AND FILTER --}}

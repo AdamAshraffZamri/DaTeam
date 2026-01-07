@@ -14,13 +14,8 @@
 </style>
 
 {{-- GREY BACKGROUND RECTANGLE --}}
-<div class="min-h-screen bg-gray-100 rounded-2xl p-6">
+<div class="min-h-screen bg-slate-100 rounded-2xl p-6">
     <div class="max-w-7xl mx-auto">
-
-        {{-- BACK BUTTON --}}
-        <a href="{{ route('staff.fleet.index') }}" class="inline-flex items-center text-gray-500 hover:text-gray-900 mb-6 transition">
-            <i class="fas fa-arrow-left mr-2"></i> Back to Fleet
-        </a>
 
         {{-- === 1. SUCCESS MESSAGE === --}}
         @if(session('success'))
