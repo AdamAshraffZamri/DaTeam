@@ -1,6 +1,9 @@
 @extends('layouts.app')
 
 @section('content')
+{{-- SweetAlert2 for Validation Popups --}}
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
 <style>
     /* Scoped Styles */
     @keyframes blob {
@@ -146,4 +149,38 @@
         </div>
     </div>
 </div>
+
+{{-- VALIDATION ERROR POPUP --}}
+@if ($errors->any())
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const errors = @json($errors->messages());
+        let errorMessages = '<ul style="text-align: left;">';
+        
+        for (const [field, messages] of Object.entries(errors)) {
+            messages.forEach(message => {
+                errorMessages += `<li style="margin: 8px 0;">${message}</li>`;
+            });
+        }
+        errorMessages += '</ul>';
+        
+        Swal.fire({
+            icon: 'error',
+            title: '❌ Invalid Information',
+            html: errorMessages,
+            confirmButtonColor: '#ea580c',
+            confirmButtonText: 'Try Again',
+            allowOutsideClick: false,
+            allowEscapeKey: false,
+            background: '#353639ff',
+            color: '#fff',
+            customClass: {
+                popup: 'border border-red-500/30 backdrop-blur-md',
+                confirmButton: 'bg-orange-600 hover:bg-orange-700 text-white px-6 py-2 rounded-lg font-bold'
+            }
+        });
+    });
+</script>
+@endif
+
 @endsection
