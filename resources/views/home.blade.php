@@ -56,7 +56,7 @@
         <div class="flex justify-center animate-fade-in-up">
             <div class="bg-white/10 backdrop-blur-md border border-white/20 rounded-full p-1.5 flex flex-wrap justify-center md:flex-nowrap items-center shadow-2xl">
                 <a href="{{ route('book.create') }}" class="px-6 md:px-8 py-2.5 text-white/90 font-bold hover:bg-white/10 rounded-full transition text-sm md:text-base">
-                    Book a Car
+                    Book Now
                 </a>
                 <a href="{{ route('book.index') }}" class="px-6 md:px-8 py-2.5 text-white/90 font-bold hover:bg-white/10 rounded-full transition text-sm md:text-base">
                     My Bookings
@@ -82,7 +82,7 @@
             
             <div class="flex flex-col sm:flex-row gap-4 justify-center">
                 <a href="{{ route('book.create') }}" class="px-10 py-4 bg-orange-600 hover:bg-orange-700 text-white font-bold rounded-full transition transform hover:scale-105 shadow-lg shadow-orange-600/30 flex items-center justify-center">
-                    Book Now <i class="fas fa-arrow-right ml-3"></i>
+                    Book a Vehicle <i class="fas fa-arrow-right ml-3"></i>
                 </a>
                 <a href="#fleet-showcase" class="px-10 py-4 bg-white/10 hover:bg-white/20 text-white font-bold rounded-full backdrop-blur-md border border-white/20 transition flex items-center justify-center">
                     View Fleet

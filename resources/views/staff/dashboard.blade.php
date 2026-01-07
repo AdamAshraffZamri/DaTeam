@@ -98,14 +98,14 @@
             <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm hover:border-orange-200 transition-colors group">
                 <div class="flex justify-between items-start">
                     <div>
-                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Revenue</p>
-                        <h3 class="text-2xl font-bold text-slate-800 mt-1">RM {{ number_format($totalRevenue) }}</h3>
+                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Revenue</p>
+                        <h3 class="text-2xl font-black text-slate-800 mt-1">RM {{ number_format($totalRevenue) }}</h3>
                     </div>
-                    <div class="p-2 bg-green-50 text-green-600 rounded-lg group-hover:bg-green-100 transition-colors">
+                    <div class="p-2.5 bg-green-100 text-green-700 rounded-xl group-hover:bg-green-600 group-hover:text-white transition-all shadow-sm">
                         <i class="fas fa-wallet text-lg"></i>
                     </div>
                 </div>
-                <div class="mt-3 text-[10px] font-medium text-green-600 flex items-center gap-1">
+                <div class="mt-3 text-[10px] font-bold text-green-600 flex items-center gap-1">
                     <i class="fas fa-arrow-up"></i> {{ $revenueGrowth }}% vs last month
                 </div>
             </div>
@@ -113,29 +113,29 @@
             <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm hover:border-orange-200 transition-colors group">
                 <div class="flex justify-between items-start">
                     <div>
-                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Active Rentals</p>
-                        <h3 class="text-2xl font-bold text-slate-800 mt-1">{{ $activeRentalsCount }}</h3>
+                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Active Rentals</p>
+                        <h3 class="text-2xl font-black text-slate-800 mt-1">{{ $activeRentalsCount }}</h3>
                     </div>
-                    <div class="p-2 bg-blue-50 text-blue-600 rounded-lg group-hover:bg-blue-100 transition-colors">
+                    <div class="p-2.5 bg-blue-100 text-blue-700 rounded-xl group-hover:bg-blue-600 group-hover:text-white transition-all shadow-sm">
                         <i class="fas fa-car-side text-lg"></i>
                     </div>
                 </div>
                 <div class="mt-3 w-full bg-gray-100 rounded-full h-1.5 overflow-hidden">
-                    <div class="bg-blue-500 h-1.5 rounded-full" style="width: 60%"></div>
+                    <div class="bg-blue-600 h-1.5 rounded-full" style="width: 60%"></div>
                 </div>
             </div>
 
             <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm hover:border-orange-200 transition-colors group">
                 <div class="flex justify-between items-start">
                     <div>
-                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Pending</p>
-                        <h3 class="text-2xl font-bold text-slate-800 mt-1">{{ $pendingBookingsCount }}</h3>
+                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Pending</p>
+                        <h3 class="text-2xl font-black text-slate-800 mt-1">{{ $pendingBookingsCount }}</h3>
                     </div>
-                    <div class="p-2 bg-orange-50 text-orange-600 rounded-lg group-hover:bg-orange-100 transition-colors">
+                    <div class="p-2.5 bg-orange-100 text-orange-700 rounded-xl group-hover:bg-orange-600 group-hover:text-white transition-all shadow-sm">
                         <i class="fas fa-hourglass-half text-lg"></i>
                     </div>
                 </div>
-                <div class="mt-3 text-[10px] font-medium text-orange-600">
+                <div class="mt-3 text-[10px] font-bold text-orange-600">
                     Needs verification
                 </div>
             </div>
@@ -143,14 +143,14 @@
             <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm hover:border-orange-200 transition-colors group">
                 <div class="flex justify-between items-start">
                     <div>
-                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Customers</p>
-                        <h3 class="text-2xl font-bold text-slate-800 mt-1">{{ $totalCustomers }}</h3>
+                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Customers</p>
+                        <h3 class="text-2xl font-black text-slate-800 mt-1">{{ $totalCustomers }}</h3>
                     </div>
-                    <div class="p-2 bg-purple-50 text-purple-600 rounded-lg group-hover:bg-purple-100 transition-colors">
+                    <div class="p-2.5 bg-purple-100 text-purple-700 rounded-xl group-hover:bg-purple-600 group-hover:text-white transition-all shadow-sm">
                         <i class="fas fa-users text-lg"></i>
                     </div>
                 </div>
-                <div class="mt-3 text-[10px] font-medium text-slate-400">
+                <div class="mt-3 text-[10px] font-bold text-slate-400">
                     Total registered users
                 </div>
             </div>
@@ -237,7 +237,7 @@
                                     {{-- Recent Tab --}}
                                     <button @click="currentTab = 'recent'" 
                                         class="flex-1 sm:flex-none px-4 py-2 rounded-full text-xs font-bold transition-all flex items-center justify-center gap-2"
-                                        :class="currentTab === 'recent' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:bg-gray-200/50'">
+                                        :class="currentTab === 'recent' ? 'bg-blue-50 text-blue-600 shadow-sm' : 'text-slate-500 hover:bg-gray-200/50'">
                                         Recent
                                         <span class="w-5 h-5 rounded-full flex items-center justify-center text-[9px]"
                                             :class="currentTab === 'recent' ? 'bg-blue-50 text-blue-600' : 'bg-white text-slate-500'">
@@ -293,10 +293,38 @@
             <div class="xl:col-span-1 space-y-6">
                 
                 {{-- Availability Checker --}}
-                <div class="bg-white rounded-xl p-6 text-slate-900 shadow-lg relative overflow-hidden">
+                <div class="bg-white rounded-xl p-6 text-slate-900 shadow-lg relative overflow-hidden"
+                     x-data="{ 
+                        pDate: '{{ request('pickup_date') }}', 
+                        rDate: '{{ request('return_date') }}',
+                        pTime: '{{ request('pickup_time', '09:00') }}',
+                        rTime: '{{ request('return_time', '09:00') }}',
+                        setToday() {
+                            // Get today's date in YYYY-MM-DD format based on local time
+                            const today = new Date();
+                            const year = today.getFullYear();
+                            const month = String(today.getMonth() + 1).padStart(2, '0');
+                            const day = String(today.getDate()).padStart(2, '0');
+                            const formatted = `${year}-${month}-${day}`;
+                            
+                            this.pDate = formatted;
+                            this.rDate = formatted;
+                            this.pTime = '00:00';
+                            this.rTime = '23:00';
+                        }
+                     }">
+                    
                     <div class="absolute -top-10 -right-10 w-32 h-32 bg-orange-200 rounded-full blur-3xl opacity-60 pointer-events-none"></div>
-                    <h2 class="text-lg font-bold text-slate-800 truncate mr-5">Check Vehicle Availability</h2>
-                    <p class="text-slate-500 text-xs font-medium mb-5 relative z-10">Instant fleet search for walk-ins.</p>
+                    
+                    <div class="flex justify-between items-start relative z-10 mb-4">
+                        <div>
+                            <h2 class="text-lg font-bold text-slate-800 truncate">Check Availability</h2>
+                            <p class="text-slate-500 text-xs font-medium">Instant fleet search.</p>
+                        </div>
+                        <button @click="setToday()" type="button" class="bg-slate-100 hover:bg-slate-200 text-slate-700 text-[10px] font-bold px-2.5 py-1.5 rounded-lg transition-colors flex items-center gap-1">
+                            <i class="fas fa-calendar-day"></i> Today
+                        </button>
+                    </div>
 
                     <form action="{{ route('staff.dashboard') }}" method="GET" class="space-y-4 relative z-10">
                         <div>
@@ -304,13 +332,14 @@
                             <div class="grid grid-cols-2 gap-2">
                                 <div>
                                     <span class="text-[9px] text-slate-500 block mb-1">Pickup</span>
-                                    <input type="date" name="pickup_date" value="{{ request('pickup_date') }}" class="w-full bg-white border border-slate-200 text-slate-800 text-xs font-bold rounded-lg px-3 py-2 focus:border-orange-500 focus:ring-0 outline-none transition-colors" required>
-                                    <input type="time" name="pickup_time" value="{{ request('pickup_time', '09:00') }}" class="w-full bg-white border border-slate-200 text-slate-800 text-xs font-bold rounded-lg px-3 py-2 mt-1 focus:border-orange-500 focus:ring-0 outline-none transition-colors">
+                                    <input type="date" name="pickup_date" x-model="pDate" class="w-full bg-white border border-slate-200 text-slate-800 text-xs font-bold rounded-lg px-3 py-2 focus:border-orange-500 focus:ring-0 outline-none transition-colors" required>
+                                    {{-- step="3600" forces 1 hour steps, effectively hiding minutes in many browsers --}}
+                                    <input type="time" name="pickup_time" x-model="pTime" step="3600" class="w-full bg-white border border-slate-200 text-slate-800 text-xs font-bold rounded-lg px-3 py-2 mt-1 focus:border-orange-500 focus:ring-0 outline-none transition-colors">
                                 </div>
                                 <div>
                                     <span class="text-[9px] text-slate-500 block mb-1">Return</span>
-                                    <input type="date" name="return_date" value="{{ request('return_date') }}" class="w-full bg-white border border-slate-200 text-slate-800 text-xs font-bold rounded-lg px-3 py-2 focus:border-orange-500 focus:ring-0 outline-none transition-colors" required>
-                                    <input type="time" name="return_time" value="{{ request('return_time', '09:00') }}" class="w-full bg-white border border-slate-200 text-slate-800 text-xs font-bold rounded-lg px-3 py-2 mt-1 focus:border-orange-500 focus:ring-0 outline-none transition-colors">
+                                    <input type="date" name="return_date" x-model="rDate" class="w-full bg-white border border-slate-200 text-slate-800 text-xs font-bold rounded-lg px-3 py-2 focus:border-orange-500 focus:ring-0 outline-none transition-colors" required>
+                                    <input type="time" name="return_time" x-model="rTime" step="3600" class="w-full bg-white border border-slate-200 text-slate-800 text-xs font-bold rounded-lg px-3 py-2 mt-1 focus:border-orange-500 focus:ring-0 outline-none transition-colors">
                                 </div>
                             </div>
                         </div>
@@ -481,6 +510,19 @@
     document.addEventListener('DOMContentLoaded', function() {
         const ctx = document.getElementById('dashboardChart').getContext('2d');
         
+        // 1. CLEAN DATA: Ensure backend data are numbers, not strings with commas
+        const rawRevenue = @json($chartRevenue);
+        const rawBookings = @json($chartBookings);
+
+        const cleanRevenue = rawRevenue.map(val => {
+            // Convert to string, remove commas, parse as float, default to 0 if null
+            return parseFloat(String(val).replace(/,/g, '')) || 0;
+        });
+
+        const cleanBookings = rawBookings.map(val => {
+            return parseFloat(String(val).replace(/,/g, '')) || 0;
+        });
+
         let gradientSales = ctx.createLinearGradient(0, 0, 0, 300);
         gradientSales.addColorStop(0, 'rgba(249, 115, 22, 0.15)'); // Orange
         gradientSales.addColorStop(1, 'rgba(249, 115, 22, 0)');
@@ -492,7 +534,7 @@
                 datasets: [
                     {
                         label: 'Revenue',
-                        data: @json($chartRevenue),
+                        data: cleanRevenue, // Use the cleaned data
                         borderColor: '#f97316', // Orange
                         backgroundColor: gradientSales,
                         borderWidth: 2,
@@ -504,7 +546,7 @@
                     },
                     {
                         label: 'Bookings',
-                        data: @json($chartBookings),
+                        data: cleanBookings, // Use the cleaned data
                         borderColor: '#3b82f6', // Bright Blue
                         backgroundColor: '#3b82f6',
                         borderWidth: 3,
@@ -528,7 +570,21 @@
                         titleColor: '#1e293b',
                         bodyColor: '#1e293b',
                         borderColor: '#e2e8f0',
-                        borderWidth: 1
+                        borderWidth: 1,
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.dataset.label || '';
+                                if (label) {
+                                    label += ': ';
+                                }
+                                if (context.dataset.label === 'Revenue') {
+                                    label += 'RM ' + context.parsed.y.toLocaleString();
+                                } else {
+                                    label += context.parsed.y;
+                                }
+                                return label;
+                            }
+                        }
                     }
                 },
                 interaction: { mode: 'index', intersect: false },
@@ -537,28 +593,39 @@
                         grid: { display: false }, 
                         ticks: { font: { size: 10, family: 'sans-serif' }, color: '#94a3b8' } 
                     },
+                    // Revenue Axis (Left)
                     y: { 
-                        display: true, // <--- CHANGED TO TRUE (SHOWS SCALES)
+                        display: true,
                         beginAtZero: true,
-                        suggestedMin: -100, // Forces negative scale
+                        suggestedMax: 100, // Prevents 0-1 decimal scale if data is empty
+                        type: 'linear',
+                        position: 'left',
                         grid: { 
                             borderDash: [4, 4],
-                            color: '#f1f5f9', // Very light grid lines
+                            color: '#f1f5f9', 
                             drawBorder: false 
                         },
                         ticks: { 
                             font: { size: 10, family: 'sans-serif' }, 
-                            color: '#94a3b8',
-                            callback: function(value) { return 'RM ' + value; } // Adds 'RM' prefix
+                            color: '#f97316',
+                            // Ensure no decimals are shown if the range is small
+                            precision: 0, 
+                            callback: function(value) { return 'RM ' + value; }
                         }
                     },
+                    // Bookings Axis (Right)
                     y1: { 
-                        display: false, // Keep secondary axis hidden to avoid clutter
-                        beginAtZero: true,
+                        display: true,
+                        type: 'linear',
                         position: 'right',
-                        min: 0, 
-                        suggestedMax: 5, 
-                        grid: { drawOnChartArea: false }
+                        beginAtZero: true,
+                        suggestedMax: 5,
+                        grid: { drawOnChartArea: false },
+                        ticks: {
+                            stepSize: 1,
+                            font: { size: 10, family: 'sans-serif' },
+                            color: '#3b82f6'
+                        }
                     }
                 }
             }

@@ -154,7 +154,7 @@
             <div class="bg-white/10 backdrop-blur-md border border-white/20 rounded-full p-1.5 flex items-center shadow-2xl">
                 <a href="{{ route('book.create') }}" 
                    class="px-8 py-2.5 rounded-full font-bold transition {{ (request()->routeIs('book.create') || request()->routeIs('book.search') || request()->routeIs('book.show') || request()->routeIs('book.payment') || request()->routeIs('book.payment.submit')) ? 'nav-link-active' : 'text-white/80 hover:bg-white/10' }}">
-                    Book a Car
+                    Book Now
                 </a>
                 <a href="{{ route('book.index') }}" 
                    class="px-8 py-2.5 rounded-full font-bold transition {{ (request()->routeIs('book.index') || request()->routeIs('book.cancel')) ? 'nav-link-active' : 'text-white/80 hover:bg-white/10' }}">
@@ -186,7 +186,7 @@
         <div class="absolute top-1/2 -right-2 w-1.5 h-1.5 bg-orange-300 rounded-full animate-float-3 opacity-60"></div>
     </button>
 
-    <div id="help-modal" class="fixed inset-0 z-[10000] hidden bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
+    <div id="help-modal" class="fixed inset-0 z-[10000] hidden bg-black/60 backdrop-blur-md flex items-center justify-center p-4">
         <div class="bg-[#1a1a1a] border border-white/10 rounded-[2.5rem] max-w-3xl w-full p-8 relative shadow-2xl overflow-hidden">
             <div class="absolute -top-24 -right-24 w-48 h-48 bg-orange-600/20 blur-[80px] rounded-full"></div>
             <button onclick="document.getElementById('help-modal').classList.add('hidden')" class="absolute top-6 right-6 text-gray-500 hover:text-white transition">

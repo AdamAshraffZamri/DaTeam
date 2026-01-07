@@ -12,8 +12,9 @@
             </div>
 
             <div class="flex flex-col md:flex-row gap-3 w-full md:w-auto">
-                {{-- Search & Filters Form --}}
-                <form action="{{ route('staff.fleet.index') }}" method="GET" id="filterForm" class="contents">
+                
+                {{-- SEARCH & FILTERS FORM --}}
+                <form action="{{ route('staff.fleet.index') }}" method="GET" id="filterForm" class="flex flex-col md:flex-row gap-3 w-full md:w-auto">
                     
                     {{-- 1. Search Bar --}}
                     <div class="relative w-full md:w-64 group">
@@ -22,30 +23,84 @@
                         <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-hover:text-orange-500 transition-colors"></i>
                     </div>
 
-                    {{-- 2. Model Filter --}}
-                    <div class="relative w-full md:w-48">
-                        <select name="model" onchange="this.form.submit()" 
-                            class="w-full bg-white border border-gray-200 text-gray-700 text-xs font-bold py-3.5 px-4 rounded-2xl appearance-none focus:outline-none focus:border-orange-500 transition-all shadow-sm cursor-pointer hover:shadow-md">
-                            <option value="all">All Models</option>
+                    {{-- 2. Model Filter (With Visible Count) --}}
+                    <div class="relative w-full md:w-[220px]" id="modelDropdown">
+                        <input type="hidden" name="model" id="modelInput" value="{{ request('model', 'all') }}">
+                        
+                        {{-- Calculate Current Count for Display on Button --}}
+                        @php
+                            $currentModel = request('model', 'all');
+                            $displayCount = ($currentModel == 'all') 
+                                ? $vehicles->count() 
+                                : $vehicles->where('model', $currentModel)->count();
+                        @endphp
+
+                        <button type="button" onclick="toggleModelDropdown()" 
+                            class="w-full flex items-center justify-between bg-white border border-gray-200 text-gray-700 text-xs font-bold py-3.5 px-5 rounded-2xl hover:border-orange-500 hover:text-orange-600 transition-all shadow-sm hover:shadow-md group">
+                            
+                            <div class="flex items-center gap-2 truncate">
+                                <i class="fas fa-car text-orange-500"></i>
+                                <span class="capitalize truncate">
+                                    {{ ($currentModel == 'all') ? 'All Models' : $currentModel }}
+                                </span>
+                                {{-- VISIBLE BADGE ON BUTTON --}}
+                                <span class="flex items-center justify-center w-5 h-5 rounded-full text-[9px] bg-orange-100 text-orange-700 ml-1">
+                                    {{ $displayCount }}
+                                </span>
+                            </div>
+
+                            <i class="fas fa-chevron-down text-[10px] text-gray-400 group-hover:text-orange-500 transition-transform duration-300" id="modelDropdownArrow"></i>
+                        </button>
+
+                        <div id="modelMenu" class="absolute top-full right-0 mt-2 w-full bg-white border border-gray-100 rounded-2xl shadow-xl overflow-hidden hidden transform origin-top transition-all duration-200 z-50 max-h-64 overflow-y-auto custom-scrollbar">
+                            
+                            {{-- All Models Option --}}
+                            <div onclick="selectModel('all')" 
+                                class="px-5 py-3 text-xs font-bold cursor-pointer transition-colors flex items-center justify-between border-b border-gray-50 last:border-0 {{ ($currentModel == 'all') ? 'bg-orange-50 text-orange-600' : 'text-gray-600 hover:bg-gray-50' }}">
+                                <span>All Models</span>
+                                <span class="flex items-center justify-center w-5 h-5 rounded-full text-[9px] {{ ($currentModel == 'all') ? 'bg-orange-200 text-orange-700' : 'bg-gray-100 text-gray-500' }}">
+                                    {{ $vehicles->count() }}
+                                </span>
+                            </div>
+
+                            {{-- Specific Models --}}
                             @foreach($vehicleModels as $model)
-                                <option value="{{ $model }}" {{ request('model') == $model ? 'selected' : '' }}>{{ $model }}</option>
+                                @php
+                                    $count = $vehicles->where('model', $model)->count();
+                                @endphp
+                                <div onclick="selectModel('{{ $model }}')" 
+                                    class="px-5 py-3 text-xs font-bold cursor-pointer transition-colors flex items-center justify-between border-b border-gray-50 last:border-0 {{ $currentModel == $model ? 'bg-orange-50 text-orange-600' : 'text-gray-600 hover:bg-gray-50' }}">
+                                    <span>{{ $model }}</span>
+                                    <span class="flex items-center justify-center w-5 h-5 rounded-full text-[9px] {{ $currentModel == $model ? 'bg-orange-200 text-orange-700' : 'bg-gray-100 text-gray-500' }}">
+                                        {{ $count }}
+                                    </span>
+                                </div>
                             @endforeach
-                        </select>
-                        <i class="fas fa-chevron-down absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none text-xs"></i>
+                        </div>
                     </div>
 
-                    {{-- 3. Custom Status Dropdown --}}
+                    {{-- 3. Status Filter (With Visible Count) --}}
                     <div class="relative w-full md:w-[180px]" id="customDropdown">
                         <input type="hidden" name="status" id="statusInput" value="{{ request('status', 'all') }}">
                         
+                        @php
+                            $currentStatus = request('status', 'all');
+                            // Helper logic for display
+                            $statusLabel = match($currentStatus) {
+                                'active' => 'Active',
+                                'inactive' => 'Inactive',
+                                'ready' => 'Ready',
+                                'rented' => 'Rented',
+                                default => 'All Status'
+                            };
+                        @endphp
+
                         <button type="button" onclick="toggleDropdown()" 
                             class="w-full flex items-center justify-between bg-white border border-gray-200 text-gray-700 text-xs font-bold py-3.5 px-5 rounded-2xl hover:border-orange-500 hover:text-orange-600 transition-all shadow-sm hover:shadow-md group">
                             
                             <div class="flex items-center gap-2">
                                 <i class="fas fa-filter text-orange-500"></i>
-                                <span id="dropdownLabel" class="capitalize">
-                                    {{ (request('status') == 'all' || !request('status')) ? 'All Status' : ucfirst(request('status')) }}
-                                </span>
+                                <span id="dropdownLabel" class="capitalize">{{ $statusLabel }}</span>
                             </div>
 
                             <i class="fas fa-chevron-down text-[10px] text-gray-400 group-hover:text-orange-500 transition-transform duration-300" id="dropdownArrow"></i>
@@ -54,22 +109,24 @@
                         <div id="dropdownMenu" 
                             class="absolute top-full right-0 mt-2 w-full bg-white border border-gray-100 rounded-2xl shadow-xl overflow-hidden hidden transform origin-top transition-all duration-200 z-50">
                             
-                            <div onclick="selectStatus('all')" 
-                                class="px-5 py-3 text-xs font-bold cursor-pointer transition-colors flex items-center justify-between border-b border-gray-50 last:border-0 {{ (request('status') == 'all' || !request('status')) ? 'bg-orange-50 text-orange-600' : 'text-gray-600 hover:bg-gray-50' }}">
+                            <div onclick="selectStatus('all')" class="px-5 py-3 text-xs font-bold cursor-pointer transition-colors flex items-center justify-between border-b border-gray-50 {{ $currentStatus == 'all' ? 'bg-orange-50 text-orange-600' : 'text-gray-600 hover:bg-gray-50' }}">
                                 <span>All Status</span>
-                                @if(request('status') == 'all' || !request('status')) <i class="fas fa-check"></i> @endif
+                                @if($currentStatus == 'all') <i class="fas fa-check"></i> @endif
                             </div>
                             
-                            <div onclick="selectStatus('active')" 
-                                class="px-5 py-3 text-xs font-bold cursor-pointer transition-colors flex items-center justify-between border-b border-gray-50 last:border-0 {{ request('status') == 'active' ? 'bg-orange-50 text-orange-600' : 'text-gray-600 hover:bg-gray-50' }}">
-                                <span>Active</span>
-                                @if(request('status') == 'active') <i class="fas fa-check"></i> @endif
+                            <div onclick="selectStatus('ready')" class="px-5 py-3 text-xs font-bold cursor-pointer transition-colors flex items-center justify-between border-b border-gray-50 {{ $currentStatus == 'ready' ? 'bg-orange-50 text-orange-600' : 'text-gray-600 hover:bg-gray-50' }}">
+                                <span class="flex items-center gap-2"><span class="w-1.5 h-1.5 rounded-full bg-green-500"></span> Ready</span>
+                                @if($currentStatus == 'ready') <i class="fas fa-check"></i> @endif
                             </div>
 
-                            <div onclick="selectStatus('inactive')" 
-                                class="px-5 py-3 text-xs font-bold cursor-pointer transition-colors flex items-center justify-between border-b border-gray-50 last:border-0 {{ request('status') == 'inactive' ? 'bg-orange-50 text-orange-600' : 'text-gray-600 hover:bg-gray-50' }}">
-                                <span>Inactive</span>
-                                @if(request('status') == 'inactive') <i class="fas fa-check"></i> @endif
+                            <div onclick="selectStatus('rented')" class="px-5 py-3 text-xs font-bold cursor-pointer transition-colors flex items-center justify-between border-b border-gray-50 {{ $currentStatus == 'rented' ? 'bg-orange-50 text-orange-600' : 'text-gray-600 hover:bg-gray-50' }}">
+                                <span class="flex items-center gap-2"><span class="w-1.5 h-1.5 rounded-full bg-orange-500"></span> Rented</span>
+                                @if($currentStatus == 'rented') <i class="fas fa-check"></i> @endif
+                            </div>
+
+                            <div onclick="selectStatus('inactive')" class="px-5 py-3 text-xs font-bold cursor-pointer transition-colors flex items-center justify-between {{ $currentStatus == 'inactive' ? 'bg-orange-50 text-orange-600' : 'text-gray-600 hover:bg-gray-50' }}">
+                                <span class="flex items-center gap-2"><span class="w-1.5 h-1.5 rounded-full bg-gray-400"></span> Inactive</span>
+                                @if($currentStatus == 'inactive') <i class="fas fa-check"></i> @endif
                             </div>
                         </div>
                     </div>
@@ -98,9 +155,7 @@
         {{-- VEHICLE LIST --}}
         <div class="space-y-3">
             @foreach($vehicles as $vehicle)
-            {{-- LINK TO SHOW PAGE --}}
             <a href="{{ route('staff.fleet.show', $vehicle->VehicleID) }}" class="animate-fade-in fleet-item block bg-white rounded-xl p-2 pr-4 border border-gray-100 shadow-sm hover:shadow-md transition-all group">
-                
                 <div class="flex flex-col md:flex-row items-center gap-4 md:gap-8">
                     {{-- IMAGE --}}
                     <div class="w-full md:w-24 h-20 md:h-16 rounded-lg bg-gray-50 flex items-center justify-center overflow-hidden border border-gray-100 relative shrink-0">
@@ -110,7 +165,6 @@
                             <i class="fas fa-car text-gray-300 text-2xl"></i>
                         @endif
                         
-                        {{-- UPDATED OVERLAY LOGIC: Only show Inactive if NOT Rented AND NOT Available --}}
                         @if(!$vehicle->availability && !$vehicle->isBookedToday)
                             <div class="absolute inset-0 bg-gray-900/60 backdrop-blur-[1px] flex items-center justify-center">
                                 <span class="text-[10px] font-bold text-white bg-black/50 px-2 py-0.5 rounded border border-white/20">Inactive</span>
@@ -139,7 +193,7 @@
                         </div>
                     </div>
 
-                    {{-- STATUS & TOGGLE (Click.stop prevents navigation when toggling) --}}
+                    {{-- STATUS & TOGGLE --}}
                     <div class="flex items-center justify-between w-full md:w-auto md:justify-end gap-6 border-t md:border-t-0 border-gray-100 pt-3 md:pt-0 mt-2 md:mt-0">
                         <div class="text-right">
                             @if($vehicle->isBookedToday)
@@ -158,7 +212,6 @@
                         </div>
                         <form action="{{ route('staff.fleet.status', $vehicle->VehicleID) }}" method="POST" @click.stop>
                             @csrf
-                            {{-- UPDATED BUTTON LOGIC: Show Active (White) if Available OR Rented --}}
                             <button type="submit" class="w-9 h-9 rounded-lg flex items-center justify-center transition-all border shadow-sm {{ ($vehicle->availability || $vehicle->isBookedToday) ? 'bg-white text-gray-300 border-gray-200 hover:bg-red-50 hover:text-red-500' : 'bg-gray-800 text-white border-transparent hover:bg-gray-700' }}">
                                 <i class="fas fa-power-off text-sm"></i>
                             </button>
@@ -169,7 +222,6 @@
             @endforeach
         </div>
         
-        {{-- EMPTY STATE --}}
         @if($vehicles->isEmpty())
         <div class="flex flex-col items-center justify-center py-20 text-center animate-fade-in">
             <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4"><i class="fas fa-car-crash text-gray-300 text-2xl"></i></div>
@@ -181,21 +233,38 @@
 </div>
 
 <script>
-    // --- CUSTOM DROPDOWN LOGIC ---
+    // --- DROPDOWN & SUBMIT LOGIC ---
     function toggleDropdown() {
         const menu = document.getElementById('dropdownMenu');
         const arrow = document.getElementById('dropdownArrow');
+        closeOthers('dropdownMenu');
         
-        if (menu.classList.contains('hidden')) {
-            // Open
-            menu.classList.remove('hidden');
+        menu.classList.toggle('hidden');
+        if (!menu.classList.contains('hidden')) {
             menu.classList.add('animate-fade-in-down');
             if(arrow) arrow.style.transform = 'rotate(180deg)';
         } else {
-            // Close
-            menu.classList.add('hidden');
             if(arrow) arrow.style.transform = 'rotate(0deg)';
         }
+    }
+
+    function toggleModelDropdown() {
+        const menu = document.getElementById('modelMenu');
+        const arrow = document.getElementById('modelDropdownArrow');
+        closeOthers('modelMenu');
+
+        menu.classList.toggle('hidden');
+        if (!menu.classList.contains('hidden')) {
+            menu.classList.add('animate-fade-in-down');
+            if(arrow) arrow.style.transform = 'rotate(180deg)';
+        } else {
+            if(arrow) arrow.style.transform = 'rotate(0deg)';
+        }
+    }
+
+    function closeOthers(currentId) {
+        if(currentId !== 'dropdownMenu') document.getElementById('dropdownMenu').classList.add('hidden');
+        if(currentId !== 'modelMenu') document.getElementById('modelMenu').classList.add('hidden');
     }
 
     function selectStatus(value) {
@@ -203,14 +272,25 @@
         document.getElementById('filterForm').submit();
     }
 
-    // Close dropdown when clicking outside
-    document.addEventListener('click', function(event) {
-        const dropdown = document.getElementById('customDropdown');
-        const menu = document.getElementById('dropdownMenu');
-        const arrow = document.getElementById('dropdownArrow');
+    function selectModel(value) {
+        document.getElementById('modelInput').value = value;
+        document.getElementById('filterForm').submit();
+    }
 
-        if (dropdown && !dropdown.contains(event.target)) {
-            menu.classList.add('hidden');
+    // Close dropdowns when clicking outside
+    document.addEventListener('click', function(event) {
+        const statusDropdown = document.getElementById('customDropdown');
+        const modelDropdown = document.getElementById('modelDropdown');
+
+        if (statusDropdown && !statusDropdown.contains(event.target)) {
+            document.getElementById('dropdownMenu').classList.add('hidden');
+            const arrow = document.getElementById('dropdownArrow');
+            if(arrow) arrow.style.transform = 'rotate(0deg)';
+        }
+
+        if (modelDropdown && !modelDropdown.contains(event.target)) {
+            document.getElementById('modelMenu').classList.add('hidden');
+            const arrow = document.getElementById('modelDropdownArrow');
             if(arrow) arrow.style.transform = 'rotate(0deg)';
         }
     });
@@ -219,7 +299,10 @@
 <style>
     .no-scrollbar::-webkit-scrollbar { display: none; } 
     .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-    
+    .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+    .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 4px; }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
     @keyframes fade-in { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
     .animate-fade-in { animation: fade-in 0.2s ease-out forwards; }
     .animate-fade-in-down { animation: fade-in 0.15s ease-out forwards; }

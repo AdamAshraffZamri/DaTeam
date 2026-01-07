@@ -12,7 +12,7 @@
                 <p class="text-gray-500 mt-1 text-sm">Monitor and manage all customer rentals.</p>
             </div>
 
-            {{-- COMBINED FILTER FORM --}}
+            {{-- COMBINED FILTER FORM (With Counts) --}}
             <form action="{{ route('staff.bookings.index') }}" method="GET" id="filterForm" class="flex flex-col md:flex-row items-center gap-3 w-full xl:w-auto">
                 
                 {{-- SEARCH INPUT --}}
@@ -38,6 +38,14 @@
                         'Rejected'     => 'Rejected'
                     ];
                     $currentLabel = $statuses[$currentStatus] ?? 'Select Status';
+
+                    // Count Logic
+                    $getCount = function($status) {
+                        return $status === 'all' 
+                            ? \App\Models\Booking::count() 
+                            : \App\Models\Booking::where('bookingStatus', $status)->count();
+                    };
+                    $currentCount = $getCount($currentStatus);
                 @endphp
 
                 <input type="hidden" name="status" id="statusInput" value="{{ $currentStatus }}">
@@ -47,9 +55,14 @@
                     <button type="button" onclick="toggleDropdown()" 
                         class="w-full flex items-center justify-between bg-white border border-gray-200 text-gray-700 text-xs font-bold py-3.5 px-5 rounded-2xl hover:bg-gray-50 hover:border-gray-300 transition-all shadow-sm group">
                         
-                        <div class="flex items-center gap-2">
+                        <div class="flex items-center gap-2 truncate">
                             <i class="fas fa-filter text-orange-500"></i>
-                            <span id="dropdownLabel">{{ $currentLabel }}</span>
+                            <span id="dropdownLabel" class="truncate">{{ $currentLabel }}</span>
+                            
+                            {{-- COUNT BADGE ON BUTTON --}}
+                            <span class="flex items-center justify-center w-5 h-5 rounded-full text-[9px] bg-orange-100 text-orange-700 ml-1 shrink-0">
+                                {{ $currentCount }}
+                            </span>
                         </div>
                         <i class="fas fa-chevron-down text-[10px] text-gray-400 group-hover:text-gray-600 transition-transform duration-300" id="dropdownArrow"></i>
                     </button>
@@ -59,13 +72,18 @@
                         class="absolute top-full right-0 mt-2 w-full bg-white border border-gray-100 rounded-2xl shadow-xl overflow-hidden hidden transform origin-top transition-all duration-200 z-50 max-h-[300px] overflow-y-auto">
                         
                         @foreach($statuses as $value => $label)
-                        <div onclick="selectStatus('{{ $value }}')" 
-                             class="px-5 py-3 text-xs font-bold cursor-pointer transition-colors flex items-center justify-between border-b border-gray-50 last:border-0
-                             {{ $currentStatus == $value ? 'bg-orange-50 text-orange-600' : 'text-gray-600 hover:bg-gray-50' }}">
-                            
-                            <span>{{ $label }}</span>
-                            @if($currentStatus == $value) <i class="fas fa-check"></i> @endif
-                        </div>
+                            @php $count = $getCount($value); @endphp
+                            <div onclick="selectStatus('{{ $value }}')" 
+                                class="px-5 py-3 text-xs font-bold cursor-pointer transition-colors flex items-center justify-between border-b border-gray-50 last:border-0
+                                {{ $currentStatus == $value ? 'bg-orange-50 text-orange-600' : 'text-gray-600 hover:bg-gray-50' }}">
+                                
+                                <span>{{ $label }}</span>
+                                
+                                {{-- COUNT BADGE IN LIST --}}
+                                <span class="flex items-center justify-center w-5 h-5 rounded-full text-[9px] {{ $currentStatus == $value ? 'bg-orange-200 text-orange-700' : 'bg-gray-100 text-gray-500' }}">
+                                    {{ $count }}
+                                </span>
+                            </div>
                         @endforeach
                     </div>
                 </div>
