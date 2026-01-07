@@ -259,7 +259,12 @@ class BookingController extends Controller
             $request->input('return_date'), $request->input('return_time')
         );
 
-    if ($request->filled('voucher_id')) {
+        // Calculate base deposit and gross total
+        $baseDepo = $vehicle->baseDepo ?? 50;
+        $grossTotal = $rentalCharge + $baseDepo;
+        $discountAmount = 0;
+
+        if ($request->filled('voucher_id')) {
             $voucher = \App\Models\Voucher::find($request->input('voucher_id'));
             
             // Check kewujudan voucher DAN pastikan belum digunakan (!isUsed)
@@ -306,6 +311,11 @@ class BookingController extends Controller
              $amountToPayNow = $finalTotalCost;
              $bookingStatus = 'Submitted'; 
         }
+    } else {
+        // Full Payment
+        $amountToPayNow = $finalTotalCost;
+        $bookingStatus = 'Submitted';
+    }
 
         // --- 4. GOOGLE DRIVE UPLOAD LOGIC (NEW) ---
         
@@ -351,7 +361,7 @@ class BookingController extends Controller
             'pickupLocation' => $request->input('pickup_location'),
             'returnLocation' => $request->input('return_location'),
             'totalCost' => $finalTotalCost, 
-            'voucherID' => $voucherID,
+            'voucherID' => $voucherID ?? null,
             
             'aggreementDate' => now(),
             'aggreementLink' => $finalAgreementPath, // SAVED GOOGLE DRIVE LINK HERE
@@ -384,7 +394,7 @@ class BookingController extends Controller
         }
 
         return redirect()->route('book.index')->with('show_thank_you', true);
-    }}
+    }
 
     // --- 7. CANCEL BOOKING ---
     public function cancel($id)
