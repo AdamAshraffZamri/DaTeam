@@ -501,9 +501,4 @@ class DatabaseSeeder extends Seeder
             );
         }
     }
-
-
-
-
-
 }

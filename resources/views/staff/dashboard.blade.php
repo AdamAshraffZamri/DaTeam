@@ -237,7 +237,7 @@
                                     {{-- Recent Tab --}}
                                     <button @click="currentTab = 'recent'" 
                                         class="flex-1 sm:flex-none px-4 py-2 rounded-full text-xs font-bold transition-all flex items-center justify-center gap-2"
-                                        :class="currentTab === 'recent' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:bg-gray-200/50'">
+                                        :class="currentTab === 'recent' ? 'bg-blue-50 text-blue-600 shadow-sm' : 'text-slate-500 hover:bg-gray-200/50'">
                                         Recent
                                         <span class="w-5 h-5 rounded-full flex items-center justify-center text-[9px]"
                                             :class="currentTab === 'recent' ? 'bg-blue-50 text-blue-600' : 'bg-white text-slate-500'">
@@ -297,6 +297,8 @@
                      x-data="{ 
                         pDate: '{{ request('pickup_date') }}', 
                         rDate: '{{ request('return_date') }}',
+                        pTime: '{{ request('pickup_time', '09:00') }}',
+                        rTime: '{{ request('return_time', '09:00') }}',
                         setToday() {
                             // Get today's date in YYYY-MM-DD format based on local time
                             const today = new Date();
@@ -307,6 +309,8 @@
                             
                             this.pDate = formatted;
                             this.rDate = formatted;
+                            this.pTime = '00:00';
+                            this.rTime = '23:00';
                         }
                      }">
                     
@@ -329,12 +333,13 @@
                                 <div>
                                     <span class="text-[9px] text-slate-500 block mb-1">Pickup</span>
                                     <input type="date" name="pickup_date" x-model="pDate" class="w-full bg-white border border-slate-200 text-slate-800 text-xs font-bold rounded-lg px-3 py-2 focus:border-orange-500 focus:ring-0 outline-none transition-colors" required>
-                                    <input type="time" name="pickup_time" value="{{ request('pickup_time', '09:00') }}" class="w-full bg-white border border-slate-200 text-slate-800 text-xs font-bold rounded-lg px-3 py-2 mt-1 focus:border-orange-500 focus:ring-0 outline-none transition-colors">
+                                    {{-- step="3600" forces 1 hour steps, effectively hiding minutes in many browsers --}}
+                                    <input type="time" name="pickup_time" x-model="pTime" step="3600" class="w-full bg-white border border-slate-200 text-slate-800 text-xs font-bold rounded-lg px-3 py-2 mt-1 focus:border-orange-500 focus:ring-0 outline-none transition-colors">
                                 </div>
                                 <div>
                                     <span class="text-[9px] text-slate-500 block mb-1">Return</span>
                                     <input type="date" name="return_date" x-model="rDate" class="w-full bg-white border border-slate-200 text-slate-800 text-xs font-bold rounded-lg px-3 py-2 focus:border-orange-500 focus:ring-0 outline-none transition-colors" required>
-                                    <input type="time" name="return_time" value="{{ request('return_time', '09:00') }}" class="w-full bg-white border border-slate-200 text-slate-800 text-xs font-bold rounded-lg px-3 py-2 mt-1 focus:border-orange-500 focus:ring-0 outline-none transition-colors">
+                                    <input type="time" name="return_time" x-model="rTime" step="3600" class="w-full bg-white border border-slate-200 text-slate-800 text-xs font-bold rounded-lg px-3 py-2 mt-1 focus:border-orange-500 focus:ring-0 outline-none transition-colors">
                                 </div>
                             </div>
                         </div>
@@ -505,6 +510,19 @@
     document.addEventListener('DOMContentLoaded', function() {
         const ctx = document.getElementById('dashboardChart').getContext('2d');
         
+        // 1. CLEAN DATA: Ensure backend data are numbers, not strings with commas
+        const rawRevenue = @json($chartRevenue);
+        const rawBookings = @json($chartBookings);
+
+        const cleanRevenue = rawRevenue.map(val => {
+            // Convert to string, remove commas, parse as float, default to 0 if null
+            return parseFloat(String(val).replace(/,/g, '')) || 0;
+        });
+
+        const cleanBookings = rawBookings.map(val => {
+            return parseFloat(String(val).replace(/,/g, '')) || 0;
+        });
+
         let gradientSales = ctx.createLinearGradient(0, 0, 0, 300);
         gradientSales.addColorStop(0, 'rgba(249, 115, 22, 0.15)'); // Orange
         gradientSales.addColorStop(1, 'rgba(249, 115, 22, 0)');
@@ -516,7 +534,7 @@
                 datasets: [
                     {
                         label: 'Revenue',
-                        data: @json($chartRevenue),
+                        data: cleanRevenue, // Use the cleaned data
                         borderColor: '#f97316', // Orange
                         backgroundColor: gradientSales,
                         borderWidth: 2,
@@ -528,7 +546,7 @@
                     },
                     {
                         label: 'Bookings',
-                        data: @json($chartBookings),
+                        data: cleanBookings, // Use the cleaned data
                         borderColor: '#3b82f6', // Bright Blue
                         backgroundColor: '#3b82f6',
                         borderWidth: 3,
@@ -552,7 +570,21 @@
                         titleColor: '#1e293b',
                         bodyColor: '#1e293b',
                         borderColor: '#e2e8f0',
-                        borderWidth: 1
+                        borderWidth: 1,
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.dataset.label || '';
+                                if (label) {
+                                    label += ': ';
+                                }
+                                if (context.dataset.label === 'Revenue') {
+                                    label += 'RM ' + context.parsed.y.toLocaleString();
+                                } else {
+                                    label += context.parsed.y;
+                                }
+                                return label;
+                            }
+                        }
                     }
                 },
                 interaction: { mode: 'index', intersect: false },
@@ -564,7 +596,8 @@
                     // Revenue Axis (Left)
                     y: { 
                         display: true,
-                        beginAtZero: true, // Fixes the scale starting point
+                        beginAtZero: true,
+                        suggestedMax: 100, // Prevents 0-1 decimal scale if data is empty
                         type: 'linear',
                         position: 'left',
                         grid: { 
@@ -574,21 +607,24 @@
                         },
                         ticks: { 
                             font: { size: 10, family: 'sans-serif' }, 
-                            color: '#f97316', // Orange text to match revenue line
+                            color: '#f97316',
+                            // Ensure no decimals are shown if the range is small
+                            precision: 0, 
                             callback: function(value) { return 'RM ' + value; }
                         }
                     },
-                    // Bookings Axis (Right) - Now Visible
+                    // Bookings Axis (Right)
                     y1: { 
-                        display: true, // Changed to TRUE so the scale is visible
+                        display: true,
                         type: 'linear',
                         position: 'right',
                         beginAtZero: true,
-                        grid: { drawOnChartArea: false }, // Don't draw grid lines for this axis (cleaner)
+                        suggestedMax: 5,
+                        grid: { drawOnChartArea: false },
                         ticks: {
-                            stepSize: 1, // Ensure whole numbers for bookings
+                            stepSize: 1,
                             font: { size: 10, family: 'sans-serif' },
-                            color: '#3b82f6' // Blue text to match booking line
+                            color: '#3b82f6'
                         }
                     }
                 }

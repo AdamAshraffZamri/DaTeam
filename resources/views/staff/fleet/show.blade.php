@@ -425,161 +425,277 @@
     </div>
 
     {{-- BLOCK SCHEDULE MODAL --}}
-    <div x-show="blockModalOpen" class="fixed inset-0 z-[60] flex items-center justify-center bg-gray-900/60 backdrop-blur-sm px-4" x-transition.opacity x-cloak>
-        <form action="{{ route('staff.fleet.maintenance.store', $vehicle->VehicleID) }}" method="POST" 
-              class="bg-white/95 backdrop-blur-xl border border-white/50 rounded-[2rem] shadow-2xl w-full max-w-sm overflow-hidden transform transition-all" 
-              @click.away="blockModalOpen = false">
+    <div x-show="blockModalOpen" 
+        class="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/20 backdrop-blur-sm px-4 transition-opacity duration-300"
+        x-transition:enter="ease-out duration-300"
+        x-transition:enter-start="opacity-0"
+        x-transition:enter-end="opacity-100"
+        x-transition:leave="ease-in duration-200"
+        x-transition:leave-start="opacity-100"
+        x-transition:leave-end="opacity-0"
+        x-cloak>
+
+        <form action="{{ route('staff.fleet.maintenance.store', $vehicle->VehicleID) }}" 
+            method="POST" 
+            class="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden transform transition-all duration-300 scale-100"
+            x-transition:enter="ease-out duration-300"
+            x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+            x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
+            x-transition:leave="ease-in duration-200"
+            x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
+            x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+            @click.away="blockModalOpen = false">
+            
             @csrf
             
-            <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-white/50">
+            {{-- Header --}}
+            <div class="px-8 py-6 border-b border-slate-50 flex justify-between items-start bg-white">
                 <div>
-                    <h3 class="text-lg font-bold text-gray-900">Block Schedule</h3>
-                    <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-0.5" x-text="dateRangeText"></p>
+                    <h3 class="text-xl font-bold text-slate-900 tracking-tight">Block Schedule</h3>
+                    <p class="text-sm font-medium text-slate-500 mt-1" x-text="dateRangeText"></p>
                 </div>
-                <button type="button" @click="blockModalOpen = false" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times"></i></button>
+                <button type="button" @click="blockModalOpen = false" class="w-8 h-8 rounded-full bg-slate-50 text-slate-400 hover:bg-slate-100 hover:text-slate-600 flex items-center justify-center transition-colors">
+                    <i class="fas fa-times"></i>
+                </button>
             </div>
             
-            <div class="p-6 space-y-5">
+            <div class="p-8 space-y-6">
                 <input type="hidden" name="start_date" x-model="selectedStart">
                 <input type="hidden" name="end_date" x-model="selectedEnd">
 
-                <div class="space-y-3">
-                    <div x-show="!allDay" x-transition class="grid grid-cols-2 gap-3">
+                {{-- Time & Toggle Section --}}
+                <div class="space-y-4">
+                    {{-- Time Selectors --}}
+                    <div x-show="!allDay" x-collapse class="grid grid-cols-2 gap-4">
                         <div>
-                            <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-1">Start Time</label>
+                            <label class="text-xs font-semibold text-slate-500 mb-1.5 block">Start Time</label>
                             <div class="relative">
-                                <select name="start_time" class="w-full bg-white border border-gray-200 rounded-xl px-3 py-2 text-sm font-bold text-gray-800 outline-none focus:border-gray-900 transition-colors appearance-none">
+                                <select name="start_time" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-700 outline-none focus:bg-white focus:border-red-500 focus:ring-0 transition-all appearance-none cursor-pointer">
                                     @for($i = 0; $i < 24; $i++)
                                         <option value="{{ sprintf('%02d:00', $i) }}">{{ sprintf('%02d:00', $i) }}</option>
                                     @endfor
                                 </select>
-                                <div class="absolute inset-y-0 right-3 flex items-center pointer-events-none text-gray-400"><i class="fas fa-chevron-down text-[10px]"></i></div>
+                                <div class="absolute inset-y-0 right-4 flex items-center pointer-events-none text-slate-400">
+                                    <i class="fas fa-chevron-down text-[10px]"></i>
+                                </div>
                             </div>
                         </div>
                         <div>
-                            <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-1">End Time</label>
+                            <label class="text-xs font-semibold text-slate-500 mb-1.5 block">End Time</label>
                             <div class="relative">
-                                <select name="end_time" class="w-full bg-white border border-gray-200 rounded-xl px-3 py-2 text-sm font-bold text-gray-800 outline-none focus:border-gray-900 transition-colors appearance-none">
+                                <select name="end_time" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-700 outline-none focus:bg-white focus:border-red-500 focus:ring-0 transition-all appearance-none cursor-pointer">
                                     @for($i = 0; $i < 24; $i++)
                                         <option value="{{ sprintf('%02d:00', $i) }}" {{ $i == 23 ? 'selected' : '' }}>{{ sprintf('%02d:00', $i) }}</option>
                                     @endfor
                                 </select>
-                                <div class="absolute inset-y-0 right-3 flex items-center pointer-events-none text-gray-400"><i class="fas fa-chevron-down text-[10px]"></i></div>
+                                <div class="absolute inset-y-0 right-4 flex items-center pointer-events-none text-slate-400">
+                                    <i class="fas fa-chevron-down text-[10px]"></i>
+                                </div>
                             </div>
                         </div>
                     </div>
                     
-                    <div class="flex items-center justify-between bg-white/60 p-3 rounded-xl border border-gray-100 cursor-pointer hover:bg-white transition-colors" @click="allDay = !allDay">
-                        <span class="text-xs font-bold text-gray-700">Block Whole Day</span>
-                        <div class="w-10 h-5 bg-gray-200 rounded-full relative transition-colors" :class="allDay ? 'bg-gray-900' : 'bg-gray-200'">
-                            <div class="w-3 h-3 bg-white rounded-full absolute top-1 left-1 transition-transform" :class="allDay ? 'translate-x-5' : ''"></div>
+                    {{-- All Day Toggle --}}
+                    <div class="flex items-center justify-between bg-slate-50 px-4 py-3 rounded-xl border border-slate-100 cursor-pointer group hover:border-slate-200 transition-colors" @click="allDay = !allDay">
+                        <span class="text-sm font-semibold text-slate-700 group-hover:text-slate-900 transition-colors">Block Entire Day</span>
+                        <div class="w-11 h-6 rounded-full relative transition-colors duration-200 ease-in-out" 
+                            :class="allDay ? 'bg-slate-900' : 'bg-slate-200'">
+                            <div class="w-4 h-4 bg-white rounded-full absolute top-1 left-1 shadow-sm transition-transform duration-200 ease-in-out" 
+                                :class="allDay ? 'translate-x-5' : ''"></div>
                         </div>
                         <input type="hidden" name="all_day" :value="allDay ? 'true' : 'false'">
                     </div>
                 </div>
 
+                {{-- Reason Selection Grid --}}
                 <div>
-                    <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-2">Select Reason</label>
-                    <div class="flex flex-col gap-2">
-                        @foreach(['maintenance' => ['red', 'Maintenance'], 'delivery' => ['blue', 'Delivery'], 'holiday' => ['purple', 'Holiday'], 'other' => ['gray', 'Other']] as $key => $details)
-                        <button type="button" @click="blockType = '{{ $key }}'" class="w-full text-left px-4 py-3 rounded-xl text-xs font-bold border transition-all capitalize flex justify-between items-center group" 
-                            :class="blockType === '{{ $key }}' ? 'bg-{{ $details[0] }}-50 border-{{ $details[0] }}-200 text-{{ $details[0] }}-600 shadow-sm' : 'bg-white text-gray-600 border-gray-200 hover:border-{{ $details[0] }}-300 hover:text-{{ $details[0] }}-500'">
-                            <div class="flex items-center gap-2"><div class="w-2 h-2 rounded-full bg-{{ $details[0] }}-500"></div> {{ $details[1] }}</div>
-                            <i class="fas fa-check text-{{ $details[0] }}-600" x-show="blockType === '{{ $key }}'"></i>
+                    <label class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 block">Reason</label>
+                    <div class="grid grid-cols-2 gap-3">
+                        @foreach(['maintenance' => ['red', 'Maintenance', 'fa-tools'], 'delivery' => ['blue', 'Delivery', 'fa-truck'], 'holiday' => ['purple', 'Holiday', 'fa-umbrella-beach'], 'other' => ['gray', 'Other', 'fa-comment-alt']] as $key => $details)
+                        <button type="button" @click="blockType = '{{ $key }}'" 
+                                class="relative flex flex-col items-start p-3.5 rounded-2xl border text-left transition-all duration-200 group"
+                                :class="blockType === '{{ $key }}' 
+                                    ? 'bg-{{ $details[0] }}-50 border-{{ $details[0] }}-500 ring-1 ring-{{ $details[0] }}-500' 
+                                    : 'bg-white border-slate-200 hover:border-slate-300 hover:shadow-sm'">
+                            
+                            <div class="flex justify-between w-full mb-2">
+                                <div class="w-8 h-8 rounded-full flex items-center justify-center text-sm transition-colors"
+                                    :class="blockType === '{{ $key }}' ? 'bg-{{ $details[0] }}-100 text-{{ $details[0] }}-600' : 'bg-slate-50 text-slate-400 group-hover:bg-slate-100'">
+                                    <i class="fas {{ $details[2] }}"></i>
+                                </div>
+                                <div x-show="blockType === '{{ $key }}'" class="text-{{ $details[0] }}-600">
+                                    <i class="fas fa-check-circle"></i>
+                                </div>
+                            </div>
+                            <span class="text-xs font-bold transition-colors"
+                                :class="blockType === '{{ $key }}' ? 'text-{{ $details[0] }}-900' : 'text-slate-600 group-hover:text-slate-900'">
+                                {{ $details[1] }}
+                            </span>
                         </button>
                         @endforeach
                     </div>
                     <input type="hidden" name="type" x-model="blockType">
                 </div>
 
-                <div x-show="blockType === 'maintenance'" class="space-y-3 pt-2 border-t border-gray-100">
-                    <select name="maintenance_desc" class="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-sm font-bold text-gray-800 outline-none focus:border-red-500 transition-colors">
-                        <option>Regular Service</option><option>Tire Change</option><option>Battery Replacement</option><option>Major Repair</option><option>Inspection</option>
-                    </select>
-                    <input type="number" name="maintenance_cost" placeholder="Cost (RM)" class="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-sm font-bold text-gray-800 outline-none focus:border-red-500 transition-colors">
+                {{-- Dynamic Inputs --}}
+                <div class="pt-2">
+                    {{-- Maintenance Inputs --}}
+                    <div x-show="blockType === 'maintenance'" x-transition class="space-y-3">
+                        <div class="relative">
+                            <select name="maintenance_desc" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-semibold text-slate-700 outline-none focus:bg-white focus:border-red-500 focus:ring-0 transition-all appearance-none cursor-pointer">
+                                <option>Regular Service</option><option>Tire Change</option><option>Battery Replacement</option><option>Major Repair</option><option>Inspection</option>
+                            </select>
+                            <div class="absolute inset-y-0 right-4 flex items-center pointer-events-none text-slate-400"><i class="fas fa-chevron-down text-[10px]"></i></div>
+                        </div>
+                        <div class="relative">
+                            <span class="absolute left-4 top-3 text-slate-400 text-sm font-bold">RM</span>
+                            <input type="number" name="maintenance_cost" placeholder="0.00" class="w-full bg-slate-50 border border-slate-200 rounded-xl pl-12 pr-4 py-3 text-sm font-bold text-slate-700 outline-none focus:bg-white focus:border-red-500 focus:ring-0 transition-all placeholder:font-normal">
+                        </div>
+                    </div>
+
+                    {{-- Delivery Inputs --}}
+                    <div x-show="blockType === 'delivery'" x-transition>
+                        <input type="text" name="ref_id" placeholder="Related Booking ID (e.g., #BK-2024-001)" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-semibold text-slate-700 outline-none focus:bg-white focus:border-blue-500 focus:ring-0 transition-all placeholder:text-slate-400 placeholder:font-normal" :required="blockType === 'delivery'">
+                        <input type="hidden" name="reason" value="Vehicle Delivery Logistics">
+                    </div>
+
+                    {{-- Other/Holiday Inputs --}}
+                    <div x-show="blockType === 'other' || blockType === 'holiday'" x-transition>
+                        <textarea name="reason" rows="2" placeholder="Enter remarks..." class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-semibold text-slate-700 outline-none focus:bg-white focus:border-purple-500 focus:ring-0 transition-all placeholder:text-slate-400 placeholder:font-normal resize-none" :required="blockType === 'other' || blockType === 'holiday'"></textarea>
+                    </div>
                 </div>
 
-                <div x-show="blockType === 'delivery'" class="pt-2 border-t border-gray-100">
-                    <input type="text" name="ref_id" placeholder="Related Booking ID (Required)" class="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-sm font-bold text-gray-800 outline-none focus:border-blue-500 transition-colors" :required="blockType === 'delivery'">
-                    <input type="hidden" name="reason" value="Vehicle Delivery Logistics">
-                </div>
-
-                <div x-show="blockType === 'other' || blockType === 'holiday'" class="pt-2 border-t border-gray-100">
-                    <input type="text" name="reason" placeholder="Enter specific remarks (Required)..." class="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-sm font-bold text-gray-800 outline-none focus:border-gray-900 transition-colors" :required="blockType === 'other' || blockType === 'holiday'">
-                </div>
-
-                <button type="submit" class="w-full bg-red-600 text-white py-4 rounded-xl font-bold text-sm uppercase tracking-wider shadow-lg hover:bg-red-700 transition transform active:scale-[0.98]">
-                    Confirm Block
+                <button type="submit" class="w-full bg-slate-900 hover:bg-slate-800 text-white py-4 rounded-xl font-bold text-sm shadow-lg shadow-slate-200 hover:shadow-xl transition-all transform active:scale-[0.99] flex items-center justify-center gap-2">
+                    <i class="fas fa-lock text-xs opacity-70"></i> Confirm Block
                 </button>
             </div>
         </form>
     </div>
 
     {{-- HISTORY MODAL --}}
-    <div x-show="historyModalOpen" class="fixed inset-0 z-[80] flex items-center justify-center bg-gray-900/60 backdrop-blur-sm px-4" x-transition.opacity x-cloak>
-        <div class="bg-white rounded-[2rem] shadow-2xl w-full max-w-md h-[60vh] flex flex-col overflow-hidden" @click.away="historyModalOpen = false">
+    <div x-show="historyModalOpen" 
+        class="fixed inset-0 z-[80] flex items-center justify-center bg-slate-900/20 backdrop-blur-sm px-4 transition-opacity duration-300"
+        x-transition:enter="ease-out duration-300"
+        x-transition:enter-start="opacity-0"
+        x-transition:enter-end="opacity-100"
+        x-transition:leave="ease-in duration-200"
+        x-transition:leave-start="opacity-100"
+        x-transition:leave-end="opacity-0"
+        x-cloak>
+
+        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md h-[65vh] flex flex-col overflow-hidden transform transition-all duration-300 scale-100"
+            x-transition:enter="ease-out duration-300"
+            x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+            x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
+            @click.away="historyModalOpen = false">
             
-            <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
-                <h3 class="text-lg font-black text-gray-900">History Log</h3>
-                <button @click="historyModalOpen = false" class="w-8 h-8 rounded-full bg-white text-gray-400 hover:text-gray-600 shadow-sm flex items-center justify-center transition hover:scale-105"><i class="fas fa-times"></i></button>
+            {{-- Header --}}
+            <div class="px-6 py-5 border-b border-slate-100 flex justify-between items-center bg-white z-10">
+                <div>
+                    <h3 class="text-lg font-bold text-slate-900 tracking-tight">History Log</h3>
+                    <p class="text-xs text-slate-500 font-medium">Maintenance & block records</p>
+                </div>
+                <button @click="historyModalOpen = false" class="w-8 h-8 rounded-full bg-slate-50 text-slate-400 hover:bg-slate-100 hover:text-slate-600 flex items-center justify-center transition-colors">
+                    <i class="fas fa-times"></i>
+                </button>
             </div>
             
-            <div class="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar bg-gray-50/30">
+            {{-- Content --}}
+            <div class="flex-1 overflow-y-auto p-5 space-y-4 bg-slate-50 custom-scrollbar">
                 @forelse($vehicle->maintenances->sortByDesc('updated_at') as $log)
-                    <div class="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden">
+                    <div class="group bg-white border border-slate-100 rounded-2xl p-5 shadow-sm hover:shadow-md transition-all duration-200 relative overflow-hidden">
                         
-                        {{-- Unblocked Badge --}}
+                        {{-- Unblocked Status Strip --}}
                         @if($log->type === 'unblocked')
-                            <div class="absolute top-0 right-0 bg-green-500 text-white text-[9px] font-bold px-2 py-1 rounded-bl-xl">UNBLOCKED</div>
+                            <div class="absolute left-0 top-0 bottom-0 w-1 bg-emerald-400"></div>
                         @endif
 
-                        <div class="flex justify-between items-start mb-2 pr-12">
+                        <div class="flex justify-between items-start mb-3">
                             @php
-                                $badgeColor = match($log->type) {
-                                    'maintenance' => 'bg-red-100 text-red-600',
-                                    'delivery' => 'bg-blue-100 text-blue-600',
-                                    'holiday' => 'bg-purple-100 text-purple-600',
-                                    'unblocked' => 'bg-gray-100 text-gray-400 line-through opacity-70',
-                                    default => 'bg-gray-100 text-gray-600'
+                                $badgeStyle = match($log->type) {
+                                    'maintenance' => 'bg-red-50 text-red-600 border-red-100',
+                                    'delivery' => 'bg-blue-50 text-blue-600 border-blue-100',
+                                    'holiday' => 'bg-purple-50 text-purple-600 border-purple-100',
+                                    'unblocked' => 'bg-slate-100 text-slate-500 border-slate-200',
+                                    default => 'bg-gray-50 text-gray-600 border-gray-200'
+                                };
+                                $icon = match($log->type) {
+                                    'maintenance' => 'fa-tools',
+                                    'delivery' => 'fa-truck',
+                                    'holiday' => 'fa-umbrella-beach',
+                                    'unblocked' => 'fa-history',
+                                    default => 'fa-info-circle'
                                 };
                             @endphp
-                            <span class="px-2 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wide {{ $badgeColor }}">{{ $log->type === 'unblocked' ? 'Archived' : $log->type }}</span>
-                            <span class="text-[10px] font-medium text-gray-400">{{ $log->created_at->format('d M, h:i A') }}</span>
+                            
+                            <div class="flex items-center gap-2">
+                                <span class="px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider border {{ $badgeStyle }} flex items-center gap-1.5">
+                                    <i class="fas {{ $icon }} text-[9px]"></i>
+                                    {{ $log->type === 'unblocked' ? 'Archived' : $log->type }}
+                                </span>
+                            </div>
+                            
+                            <span class="text-[10px] font-semibold text-slate-400">{{ $log->created_at->format('d M, h:i A') }}</span>
                         </div>
 
-                        {{-- Parse Description --}}
+                        {{-- Description Logic --}}
                         @php
                             $parts = explode('| [UNBLOCKED]', $log->description);
                             $cleanDesc = $parts[0];
-                            $unblockInfo = isset($parts[1]) ? '[UNBLOCKED]' . $parts[1] : null;
+                            $unblockInfo = isset($parts[1]) ? trim($parts[1]) : null;
                         @endphp
 
-                        <p class="text-sm font-bold text-gray-900 mb-1 leading-tight {{ $log->type === 'unblocked' ? 'opacity-50' : '' }}">
-                            {{ $cleanDesc ?? 'No Description' }}
-                        </p>
-                        
-                        <div class="flex items-center gap-2 text-xs text-gray-500 mt-2">
-                            <i class="fas fa-user-lock text-gray-300"></i> Blocked by: 
-                            <span class="font-bold text-gray-700">{{ $log->staff->name ?? 'System' }}</span>
+                        <div class="space-y-1 mb-3">
+                            <p class="text-sm font-semibold text-slate-800 leading-snug {{ $log->type === 'unblocked' ? 'text-slate-500' : '' }}">
+                                {{ $cleanDesc ?? 'No Description' }}
+                            </p>
+                            
+                            <div class="flex items-center gap-1.5 text-xs text-slate-500">
+                                <div class="w-4 h-4 rounded-full bg-slate-100 flex items-center justify-center text-[8px] text-slate-400">
+                                    <i class="fas fa-user"></i>
+                                </div>
+                                <span class="font-medium">By {{ $log->staff->name ?? 'System' }}</span>
+                            </div>
                         </div>
 
+                        {{-- Unblock Info Box --}}
                         @if($unblockInfo)
-                            <div class="mt-2 p-2 bg-green-50 rounded-lg border border-green-100 flex items-center gap-2 text-xs text-green-700">
-                                <i class="fas fa-unlock"></i>
-                                <span class="font-medium">{{ str_replace('[UNBLOCKED] by ', 'Unblocked by: ', $unblockInfo) }}</span>
+                            <div class="mt-3 py-2 px-3 bg-emerald-50/50 rounded-lg border border-emerald-100/60 flex items-start gap-2.5">
+                                <div class="mt-0.5 text-emerald-500"><i class="fas fa-unlock text-xs"></i></div>
+                                <div class="flex-1">
+                                    <p class="text-[10px] font-bold text-emerald-700 uppercase tracking-wide mb-0.5">Unblocked</p>
+                                    <p class="text-xs text-emerald-600/90 leading-relaxed">
+                                        {{ str_replace('by ', '', $unblockInfo) }}
+                                    </p>
+                                </div>
                             </div>
                         @endif
                         
-                        <div class="mt-2 pt-2 border-t border-gray-50 flex justify-between text-[10px] font-bold text-gray-400 uppercase tracking-wider">
-                            <span><i class="fas fa-calendar-alt mr-1"></i> {{ \Carbon\Carbon::parse($log->start_time)->format('d M') }}</span>
-                            <span class="text-gray-300 mx-2"><i class="fas fa-arrow-right"></i></span>
-                            <span>{{ \Carbon\Carbon::parse($log->end_time)->format('d M') }}</span>
+                        {{-- Footer Date Range --}}
+                        <div class="mt-3 pt-3 border-t border-slate-50 flex items-center justify-between">
+                            <div class="flex items-center gap-2 text-xs font-medium text-slate-500">
+                                <span class="text-slate-400"><i class="far fa-calendar-alt"></i></span>
+                                <span>{{ \Carbon\Carbon::parse($log->start_time)->format('d M') }}</span>
+                                <i class="fas fa-arrow-right text-[8px] text-slate-300"></i>
+                                <span>{{ \Carbon\Carbon::parse($log->end_time)->format('d M') }}</span>
+                            </div>
+                            
+                            {{-- Duration pill (optional nice-to-have) --}}
+                            @php
+                                $duration = \Carbon\Carbon::parse($log->start_time)->diffInDays(\Carbon\Carbon::parse($log->end_time));
+                            @endphp
+                            <span class="text-[10px] font-bold text-slate-300">
+                                {{ $duration == 0 ? 'Same Day' : $duration . ' Days' }}
+                            </span>
                         </div>
                     </div>
                 @empty
-                    <div class="flex flex-col items-center justify-center py-10 text-gray-400 h-full">
-                        <i class="fas fa-history text-3xl mb-2 opacity-50"></i>
-                        <p class="text-xs font-bold">No history found.</p>
+                    <div class="flex flex-col items-center justify-center h-full text-slate-400 pb-8">
+                        <div class="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mb-3">
+                            <i class="fas fa-clipboard-list text-2xl text-slate-300"></i>
+                        </div>
+                        <p class="text-sm font-semibold text-slate-500">No records found</p>
+                        <p class="text-xs text-slate-400">Activity will appear here.</p>
                     </div>
                 @endforelse
             </div>

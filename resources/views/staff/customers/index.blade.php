@@ -22,28 +22,46 @@
                     <i class="fas fa-search absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 group-hover:text-gray-600 transition-colors"></i>
                 </div>
 
-                {{-- 2. STATUS DROPDOWN --}}
+                {{-- 2. STATUS DROPDOWN (UPDATED WITH COUNTS) --}}
                 @php
                     $currentStatus = request('status', 'all');
                     $statuses = [
-                        'all'      => 'All Status',
-                        'approved' => 'Approved',
-                        'pending'  => 'Pending',
-                        'rejected' => 'Rejected',
+                        'all'         => 'All Status',
+                        'approved'    => 'Approved',
+                        'pending'     => 'Pending',
+                        'rejected'    => 'Rejected',
                         'blacklisted' => 'Blacklisted'
                     ];
                     $currentLabel = $statuses[$currentStatus] ?? 'All Status';
+
+                    // Helper to get counts (Direct Model Query to ensure accuracy across pages)
+                    $getCount = function($status) {
+                        $query = \App\Models\Customer::query();
+                        return match($status) {
+                            'all'         => $query->count(),
+                            'blacklisted' => $query->where('blacklisted', 1)->count(),
+                            'approved'    => $query->whereIn('accountStat', ['approved', 'active'])->count(),
+                            default       => $query->where('accountStat', $status)->count(),
+                        };
+                    };
+
+                    $currentCount = $getCount($currentStatus);
                 @endphp
 
                 <input type="hidden" name="status" id="statusInput" value="{{ $currentStatus }}">
 
-                <div class="relative w-full md:w-[180px]" id="customDropdown">
+                <div class="relative w-full md:w-[200px]" id="customDropdown">
                     <button type="button" onclick="toggleDropdown()" 
                         class="w-full flex items-center justify-between bg-white border border-gray-200 text-gray-700 text-xs font-bold py-3.5 px-5 rounded-2xl hover:bg-gray-50 hover:border-gray-300 transition-all shadow-sm group">
                         
                         <div class="flex items-center gap-2">
                             <i class="fas fa-filter text-orange-500"></i>
-                            <span id="dropdownLabel">{{ $currentLabel }}</span>
+                            <span id="dropdownLabel" class="truncate">{{ $currentLabel }}</span>
+                            
+                            {{-- MAIN BUTTON BADGE --}}
+                            <span class="flex items-center justify-center w-5 h-5 rounded-full text-[9px] bg-orange-100 text-orange-700 ml-1">
+                                {{ $currentCount }}
+                            </span>
                         </div>
                         <i class="fas fa-chevron-down text-[10px] text-gray-400 group-hover:text-gray-600 transition-transform duration-300" id="dropdownArrow"></i>
                     </button>
@@ -52,13 +70,18 @@
                         class="absolute top-full right-0 mt-2 w-full bg-white border border-gray-100 rounded-2xl shadow-xl overflow-hidden hidden transform origin-top transition-all duration-200 z-50">
                         
                         @foreach($statuses as $value => $label)
-                        <div onclick="selectStatus('{{ $value }}')" 
-                             class="px-5 py-3 text-xs font-bold cursor-pointer transition-colors flex items-center justify-between border-b border-gray-50 last:border-0
-                             {{ $currentStatus == $value ? 'bg-orange-50 text-orange-600' : 'text-gray-600 hover:bg-gray-50' }}">
-                            
-                            <span>{{ $label }}</span>
-                            @if($currentStatus == $value) <i class="fas fa-check"></i> @endif
-                        </div>
+                            @php $count = $getCount($value); @endphp
+                            <div onclick="selectStatus('{{ $value }}')" 
+                                 class="px-5 py-3 text-xs font-bold cursor-pointer transition-colors flex items-center justify-between border-b border-gray-50 last:border-0
+                                 {{ $currentStatus == $value ? 'bg-orange-50 text-orange-600' : 'text-gray-600 hover:bg-gray-50' }}">
+                                
+                                <span>{{ $label }}</span>
+                                
+                                {{-- DROPDOWN LIST BADGE --}}
+                                <span class="flex items-center justify-center w-5 h-5 rounded-full text-[9px] {{ $currentStatus == $value ? 'bg-orange-200 text-orange-700' : 'bg-gray-100 text-gray-500' }}">
+                                    {{ $count }}
+                                </span>
+                            </div>
                         @endforeach
                     </div>
                 </div>
@@ -79,7 +102,7 @@
                             {{ substr($customer->fullName, 0, 1) }}
                         </div>
                         <div class="overflow-hidden">
-                            <h4 class="text-sm font-black text-gray-900 truncate group-hover:text-orange-600 transition-colors" title="{{ $customer->fullName }}">
+                            <h4 class="text-sm font-bold text-gray-900 truncate group-hover:text-orange-600 transition-colors" title="{{ $customer->fullName }}">
                                 {{ $customer->fullName }}
                             </h4>
                             <p class="text-[10px] font-bold text-gray-400 mt-0.5 uppercase tracking-wider">

@@ -186,7 +186,7 @@
         <div class="absolute top-1/2 -right-2 w-1.5 h-1.5 bg-orange-300 rounded-full animate-float-3 opacity-60"></div>
     </button>
 
-    <div id="help-modal" class="fixed inset-0 z-[10000] hidden bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
+    <div id="help-modal" class="fixed inset-0 z-[10000] hidden bg-black/60 backdrop-blur-md flex items-center justify-center p-4">
         <div class="bg-[#1a1a1a] border border-white/10 rounded-[2.5rem] max-w-3xl w-full p-8 relative shadow-2xl overflow-hidden">
             <div class="absolute -top-24 -right-24 w-48 h-48 bg-orange-600/20 blur-[80px] rounded-full"></div>
             <button onclick="document.getElementById('help-modal').classList.add('hidden')" class="absolute top-6 right-6 text-gray-500 hover:text-white transition">

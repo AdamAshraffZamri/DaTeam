@@ -52,7 +52,7 @@
 
         <div x-data="fleetForm()">
             {{-- UPDATE FORM --}}
-            <form action="{{ route('staff.fleet.update', $vehicle->VehicleID) }}" method="POST" enctype="multipart/form-data">
+            <form x-ref="form" @submit.prevent="submitForm" action="{{ route('staff.fleet.update', $vehicle->VehicleID) }}" method="POST" enctype="multipart/form-data">
                 @csrf
                 @method('PUT')
                 <input type="hidden" name="vehicle_category" :value="category">
@@ -88,7 +88,7 @@
 
                         {{-- 2. Category --}}
                         <div class="space-y-4">
-                            <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest block text-center">Vehicle Type</label>
+                            <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest block text-center">Vehicle Type <span class="text-red-500">*</span></label>
                             <div class="flex bg-white p-1.5 rounded-2xl border border-gray-200 shadow-sm mx-auto w-full">
                                 <button type="button" @click="category = 'car'" 
                                     :class="category === 'car' ? 'bg-gray-900 text-white shadow-md' : 'text-gray-400 hover:bg-gray-50'" 
@@ -107,7 +107,7 @@
 
                         {{-- 3. Classification --}}
                         <div>
-                            <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-2">Classification</label>
+                            <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-2">Classification <span class="text-red-500">*</span></label>
                             <div class="relative mb-6">
                                 <select name="type" class="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-sm font-bold text-gray-700 shadow-sm outline-none focus:border-orange-500 appearance-none" required>
                                     <template x-if="category === 'car'">
@@ -131,10 +131,10 @@
                             </div>
                         </div>
 
-                        {{-- 4. Hourly Rates (Initialized with existing data) --}}
+                        {{-- 4. Hourly Rates --}}
                         <div>
                             <div class="flex items-center gap-2 mb-4">
-                                <h4 class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Hourly Rates (RM)</h4>
+                                <h4 class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Hourly Rates (RM) <span class="text-red-500">*</span></h4>
                                 <div class="h-px bg-gray-200 flex-1"></div>
                             </div>
                             
@@ -144,20 +144,17 @@
                                 @endphp
                                 @foreach([1, 3, 5, 7, 9, 12, 24] as $h)
                                 <div x-data="{ price: {{ old("rates.$h", $rates[$h] ?? 0) }} }" class="flex items-center justify-between bg-white p-2 rounded-xl border border-gray-200 shadow-sm hover:border-orange-300 transition-all group">
-                                    {{-- Label --}}
                                     <div class="flex items-center gap-3 pl-1">
                                         <div class="w-8 h-8 rounded-lg bg-gray-50 flex items-center justify-center text-[10px] font-black text-gray-500 group-hover:bg-orange-50 group-hover:text-orange-600 transition-colors">
                                             {{ $h }}H
                                         </div>
                                     </div>
-                                    
-                                    {{-- Input --}}
                                     <div class="flex items-center gap-1 pr-1">
                                         <button type="button" @click="price = Math.max(0, parseInt(price) - 5)" class="w-6 h-6 rounded-full flex items-center justify-center text-gray-300 hover:bg-gray-100 hover:text-orange-600">
                                             <i class="fas fa-minus text-[10px]"></i>
                                         </button>
                                         <div class="relative w-12 text-center">
-                                            <input type="number" name="rates[{{ $h }}]" x-model="price" class="w-full text-center py-1 text-sm font-black text-gray-900 bg-transparent outline-none focus:text-orange-600 transition-colors no-spin">
+                                            <input type="number" name="rates[{{ $h }}]" x-model="price" min="0" class="w-full text-center py-1 text-sm font-black text-gray-900 bg-transparent outline-none focus:text-orange-600 transition-colors no-spin" required>
                                         </div>
                                         <button type="button" @click="price = parseInt(price) + 5" class="w-6 h-6 rounded-full flex items-center justify-center text-gray-300 hover:bg-gray-100 hover:text-orange-600">
                                             <i class="fas fa-plus text-[10px]"></i>
@@ -195,21 +192,23 @@
 
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
                                 <div class="col-span-full">
-                                    <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-1.5 ml-1">Plate Number</label>
-                                    <input type="text" name="plateNo" placeholder="UTMXXXX" value="{{ old('plateNo', $vehicle->plateNo) }}" class="w-full bg-orange-50/50 border border-orange-100 rounded-xl px-4 py-3 font-bold text-gray-900 tracking-wider uppercase outline-none focus:bg-white focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all" required>
+                                    <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-1.5 ml-1">Plate Number <span class="text-red-500">*</span></label>
+                                    <input type="text" name="plateNo" placeholder="UTMXXXX" value="{{ old('plateNo', $vehicle->plateNo) }}" 
+                                           class="w-full bg-orange-50/50 border border-orange-100 rounded-xl px-4 py-3 font-bold text-gray-900 tracking-wider uppercase outline-none focus:bg-white focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all" 
+                                           required x-on:input="$el.value = $el.value.toUpperCase().replace(/[^A-Z0-9\s]/g, '')">
                                 </div>
                                 <div>
-                                    <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-1.5 ml-1">Brand</label>
+                                    <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-1.5 ml-1">Brand <span class="text-red-500">*</span></label>
                                     <input type="text" name="brand" placeholder="Perodua" value="{{ old('brand', $vehicle->brand) }}" class="w-full bg-orange-50/50 border border-orange-100 rounded-xl px-4 py-3 font-medium text-gray-900 outline-none focus:bg-white focus:border-orange-500 transition-all" required>
                                 </div>
                                 <div>
-                                    <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-1.5 ml-1">Model</label>
+                                    <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-1.5 ml-1">Model <span class="text-red-500">*</span></label>
                                     <input type="text" name="model" placeholder="Myvi" value="{{ old('model', $vehicle->model) }}" class="w-full bg-orange-50/50 border border-orange-100 rounded-xl px-4 py-3 font-medium text-gray-900 outline-none focus:bg-white focus:border-orange-500 transition-all" required>
                                 </div>
                                 <div>
-                                    <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-1.5 ml-1">Year</label>
+                                    <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-1.5 ml-1">Year <span class="text-red-500">*</span></label>
                                     <div class="relative">
-                                        <select name="year" class="w-full bg-orange-50/50 border border-orange-100 rounded-xl px-4 py-3 font-medium text-gray-900 outline-none focus:bg-white focus:border-orange-500 appearance-none cursor-pointer">
+                                        <select name="year" class="w-full bg-orange-50/50 border border-orange-100 rounded-xl px-4 py-3 font-medium text-gray-900 outline-none focus:bg-white focus:border-orange-500 appearance-none cursor-pointer" required>
                                             @for($i = date('Y'); $i >= 2010; $i--)
                                                 <option value="{{ $i }}" {{ old('year', $vehicle->year) == $i ? 'selected' : '' }}>{{ $i }}</option>
                                             @endfor
@@ -217,13 +216,14 @@
                                     </div>
                                 </div>
                                 <div>
-                                    <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-1.5 ml-1">Color</label>
-                                    <select name="color" class="w-full bg-orange-50/50 border border-orange-100 rounded-xl px-4 py-3 font-medium text-gray-900 outline-none focus:bg-white focus:border-orange-500 appearance-none cursor-pointer">
+                                    <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-1.5 ml-1">Color <span class="text-red-500">*</span></label>
+                                    <select name="color" class="w-full bg-orange-50/50 border border-orange-100 rounded-xl px-4 py-3 font-medium text-gray-900 outline-none focus:bg-white focus:border-orange-500 appearance-none cursor-pointer" required>
                                         @foreach(['Yellow','Orange','Blue','White','Green','Purple','Gold','Black','Red','Silver'] as $color)
                                             <option value="{{ $color }}" {{ old('color', $vehicle->color) == $color ? 'selected' : '' }}>{{ $color }}</option>
                                         @endforeach
                                     </select>
                                 </div>
+                                {{-- Optional Fields --}}
                                 <div>
                                     <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-1.5 ml-1">Mileage</label>
                                     <input type="number" name="mileage" placeholder="0" value="{{ old('mileage', $vehicle->mileage) }}" class="w-full bg-orange-50/50 border border-orange-100 rounded-xl px-4 py-3 font-medium text-gray-900 outline-none focus:bg-white focus:border-orange-500 transition-all no-spin">
@@ -240,7 +240,7 @@
                             </div>
                         </div>
 
-                        {{-- 2. Ownership (Updated with Previews) --}}
+                        {{-- 2. Ownership --}}
                         <div class="space-y-6">
                             <div class="flex items-center gap-4 mb-2">
                                 <div class="h-px bg-gray-200 flex-1"></div>
@@ -250,19 +250,25 @@
 
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
                                 <div class="col-span-full">
-                                    <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-1.5 ml-1">Owner Name</label>
-                                    <input type="text" name="owner_name" placeholder="Hasta Travel & Tours" value="{{ old('owner_name', $vehicle->owner_name) }}" class="w-full bg-blue-50/50 border border-blue-100 rounded-xl px-4 py-3 font-medium text-gray-900 outline-none focus:bg-white focus:border-blue-500 transition-all">
+                                    <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-1.5 ml-1">Owner Name <span class="text-red-500">*</span></label>
+                                    <input type="text" name="owner_name" placeholder="Hasta Travel & Tours" value="{{ old('owner_name', $vehicle->owner_name) }}" 
+                                           class="w-full bg-blue-50/50 border border-blue-100 rounded-xl px-4 py-3 font-medium text-gray-900 outline-none focus:bg-white focus:border-blue-500 transition-all" 
+                                           required x-on:input="$el.value = $el.value.replace(/[^a-zA-Z\s\.]/g, '')">
                                 </div>
                                 <div>
-                                    <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-1.5 ml-1">Contact No.</label>
-                                    <input type="text" name="owner_phone" placeholder="012-3456789" value="{{ old('owner_phone', $vehicle->owner_phone) }}" class="w-full bg-blue-50/50 border border-blue-100 rounded-xl px-4 py-3 font-medium text-gray-900 outline-none focus:bg-white focus:border-blue-500 transition-all">
+                                    <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-1.5 ml-1">Contact No. <span class="text-red-500">*</span></label>
+                                    <input type="text" name="owner_phone" placeholder="012-3456789" value="{{ old('owner_phone', $vehicle->owner_phone) }}" 
+                                           class="w-full bg-blue-50/50 border border-blue-100 rounded-xl px-4 py-3 font-medium text-gray-900 outline-none focus:bg-white focus:border-blue-500 transition-all" 
+                                           required x-on:input="$el.value = $el.value.replace(/[^0-9\-\+\s]/g, '')">
                                 </div>
                                 <div>
                                     <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-1.5 ml-1">NRIC / ID</label>
-                                    <input type="text" name="owner_nric" placeholder="XXXXXX-XX-XXXX" value="{{ old('owner_nric', $vehicle->owner_nric) }}" class="w-full bg-blue-50/50 border border-blue-100 rounded-xl px-4 py-3 font-medium text-gray-900 outline-none focus:bg-white focus:border-blue-500 transition-all">
+                                    <input type="text" name="owner_nric" placeholder="XXXXXX-XX-XXXX" value="{{ old('owner_nric', $vehicle->owner_nric) }}" 
+                                           class="w-full bg-blue-50/50 border border-blue-100 rounded-xl px-4 py-3 font-medium text-gray-900 outline-none focus:bg-white focus:border-blue-500 transition-all"
+                                           x-on:input="$el.value = $el.value.replace(/[^0-9\-]/g, '')">
                                 </div>
 
-                                {{-- === DOCUMENTS WITH PREVIEW, DELETE & DRAG-DROP === --}}
+                                {{-- === DOCUMENTS (Optional) === --}}
                                 <div class="col-span-full space-y-4 pt-4">
                                     <label class="text-[10px] font-bold text-blue-900 uppercase tracking-widest block text-center">Legal Documents</label>
                                     
@@ -271,16 +277,13 @@
                                         {{-- 1. Road Tax --}}
                                         <div>
                                             <input type="hidden" name="delete_road_tax" x-model="deleteRoadTax">
-
-                                            {{-- Added x-data for drag state, events for drag/drop, and dynamic classes --}}
                                             <div x-data="{ isDragging: false }"
-                                                @dragover.prevent="isDragging = true"
-                                                @dragleave.prevent="isDragging = false"
-                                                @drop.prevent="isDragging = false; handleDrop($event, $refs.roadTaxInput, 'roadTaxPreview', 'roadTaxName', 'deleteRoadTax')"
-                                                :class="isDragging ? 'border-blue-500 bg-blue-50 ring-2 ring-blue-200 scale-[1.02]' : 'border-blue-200 bg-white'"
-                                                class="relative block border-2 border-dashed rounded-xl p-1 h-32 flex flex-col items-center justify-center hover:border-blue-500 transition-all duration-200 overflow-hidden group">
+                                                 @dragover.prevent="isDragging = true"
+                                                 @dragleave.prevent="isDragging = false"
+                                                 @drop.prevent="isDragging = false; handleDrop($event, $refs.roadTaxInput, 'roadTaxPreview', 'roadTaxName', 'deleteRoadTax')"
+                                                 :class="isDragging ? 'border-blue-500 bg-blue-50 ring-2 ring-blue-200 scale-[1.02]' : 'border-blue-200 bg-white'"
+                                                 class="relative block border-2 border-dashed rounded-xl p-1 h-32 flex flex-col items-center justify-center hover:border-blue-500 transition-all duration-200 overflow-hidden group">
                                                 
-                                                {{-- Delete Button --}}
                                                 <button type="button" x-show="roadTaxName" @click.prevent="removeDoc('roadTax')" class="absolute top-2 right-2 z-20 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center shadow-md hover:bg-red-600 transition-transform hover:scale-110">
                                                     <i class="fas fa-times text-[10px]"></i>
                                                 </button>
@@ -293,7 +296,6 @@
                                                             <span x-show="isDragging" class="text-blue-600">Drop Here</span>
                                                         </span>
                                                     </div>
-
                                                     <template x-if="roadTaxName">
                                                         <div class="w-full h-full pointer-events-none">
                                                             <template x-if="roadTaxPreview">
@@ -307,8 +309,6 @@
                                                             </template>
                                                         </div>
                                                     </template>
-
-                                                    {{-- Added x-ref to target this input from the drop handler --}}
                                                     <input x-ref="roadTaxInput" type="file" name="road_tax_image" @change="previewDoc($event, 'roadTaxPreview', 'roadTaxName', 'deleteRoadTax')" accept=".pdf,image/*" class="hidden">
                                                 </label>
                                             </div>
@@ -319,13 +319,12 @@
                                         {{-- 2. Grant --}}
                                         <div>
                                             <input type="hidden" name="delete_grant" x-model="deleteGrant">
-
                                             <div x-data="{ isDragging: false }"
-                                                @dragover.prevent="isDragging = true"
-                                                @dragleave.prevent="isDragging = false"
-                                                @drop.prevent="isDragging = false; handleDrop($event, $refs.grantInput, 'grantPreview', 'grantName', 'deleteGrant')"
-                                                :class="isDragging ? 'border-blue-500 bg-blue-50 ring-2 ring-blue-200 scale-[1.02]' : 'border-blue-200 bg-white'"
-                                                class="relative block border-2 border-dashed rounded-xl p-1 h-32 flex flex-col items-center justify-center hover:border-blue-500 transition-all duration-200 overflow-hidden group">
+                                                 @dragover.prevent="isDragging = true"
+                                                 @dragleave.prevent="isDragging = false"
+                                                 @drop.prevent="isDragging = false; handleDrop($event, $refs.grantInput, 'grantPreview', 'grantName', 'deleteGrant')"
+                                                 :class="isDragging ? 'border-blue-500 bg-blue-50 ring-2 ring-blue-200 scale-[1.02]' : 'border-blue-200 bg-white'"
+                                                 class="relative block border-2 border-dashed rounded-xl p-1 h-32 flex flex-col items-center justify-center hover:border-blue-500 transition-all duration-200 overflow-hidden group">
                                                 
                                                 <button type="button" x-show="grantName" @click.prevent="removeDoc('grant')" class="absolute top-2 right-2 z-20 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center shadow-md hover:bg-red-600 transition-transform hover:scale-110">
                                                     <i class="fas fa-times text-[10px]"></i>
@@ -339,7 +338,6 @@
                                                             <span x-show="isDragging" class="text-blue-600">Drop Here</span>
                                                         </span>
                                                     </div>
-
                                                     <template x-if="grantName">
                                                         <div class="w-full h-full pointer-events-none">
                                                             <template x-if="grantPreview">
@@ -353,7 +351,6 @@
                                                             </template>
                                                         </div>
                                                     </template>
-
                                                     <input x-ref="grantInput" type="file" name="grant_image" @change="previewDoc($event, 'grantPreview', 'grantName', 'deleteGrant')" accept=".pdf,image/*" class="hidden">
                                                 </label>
                                             </div>
@@ -364,13 +361,12 @@
                                         {{-- 3. Insurance --}}
                                         <div>
                                             <input type="hidden" name="delete_insurance" x-model="deleteInsurance">
-
                                             <div x-data="{ isDragging: false }"
-                                                @dragover.prevent="isDragging = true"
-                                                @dragleave.prevent="isDragging = false"
-                                                @drop.prevent="isDragging = false; handleDrop($event, $refs.insuranceInput, 'insurancePreview', 'insuranceName', 'deleteInsurance')"
-                                                :class="isDragging ? 'border-blue-500 bg-blue-50 ring-2 ring-blue-200 scale-[1.02]' : 'border-blue-200 bg-white'"
-                                                class="relative block border-2 border-dashed rounded-xl p-1 h-32 flex flex-col items-center justify-center hover:border-blue-500 transition-all duration-200 overflow-hidden group">
+                                                 @dragover.prevent="isDragging = true"
+                                                 @dragleave.prevent="isDragging = false"
+                                                 @drop.prevent="isDragging = false; handleDrop($event, $refs.insuranceInput, 'insurancePreview', 'insuranceName', 'deleteInsurance')"
+                                                 :class="isDragging ? 'border-blue-500 bg-blue-50 ring-2 ring-blue-200 scale-[1.02]' : 'border-blue-200 bg-white'"
+                                                 class="relative block border-2 border-dashed rounded-xl p-1 h-32 flex flex-col items-center justify-center hover:border-blue-500 transition-all duration-200 overflow-hidden group">
                                                 
                                                 <button type="button" x-show="insuranceName" @click.prevent="removeDoc('insurance')" class="absolute top-2 right-2 z-20 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center shadow-md hover:bg-red-600 transition-transform hover:scale-110">
                                                     <i class="fas fa-times text-[10px]"></i>
@@ -384,7 +380,6 @@
                                                             <span x-show="isDragging" class="text-blue-600">Drop Here</span>
                                                         </span>
                                                     </div>
-
                                                     <template x-if="insuranceName">
                                                         <div class="w-full h-full pointer-events-none">
                                                             <template x-if="insurancePreview">
@@ -398,20 +393,18 @@
                                                             </template>
                                                         </div>
                                                     </template>
-
                                                     <input x-ref="insuranceInput" type="file" name="insurance_image" @change="previewDoc($event, 'insurancePreview', 'insuranceName', 'deleteInsurance')" accept=".pdf,image/*" class="hidden">
                                                 </label>
                                             </div>
                                             <p x-show="insuranceName" x-text="insuranceName" class="text-[9px] text-blue-600 font-bold text-center uppercase tracking-widest truncate px-2 mt-2"></p>
                                             <p x-show="!insuranceName" class="text-[9px] text-gray-400 font-bold text-center uppercase tracking-widest mt-2">Insurance</p>
                                         </div>
-
                                     </div>
                                 </div>
 
                                 <div class="col-span-full">
                                     <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-1.5 ml-1">Base Security Deposit (RM)</label>
-                                    <input type="number" name="baseDepo" value="{{ old('baseDepo', $vehicle->baseDepo) }}" class="w-full bg-orange-50/50 border border-orange-100 rounded-xl px-4 py-3 font-bold text-orange-600 outline-none focus:bg-white focus:border-orange-500 transition-all no-spin">
+                                    <input type="number" name="baseDepo" value="{{ old('baseDepo', $vehicle->baseDepo) }}" min="0" class="w-full bg-orange-50/50 border border-orange-100 rounded-xl px-4 py-3 font-bold text-orange-600 outline-none focus:bg-white focus:border-orange-500 transition-all no-spin">
                                 </div>
                             </div>
                         </div>
@@ -467,11 +460,7 @@
             handleDrop(event, inputElement, previewVar, nameVar, deleteVar) {
                 const files = event.dataTransfer.files;
                 if (files.length > 0) {
-                    // 1. Assign files to the input so they get submitted
                     inputElement.files = files;
-                    
-                    // 2. reuse previewDoc logic by creating a mock event
-                    // We pass { target: { files: files } } to simulate the 'change' event structure
                     this.previewDoc({ target: { files: files } }, previewVar, nameVar, deleteVar);
                 }
             },
@@ -493,13 +482,23 @@
 
             // Handle Deletion
             removeDoc(type) {
-                // 1. Clear the visual variables
                 this[type + 'Name'] = '';
                 this[type + 'Preview'] = null;
-
-                // 2. Set the hidden input flag to 1
                 let deleteVar = 'delete' + type.charAt(0).toUpperCase() + type.slice(1);
                 this[deleteVar] = 1;
+            },
+
+            // Submit with Confirmation
+            submitForm(event) {
+                // Check HTML5 validity (required fields)
+                if (!this.$refs.form.checkValidity()) {
+                    this.$refs.form.reportValidity();
+                    return;
+                }
+
+                if (confirm('Are you sure you want to update this vehicle?\n\nPlease confirm that all details are correct.')) {
+                    this.$refs.form.submit();
+                }
             }
         }
     }
