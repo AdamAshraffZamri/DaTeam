@@ -139,12 +139,34 @@ class BookingController extends Controller
         $query = Vehicle::where('availability', true)
             ->with(['bookings', 'maintenances']); 
 
-        // 4. Apply Vehicle Type Filter (if selected)
+        // 4. Apply Vehicle Category Filter (if selected)
+        if ($request->filled('category')) {
+            $query->whereIn('vehicle_category', $request->category);
+        }
+
+        // 5. Apply Vehicle Type Filter (if selected)
         if ($request->filled('types')) {
             $query->whereIn('type', $request->types);
         }
 
-        // 5. Fetch & Filter in Memory
+        // 6. Apply Price Range Filter (if selected)
+        if ($request->filled('price_range')) {
+            $query->where(function($subQuery) use ($request) {
+                foreach ($request->price_range as $range) {
+                    if ($range === '0-100') {
+                        $subQuery->orWhereBetween('priceHour', [0, 100]);
+                    } elseif ($range === '100-200') {
+                        $subQuery->orWhereBetween('priceHour', [100, 200]);
+                    } elseif ($range === '200-300') {
+                        $subQuery->orWhereBetween('priceHour', [200, 300]);
+                    } elseif ($range === '300-1000') {
+                        $subQuery->orWhere('priceHour', '>=', 300);
+                    }
+                }
+            });
+        }
+
+        // 7. Fetch & Filter in Memory
         $vehicles = $query->get()->filter(function($vehicle) use ($reqStart, $reqEnd) {
             
             // Define the Requested "Blocked" Block (Includes its own 3-hour cooldown tail)
