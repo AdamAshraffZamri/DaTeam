@@ -98,14 +98,14 @@
             <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm hover:border-orange-200 transition-colors group">
                 <div class="flex justify-between items-start">
                     <div>
-                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Revenue</p>
-                        <h3 class="text-2xl font-bold text-slate-800 mt-1">RM {{ number_format($totalRevenue) }}</h3>
+                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Revenue</p>
+                        <h3 class="text-2xl font-black text-slate-800 mt-1">RM {{ number_format($totalRevenue) }}</h3>
                     </div>
-                    <div class="p-2 bg-green-50 text-green-600 rounded-lg group-hover:bg-green-100 transition-colors">
+                    <div class="p-2.5 bg-green-100 text-green-700 rounded-xl group-hover:bg-green-600 group-hover:text-white transition-all shadow-sm">
                         <i class="fas fa-wallet text-lg"></i>
                     </div>
                 </div>
-                <div class="mt-3 text-[10px] font-medium text-green-600 flex items-center gap-1">
+                <div class="mt-3 text-[10px] font-bold text-green-600 flex items-center gap-1">
                     <i class="fas fa-arrow-up"></i> {{ $revenueGrowth }}% vs last month
                 </div>
             </div>
@@ -113,29 +113,29 @@
             <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm hover:border-orange-200 transition-colors group">
                 <div class="flex justify-between items-start">
                     <div>
-                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Active Rentals</p>
-                        <h3 class="text-2xl font-bold text-slate-800 mt-1">{{ $activeRentalsCount }}</h3>
+                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Active Rentals</p>
+                        <h3 class="text-2xl font-black text-slate-800 mt-1">{{ $activeRentalsCount }}</h3>
                     </div>
-                    <div class="p-2 bg-blue-50 text-blue-600 rounded-lg group-hover:bg-blue-100 transition-colors">
+                    <div class="p-2.5 bg-blue-100 text-blue-700 rounded-xl group-hover:bg-blue-600 group-hover:text-white transition-all shadow-sm">
                         <i class="fas fa-car-side text-lg"></i>
                     </div>
                 </div>
                 <div class="mt-3 w-full bg-gray-100 rounded-full h-1.5 overflow-hidden">
-                    <div class="bg-blue-500 h-1.5 rounded-full" style="width: 60%"></div>
+                    <div class="bg-blue-600 h-1.5 rounded-full" style="width: 60%"></div>
                 </div>
             </div>
 
             <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm hover:border-orange-200 transition-colors group">
                 <div class="flex justify-between items-start">
                     <div>
-                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Pending</p>
-                        <h3 class="text-2xl font-bold text-slate-800 mt-1">{{ $pendingBookingsCount }}</h3>
+                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Pending</p>
+                        <h3 class="text-2xl font-black text-slate-800 mt-1">{{ $pendingBookingsCount }}</h3>
                     </div>
-                    <div class="p-2 bg-orange-50 text-orange-600 rounded-lg group-hover:bg-orange-100 transition-colors">
+                    <div class="p-2.5 bg-orange-100 text-orange-700 rounded-xl group-hover:bg-orange-600 group-hover:text-white transition-all shadow-sm">
                         <i class="fas fa-hourglass-half text-lg"></i>
                     </div>
                 </div>
-                <div class="mt-3 text-[10px] font-medium text-orange-600">
+                <div class="mt-3 text-[10px] font-bold text-orange-600">
                     Needs verification
                 </div>
             </div>
@@ -143,14 +143,14 @@
             <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm hover:border-orange-200 transition-colors group">
                 <div class="flex justify-between items-start">
                     <div>
-                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Customers</p>
-                        <h3 class="text-2xl font-bold text-slate-800 mt-1">{{ $totalCustomers }}</h3>
+                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Customers</p>
+                        <h3 class="text-2xl font-black text-slate-800 mt-1">{{ $totalCustomers }}</h3>
                     </div>
-                    <div class="p-2 bg-purple-50 text-purple-600 rounded-lg group-hover:bg-purple-100 transition-colors">
+                    <div class="p-2.5 bg-purple-100 text-purple-700 rounded-xl group-hover:bg-purple-600 group-hover:text-white transition-all shadow-sm">
                         <i class="fas fa-users text-lg"></i>
                     </div>
                 </div>
-                <div class="mt-3 text-[10px] font-medium text-slate-400">
+                <div class="mt-3 text-[10px] font-bold text-slate-400">
                     Total registered users
                 </div>
             </div>
@@ -293,10 +293,34 @@
             <div class="xl:col-span-1 space-y-6">
                 
                 {{-- Availability Checker --}}
-                <div class="bg-white rounded-xl p-6 text-slate-900 shadow-lg relative overflow-hidden">
+                <div class="bg-white rounded-xl p-6 text-slate-900 shadow-lg relative overflow-hidden"
+                     x-data="{ 
+                        pDate: '{{ request('pickup_date') }}', 
+                        rDate: '{{ request('return_date') }}',
+                        setToday() {
+                            // Get today's date in YYYY-MM-DD format based on local time
+                            const today = new Date();
+                            const year = today.getFullYear();
+                            const month = String(today.getMonth() + 1).padStart(2, '0');
+                            const day = String(today.getDate()).padStart(2, '0');
+                            const formatted = `${year}-${month}-${day}`;
+                            
+                            this.pDate = formatted;
+                            this.rDate = formatted;
+                        }
+                     }">
+                    
                     <div class="absolute -top-10 -right-10 w-32 h-32 bg-orange-200 rounded-full blur-3xl opacity-60 pointer-events-none"></div>
-                    <h2 class="text-lg font-bold text-slate-800 truncate mr-5">Check Vehicle Availability</h2>
-                    <p class="text-slate-500 text-xs font-medium mb-5 relative z-10">Instant fleet search for walk-ins.</p>
+                    
+                    <div class="flex justify-between items-start relative z-10 mb-4">
+                        <div>
+                            <h2 class="text-lg font-bold text-slate-800 truncate">Check Availability</h2>
+                            <p class="text-slate-500 text-xs font-medium">Instant fleet search.</p>
+                        </div>
+                        <button @click="setToday()" type="button" class="bg-slate-100 hover:bg-slate-200 text-slate-700 text-[10px] font-bold px-2.5 py-1.5 rounded-lg transition-colors flex items-center gap-1">
+                            <i class="fas fa-calendar-day"></i> Today
+                        </button>
+                    </div>
 
                     <form action="{{ route('staff.dashboard') }}" method="GET" class="space-y-4 relative z-10">
                         <div>
@@ -304,12 +328,12 @@
                             <div class="grid grid-cols-2 gap-2">
                                 <div>
                                     <span class="text-[9px] text-slate-500 block mb-1">Pickup</span>
-                                    <input type="date" name="pickup_date" value="{{ request('pickup_date') }}" class="w-full bg-white border border-slate-200 text-slate-800 text-xs font-bold rounded-lg px-3 py-2 focus:border-orange-500 focus:ring-0 outline-none transition-colors" required>
+                                    <input type="date" name="pickup_date" x-model="pDate" class="w-full bg-white border border-slate-200 text-slate-800 text-xs font-bold rounded-lg px-3 py-2 focus:border-orange-500 focus:ring-0 outline-none transition-colors" required>
                                     <input type="time" name="pickup_time" value="{{ request('pickup_time', '09:00') }}" class="w-full bg-white border border-slate-200 text-slate-800 text-xs font-bold rounded-lg px-3 py-2 mt-1 focus:border-orange-500 focus:ring-0 outline-none transition-colors">
                                 </div>
                                 <div>
                                     <span class="text-[9px] text-slate-500 block mb-1">Return</span>
-                                    <input type="date" name="return_date" value="{{ request('return_date') }}" class="w-full bg-white border border-slate-200 text-slate-800 text-xs font-bold rounded-lg px-3 py-2 focus:border-orange-500 focus:ring-0 outline-none transition-colors" required>
+                                    <input type="date" name="return_date" x-model="rDate" class="w-full bg-white border border-slate-200 text-slate-800 text-xs font-bold rounded-lg px-3 py-2 focus:border-orange-500 focus:ring-0 outline-none transition-colors" required>
                                     <input type="time" name="return_time" value="{{ request('return_time', '09:00') }}" class="w-full bg-white border border-slate-200 text-slate-800 text-xs font-bold rounded-lg px-3 py-2 mt-1 focus:border-orange-500 focus:ring-0 outline-none transition-colors">
                                 </div>
                             </div>
@@ -537,28 +561,35 @@
                         grid: { display: false }, 
                         ticks: { font: { size: 10, family: 'sans-serif' }, color: '#94a3b8' } 
                     },
+                    // Revenue Axis (Left)
                     y: { 
-                        display: true, // <--- CHANGED TO TRUE (SHOWS SCALES)
-                        beginAtZero: true,
-                        suggestedMin: -100, // Forces negative scale
+                        display: true,
+                        beginAtZero: true, // Fixes the scale starting point
+                        type: 'linear',
+                        position: 'left',
                         grid: { 
                             borderDash: [4, 4],
-                            color: '#f1f5f9', // Very light grid lines
+                            color: '#f1f5f9', 
                             drawBorder: false 
                         },
                         ticks: { 
                             font: { size: 10, family: 'sans-serif' }, 
-                            color: '#94a3b8',
-                            callback: function(value) { return 'RM ' + value; } // Adds 'RM' prefix
+                            color: '#f97316', // Orange text to match revenue line
+                            callback: function(value) { return 'RM ' + value; }
                         }
                     },
+                    // Bookings Axis (Right) - Now Visible
                     y1: { 
-                        display: false, // Keep secondary axis hidden to avoid clutter
-                        beginAtZero: true,
+                        display: true, // Changed to TRUE so the scale is visible
+                        type: 'linear',
                         position: 'right',
-                        min: 0, 
-                        suggestedMax: 5, 
-                        grid: { drawOnChartArea: false }
+                        beginAtZero: true,
+                        grid: { drawOnChartArea: false }, // Don't draw grid lines for this axis (cleaner)
+                        ticks: {
+                            stepSize: 1, // Ensure whole numbers for bookings
+                            font: { size: 10, family: 'sans-serif' },
+                            color: '#3b82f6' // Blue text to match booking line
+                        }
                     }
                 }
             }
