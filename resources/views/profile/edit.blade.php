@@ -42,7 +42,7 @@
                         <p class="text-white font-medium">{{ $user->blacklist_reason }}</p>
                     </div>
                 @endif
-            @elseif($user->accountStat == 'approved' || $user->accountStat == 'active')
+            @elseif($user->accountStat == 'Confirmed' || $user->accountStat == 'active')
                 <div class="px-8 py-3 rounded-2xl bg-green-500/20 border border-green-500 text-green-400 font-black uppercase tracking-[0.2em] shadow-[0_0_20px_rgba(34,197,94,0.3)] flex items-center gap-4">
                     <i class="fas fa-check-circle text-2xl"></i> Account Verified
                 </div>

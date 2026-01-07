@@ -235,7 +235,7 @@
                             <img src="{{ asset('confirmed.png') }}" alt="Staff Verification" class="w-full h-full object-cover">
                         </div>
                         <h4 class="text-white font-bold text-sm">Staff Verification</h4>
-                        <p class="text-xs text-gray-400 mt-1">Wait for verification. Status changes to <span class="text-green-400">Approved</span>.</p>
+                        <p class="text-xs text-gray-400 mt-1">Wait for verification. Status changes to <span class="text-green-400">Confirmed</span>.</p>
                     </div>
                 </div>
                 <div class="relative flex gap-6 group">

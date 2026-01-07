@@ -283,201 +283,209 @@ class DatabaseSeeder extends Seeder
      */
     private function seedBookings(): void
     {
-        // Setup details
         $admin = Staff::where('email', 'admin@hasta.com')->first();
-        if(!$admin) $admin = Staff::first();
         $staffIds = Staff::pluck('staffID')->toArray();
-        $vehicleIds = Vehicle::pluck('VehicleID')->toArray();
+        $allCustomerIDs = Customer::pluck('customerID')->toArray();
         $faker = Faker::create();
 
-        // Specific Users
+        // specific users
         $adam   = Customer::where('email', 'adam@hasta.com')->first();
         $wildan = Customer::where('email', 'wildan@hasta.com')->first();
         $mikael = Customer::where('email', 'mikael@hasta.com')->first();
         $joshua = Customer::where('email', 'joshua@hasta.com')->first();
 
-        // Track active bookings count
-        $activeBookingsCount = 0;
-        $createdBookingsCount = 0;
-
-        // --- 1. PRESERVE SPECIFIC HISTORY (11 Bookings) ---
-
-        // ADAM: 6 Bookings (5 Completed, 1 Active)
-        if ($adam) {
-            $pastCars = Vehicle::take(5)->get();
-            foreach($pastCars as $index => $vehicle) {
-                $daysAgo = ($index + 1) * 10; 
-                $this->createBooking($adam->customerID, $vehicle->VehicleID, $admin->staffID, 
-                    now()->subDays($daysAgo)->toDateString(), 
-                    now()->subDays($daysAgo - 2)->toDateString(), 
-                    'Completed', 100.00);
-                $createdBookingsCount++;
-            }
-            $activeCar = Vehicle::skip(5)->first(); 
-            if($activeCar) {
-                $this->createBooking($adam->customerID, $activeCar->VehicleID, $admin->staffID, 
-                    now()->toDateString(), 
-                    now()->addDays(3)->toDateString(), 
-                    'Active', 150.00);
-                $activeCar->update(['availability' => 0]);
-                $activeBookingsCount++;
-                $createdBookingsCount++;
-            }
-        }
-
-        // WILDAN: 3 Bookings (Completed)
-        if ($wildan) {
-            $cars = Vehicle::skip(6)->take(3)->get();
-            foreach($cars as $index => $vehicle) {
-                $daysAgo = ($index + 1) * 15; 
-                $this->createBooking($wildan->customerID, $vehicle->VehicleID, $admin->staffID, 
-                    now()->subDays($daysAgo)->toDateString(), 
-                    now()->subDays($daysAgo - 1)->toDateString(), 
-                    'Completed', 80.00);
-                $createdBookingsCount++;
-            }
-        }
-
-        // MIKAEL: 1 Booking (Completed)
-        if ($mikael) {
-            $car = Vehicle::skip(9)->first();
-            if($car) {
-                $this->createBooking($mikael->customerID, $car->VehicleID, $admin->staffID, 
-                    now()->subDays(30)->toDateString(), 
-                    now()->subDays(29)->toDateString(), 
-                    'Completed', 60.00);
-                $createdBookingsCount++;
-            }
-        }
-
-        // JOSHUA: 1 Booking (Pending)
-        if ($joshua) {
-            $car = Vehicle::skip(10)->first();
-            if($car) {
-                $this->createBooking($joshua->customerID, $car->VehicleID, null, 
-                    now()->addDays(2)->toDateString(), 
-                    now()->addDays(4)->toDateString(), 
-                    'Pending', 200.00);
-                $createdBookingsCount++;
-            }
-        }
-
-        // --- 2. GENERATE REMAINING BOOKINGS (To Reach 1000) ---
-        // We will distribute these among all customers
+        // --- 1. PRESERVE SPECIFIC HISTORY (Recent) ---
         
-        $allCustomerIDs = Customer::pluck('customerID')->toArray();
-        $targetTotal = 1000;
-        $totalToGenerate = $targetTotal - $createdBookingsCount;
-        $targetActive = 5; 
-        
-        // We need 4 more active bookings (Since Adam already has 1)
-        $remainingActiveNeeded = $targetActive - $activeBookingsCount;
+        // ADAM: Multiple Future Bookings (Testing 3-hour cooldown rule)
+        $activeCar = Vehicle::where('plateNo', 'JPN1416')->first(); // Purple Myvi
+        if ($adam && $activeCar) {
+            // First Active booking: Now to 3 days later
+            $this->createBooking($adam->customerID, $activeCar->VehicleID, $admin->staffID, 
+                now()->toDateString(), 
+                now()->addDays(3)->toDateString(), 
+                'Active', 150.00, 'Future');
+            $activeCar->update(['availability' => 0]);
 
-        for ($i = 0; $i < $totalToGenerate; $i++) {
-            $custID = $faker->randomElement($allCustomerIDs);
-            $vehID = $faker->randomElement($vehicleIds);
-            
-            // Check if we need to force an active booking
-            if ($remainingActiveNeeded > 0) {
-                $status = 'Active';
-                $remainingActiveNeeded--;
-            } else {
-                // Probabilities for rest: 
-                // 85% Completed, 10% Pending, 5% Cancelled
-                $randStatus = $faker->numberBetween(1, 100);
-                if ($randStatus <= 85) $status = 'Completed';
-                elseif ($randStatus <= 95) $status = 'Pending';
-                else $status = 'Cancelled';
+            // Second booking after cooldown: 3 hours + 3 days + 3 hours = 3 days 6 hours later
+            $this->createBooking($adam->customerID, $activeCar->VehicleID, $admin->staffID, 
+                now()->addDays(3)->addHours(3)->toDateString(), 
+                now()->addDays(6)->addHours(3)->toDateString(), 
+                'Confirmed', 150.00, 'Future');
+
+            // Third booking respecting cooldown: Another 3 days + 3 hours after second ends
+            $this->createBooking($adam->customerID, $activeCar->VehicleID, $admin->staffID, 
+                now()->addDays(6)->addHours(6)->toDateString(), 
+                now()->addDays(9)->addHours(6)->toDateString(), 
+                'Confirmed', 150.00, 'Future');
+        }
+
+        // JOSHUA: Multiple Future Bookings with Different Vehicle (No conflict with Adam)
+        $joshuaCar = Vehicle::where('plateNo', 'UTM3365')->first(); 
+        if ($joshua && $joshuaCar) {
+            // First booking: Starts 2 days from now
+            $this->createBooking($joshua->customerID, $joshuaCar->VehicleID, $admin->staffID, 
+                now()->addDays(2)->toDateString(), 
+                now()->addDays(4)->toDateString(), 
+                'Confirmed', 200.00, 'Future');
+
+            // Second booking after 3-hour cooldown
+            $this->createBooking($joshua->customerID, $joshuaCar->VehicleID, $admin->staffID, 
+                now()->addDays(4)->addHours(3)->toDateString(), 
+                now()->addDays(6)->addHours(3)->toDateString(), 
+                'Confirmed', 200.00, 'Future');
+
+            // Third booking - different vehicle to avoid conflict
+            $thirdVehicle = Vehicle::where('plateNo', 'CTR2020')->first(); 
+            if ($thirdVehicle) {
+                $this->createBooking($joshua->customerID, $thirdVehicle->VehicleID, $admin->staffID, 
+                    now()->addDays(5)->toDateString(), 
+                    now()->addDays(7)->toDateString(), 
+                    'Confirmed', 200.00, 'Future');
             }
-            
-            // Date Generation Logic based on Status and Year/Month/Week distribution
-            $staffID = null;
-            $start = now();
-            $end = now();
-            $cost = $faker->randomFloat(2, 50, 450);
+        }
 
-            if ($status === 'Active') {
-                $staffID = $faker->randomElement($staffIds);
-                $start = now()->subDays($faker->numberBetween(0, 2));
-                $end = now()->addDays($faker->numberBetween(1, 5));
-                // Note: In a real scenario, we'd check vehicle availability, 
-                // but for seeding mass data we allow overlap or assume different cars.
-            } elseif ($status === 'Pending') {
-                $start = now()->addDays($faker->numberBetween(3, 60));
-                $end = (clone $start)->addDays($faker->numberBetween(1, 5));
-            } elseif ($status === 'Cancelled') {
-                $staffID = $faker->randomElement($staffIds);
-                $daysAgo = $faker->numberBetween(10, 365);
-                $start = now()->subDays($daysAgo);
-                $end = (clone $start)->addDays(1);
-                $cost = 0.00; // No cost for cancelled usually, or penalty
-            } else {
-                // Completed: Distribute across Years, Months, Weeks
-                $staffID = $faker->randomElement($staffIds);
-                $timeDistribution = $faker->randomElement(['year', 'year', 'month', 'month', 'month', 'week']); 
-                
-                if ($timeDistribution === 'year') {
-                    // 1-2 Years ago
-                    $start = $faker->dateTimeBetween('-2 years', '-1 year');
-                    $start = Carbon::instance($start);
-                } elseif ($timeDistribution === 'month') {
-                    // 1-11 Months ago
-                    $start = $faker->dateTimeBetween('-11 months', '-1 month');
-                    $start = Carbon::instance($start);
-                } else {
-                    // 1-3 Weeks ago
-                    $start = $faker->dateTimeBetween('-3 weeks', '-1 week');
-                    $start = Carbon::instance($start);
-                }
-                
-                $duration = $faker->numberBetween(1, 7);
-                $end = (clone $start)->addDays($duration);
+        // WILDAN: Future bookings to test same-customer, different-vehicle scenario
+        $wildanCar1 = Vehicle::where('plateNo', 'ABC1234')->first();
+        if ($wildan && $wildanCar1) {
+            $this->createBooking($wildan->customerID, $wildanCar1->VehicleID, $admin->staffID,
+                now()->addDays(1)->toDateString(),
+                now()->addDays(2)->toDateString(),
+                'Confirmed', 120.00, 'Future');
+
+            // Another car, overlapping time (same customer, different vehicle = allowed)
+            $wildanCar2 = Vehicle::where('plateNo', 'JPN1416')->first();
+            if ($wildanCar2 && $wildanCar2->VehicleID != $wildanCar1->VehicleID) {
+                $this->createBooking($wildan->customerID, $wildanCar2->VehicleID, $admin->staffID,
+                    now()->addDays(1)->toDateString(),
+                    now()->addDays(3)->toDateString(),
+                    'Confirmed', 150.00, 'Future');
+            }
+        }
+
+        // MIKAEL: Test cooldown validation - bookings that respect 3-hour gaps
+        $mikaelCar = Vehicle::where('plateNo', 'XYZ5678')->first();
+        if ($mikael && $mikaelCar) {
+            // Booking 1
+            $this->createBooking($mikael->customerID, $mikaelCar->VehicleID, $admin->staffID,
+                now()->addDays(7)->toDateString(),
+                now()->addDays(8)->toDateString(),
+                'Confirmed', 100.00, 'Future');
+
+            // Booking 2 - exactly 3 hours after Booking 1 ends
+            $this->createBooking($mikael->customerID, $mikaelCar->VehicleID, $admin->staffID,
+                now()->addDays(8)->addHours(3)->toDateString(),
+                now()->addDays(9)->addHours(3)->toDateString(),
+                'Confirmed', 100.00, 'Future');
+        }
+
+        // --- 2. MASS GENERATION (Backwards Chaining) ---
+        // This loops every vehicle and fills history backwards to prevent overlaps.
+
+        $vehicles = Vehicle::all();
+
+        foreach ($vehicles as $vehicle) {
+            // Start the timeline from yesterday (so we don't clash with today's Active bookings)
+            $currentDate = now()->subDay();
+
+            // Check if this vehicle is currently used by Adam or Joshua (Future bookings)
+            // If so, start the history BEFORE their booking starts
+            $futureBooking = Booking::where('vehicleID', $vehicle->VehicleID)->orderBy('bookingDate', 'asc')->first();
+            if ($futureBooking) {
+                $currentDate = Carbon::parse($futureBooking->bookingDate)->subHours(4);
             }
 
-            $this->createBooking($custID, $vehID, $staffID, $start->toDateString(), $end->toDateString(), $status, $cost);
+            // We want roughly 60-80 bookings per vehicle to fill up history
+            $bookingsPerCar = rand(50, 80); 
+
+            for ($i = 0; $i < $bookingsPerCar; $i++) {
+                // 1. Determine End Date (matches current timeline cursor)
+                $endDate = $currentDate->copy();
+
+                // 2. Determine Duration (1 to 3 days)
+                $duration = rand(1, 3);
+                $startDate = $endDate->copy()->subDays($duration);
+
+                // 3. Determine Status (NO PENDING)
+                // 90% Completed, 5% Cancelled, 5% Confirmed (old uncollected)
+                $rand = rand(1, 100);
+                if ($rand <= 90) $status = 'Completed';
+                elseif ($rand <= 95) $status = 'Cancelled';
+                else $status = 'Confirmed';
+
+                // 4. Random Customer & Cost
+                $custID = $faker->randomElement($allCustomerIDs);
+                $staffID = $faker->randomElement($staffIds);
+                $cost = $duration * $vehicle->priceHour * 24; // Rough calc
+                if ($status == 'Cancelled') $cost = 0;
+
+                // 5. Create Booking
+                $this->createBooking(
+                    $custID, 
+                    $vehicle->VehicleID, 
+                    $staffID, 
+                    $startDate->toDateString(), 
+                    $endDate->toDateString(), 
+                    $status, 
+                    $cost,
+                    'Standard' // Ensure historical bookings are Standard type
+                );
+
+                // 6. MOVE CURSOR BACKWARDS
+                // Gap: 3 hours + duration of the booking we just made
+                // We move back to the start of this booking, then subtract 3 hours for the next gap
+                $currentDate = $startDate->copy()->subHours(3);
+                
+                // Safety break if we go back too far (e.g. > 2 years)
+                if ($currentDate->year < 2023) break;
+            }
         }
     }
 
-    /**
-     * Helper to create a booking and payment
-     */
-    private function createBooking($custID, $vehID, $staffID, $startDate, $endDate, $status, $cost)
+    private function createBooking($custID, $vehID, $staffID, $startDate, $endDate, $status, $cost, $bookingType = 'Standard')
     {
+        // Parse dates to handle potentially passed Carbon objects or Strings
+        $start = Carbon::parse($startDate);
+        $end = Carbon::parse($endDate);
+
         $booking = Booking::create([
             'customerID' => $custID,
             'vehicleID' => $vehID,
             'staffID' => $staffID,
-            'bookingDate' => Carbon::parse($startDate)->format('Y-m-d'),
-            'originalDate' => Carbon::parse($startDate)->format('Y-m-d'),
+            'bookingDate' => $start->format('Y-m-d'),
+            'originalDate' => $start->format('Y-m-d'),
             'bookingTime' => '10:00:00',
-            'returnDate' => Carbon::parse($endDate)->format('Y-m-d'),
+            'returnDate' => $end->format('Y-m-d'),
             'returnTime' => '10:00:00',
-            'actualReturnDate' => ($status === 'Completed') ? Carbon::parse($endDate)->format('Y-m-d') : null,
+            'actualReturnDate' => ($status === 'Completed') ? $end->format('Y-m-d') : null,
             'actualReturnTime' => ($status === 'Completed') ? '10:00:00' : null,
             'pickupLocation' => 'KTDI',
             'returnLocation' => 'KTDI',
             'totalCost' => $cost,
             'bookingStatus' => $status,
-            'bookingType' => 'Standard',
+            'bookingType' => $bookingType,
+            // IMPORTANT: Set created_at to bookingDate so reports look correct!
+            'created_at' => $start, 
+            'updated_at' => $start,
         ]);
 
-        // Payment Logic
+        // Payment Logic - NO PENDING
         $paymentStatus = 'Paid';
-        if ($status === 'Pending' || $status === 'Cancelled') $paymentStatus = 'Pending';
+        if ($status === 'Cancelled') $paymentStatus = 'Refunded'; // Or Void
         
         Payment::create([
             'bookingID' => $booking->bookingID,
             'amount' => $cost > 0 ? $cost : 50.00, 
             'depoAmount' => 50.00,
-            'transactionDate' => Carbon::parse($startDate),
+            'transactionDate' => $start,
             'paymentMethod' => 'DuitNow', 
             'paymentStatus' => $paymentStatus, 
-            'depoStatus' => ($status === 'Completed') ? 'Refunded' : 'Pending'
+            'depoStatus' => ($status === 'Completed') ? 'Refunded' : 'Held',
+            'created_at' => $start,
+            'updated_at' => $start,
         ]);
 
         return $booking;
     }
-
     /**
      * Seed Rewards (UNCHANGED from original reference)
      */

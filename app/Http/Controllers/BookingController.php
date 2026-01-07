@@ -98,7 +98,7 @@ class BookingController extends Controller
         $vehicles = Vehicle::where('availability', true)
             ->whereDoesntHave('bookings', function ($q) use ($today) {
                 // Exclude cars that have active bookings overlapping with "today"
-                $q->whereIn('bookingStatus', ['Submitted', 'Deposit Paid', 'Paid', 'Approved', 'Active'])
+                $q->whereIn('bookingStatus', ['Submitted', 'Deposit Paid', 'Paid', 'Confirmed', 'Active'])
                 ->where(function ($sub) use ($today) {
                     $sub->whereDate('originalDate', '<=', $today)
                         ->whereDate('returnDate', '>=', $today);
