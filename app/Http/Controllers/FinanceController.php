@@ -105,7 +105,7 @@ class FinanceController extends Controller
             'installmentDetails' => $path
         ]);
 
-        if (in_array($booking->bookingStatus, ['Deposit Paid', 'Approved'])) {
+        if (in_array($booking->bookingStatus, ['Deposit Paid', 'Confirmed'])) {
             $booking->update(['bookingStatus' => 'Paid']);
         }
 

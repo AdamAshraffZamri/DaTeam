@@ -126,11 +126,11 @@ class ProfileController extends Controller
 
         // 1. VALIDATION
         $request->validate([
-            'name' => ['required', 'string', 'max:255'],
+            'name' => ['required', 'string', 'max:255', 'regex:/^[a-zA-Z\s]+$/'],
             'email' => ['required', 'email', 'max:255', Rule::unique('customers', 'email')->ignore($user->customerID, 'customerID')],
-            'phone' => ['required', 'string', 'max:20'],
-            'emergency_contact_no' => ['required', 'string', 'max:20'],
-            'emergency_contact_name' => ['required', 'string', 'max:255'],
+            'phone' => ['required', 'regex:/^[0-9\-\+\s]+$/', 'max:20'],
+            'emergency_contact_no' => ['required', 'regex:/^[0-9\-\+\s]+$/', 'max:20'],
+            'emergency_contact_name' => ['required', 'string', 'max:255', 'regex:/^[a-zA-Z\s]+$/'],
             'home_address' => ['required', 'string', 'max:500'],
             'college_address' => ['required', 'string', 'max:500'],
             'student_staff_id' => ['required', 'string', 'max:50', Rule::unique('customers', 'stustaffID')->ignore($user->customerID, 'customerID')],
@@ -146,6 +146,11 @@ class ProfileController extends Controller
             'student_card_image' => ['nullable', 'file', 'mimes:jpeg,png,jpg', 'max:5120'],
             'ic_passport_image' => ['nullable', 'file', 'mimes:jpeg,png,jpg', 'max:5120'],
             'driving_license_image' => ['nullable', 'file', 'mimes:jpeg,png,jpg', 'max:5120'],
+        ], [
+            'name.regex' => 'Full name can only contain letters and spaces.',
+            'phone.regex' => 'Phone number can only contain numbers, hyphens, and plus signs.',
+            'emergency_contact_no.regex' => 'Emergency contact number can only contain numbers, hyphens, and plus signs.',
+            'emergency_contact_name.regex' => 'Emergency contact name can only contain letters and spaces.',
         ]);
 
         // 2. GOOGLE DRIVE UPLOADS (Documents)

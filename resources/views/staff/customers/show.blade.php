@@ -23,8 +23,8 @@
                     
                     @if($customer->blacklisted)
                         <span class="text-xs font-black text-slate-900 uppercase">BLACKLISTED</span>
-                    @elseif($customer->accountStat == 'approved' || $customer->accountStat == 'active')
-                        <span class="text-xs font-black text-green-600 uppercase">APPROVED</span>
+                    @elseif($customer->accountStat == 'Confirmed' || $customer->accountStat == 'active')
+                        <span class="text-xs font-black text-green-600 uppercase">Confirmed</span>
                     @elseif($customer->accountStat == 'pending')
                         <span class="text-xs font-black text-orange-500 uppercase">PENDING</span>
                     @elseif($customer->accountStat == 'rejected')
@@ -37,7 +37,7 @@
                 {{-- Status Indicator Dot --}}
                 @if($customer->blacklisted)
                     <div class="w-3 h-3 rounded-full bg-slate-900 shadow-[0_0_8px_rgba(15,23,42,0.4)]"></div>
-                @elseif($customer->accountStat == 'approved' || $customer->accountStat == 'active')
+                @elseif($customer->accountStat == 'Confirmed' || $customer->accountStat == 'active')
                     <div class="w-3 h-3 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.4)]"></div>
                 @elseif($customer->accountStat == 'pending')
                     <div class="w-3 h-3 rounded-full bg-orange-500 shadow-[0_0_8px_rgba(249,115,22,0.4)] animate-pulse"></div>
@@ -100,14 +100,14 @@
                     </button>
 
                     {{-- REJECT BUTTON: Hide if Verified OR Already Rejected --}}
-                    @if($customer->accountStat !== 'active' && $customer->accountStat !== 'approved' && $customer->accountStat !== 'rejected')
+                    @if($customer->accountStat !== 'active' && $customer->accountStat !== 'Confirmed' && $customer->accountStat !== 'rejected')
                         <button @click="showRejectModal = true" type="button" class="bg-red-50 text-red-600 px-6 py-3 rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-red-100 transition border border-red-100">
                             <i class="fas fa-times mr-2"></i> Reject
                         </button>
                     @endif
 
                     {{-- APPROVE BUTTON: Hide if already Verified (But KEEP if Rejected, so you can change your mind) --}}
-                    @if($customer->accountStat !== 'active' && $customer->accountStat !== 'approved')
+                    @if($customer->accountStat !== 'active' && $customer->accountStat !== 'Confirmed')
                         <form action="{{ route('staff.customers.approve', $customer->customerID) }}" method="POST">
                             @csrf
                             <button type="submit" onclick="return confirm('Confirm all details are correct?')" class="bg-green-500 text-white px-8 py-3 rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-green-600 transition shadow-lg shadow-green-500/30">
@@ -232,7 +232,7 @@
                             </button>
 
                             {{-- Approve/Reject Logic --}}
-                            @if($customer->accountStat !== 'active' && $customer->accountStat !== 'approved')
+                            @if($customer->accountStat !== 'active' && $customer->accountStat !== 'Confirmed')
                                 @if($customer->accountStat !== 'rejected')
                                     <button @click="showRejectModal = true" class="px-4 py-2.5 rounded-xl bg-white text-red-600 border border-red-100 text-xs font-bold uppercase tracking-wide hover:bg-red-50 transition">
                                         Reject

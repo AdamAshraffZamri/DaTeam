@@ -140,9 +140,9 @@
                             <span class="block w-24 text-center px-0 py-1.5 rounded-full text-[10px] font-bold border uppercase tracking-wider bg-gray-900 text-white border-gray-800 shadow-sm">
                                 Blacklisted
                             </span>
-                        @elseif($customer->accountStat == 'approved' || $customer->accountStat == 'active')
+                        @elseif($customer->accountStat == 'Confirmed' || $customer->accountStat == 'active')
                             <span class="block w-24 text-center px-0 py-1.5 rounded-full text-[10px] font-bold border uppercase tracking-wider bg-green-100 text-green-700 border-green-200">
-                                Approved
+                                Confirmed
                             </span>
                         @elseif($customer->accountStat == 'pending')
                             <span class="block w-24 text-center px-0 py-1.5 rounded-full text-[10px] font-bold border uppercase tracking-wider bg-orange-100 text-orange-700 border-orange-200 animate-pulse">

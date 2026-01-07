@@ -42,11 +42,11 @@ class StaffCustomerController extends Controller
         $customer = Customer::findOrFail($id);
         
         $customer->update([
-            'accountStat' => 'approved',
+            'accountStat' => 'Confirmed',
             'rejection_reason' => null // Clear any previous rejection error
         ]);
 
-        return back()->with('success', 'Customer has been verified and approved.');
+        return back()->with('success', 'Customer has been verified and Confirmed.');
     }
 
     // ACTION 2: Reject

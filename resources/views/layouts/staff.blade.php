@@ -287,6 +287,47 @@
         </main>
 
     </div>
+<div id="staff-loader" class="fixed inset-0 z-[99999] hidden bg-slate-900/80 backdrop-blur-sm flex items-center justify-center transition-opacity duration-300">
+    <div class="bg-white rounded-2xl shadow-2xl p-8 flex flex-col items-center max-w-sm w-full mx-4">
+        <div class="w-12 h-12 border-4 border-indigo-100 border-t-indigo-600 rounded-full animate-spin mb-4"></div>
+        
+        <h3 class="text-gray-900 font-bold text-lg">System Processing</h3>
+        <p class="text-gray-500 text-xs text-center mt-2 leading-relaxed">
+            Sending notifications, generating invoices, and updating records.
+        </p>
+
+        <div class="w-full bg-gray-100 rounded-full h-1.5 mt-6 overflow-hidden">
+            <div class="bg-indigo-600 h-1.5 rounded-full animate-[loading_2s_ease-in-out_infinite] w-1/2"></div>
+        </div>
+    </div>
+</div>
+
+<style>
+    @keyframes loading {
+        0% { transform: translateX(-100%); }
+        100% { transform: translateX(200%); }
+    }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const loader = document.getElementById('staff-loader');
+
+        document.querySelectorAll('form').forEach(form => {
+            form.addEventListener('submit', function(e) {
+                // Only trigger for POST requests (Actions)
+                if (this.method.toUpperCase() === 'POST' && this.checkValidity()) {
+                    loader.classList.remove('hidden');
+                }
+            });
+        });
+        
+        // Reset on back navigation
+        window.addEventListener('pageshow', (event) => {
+            if (event.persisted) loader.classList.add('hidden');
+        });
+    });
+</script>
 
 </body>
 </html>

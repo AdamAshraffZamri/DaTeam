@@ -10,6 +10,7 @@ use App\Models\Voucher;
 use App\Models\Staff;
 use App\Services\GoogleDriveService;
 use App\Notifications\NewBookingSubmitted;
+use App\Notifications\BookingStatusUpdated;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
@@ -97,7 +98,7 @@ class BookingController extends Controller
         $vehicles = Vehicle::where('availability', true)
             ->whereDoesntHave('bookings', function ($q) use ($today) {
                 // Exclude cars that have active bookings overlapping with "today"
-                $q->whereIn('bookingStatus', ['Submitted', 'Deposit Paid', 'Paid', 'Approved', 'Active'])
+                $q->whereIn('bookingStatus', ['Submitted', 'Deposit Paid', 'Paid', 'Confirmed', 'Active'])
                 ->where(function ($sub) use ($today) {
                     $sub->whereDate('originalDate', '<=', $today)
                         ->whereDate('returnDate', '>=', $today);
@@ -238,9 +239,6 @@ class BookingController extends Controller
     }
 
     // --- 6. SUBMIT BOOKING (Handles Full/Deposit & Vouchers) ---
-    // In App\Http\Controllers\BookingController.php
-
-    // --- 6. SUBMIT BOOKING (Updated) ---
     public function submitPayment(Request $request, $id)
     {
         // 1. Validation
@@ -387,8 +385,16 @@ class BookingController extends Controller
         
         // 7. Notifications
         try {
+            // A. Notify Staff (Database + Email via NewBookingSubmitted)
             $staff = Staff::all(); 
             Notification::send($staff, new NewBookingSubmitted($booking));
+
+            // B. Notify Customer (Database + Email via BookingStatusUpdated)
+            $booking->customer->notify(new BookingStatusUpdated(
+                $booking, 
+                "Your booking #{$booking->bookingID} has been submitted successfully and is pending approval."
+            ));
+
         } catch (\Exception $e) {
             \Log::error("Notification failed: " . $e->getMessage());
         }

@@ -222,7 +222,7 @@
         // Gross Balance: Total Cost - Verified Paid (The absolute remaining debt)
         $grossBalance = $totalCost - $verifiedPaid;
 
-        // Net Balance: Gross Balance - Pending Paid (What is left to pay if current pending payments are approved)
+        // Net Balance: Gross Balance - Pending Paid (What is left to pay if current pending payments are Confirmed)
         // If you just paid a deposit, this will still be > 0
         $netBalance = $grossBalance - $pendingPaid;
         

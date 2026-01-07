@@ -1,6 +1,9 @@
 @extends('layouts.app')
 
 @section('content')
+{{-- SweetAlert2 for Validation Popups --}}
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
 {{-- 1. FIXED BACKGROUND --}}
 <div class="fixed inset-0 z-0">
     <div class="absolute inset-0 bg-cover bg-center" style="background-image: url('{{ asset('hastabg.png') }}');"></div>
@@ -39,7 +42,7 @@
                         <p class="text-white font-medium">{{ $user->blacklist_reason }}</p>
                     </div>
                 @endif
-            @elseif($user->accountStat == 'approved' || $user->accountStat == 'active')
+            @elseif($user->accountStat == 'Confirmed' || $user->accountStat == 'active')
                 <div class="px-8 py-3 rounded-2xl bg-green-500/20 border border-green-500 text-green-400 font-black uppercase tracking-[0.2em] shadow-[0_0_20px_rgba(34,197,94,0.3)] flex items-center gap-4">
                     <i class="fas fa-check-circle text-2xl"></i> Account Verified
                 </div>
@@ -417,4 +420,38 @@
         }
     }
 </script>
+
+{{-- VALIDATION ERROR POPUP --}}
+@if ($errors->any())
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const errors = @json($errors->messages());
+        let errorMessages = '<ul style="text-align: left;">';
+        
+        for (const [field, messages] of Object.entries(errors)) {
+            messages.forEach(message => {
+                errorMessages += `<li style="margin: 8px 0;">${message}</li>`;
+            });
+        }
+        errorMessages += '</ul>';
+        
+        Swal.fire({
+            icon: 'error',
+            title: '❌ Invalid Information',
+            html: errorMessages,
+            confirmButtonColor: '#ea580c',
+            confirmButtonText: 'Try Again',
+            allowOutsideClick: false,
+            allowEscapeKey: false,
+            background: '#353639ff',
+            color: '#fff',
+            customClass: {
+                popup: 'border border-red-500/30 backdrop-blur-md',
+                confirmButton: 'bg-orange-600 hover:bg-orange-700 text-white px-6 py-2 rounded-lg font-bold'
+            }
+        });
+    });
+</script>
+@endif
+
 @endsection

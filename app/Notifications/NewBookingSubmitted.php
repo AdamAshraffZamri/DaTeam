@@ -20,8 +20,20 @@ class NewBookingSubmitted extends Notification
 
     public function via($notifiable)
     {
-        // For now, we use 'database'. Add 'mail' later if your SMTP is set up.
-        return ['database'];
+        return ['database', 'mail'];
+    }
+
+    public function toMail($notifiable)
+    {
+        return (new MailMessage)
+            ->subject('New Booking #' . $this->booking->bookingID . ' Submitted')
+            ->greeting('Hello ' . $notifiable->name . ',') // Staff has 'name'
+            ->line('A new booking request has been received.')
+            ->line('**Customer:** ' . ($this->booking->customer->fullName ?? 'Guest'))
+            ->line('**Vehicle:** ' . ($this->booking->vehicle->model ?? 'Unknown') . ' (' . ($this->booking->vehicle->plateNo ?? '') . ')')
+            ->line('**Dates:** ' . $this->booking->originalDate . ' to ' . $this->booking->returnDate)
+            ->line('**Total Cost:** RM ' . number_format($this->booking->totalCost, 2))
+            ->action('Review Booking', url('/staff/bookings/' . $this->booking->bookingID));
     }
 
     public function toArray($notifiable)
