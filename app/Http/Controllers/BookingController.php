@@ -8,6 +8,7 @@ use App\Models\Vehicle;
 use App\Models\Penalties;
 use App\Models\Voucher;
 use App\Models\Staff;
+use App\Services\GoogleDriveService;
 use App\Notifications\NewBookingSubmitted;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -18,9 +19,17 @@ use Barryvdh\DomPDF\Facade\Pdf;
 
 class BookingController extends Controller
 {
+    protected $driveService;
+
+    // Inject the GoogleDriveService
+    public function __construct(GoogleDriveService $driveService)
+    {
+        $this->driveService = $driveService;
+    }
+
     // --- 1. MY BOOKINGS PAGE ---
     public function index(Request $request)
-{
+    {
     $query = Booking::where('customerID', Auth::id())
                 ->with(['vehicle', 'payments', 'penalties', 'inspections']); // Added 'inspections'
                 
@@ -43,6 +52,13 @@ class BookingController extends Controller
     public function create() 
     {
         $user = auth()->user();
+
+        if ($user instanceof \App\Models\Customer && $user->unpaidPenalties()) {
+        
+        // 2. Kalau ada saman, PAKSA dia pergi ke page Finance (Payment Tab)
+        return redirect()->route('finance.index')
+            ->with('error', '⛔ ACTION BLOCKED: You have unpaid penalties. Please settle them before making a new booking.');
+    }
 
         // 1. BLACKLIST CHECK (NEW)
         // If the user is blacklisted, block them immediately.
@@ -90,7 +106,7 @@ class BookingController extends Controller
             ->orderBy('priceHour', 'asc')
             ->get();
 
-        // Pass $vehicles to the view
+
         return view('bookings.create', compact('vehicles')); 
     }
 
@@ -107,8 +123,8 @@ class BookingController extends Controller
 
         // 2. Parse Requested Start & End Times
         try {
-            $reqStart = \Carbon\Carbon::parse($request->pickup_date . ' ' . $request->pickup_time);
-            $reqEnd   = \Carbon\Carbon::parse($request->return_date . ' ' . $request->return_time);
+            $reqStart = Carbon::parse($request->pickup_date . ' ' . $request->pickup_time);
+            $reqEnd   = Carbon::parse($request->return_date . ' ' . $request->return_time);
         } catch (\Exception $e) {
             return back()->withErrors(['date_error' => 'Invalid date or time format.']);
         }
@@ -141,8 +157,8 @@ class BookingController extends Controller
                 }
 
                 // Parse Existing Booking Times
-                $bookStart = \Carbon\Carbon::parse($booking->originalDate . ' ' . $booking->bookingTime);
-                $bookEnd   = \Carbon\Carbon::parse($booking->returnDate . ' ' . $booking->returnTime);
+                $bookStart = Carbon::parse($booking->originalDate . ' ' . $booking->bookingTime);
+                $bookEnd   = Carbon::parse($booking->returnDate . ' ' . $booking->returnTime);
                 
                 // Define Existing "Blocked" Block (Includes its own 3-hour cooldown tail)
                 // This represents: [Book Start] ------ [Book End] -- (3h Buffer) --|
@@ -224,51 +240,62 @@ class BookingController extends Controller
     // --- 6. SUBMIT BOOKING (Handles Full/Deposit & Vouchers) ---
     // In App\Http\Controllers\BookingController.php
 
-public function submitPayment(Request $request, $id)
-{
-    // 1. Validation
-    $request->validate([
-        'payment_proof' => 'required|image|max:2048',
-        'agreement_proof' => 'required|file|mimes:pdf|max:4048',
-        'payment_type' => 'required|in:full,deposit',
-    ]);
+    // --- 6. SUBMIT BOOKING (Updated) ---
+    public function submitPayment(Request $request, $id)
+    {
+        // 1. Validation
+        $request->validate([
+            'payment_proof' => 'required|mimes:jpeg,png,jpg|max:4048',
+            'agreement_proof' => 'required|file|mimes:pdf|max:4048',
+            'payment_type' => 'required|in:full,deposit',
+        ]);
 
         $vehicle = Vehicle::findOrFail($id);
 
-    // 2. Calculate Base Rental Price
-    $rentalCharge = $this->calculateRentalPrice(
-        $vehicle, 
-        $request->input('pickup_date'), $request->input('pickup_time'), 
-        $request->input('return_date'), $request->input('return_time')
-    );
+        // 2. Calculate Prices (Existing Logic)
+        $rentalCharge = $this->calculateRentalPrice(
+            $vehicle, 
+            $request->input('pickup_date'), $request->input('pickup_time'), 
+            $request->input('return_date'), $request->input('return_time')
+        );
 
-    $baseDepo = $vehicle->baseDepo;
-    $grossTotal = $rentalCharge + $baseDepo;
-    
-    // --- NEW: VOUCHER LOGIC START ---
-    $discountAmount = 0;
-    $voucherID = null;
+        // Calculate base deposit and gross total
+        $baseDepo = $vehicle->baseDepo ?? 50;
+        $grossTotal = $rentalCharge + $baseDepo;
+        $discountAmount = 0;
 
-    if ($request->filled('voucher_id')) {
-        $voucher = Voucher::find($request->input('voucher_id'));
-        
-        // Basic validation to ensure voucher is still valid at moment of submission
-        if ($voucher) {
-            $voucherID = $voucher->id; // Save ID to link it later if needed
+        if ($request->filled('voucher_id')) {
+            $voucher = \App\Models\Voucher::find($request->input('voucher_id'));
             
-            if ($voucher->discount_percentage > 0) {
-                // Percentage based discount (usually on Rental Charge only, not Deposit)
-                // But matching your frontend logic:
-                $discountAmount = ($grossTotal * $voucher->discount_percentage) / 100;
-            } else {
-                // Fixed amount discount
-                $discountAmount = $voucher->discount_amount;
+            // Check kewujudan voucher DAN pastikan belum digunakan (!isUsed)
+            if ($voucher && !$voucher->isUsed) {
+                $voucherID = $voucher->voucherID ?? $voucher->id;
+                
+                // [BARU] VALIDATION HARI (BACKEND SAFETY CHECK)
+                // Pastikan tarikh pickup adalah Isnin - Khamis
+                $pickupDay = Carbon::parse($request->input('pickup_date'));
+                
+                // Carbon: 1=Isnin, 4=Khamis, 5=Jumaat, 6=Sabtu, 7=Ahad
+                if ($voucher->voucherType == 'Rental Discount' && $pickupDay->dayOfWeekIso > 4) {
+                    return back()->with('error', 'Voucher invalid for this date (Mon-Thu only). Transaction cancelled.');
+                }
+
+                // Kira Diskaun
+                if ($voucher->discount_percent > 0) {
+                    // Percentage based discount (Diskaun atas Rental Charge sahaja, bukan Deposit)
+                    $discountAmount = ($rentalCharge * $voucher->discount_percent) / 100;
+                } else {
+                    // Fixed amount discount
+                    $discountAmount = $voucher->voucherAmount;
+                }
+                
+                // [PENTING] TANDAKAN VOUCHER SEBAGAI DIGUNAKAN
+                $voucher->update([
+                    'isUsed' => true,
+                    // 'used_at' => now() // Boleh uncomment jika ada column ini
+                ]);
             }
-            
-            // Optional: Mark voucher as used (if single-use)
-            // $voucher->decrement('usage_limit'); 
         }
-    }
 
     // Calculate Final Total Cost after Discount
     $finalTotalCost = max(0, $grossTotal - $discountAmount);
@@ -290,53 +317,81 @@ public function submitPayment(Request $request, $id)
         $bookingStatus = 'Submitted';
     }
 
-    // 4. File Uploads
-    $proofPath = $request->file('payment_proof')->store('receipts', 'public');
-    $agreementPath = $request->file('agreement_proof')->store('agreements', 'public');
-
-    // 5. Create Booking
-    $booking = Booking::create([
-        'customerID' => Auth::id(),
-        'vehicleID' => $id,
-        'bookingDate' => now(),
-        'originalDate' => $request->input('pickup_date'),
-        'bookingTime' => $request->input('pickup_time'),
-        'returnDate' => $request->input('return_date'),
-        'returnTime' => $request->input('return_time'),
-        'pickupLocation' => $request->input('pickup_location'),
-        'returnLocation' => $request->input('return_location'),
+        // --- 4. GOOGLE DRIVE UPLOAD LOGIC (NEW) ---
         
-        // SAVE THE DISCOUNTED TOTAL
-        'totalCost' => $finalTotalCost, 
-        'voucherID' => $voucherID, // Ensure you have this column in your table, or remove this line
-        
-        'aggreementDate' => now(),
-        'aggreementLink' => $agreementPath,
-        'bookingStatus' => $bookingStatus,
-        'bookingType' => 'Standard',
-        'remarks' => $request->input('remarks'),
-    ]);
+        // Format: [Name - Date - Time]
+        $timestamp = now()->format('Y-m-d - H-i');
+        $userName = Auth::user()->fullName; // Using fullName from Customer model
+        $fileNameBase = "[{$userName} - {$timestamp}]";
 
-    // 6. Create Payment Record
-    Payment::create([
-        'bookingID' => $booking->bookingID,
-        'amount' => $amountToPayNow, 
-        'depoAmount' => $baseDepo,
-        'transactionDate' => now(),
-        'paymentMethod' => 'QR Transfer',
-        'paymentStatus' => 'Pending Verification',
-        'depoStatus' => 'Holding',
-        'depoRequestDate' => now(),
-        'installmentDetails' => $proofPath
-    ]);
-    
-    // 7. Notifications
-    try {
-        $staff = Staff::all(); 
-        Notification::send($staff, new NewBookingSubmitted($booking));
-    } catch (\Exception $e) {
-        \Log::error("Notification failed: " . $e->getMessage());
-    }
+        // A. Upload Receipt
+        $receiptFile = $request->file('payment_proof');
+        // Fallback to local storage if Drive fails, or use local as temp
+        $localProofPath = $receiptFile->store('receipts', 'public'); 
+        
+        $receiptLink = $this->driveService->uploadFile(
+            $receiptFile, 
+            env('GOOGLE_DRIVE_RECEIPTS'), // Folder ID from .env
+            $fileNameBase . " - Receipt"
+        );
+
+        // B. Upload Agreement
+        $agreementFile = $request->file('agreement_proof');
+        $localAgreementPath = $agreementFile->store('agreements', 'public');
+
+        $agreementLink = $this->driveService->uploadFile(
+            $agreementFile, 
+            env('GOOGLE_DRIVE_AGREEMENTS'), // Folder ID from .env
+            $fileNameBase . " - Agreement"
+        );
+
+        // Use Drive Link if available, otherwise fallback to local path
+        $finalReceiptPath = $receiptLink ?? $localProofPath;
+        $finalAgreementPath = $agreementLink ?? $localAgreementPath;
+
+        // --- 5. Create Booking ---
+        $booking = Booking::create([
+            'customerID' => Auth::id(),
+            'vehicleID' => $id,
+            'bookingDate' => now(),
+            'originalDate' => $request->input('pickup_date'),
+            'bookingTime' => $request->input('pickup_time'),
+            'returnDate' => $request->input('return_date'),
+            'returnTime' => $request->input('return_time'),
+            'pickupLocation' => $request->input('pickup_location'),
+            'returnLocation' => $request->input('return_location'),
+            'totalCost' => $finalTotalCost, 
+            'voucherID' => $voucherID ?? null,
+            
+            'aggreementDate' => now(),
+            'aggreementLink' => $finalAgreementPath, // SAVED GOOGLE DRIVE LINK HERE
+            
+            'bookingStatus' => $bookingStatus,
+            'bookingType' => 'Standard',
+            'remarks' => $request->input('remarks'),
+        ]);
+
+        // --- 6. Create Payment Record ---
+        Payment::create([
+            'bookingID' => $booking->bookingID,
+            'amount' => $amountToPayNow, 
+            'depoAmount' => $baseDepo,
+            'transactionDate' => now(),
+            'paymentMethod' => 'QR Transfer',
+            'paymentStatus' => 'Pending Verification',
+            'depoStatus' => 'Holding',
+            'depoRequestDate' => now(),
+            
+            'installmentDetails' => $finalReceiptPath // SAVED GOOGLE DRIVE LINK HERE
+        ]);
+        
+        // 7. Notifications
+        try {
+            $staff = Staff::all(); 
+            Notification::send($staff, new NewBookingSubmitted($booking));
+        } catch (\Exception $e) {
+            \Log::error("Notification failed: " . $e->getMessage());
+        }
 
         return redirect()->route('book.index')->with('show_thank_you', true);
     }
@@ -368,10 +423,17 @@ public function submitPayment(Request $request, $id)
         return back()->with('error', 'Cannot cancel this booking.');
     }
 
-    // --- 8. SHOW AGREEMENT ---
+    // In showAgreement, handle external links vs local files if you wish
     public function showAgreement($id)
     {
         $booking = Booking::with(['customer', 'vehicle'])->findOrFail($id);
+        
+        // Check if it's a Google Drive Link
+        if (str_contains($booking->aggreementLink, 'drive.google.com')) {
+            return redirect($booking->aggreementLink);
+        }
+
+        // Fallback for old local files
         if (Auth::id() != $booking->customerID && !Auth::guard('staff')->check()) {
             abort(403);
         }
