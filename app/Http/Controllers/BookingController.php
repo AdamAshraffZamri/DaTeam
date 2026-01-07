@@ -384,7 +384,7 @@ class BookingController extends Controller
         }
 
         return redirect()->route('book.index')->with('show_thank_you', true);
-    }
+    }}
 
     // --- 7. CANCEL BOOKING ---
     public function cancel($id)
