@@ -285,8 +285,10 @@
                 </div>
             </div>
 
-            {{-- RIGHT COL: Financials --}}
-            <div class="flex flex-col gap-6 h-full">
+            {{-- RIGHT COL: Financials & Bookings --}}
+            <div class="flex flex-col gap-6">
+                
+                {{-- 1. Financial Card (Fixed Top) --}}
                 <div class="bg-white rounded-[2rem] shadow-sm border border-gray-100 p-6 text-center shrink-0">
                     <h3 class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Net Profit</h3>
                     <div class="text-4xl font-black {{ $netProfit >= 0 ? 'text-gray-900' : 'text-red-600' }} mb-4 tracking-tight">
@@ -305,8 +307,12 @@
                     </div>
                 </div>
 
-                <div class="bg-white rounded-[2rem] shadow-sm border border-gray-100 flex flex-col flex-1 h-full overflow-hidden">
-                    <div class="p-4 border-b border-gray-100 shrink-0">
+                {{-- 2. Tabbed List Card (Fixed Height & Scrollable) --}}
+                {{-- Added 'h-[600px]' to force a fixed size matching roughly the calendar height --}}
+                <div class="bg-white rounded-[2rem] shadow-sm border border-gray-100 flex flex-col h-[1080px] overflow-hidden">
+                    
+                    {{-- Tabs Header (Fixed at top of card) --}}
+                    <div class="p-4 border-b border-gray-100 shrink-0 bg-white z-10">
                         <div class="bg-gray-100 p-1 rounded-full flex gap-1">
                             <button @click="activeTab = 'bookings'" 
                                 :class="activeTab === 'bookings' ? 'bg-white text-orange-600 shadow-sm' : 'text-gray-500 hover:bg-gray-200'" 
@@ -321,7 +327,11 @@
                         </div>
                     </div>
                     
-                    <div class="p-4 flex-1 overflow-y-auto custom-scrollbar">
+                    {{-- Scrollable List Area --}}
+                    {{-- 'flex-1' fills the rest of the 600px, 'overflow-y-auto' enables scroll --}}
+                    <div class="flex-1 overflow-y-auto custom-scrollbar p-4">
+                        
+                        {{-- Booking List --}}
                         <div x-show="activeTab === 'bookings'" class="space-y-3">
                             @forelse($vehicle->bookings->sortByDesc('created_at') as $booking)
                                 <a href="{{ route('staff.bookings.show', $booking->bookingID) }}" class="block bg-orange-50 p-4 rounded-2xl border border-gray-100 shadow-sm hover:border-orange-200 hover:shadow-md transition group">
@@ -358,6 +368,7 @@
                             @endforelse
                         </div>
 
+                        {{-- Service List --}}
                         <div x-show="activeTab === 'service'" class="space-y-3">
                             @forelse($vehicle->maintenances->whereIn('type', ['maintenance', null])->sortByDesc('start_time') as $maint)
                                 <div class="bg-red-50 p-4 rounded-2xl border border-gray-100 shadow-sm hover:border-red-200 transition">
