@@ -1,8 +1,7 @@
 @extends('layouts.staff')
 
 @section('content')
-<div class="min-h-screen bg-gray-100 rounded-2xl p-6">
-    <div class="max-w-7xl mx-auto">
+<div class="min-h-screen bg-slate-100 rounded-2xl p-6">
 
         {{-- HEADER & ACTIONS --}}
         <div class="flex flex-col md:flex-row justify-between items-end md:items-center mb-8 gap-4">
@@ -137,8 +136,6 @@
         <div class="mt-6 px-2">
             {{ $staffMembers->links() }}
         </div>
-
-    </div>
 </div>
 
 <style>

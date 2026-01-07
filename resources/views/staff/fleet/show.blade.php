@@ -20,35 +20,46 @@
     .fc-event:hover { transform: scale(1.02); }
     .fc-event-title { font-weight: 700 !important; } 
     .fc-event-time { font-weight: 700 !important; margin-right: 4px; }
+    .fc-highlight { background: rgba(249, 115, 22, 0.2) !important; } /* Visual feedback when clicking */
     
     .custom-scrollbar::-webkit-scrollbar { width: 4px; }
     .custom-scrollbar::-webkit-scrollbar-thumb { background: #e5e7eb; border-radius: 4px; }
 </style>
 
-<div class="min-h-screen bg-gray-100 rounded-2xl p-6" x-data="fleetShow()">
+{{-- MAIN CONTAINER with ID for Alpine Scope --}}
+<div id="fleet-calendar-container" class="min-h-screen bg-slate-100 rounded-2xl p-6" x-data="fleetShow()">
     <div class="max-w-7xl mx-auto">
 
         {{-- === HEADER === --}}
-        <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4"> 
+        <div class="w-full flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+            
+            {{-- LEFT: Brand & Model ONLY --}}
             <div>
-                <a href="{{ route('staff.fleet.index') }}" class="inline-flex items-center text-gray-500 hover:text-gray-900 transition">
-                    <i class="fas fa-arrow-left mr-2"></i> Back to Fleet
-                </a>
+                <h1 class="text-4xl font-black text-gray-900 tracking-tight leading-none">
+                    {{ $vehicle->brand }} {{ $vehicle->model }}
+                </h1>
             </div>
 
+            {{-- RIGHT: Actions (Your Original Button Styles) --}}
             <div class="flex gap-3">
-                <a href="{{ route('staff.fleet.edit', $vehicle->VehicleID) }}" class="bg-gray-600 hover:bg-gray-500 text-white px-6 py-3.5 rounded-2xl font-bold text-xs shadow-lg shadow-gray-900/20 transition-all transform hover:scale-105 flex items-center gap-2 shrink-0 whitespace-nowrap">
+                {{-- Edit Button --}}
+                <a href="{{ route('staff.fleet.edit', $vehicle->VehicleID) }}" 
+                   class="bg-gray-600 hover:bg-gray-500 text-white px-6 py-3.5 rounded-2xl font-bold text-xs shadow-lg shadow-gray-900/20 transition-all transform hover:scale-105 flex items-center gap-2 whitespace-nowrap">
                     <i class="fas fa-edit"></i>
                     <span>Edit</span>
                 </a>
+
+                {{-- Delete Button --}}
                 <form action="{{ route('staff.fleet.destroy', $vehicle->VehicleID) }}" method="POST" onsubmit="return confirm('Confirm to delete this vehicle? This action can\'t be undone.');">
                     @csrf @method('DELETE')
-                    <button type="submit" class="bg-red-600 hover:bg-red-500 text-white px-6 py-3.5 rounded-2xl font-bold text-xs shadow-lg shadow-red-900/20 transition-all transform hover:scale-105 flex items-center gap-2 shrink-0 whitespace-nowrap">
+                    <button type="submit" 
+                            class="bg-red-600 hover:bg-red-500 text-white px-6 py-3.5 rounded-2xl font-bold text-xs shadow-lg shadow-red-900/20 transition-all transform hover:scale-105 flex items-center gap-2 whitespace-nowrap">
                         <i class="fas fa-trash-alt"></i>
                         <span>Delete</span>
                     </button>
                 </form>
             </div>
+
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -57,7 +68,7 @@
                 
                 {{-- 1. VEHICLE DETAILS --}}
                 <div class="bg-white rounded-[2rem] shadow-sm border border-gray-100 p-8 flex flex-col gap-8 relative">
-                    <div class="absolute top-4 right-5 z-10">
+                    <div class="absolute top-4 left-5 z-10">
                         @if($vehicle->availability)
                             <span class="px-3 py-1.5 rounded-full bg-green-50 text-green-700 text-[10px] font-black uppercase tracking-wider border border-green-100 shadow-sm">Available</span>
                         @else
@@ -99,22 +110,35 @@
                         
                         {{-- RIGHT: Info & Docs --}}
                         <div class="flex-1 flex flex-col justify-between gap-6 text-left">
-                            <div class="grid grid-cols-2 gap-y-5 gap-x-4">
-                                <div class="col-span-2">
-                                    <span class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Brand & Model</span>
-                                    <span class="text-3xl font-black font-bold-20 leading-tight">{{ $vehicle->brand }} {{ $vehicle->model }}</span>
-                                </div>
+                            
+                            {{-- GRID: 2 Columns, 3 Rows --}}
+                            <div class="grid grid-cols-2 gap-y-6 gap-x-4">
+                                
+                                {{-- Row 1 --}}
                                 <div>
                                     <span class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Plate Number</span>
-                                    <span class="font-bold text-gray-700 text-lg bg-gray-100 px-2 rounded inline-block font-mono border border-gray-200">{{ $vehicle->plateNo }}</span>
+                                    <span class="font-bold text-gray-700 text-lg bg-gray-100 px-2 py-0.5 rounded inline-block font-mono border border-gray-200">{{ $vehicle->plateNo }}</span>
                                 </div>
                                 <div>
-                                    <span class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Type & Year</span>
-                                    <span class="font-bold text-gray-500">{{ $vehicle->type }} ({{ $vehicle->year }})</span>
+                                    <span class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Manufacture Year</span>
+                                    <span class="font-bold text-gray-900">{{ $vehicle->year }}</span>
                                 </div>
+
+                                {{-- Row 2 --}}
                                 <div>
                                     <span class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Color</span>
                                     <span class="font-bold text-gray-500">{{ $vehicle->color }}</span>
+                                </div>
+                                <div>
+                                    {{-- Changed 'Capacity/Transmission' to 'Fuel Type' --}}
+                                    <span class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Fuel Type</span>
+                                    <span class="font-bold text-gray-900">{{ $vehicle->fuel_type ?? 'Petrol' }}</span>
+                                </div>
+
+                                {{-- Row 3 --}}
+                                <div>
+                                    <span class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Body Type</span>
+                                    <span class="font-bold text-gray-900">{{ $vehicle->type }}</span>
                                 </div>
                                 <div>
                                     <span class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Current Mileage</span>
@@ -122,10 +146,10 @@
                                 </div>
                             </div>
 
-                            {{-- Document Previews (Added Separator Line) --}}
                             <div class="border-t border-gray-100 pt-6">
                                 <span class="block text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-3">Documents Preview</span>
                                 <div class="grid grid-cols-3 gap-4">
+                                    {{-- Road Tax --}}
                                     <div class="flex flex-col gap-2">
                                         <div class="group relative aspect-[4/3] rounded-xl border overflow-hidden transition-all w-full {{ $vehicle->road_tax_image ? 'border-gray-200 hover:border-blue-500 shadow-sm cursor-pointer' : 'border-gray-100 bg-gray-50 cursor-not-allowed' }}"
                                              @if($vehicle->road_tax_image) @click="openViewer('Road Tax', '{{ asset('storage/'.$vehicle->road_tax_image) }}')" @endif>
@@ -135,9 +159,7 @@
                                                     <img src="{{ asset('storage/' . $vehicle->road_tax_image) }}" class="w-full h-full object-cover blur-[2px] group-hover:blur-0 transition-all duration-300">
                                                 @else
                                                     <div class="w-full h-full flex flex-col items-center justify-center bg-blue-50/50 text-blue-500">
-                                                        <div class="w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-md">
-                                                            <i class="fas fa-file-pdf text-xl"></i>
-                                                        </div>
+                                                        <div class="w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-md"><i class="fas fa-file-pdf text-xl"></i></div>
                                                     </div>
                                                 @endif
                                                 <div class="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center p-2 backdrop-blur-sm">
@@ -155,6 +177,7 @@
                                         <span class="text-sm font-medium text-gray-600 text-center">Road Tax</span>
                                     </div>
 
+                                    {{-- Grant --}}
                                     <div class="flex flex-col gap-2">
                                         <div class="group relative aspect-[4/3] rounded-xl border overflow-hidden transition-all w-full {{ $vehicle->grant_image ? 'border-gray-200 hover:border-blue-500 shadow-sm cursor-pointer' : 'border-gray-100 bg-gray-50 cursor-not-allowed' }}"
                                              @if($vehicle->grant_image) @click="openViewer('Grant', '{{ asset('storage/'.$vehicle->grant_image) }}')" @endif>
@@ -164,9 +187,7 @@
                                                     <img src="{{ asset('storage/' . $vehicle->grant_image) }}" class="w-full h-full object-cover blur-[2px] group-hover:blur-0 transition-all duration-300">
                                                 @else
                                                     <div class="w-full h-full flex flex-col items-center justify-center bg-blue-50/50 text-blue-500">
-                                                        <div class="w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-md">
-                                                            <i class="fas fa-file-pdf text-xl"></i>
-                                                        </div>
+                                                        <div class="w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-md"><i class="fas fa-file-pdf text-xl"></i></div>
                                                     </div>
                                                 @endif
                                                 <div class="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center p-2 backdrop-blur-sm">
@@ -184,6 +205,7 @@
                                         <span class="text-sm font-medium text-gray-600 text-center">Grant</span>
                                     </div>
 
+                                    {{-- Insurance --}}
                                     <div class="flex flex-col gap-2">
                                         <div class="group relative aspect-[4/3] rounded-xl border overflow-hidden transition-all w-full {{ $vehicle->insurance_image ? 'border-gray-200 hover:border-blue-500 shadow-sm cursor-pointer' : 'border-gray-100 bg-gray-50 cursor-not-allowed' }}"
                                              @if($vehicle->insurance_image) @click="openViewer('Insurance', '{{ asset('storage/'.$vehicle->insurance_image) }}')" @endif>
@@ -193,9 +215,7 @@
                                                     <img src="{{ asset('storage/' . $vehicle->insurance_image) }}" class="w-full h-full object-cover blur-[2px] group-hover:blur-0 transition-all duration-300">
                                                 @else
                                                     <div class="w-full h-full flex flex-col items-center justify-center bg-blue-50/50 text-blue-500">
-                                                        <div class="w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-md">
-                                                            <i class="fas fa-file-pdf text-xl"></i>
-                                                        </div>
+                                                        <div class="w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-md"><i class="fas fa-file-pdf text-xl"></i></div>
                                                     </div>
                                                 @endif
                                                 <div class="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center p-2 backdrop-blur-sm">
@@ -250,7 +270,6 @@
                     </div>
 
                     <div class="flex flex-col md:flex-row justify-between items-end gap-4 mt-6 pt-4 border-t border-dashed border-orange-200">
-                        {{-- Legend --}}
                         <div class="flex flex-wrap gap-4">
                              <div class="flex items-center gap-2"><div class="w-2 h-2 rounded-full bg-orange-500"></div><span class="text-[10px] font-medium text-gray-500 uppercase">Booked</span></div>
                              <div class="flex items-center gap-2"><div class="w-2 h-2 rounded-full bg-red-500"></div><span class="text-[10px] font-medium text-gray-500 uppercase">Maintenance</span></div>
@@ -259,7 +278,6 @@
                              <div class="flex items-center gap-2"><div class="w-2 h-2 rounded-full bg-gray-500"></div><span class="text-[10px] font-medium text-gray-500 uppercase">Blocked</span></div>
                         </div>
                         
-                        {{-- History Button (Bottom Right) --}}
                         <button @click="historyModalOpen = true" class="text-[10px] font-bold text-gray-500 hover:text-gray-900 bg-gray-100 hover:bg-gray-200 px-3 py-1.5 rounded-lg transition flex items-center gap-2">
                             <i class="fas fa-history"></i> History Log
                         </button>
@@ -529,11 +547,10 @@
                             <span class="text-[10px] font-medium text-gray-400">{{ $log->created_at->format('d M, h:i A') }}</span>
                         </div>
 
-                        {{-- Parse Description to separate original reason from unblocker info --}}
+                        {{-- Parse Description --}}
                         @php
                             $parts = explode('| [UNBLOCKED]', $log->description);
                             $cleanDesc = $parts[0];
-                            // Reconstruct the unblock message if it exists
                             $unblockInfo = isset($parts[1]) ? '[UNBLOCKED]' . $parts[1] : null;
                         @endphp
 
@@ -546,7 +563,6 @@
                             <span class="font-bold text-gray-700">{{ $log->staff->name ?? 'System' }}</span>
                         </div>
 
-                        {{-- Show Unblocker Info Highlighted --}}
                         @if($unblockInfo)
                             <div class="mt-2 p-2 bg-green-50 rounded-lg border border-green-100 flex items-center gap-2 text-xs text-green-700">
                                 <i class="fas fa-unlock"></i>
@@ -612,13 +628,17 @@
             headerToolbar: false,
             height: 'auto',
             selectable: true,
+            selectMirror: true, 
+            unselectAuto: false, 
             eventDisplay: 'block',
-            // Ensure 24h format for labels
             eventTimeFormat: { hour: '2-digit', minute: '2-digit', meridiem: false, hour12: false },
             nextDayThreshold: '00:00:00',
             
             select: function(info) {
-                let alpine = Alpine.$data(document.querySelector('[x-data]'));
+                // FIXED: Use specific ID to get the correct Alpine Scope
+                let alpineEl = document.getElementById('fleet-calendar-container');
+                let alpine = Alpine.$data(alpineEl);
+                
                 alpine.selectedStart = info.startStr;
                 
                 // Adjust end date because FullCalendar select end is exclusive
@@ -639,44 +659,34 @@
             events: events,
             
             eventDidMount: function(info) {
-                // 1. PARTIAL DAY (Specific Time) -> SOLID COLOR with TRANSPARENCY
                 if (!info.event.allDay) {
                     info.el.style.backgroundColor = info.event.backgroundColor;
                     info.el.style.borderColor = info.event.backgroundColor;
-                    info.el.style.color = '#ffffff'; // White Text
-                    
-                    // === ADDED TRANSPARENCY HERE ===
+                    info.el.style.color = '#ffffff';
                     info.el.style.opacity = '1';
                     
-                    // Force text white
                     let titleEl = info.el.querySelector('.fc-event-title');
                     let timeEl  = info.el.querySelector('.fc-event-time');
                     if(titleEl) titleEl.style.color = '#ffffffff';
                     if(timeEl)  timeEl.style.color  = '#000000ff';
                 } 
-                // 2. WHOLE DAY -> LIGHT GRAY BACKGROUND (No Transparency change)
                 else {
-                    info.el.style.backgroundColor = info.event.backgroundColor; // Light Gray
-                    info.el.style.borderColor = info.event.backgroundColor; // Colored Border
-                    info.el.style.color = '#000000ff'; // Colored Text
+                    info.el.style.backgroundColor = info.event.backgroundColor;
+                    info.el.style.borderColor = info.event.backgroundColor;
+                    info.el.style.color = '#000000ff';
                     info.el.style.borderWidth = '1px';
                     info.el.style.borderStyle = 'solid';
                     info.el.style.fontWeight = 'bold';
-                    
-                    // Ensure opacity is full for readability
                     info.el.style.opacity = '1';
 
-                    // Force text color
                     let titleEl = info.el.querySelector('.fc-event-title');
                     if(titleEl) titleEl.style.color = '#000000ff';
                 }
             },
             
-            
             eventClick: function(info) {
                 var props = info.event.extendedProps;
                 
-                // 1. BOOKING POPUP
                 if (props.type === 'booking') {
                     let start = info.event.start.toLocaleString([], {month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'});
                     let end = info.event.end ? info.event.end.toLocaleString([], {month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'}) : '';
@@ -702,14 +712,12 @@
                         }
                     });
                 }
-                // 2. MAINTENANCE/BLOCK POPUP
                 else if (props.type === 'block') {
                     let desc = props.desc || '-';
                     let extraHtml = '';
                     if(props.cost > 0) extraHtml += `<div class="mt-2 text-red-600 font-bold">Cost: RM ${props.cost}</div>`;
                     if(props.ref_id) extraHtml += `<div class="mt-2 text-blue-600 font-bold">Ref: ${props.ref_id}</div>`;
 
-                    // Generate History Html for the Popup
                     let historyHtml = '';
                     if (props.staff_name && props.created_at) {
                         historyHtml = `

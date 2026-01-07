@@ -226,11 +226,14 @@ class DatabaseSeeder extends Seeder
             ['plateNo' => 'VC6522', 'brand' => 'Perodua', 'model' => 'Myvi (2nd Gen)', 'vehicle_category' => 'car', 'type' => 'Hatchback', 'owner_name' => 'AKMAL HADIN JALALUDIN', 'owner_nric' => '840922055385', 'hourly_rates' => ['1'=>40, '3'=>60, '5'=>70, '7'=>75, '9'=>90, '12'=>100, '24'=>130], 'year' => 2012, 'color' => 'Silver', 'image' => 'vehicles/VC6522.jpg', 'mileage' => 280108, 'baseDepo' => 50, 'fuelType' => 'Petrol RON95'],
             ['plateNo' => 'UUM1095', 'brand' => 'Perodua', 'model' => 'Alza (2nd Gen)', 'vehicle_category' => 'car', 'type' => 'SUV', 'owner_name' => 'HASTA TRAVEL & TOURS', 'owner_nric' => '202001003057(1359376T)','hourly_rates' => ['1'=>40, '3'=>60, '5'=>70, '7'=>75, '9'=>90, '12'=>100, '24'=>130], 'year' => 2023, 'color' => 'Silver', 'image' => 'vehicles/UUM1095.jpg', 'mileage' => 247879, 'baseDepo' => 50, 'fuelType' => 'Petrol RON95'],
         ];
-
+        
         foreach ($vehicles as $v) {
             \App\Models\Vehicle::create(array_merge($v, [
                 'availability' => 1, 
-                'priceHour' => $v['hourly_rates']['1']
+                'priceHour' => $v['hourly_rates']['1'],
+                'road_tax_image' => 'vehiclesDocs/roadtax/' . $v['plateNo'] . '_roadtax.jpg',
+                'grant_image' => 'vehiclesDocs/grant/' . $v['plateNo'] . '_grant.jpg',
+                'insurance_image' => 'vehiclesDocs/insurance/' . $v['plateNo'] . '_insurance.jpg',
             ]));
         }
     }

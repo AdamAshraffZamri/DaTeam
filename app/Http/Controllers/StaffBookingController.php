@@ -4,13 +4,16 @@ namespace App\Http\Controllers;
 
 use App\Models\Booking;
 use App\Models\Payment;
-use App\Models\Staff; 
+use App\Models\Staff;
+use App\Models\Customer;
+use App\Models\Vehicle;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Notifications\BookingStatusUpdated;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
+use Carbon\Carbon;
 use App\Services\GoogleDriveService;
 use Illuminate\Support\Facades\Log;
 
@@ -24,26 +27,171 @@ class StaffBookingController extends Controller
         $this->driveService = $driveService;
     }
     // --- 1. STAFF DASHBOARD ---
-    public function dashboard()
+    public function dashboard(Request $request)
     {
-        $activeRentals = Booking::where('bookingStatus', 'Active')->count(); 
+        // ==========================================
+        // 1. FLEET PULSE & UTILIZATION (For Pie/Bar Widget)
+        // ==========================================
+        $totalVehicles = \App\Models\Vehicle::count();
         
-        // Count anything that needs attention
-        $pendingCount = Booking::whereIn('bookingStatus', ['Submitted', 'Deposit Paid'])->count();
+        $activeRentalsCount = Booking::where('bookingStatus', 'Active')->count();
         
-        $revenue = Payment::sum('amount'); 
+        // Count vehicles currently in maintenance (Start <= Now <= End)
+        $maintenanceCount = \App\Models\Maintenance::where('start_time', '<=', now())
+                                           ->where('end_time', '>=', now())
+                                           ->count();
+
+        // Calculate Percentages (Prevent Division by Zero)
+        $utilizationRate = $totalVehicles > 0 ? ($activeRentalsCount / $totalVehicles) * 100 : 0;
+        $maintenanceRate = $totalVehicles > 0 ? ($maintenanceCount / $totalVehicles) * 100 : 0;
+
+
+        // ==========================================
+        // 2. CRITICAL ALERTS & FINANCIALS
+        // ==========================================
+        $pendingBookingsCount = Booking::whereIn('bookingStatus', ['Submitted', 'Deposit Paid'])->count();
+        $totalCustomers = \App\Models\Customer::count();
         
+        // Total Lifetime Revenue
+        $totalRevenue = Payment::where('paymentStatus', 'Verified')->sum('amount');
+        $revenueGrowth = 12; // Static placeholder for UI
+
+        // Revenue Collected TODAY (Verified today)
+        $todayRevenue = Payment::where('paymentStatus', 'Verified')
+                               ->whereDate('updated_at', Carbon::today())
+                               ->sum('amount');
+
+        // Overdue Returns Logic
         $overdueCount = Booking::where('bookingStatus', 'Active')
-                                ->where('returnDate', '<', now())
-                                ->count();
+            ->where(function($q) {
+                // Return Date is in the past (Yesterday or before)
+                $q->where('returnDate', '<', now()->toDateString())
+                  // OR Return Date is Today BUT Time has passed
+                  ->orWhere(function($sub) {
+                      $sub->where('returnDate', '=', now()->toDateString())
+                          ->where('returnTime', '<', now()->format('H:i:s'));
+                  });
+            })
+            ->count();
 
-        $dueReturns = Booking::with('vehicle')
-                             ->where('bookingStatus', 'Active') 
-                             ->orderBy('returnDate', 'asc')
-                             ->take(3)
-                             ->get();
 
-        return view('staff.dashboard', compact('activeRentals', 'pendingCount', 'revenue', 'overdueCount', 'dueReturns'));
+        // ==========================================
+        // 3. OPERATIONAL LISTS (Tabs)
+        // ==========================================
+        $today = Carbon::today();
+        
+        // Pickups Today: Confirmed/Paid bookings starting today
+        $pickupsToday = Booking::with(['customer', 'vehicle'])
+            ->whereDate('originalDate', $today)
+            ->whereIn('bookingStatus', ['Confirmed', 'Paid']) 
+            ->orderBy('bookingTime', 'asc')
+            ->get();
+
+        // Returns Today: Active bookings ending today
+        $returnsToday = Booking::with(['customer', 'vehicle'])
+            ->whereDate('returnDate', $today)
+            ->where('bookingStatus', 'Active') 
+            ->orderBy('returnTime', 'asc')
+            ->get();
+
+        // Recent Activity (Last 5)
+        $recentBookings = Booking::with(['customer', 'vehicle'])
+            ->orderBy('created_at', 'desc')
+            ->take(5)
+            ->get();
+
+
+        // ==========================================
+        // 4. CHART DATA (Last 7 Days)
+        // ==========================================
+        $chartLabels = [];
+        $chartRevenue = [];
+        $chartBookings = [];
+
+        for ($i = 6; $i >= 0; $i--) {
+            $date = Carbon::now()->subDays($i);
+            $chartLabels[] = $date->format('d M'); // "05 Jan"
+            
+            // Daily Revenue
+            $chartRevenue[] = Payment::whereDate('transactionDate', $date)
+                ->where('paymentStatus', 'Verified')
+                ->sum('amount');
+                
+            // Daily Bookings
+            $chartBookings[] = Booking::whereDate('created_at', $date)->count();
+        }
+
+
+        // ==========================================
+        // 5. AVAILABILITY CHECKER LOGIC
+        // ==========================================
+        $searchResults = null;
+        $searchParams = null;
+
+        if ($request->filled(['pickup_date', 'return_date'])) {
+            // Parse inputs with fallback time if not provided
+            $pickupTimeStr = $request->pickup_time ?? '09:00';
+            $returnTimeStr = $request->return_time ?? '09:00';
+
+            $reqStart = Carbon::parse($request->pickup_date . ' ' . $pickupTimeStr);
+            $reqEnd   = Carbon::parse($request->return_date . ' ' . $returnTimeStr);
+            
+            // Query Available Vehicles
+            $searchResults = \App\Models\Vehicle::where('availability', true)
+                ->where(function($q) use ($request) {
+                    if($request->filled('model') && $request->model != 'all') {
+                        $q->where('model', $request->model);
+                    }
+                })
+                ->with(['bookings', 'maintenances'])
+                ->get()
+                ->filter(function($vehicle) use ($reqStart, $reqEnd) {
+                    
+                    // Define Requested Block with 3-hour buffer
+                    $reqEndWithBuffer = $reqEnd->copy()->addHours(3);
+
+                    // A. Check Bookings Overlap
+                    foreach ($vehicle->bookings as $booking) {
+                        if (in_array($booking->bookingStatus, ['Cancelled', 'Rejected'])) continue;
+                        
+                        $bookStart = Carbon::parse($booking->originalDate . ' ' . $booking->bookingTime);
+                        $bookEnd   = Carbon::parse($booking->returnDate . ' ' . $booking->returnTime);
+                        $bookEndWithBuffer = $bookEnd->copy()->addHours(3);
+
+                        // 2-Way Conflict Check
+                        if ($reqStart->lt($bookEndWithBuffer) && $reqEndWithBuffer->gt($bookStart)) {
+                            return false; 
+                        }
+                    }
+
+                    // B. Check Maintenance Overlap
+                    foreach ($vehicle->maintenances as $maint) {
+                        $mStart = Carbon::parse($maint->start_time);
+                        $mEnd   = Carbon::parse($maint->end_time);
+                        
+                        if ($mStart->lt($reqEnd) && $mEnd->gt($reqStart)) {
+                            return false; 
+                        }
+                    }
+
+                    return true; // Vehicle Available
+                });
+            
+            $searchParams = $request->all();
+        }
+
+        // Dropdown options
+        $vehicleModels = \App\Models\Vehicle::select('model')->distinct()->pluck('model');
+
+        return view('staff.dashboard', compact(
+            'activeRentalsCount', 'pendingBookingsCount', 'totalCustomers', 
+            'totalRevenue', 'revenueGrowth', 
+            'totalVehicles', 'maintenanceCount', 'utilizationRate', 'maintenanceRate',
+            'overdueCount', 'todayRevenue',
+            'pickupsToday', 'returnsToday', 'recentBookings',
+            'chartLabels', 'chartRevenue', 'chartBookings',
+            'vehicleModels', 'searchResults', 'searchParams'
+        ));
     }
 
     // --- 2. LIST ALL BOOKINGS ---

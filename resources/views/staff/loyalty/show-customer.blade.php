@@ -1,8 +1,8 @@
 @extends('layouts.staff')
 
 @section('content')
-<div class="min-h-screen bg-gray-100 rounded-2xl p-6">
-    <div class="max-w-6xl mx-auto">
+<div class="min-h-screen bg-slate-100 rounded-2xl p-6">
+    <div class="max-w-5xl mx-auto">
         
         {{-- BACK BUTTON --}}
         <a href="{{ route('staff.loyalty.index') }}" class="inline-flex items-center text-gray-500 hover:text-gray-900 mb-6 transition font-medium">
