@@ -446,5 +446,54 @@
         100% { transform: translateX(100%); }
     }
 </style>
+
+<div id="global-loader" class="fixed inset-0 z-[99999] hidden bg-black/90 flex flex-col items-center justify-center backdrop-blur-md transition-opacity duration-300">
+    <div class="relative mb-6">
+        <div class="w-20 h-20 border-4 border-orange-500/30 border-t-orange-500 rounded-full animate-spin"></div>
+        <div class="absolute inset-0 flex items-center justify-center">
+            <i class="fas fa-car-side text-orange-500 text-xl animate-pulse"></i>
+        </div>
+    </div>
+    
+    <h3 class="text-white font-black text-2xl tracking-[0.2em] animate-pulse">PROCESSING</h3>
+    <p class="text-gray-400 text-sm mt-3 font-medium text-center max-w-xs">
+        We are securing your booking and sending confirmation emails. 
+        <br><span class="text-orange-500 text-xs">Please do not close this window.</span>
+    </p>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const loader = document.getElementById('global-loader');
+        
+        // Attach listener to ALL forms
+        document.querySelectorAll('form').forEach(form => {
+            form.addEventListener('submit', function(e) {
+                // 1. Ensure form is valid (HTML5 validation)
+                if (!this.checkValidity()) return;
+
+                // 2. Ignore "GET" forms (Search/Filter) if you want, 
+                // but usually loading is good for them too. 
+                // We'll focus on POST for emails.
+                if (this.method.toUpperCase() === 'POST') {
+                    loader.classList.remove('hidden');
+                    
+                    // Optional: Disable submit button to prevent double-clicks
+                    const btn = this.querySelector('button[type="submit"]');
+                    if(btn) {
+                        btn.classList.add('opacity-50', 'cursor-not-allowed');
+                    }
+                }
+            });
+        });
+
+        // Hide loader if user hits "Back" button (BF Cache fix)
+        window.addEventListener('pageshow', (event) => {
+            if (event.persisted) {
+                loader.classList.add('hidden');
+            }
+        });
+    });
+</script>
 </body>
 </html>
