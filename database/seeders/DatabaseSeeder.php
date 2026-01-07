@@ -24,10 +24,10 @@ class DatabaseSeeder extends Seeder
         // 2. Seed Vehicles (Fixed list)
         $this->seedVehicles();
 
-        // 3. Seed Customers (4 Specific + 46 Random = 50 Total)
+        // 3. Seed Customers (4 Specific + 96 Random = 100 Total)
         $this->seedCustomers();
 
-        // 4. Seed Bookings (Specific History + Random = 100 Total)
+        // 4. Seed Bookings (Specific History + Random = 1000 Total)
         $this->seedBookings();
 
         // 5. Seed Rewards
@@ -115,7 +115,7 @@ class DatabaseSeeder extends Seeder
     }
 
     /**
-     * Seed Customers (4 Specific + 46 Random)
+     * Seed Customers (4 Specific + 96 Random)
      */
     private function seedCustomers(): void
     {
@@ -237,8 +237,8 @@ class DatabaseSeeder extends Seeder
             );
         }
 
-        // 2. Create 46 Random Customers
-        for ($i = 0; $i < 46; $i++) {
+        // 2. Create 96 Random Customers (Total 100)
+        for ($i = 0; $i < 96; $i++) {
             $gender = $faker->randomElement(['male', 'female']);
             $fullName = $faker->name($gender);
             
@@ -279,7 +279,7 @@ class DatabaseSeeder extends Seeder
     }
 
     /**
-     * Seed Bookings (Target: 100 Total)
+     * Seed Bookings (Target: 1000 Total)
      */
     private function seedBookings(): void
     {
@@ -296,6 +296,10 @@ class DatabaseSeeder extends Seeder
         $mikael = Customer::where('email', 'mikael@hasta.com')->first();
         $joshua = Customer::where('email', 'joshua@hasta.com')->first();
 
+        // Track active bookings count
+        $activeBookingsCount = 0;
+        $createdBookingsCount = 0;
+
         // --- 1. PRESERVE SPECIFIC HISTORY (11 Bookings) ---
 
         // ADAM: 6 Bookings (5 Completed, 1 Active)
@@ -307,6 +311,7 @@ class DatabaseSeeder extends Seeder
                     now()->subDays($daysAgo)->toDateString(), 
                     now()->subDays($daysAgo - 2)->toDateString(), 
                     'Completed', 100.00);
+                $createdBookingsCount++;
             }
             $activeCar = Vehicle::skip(5)->first(); 
             if($activeCar) {
@@ -315,6 +320,8 @@ class DatabaseSeeder extends Seeder
                     now()->addDays(3)->toDateString(), 
                     'Active', 150.00);
                 $activeCar->update(['availability' => 0]);
+                $activeBookingsCount++;
+                $createdBookingsCount++;
             }
         }
 
@@ -327,6 +334,7 @@ class DatabaseSeeder extends Seeder
                     now()->subDays($daysAgo)->toDateString(), 
                     now()->subDays($daysAgo - 1)->toDateString(), 
                     'Completed', 80.00);
+                $createdBookingsCount++;
             }
         }
 
@@ -338,6 +346,7 @@ class DatabaseSeeder extends Seeder
                     now()->subDays(30)->toDateString(), 
                     now()->subDays(29)->toDateString(), 
                     'Completed', 60.00);
+                $createdBookingsCount++;
             }
         }
 
@@ -349,54 +358,83 @@ class DatabaseSeeder extends Seeder
                     now()->addDays(2)->toDateString(), 
                     now()->addDays(4)->toDateString(), 
                     'Pending', 200.00);
+                $createdBookingsCount++;
             }
         }
 
-        // --- 2. GENERATE REMAINING BOOKINGS (89 Bookings) ---
+        // --- 2. GENERATE REMAINING BOOKINGS (To Reach 1000) ---
         // We will distribute these among all customers
         
         $allCustomerIDs = Customer::pluck('customerID')->toArray();
-        $totalToGenerate = 89;
+        $targetTotal = 1000;
+        $totalToGenerate = $targetTotal - $createdBookingsCount;
+        $targetActive = 5; 
+        
+        // We need 4 more active bookings (Since Adam already has 1)
+        $remainingActiveNeeded = $targetActive - $activeBookingsCount;
 
         for ($i = 0; $i < $totalToGenerate; $i++) {
             $custID = $faker->randomElement($allCustomerIDs);
             $vehID = $faker->randomElement($vehicleIds);
             
-            // Randomize Status: 70% Completed, 10% Active, 10% Pending, 5% Cancelled, 5% Unpaid
-            $rand = $faker->numberBetween(1, 100);
+            // Check if we need to force an active booking
+            if ($remainingActiveNeeded > 0) {
+                $status = 'Active';
+                $remainingActiveNeeded--;
+            } else {
+                // Probabilities for rest: 
+                // 85% Completed, 10% Pending, 5% Cancelled
+                $randStatus = $faker->numberBetween(1, 100);
+                if ($randStatus <= 85) $status = 'Completed';
+                elseif ($randStatus <= 95) $status = 'Pending';
+                else $status = 'Cancelled';
+            }
             
-            if ($rand <= 70) {
-                // Completed (Past)
-                $staffID = $faker->randomElement($staffIds);
-                $daysAgo = $faker->numberBetween(5, 365);
-                $duration = $faker->numberBetween(1, 7);
-                $start = now()->subDays($daysAgo);
-                $end = (clone $start)->addDays($duration);
-                $this->createBooking($custID, $vehID, $staffID, $start->toDateString(), $end->toDateString(), 'Completed', $faker->randomFloat(2, 50, 300));
-            
-            } elseif ($rand <= 80) {
-                // Active (Current) - Ensure car isn't already taken by Adam's active booking
-                // For simplicity in seeder, we might double book unless we check. 
-                // But for volume, we'll assume it's fine or just mark status.
+            // Date Generation Logic based on Status and Year/Month/Week distribution
+            $staffID = null;
+            $start = now();
+            $end = now();
+            $cost = $faker->randomFloat(2, 50, 450);
+
+            if ($status === 'Active') {
                 $staffID = $faker->randomElement($staffIds);
                 $start = now()->subDays($faker->numberBetween(0, 2));
                 $end = now()->addDays($faker->numberBetween(1, 5));
-                $this->createBooking($custID, $vehID, $staffID, $start->toDateString(), $end->toDateString(), 'Active', $faker->randomFloat(2, 50, 300));
-            
-            } elseif ($rand <= 90) {
-                // Pending (Future)
-                $start = now()->addDays($faker->numberBetween(3, 30));
-                $end = (clone $start)->addDays($faker->numberBetween(1, 3));
-                $this->createBooking($custID, $vehID, null, $start->toDateString(), $end->toDateString(), 'Pending', $faker->randomFloat(2, 50, 300));
-            
-            } else {
-                // Cancelled
+                // Note: In a real scenario, we'd check vehicle availability, 
+                // but for seeding mass data we allow overlap or assume different cars.
+            } elseif ($status === 'Pending') {
+                $start = now()->addDays($faker->numberBetween(3, 60));
+                $end = (clone $start)->addDays($faker->numberBetween(1, 5));
+            } elseif ($status === 'Cancelled') {
                 $staffID = $faker->randomElement($staffIds);
-                $daysAgo = $faker->numberBetween(10, 100);
+                $daysAgo = $faker->numberBetween(10, 365);
                 $start = now()->subDays($daysAgo);
                 $end = (clone $start)->addDays(1);
-                $this->createBooking($custID, $vehID, $staffID, $start->toDateString(), $end->toDateString(), 'Cancelled', 0.00);
+                $cost = 0.00; // No cost for cancelled usually, or penalty
+            } else {
+                // Completed: Distribute across Years, Months, Weeks
+                $staffID = $faker->randomElement($staffIds);
+                $timeDistribution = $faker->randomElement(['year', 'year', 'month', 'month', 'month', 'week']); 
+                
+                if ($timeDistribution === 'year') {
+                    // 1-2 Years ago
+                    $start = $faker->dateTimeBetween('-2 years', '-1 year');
+                    $start = Carbon::instance($start);
+                } elseif ($timeDistribution === 'month') {
+                    // 1-11 Months ago
+                    $start = $faker->dateTimeBetween('-11 months', '-1 month');
+                    $start = Carbon::instance($start);
+                } else {
+                    // 1-3 Weeks ago
+                    $start = $faker->dateTimeBetween('-3 weeks', '-1 week');
+                    $start = Carbon::instance($start);
+                }
+                
+                $duration = $faker->numberBetween(1, 7);
+                $end = (clone $start)->addDays($duration);
             }
+
+            $this->createBooking($custID, $vehID, $staffID, $start->toDateString(), $end->toDateString(), $status, $cost);
         }
     }
 
