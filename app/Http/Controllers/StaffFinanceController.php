@@ -109,8 +109,14 @@ class StaffFinanceController extends Controller
         ]);
 
         // 4. Notify Customer
-        $booking->customer->notify(new BookingStatusUpdated($booking, "Your deposit has been REFUNDED successfully."));
-
+        try {
+            $booking->customer->notify(new BookingStatusUpdated(
+                $booking, 
+                "Your deposit for booking #{$booking->bookingID} has been REFUNDED successfully."
+            ));
+        } catch (\Exception $e) {
+            \Log::error("Finance Refund Email Failed: " . $e->getMessage());
+        }
         return back()->with('success', 'Deposit marked as Refunded.');
     }
 
@@ -124,8 +130,14 @@ class StaffFinanceController extends Controller
             'depoRefundedDate' => now() // Technically closed date
         ]);
 
-        $booking->customer->notify(new BookingStatusUpdated($booking, "Your deposit has been FORFEITED due to damages/violations."));
-
+        try {
+            $booking->customer->notify(new BookingStatusUpdated(
+                $booking, 
+                "Alert: Your deposit for booking #{$booking->bookingID} has been FORFEITED due to damages or violations."
+            ));
+        } catch (\Exception $e) {
+             \Log::error("Forfeit Email Failed: " . $e->getMessage());
+        }
         return back()->with('success', 'Deposit marked as Forfeited.');
     }
 }

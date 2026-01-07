@@ -250,8 +250,7 @@ class StaffBookingController extends Controller
     // --- 4. APPROVE / CONFIRM ---
     public function approveAgreement($id)
     {
-        $booking = Booking::findOrFail($id);
-
+        $booking = Booking::with('customer', 'vehicle')->findOrFail($id);
         // Check if there are any unverified payments
         $pendingPayments = Payment::where('bookingID', $id)
                                   ->where('paymentStatus', 'Pending Verification')
@@ -268,9 +267,16 @@ class StaffBookingController extends Controller
             'aggreementDate' => now(),
         ]);
         // Notify Customer
-        $booking->customer->notify(new BookingStatusUpdated($booking, "Your booking #{$booking->bookingID} has been CONFIRMED!"));
+        try {
+            $booking->customer->notify(new BookingStatusUpdated(
+                $booking, 
+                "Great news! Your booking #{$booking->bookingID} has been CONFIRMED. Please arrive on time for pickup."
+            ));
+        } catch (\Exception $e) {
+            \Log::error("Confirmation Email Failed: " . $e->getMessage());
+        }
         
-        return back()->with('success', 'Booking is CONFIRMED.');
+        return back()->with('success', 'Booking is CONFIRMED and email sent.');
     }
 
     // ... pickup, processReturn, processRefund, storeInspection, assignStaff, show ...
@@ -307,16 +313,12 @@ class StaffBookingController extends Controller
         $loyaltyController->bookingCompleted($id);
 
         try {
-            // --- INVOICE GENERATION START ---
-            
-            // A. Generate PDF Content
-            // Load necessary relationships to ensure PDF has data
+            // A. Invoice Generation & Email
             $booking->loadMissing(['customer', 'vehicle', 'payment']);
-            
             $pdf = Pdf::loadView('pdf.invoice', compact('booking'));
-            $pdfContent = $pdf->output(); // Get raw PDF string
+            $pdfContent = $pdf->output(); 
 
-            // B. Email Invoice to Customer (EXISTING)
+            // Send Invoice via System Mailer
             Mail::send([], [], function ($message) use ($booking, $pdfContent) {
                 $message->to($booking->customer->email)
                         ->subject('Invoice for Booking #' . $booking->bookingID)
@@ -324,6 +326,13 @@ class StaffBookingController extends Controller
                             'mime' => 'application/pdf',
                         ]);
             });
+
+            // B. Send Explicit Notification about Completion & Deposit Refund
+            // This triggers the BookingStatusUpdated notification email
+            $booking->customer->notify(new BookingStatusUpdated(
+                $booking, 
+                "Your vehicle return is verified. Booking #{$booking->bookingID} is COMPLETED and your deposit has been REFUNDED."
+            ));
 
             // C. Upload to Google Drive & Save Link (NEW)
             // Use app() to resolve the service without constructor injection
@@ -375,8 +384,15 @@ class StaffBookingController extends Controller
             ]);
             
             // 3. Notify Customer (Optional: Pass remarks to notification if your notification class supports it)
-            // $booking->customer->notify(new \App\Notifications\BookingStatusUpdated($booking, "Your refund has been processed."));
-
+            try {
+                $booking->customer->notify(new BookingStatusUpdated(
+                    $booking, 
+                    "Your refund request for booking #{$booking->bookingID} has been processed successfully."
+                ));
+            } catch (\Exception $e) {
+                \Log::error("Refund Email Failed: " . $e->getMessage());
+            }
+            
             return back()->with('success', 'Refund issued successfully.');
         }
         
@@ -519,8 +535,14 @@ class StaffBookingController extends Controller
         }
 
         // Notify Customer
-        $booking->customer->notify(new BookingStatusUpdated($booking, "Your booking #{$booking->bookingID} was rejected. Reason: " . $request->reason));
-
+        try {
+            $booking->customer->notify(new BookingStatusUpdated(
+                $booking, 
+                "Your booking #{$booking->bookingID} was REJECTED. Reason: " . $request->reason
+            ));
+        } catch (\Exception $e) {
+            \Log::error("Rejection Email Failed: " . $e->getMessage());
+        }
         return back()->with('success', $statusMessage);
     }
 

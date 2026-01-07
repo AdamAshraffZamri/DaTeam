@@ -5,6 +5,7 @@ namespace App\Notifications;
 use App\Models\Booking;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Notification;
+use Illuminate\Notifications\Messages\MailMessage;
 
 class BookingStatusUpdated extends Notification
 {
@@ -21,7 +22,22 @@ class BookingStatusUpdated extends Notification
 
     public function via($notifiable)
     {
-        return ['database'];
+        return ['database', 'mail'];
+    }
+
+    public function toMail($notifiable)
+    {
+        $statusUpper = strtoupper($this->booking->bookingStatus);
+        
+        return (new MailMessage)
+            ->subject("Booking #{$this->booking->bookingID}: {$statusUpper}")
+            ->greeting('Hello ' . ($notifiable->fullName ?? 'Customer') . ',') // Customer has 'fullName'
+            ->line($this->message)
+            ->line('**Booking Details:**')
+            ->line('Vehicle: ' . ($this->booking->vehicle->model ?? 'Vehicle'))
+            ->line('Status: ' . $this->booking->bookingStatus)
+            ->action('View Details', url('/bookings'))
+            ->line('Thank you for choosing DaTeam!');
     }
 
     public function toArray($notifiable)
