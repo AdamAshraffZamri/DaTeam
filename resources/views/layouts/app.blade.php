@@ -455,9 +455,9 @@
         </div>
     </div>
     
-    <h3 class="text-white font-black text-2xl tracking-[0.2em] animate-pulse">PROCESSING</h3>
+    <h3 class="text-white font-black text-2xl tracking-[0.2em] animate-pulse">LOADING</h3>
     <p class="text-gray-400 text-sm mt-3 font-medium text-center max-w-xs">
-        We are securing your booking and sending confirmation emails. 
+        Processing your request. This may take a few seconds.
         <br><span class="text-orange-500 text-xs">Please do not close this window.</span>
     </p>
 </div>
