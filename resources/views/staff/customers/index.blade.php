@@ -27,7 +27,7 @@
                     $currentStatus = request('status', 'all');
                     $statuses = [
                         'all'         => 'All Status',
-                        'approved'    => 'Approved',
+                        'confirmed'    => 'Confirmed',
                         'pending'     => 'Pending',
                         'rejected'    => 'Rejected',
                         'blacklisted' => 'Blacklisted'
@@ -40,7 +40,7 @@
                         return match($status) {
                             'all'         => $query->count(),
                             'blacklisted' => $query->where('blacklisted', 1)->count(),
-                            'approved'    => $query->whereIn('accountStat', ['approved', 'active'])->count(),
+                            'confirmed'   => $query->whereIn('accountStat', ['confirmed', 'active'])->count(),
                             default       => $query->where('accountStat', $status)->count(),
                         };
                     };
