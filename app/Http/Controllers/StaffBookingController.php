@@ -246,10 +246,60 @@ class StaffBookingController extends Controller
         // FIX: Added 'feedback' to the with() list
         $booking = Booking::with(['customer', 'vehicle', 'payment', 'inspections', 'staff', 'feedback'])
                           ->findOrFail($id);
-                          
-        $allStaff = Staff::all();
-        return view('staff.bookings.show', compact('booking', 'allStaff'));
+
+    // 2. [NEW] Find Available Alternatives (Same Model, Different Plate)
+    // Only needed if booking is not yet completed
+    $availableCars = collect(); // Default empty collection
+
+    if (in_array($booking->bookingStatus, ['Submitted', 'Deposit Paid', 'Paid', 'Confirmed'])) {
+        
+        // Get Booking Dates
+        $reqStart = \Carbon\Carbon::parse($booking->originalDate . ' ' . $booking->bookingTime);
+        $reqEnd   = \Carbon\Carbon::parse($booking->returnDate . ' ' . $booking->returnTime);
+
+        // Find cars: Same Model + Same Brand + Not the current one + Available
+        $availableCars = \App\Models\Vehicle::where('model', $booking->vehicle->model)
+            ->where('brand', $booking->vehicle->brand)
+            ->where('availability', true)
+            ->where('VehicleID', '!=', $booking->vehicleID) // Don't show the one already assigned
+            ->get()
+            ->filter(function($v) use ($reqStart, $reqEnd) {
+                // Check if this specific car is free during the booking time
+                return $this->isVehicleAvailable($v, $reqStart, $reqEnd);
+            });
     }
+
+        $allStaff = Staff::all();
+        return view('staff.bookings.show', compact('booking', 'allStaff', 'availableCars'));
+    }
+
+    private function isVehicleAvailable($vehicle, $start, $end) {
+    $endBuffer = $end->copy()->addHours(3); // 3 Hour Buffer
+    
+    foreach ($vehicle->bookings as $b) {
+        if (in_array($b->bookingStatus, ['Cancelled', 'Rejected'])) continue;
+        
+        $bStart = \Carbon\Carbon::parse($b->originalDate . ' ' . $b->bookingTime);
+        $bEnd = \Carbon\Carbon::parse($b->returnDate . ' ' . $b->returnTime)->addHours(3);
+        
+        // Check overlap
+        if ($start->lt($bEnd) && $endBuffer->gt($bStart)) return false;
+    }
+    return true;
+}
+
+// [NEW] APPROVE
+    public function approve($id)
+    {
+        $booking = Booking::findOrFail($id);
+        $booking->bookingStatus = 'Confirmed';
+        $booking->save();
+        
+        // Notification logic here...
+
+        return back()->with('success', 'Booking Confirmed!');
+    }
+
     public function pickup(Request $request, $id) {
         $booking = Booking::findOrFail($id);
         $booking->update(['bookingStatus' => 'Active']);
@@ -442,6 +492,43 @@ class StaffBookingController extends Controller
         $request->validate(['staff_id' => 'required']);
         Booking::findOrFail($id)->update(['staffID' => $request->staff_id]);
         return back()->with('success', "Agent assigned.");
+    }
+
+    // [NEW] UPDATE VEHICLE (Swap Plate No)
+    public function updateVehicle(Request $request, $id)
+    {
+        // 1. Find the booking
+        $booking = Booking::findOrFail($id);
+        
+        // 2. Validate the new Vehicle ID exists in your database
+        $request->validate([
+            'vehicle_id' => 'required|exists:vehicles,VehicleID'
+        ]);
+
+        // 3. FORCE UPDATE the vehicle ID
+        // We set it directly and call save() to ensure it persists
+        $booking->vehicleID = $request->vehicle_id;
+        
+        // Optional: If you want this action to also Confirm the booking immediately
+        // Uncomment the line below. Otherwise, it just swaps the car.
+        // $booking->bookingStatus = 'Confirmed'; 
+
+        $booking->save();
+
+        // 4. (Optional) Notify Customer about the change
+        try {
+            // Reload the vehicle relation so the email shows the NEW plate
+            $booking->refresh(); 
+            
+            $booking->customer->notify(new \App\Notifications\BookingStatusUpdated(
+                $booking, 
+                "Vehicle update: Your booking #{$booking->bookingID} is now assigned to plate {$booking->vehicle->plateNo}."
+            ));
+        } catch (\Exception $e) {
+            // Ignore notification errors
+        }
+
+        return back()->with('success', 'Vehicle successfully swapped to ' . $booking->vehicle->plateNo);
     }
 
     // [NEW] REJECT BOOKING (Handle Fraud vs Refund)

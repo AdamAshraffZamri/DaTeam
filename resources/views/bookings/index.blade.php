@@ -128,7 +128,18 @@
 
                             <div>
                                 <h3 class="text-xl font-black text-white leading-tight">{{ $booking->vehicle->model }}</h3>
-                                <p class="text-xs text-orange-400 font-bold mt-1 tracking-wide">{{ $booking->vehicle->plateNo }}</p>
+                                
+                                {{-- CONDITIONAL PLATE DISPLAY --}}
+                                @if($booking->bookingStatus == 'Confirmed' || $booking->bookingStatus == 'Active' || $booking->bookingStatus == 'Completed')
+                                    <p class="text-xs text-orange-400 font-bold mt-1 tracking-wide">
+                                        PLATE: {{ $booking->vehicle->plateNo }}
+                                    </p>
+                                @else
+                                    <p class="text-xs text-gray-500 font-medium mt-1 italic">
+                                        <i class="fas fa-spinner fa-spin mr-1"></i> Plate No. pending confirmation
+                                    </p>
+                                @endif
+                                
                             </div>
                         </div>
 

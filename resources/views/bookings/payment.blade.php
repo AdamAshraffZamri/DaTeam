@@ -210,6 +210,7 @@
                  ============================== --}}
             <div class="lg:col-span-5">
                 <form id="paymentForm" action="{{ route('book.payment.submit', ['id' => $vehicle->VehicleID]) }}" method="POST" enctype="multipart/form-data" novalidate>                    @csrf 
+                    @csrf
                     {{-- Hidden Info Inputs --}}
                     <input type="hidden" name="pickup_location" value="{{ $pickupLoc }}">
                     <input type="hidden" name="return_location" value="{{ $returnLoc }}">
