@@ -21,6 +21,46 @@
             <div><p class="font-bold text-green-400">Success</p><p>{{ session('status') }}</p></div>
         </div>
         @endif
+        
+        <div class="flex flex-col items-center mb-10">
+            {{-- (Status Logic kept same as before) --}}
+            @if($user->blacklisted)
+                <div class="px-8 py-3 rounded-2xl bg-black/60 border border-red-500 text-red-500 font-black uppercase tracking-[0.2em] shadow-[0_0_20px_rgba(239,68,68,0.4)] flex items-center gap-4 text-lg">
+                    <i class="fas fa-ban text-2xl"></i> Account Blacklisted
+                </div>
+                @if($user->blacklist_reason)
+                    <div class="mt-4 bg-gray-900/80 border border-red-500/30 p-4 rounded-xl max-w-lg text-center backdrop-blur-md">
+                        <p class="text-[10px] text-red-400 uppercase font-bold mb-1 tracking-widest">Reason for suspension</p>
+                        <p class="text-white font-medium">{{ $user->blacklist_reason }}</p>
+                    </div>
+                @endif
+            @elseif($user->accountStat == 'Confirmed' || $user->accountStat == 'active')
+                <div class="px-8 py-3 rounded-2xl bg-green-500/20 border border-green-500 text-green-400 font-black uppercase tracking-[0.2em] shadow-[0_0_20px_rgba(34,197,94,0.3)] flex items-center gap-4">
+                    <i class="fas fa-check-circle text-2xl"></i> Account Verified
+                </div>
+            @elseif($user->accountStat == 'pending')
+                <div class="px-8 py-3 rounded-2xl bg-yellow-500/20 border border-yellow-500 text-yellow-400 font-black uppercase tracking-[0.2em] shadow-[0_0_20px_rgba(234,179,8,0.3)] animate-pulse flex items-center gap-4">
+                    <i class="fas fa-clock text-2xl"></i> Pending Verification
+                </div>
+                <p class="text-gray-400 text-xs mt-3">Staff is reviewing your details. This usually takes 24 hours.</p>
+            @elseif($user->accountStat == 'rejected')
+                <div class="px-8 py-3 rounded-2xl bg-red-600/20 border border-red-500 text-red-400 font-black uppercase tracking-[0.2em] shadow-[0_0_20px_rgba(220,38,38,0.3)] flex items-center gap-4">
+                    <i class="fas fa-times-circle text-2xl"></i> Verification Rejected
+                </div>
+                @if($user->rejection_reason)
+                    <div class="mt-4 bg-red-900/40 border border-red-500/50 p-6 rounded-2xl max-w-lg text-center backdrop-blur-md shadow-xl">
+                        <div class="flex justify-center mb-2"><i class="fas fa-exclamation-triangle text-red-400 text-xl"></i></div>
+                        <p class="text-xs text-red-300 uppercase font-bold mb-2 tracking-widest">Please fix the following:</p>
+                        <p class="text-white font-bold text-lg leading-relaxed">"{{ $user->rejection_reason }}"</p>
+                    </div>
+                @endif
+            @else
+                <div class="px-8 py-3 rounded-2xl bg-white/10 border border-white/20 text-gray-300 font-black uppercase tracking-[0.2em] flex items-center gap-4">
+                    <i class="fas fa-user-shield text-2xl"></i> Unverified
+                </div>
+                <p class="text-gray-400 text-xs mt-3">Please complete your profile to verify your account.</p>
+            @endif
+        </div>
 
         {{-- ==================== PROFILE HEADER ==================== --}}
         <div class="text-center mb-8 relative">
