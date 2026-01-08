@@ -196,8 +196,10 @@
                 <h3 class="text-4xl font-black text-white tracking-tighter">Rental <span class="text-orange-500">Journey</span></h3>
                 <p class="text-gray-400 text-base mt-2">Follow these steps for a smooth experience.</p>
             </div>
-            <div class="relative space-y-8 max-h-[70vh] overflow-y-auto pr-4 custom-scrollbar">
-                <div class="absolute left-[15px] top-2 bottom-2 w-0.5 bg-gradient-to-b from-orange-500 via-blue-500 to-emerald-500 opacity-20"></div>
+            <div class="relative space-y-8 max-h-[60vh] overflow-y-auto pr-4 custom-scrollbar">
+                <div class="absolute left-[15px] top-0 bottom-0 w-0.5 
+                            bg-gradient-to-b from-orange-500 via-blue-500 to-emerald-500 opacity-20">
+                </div>
                 <div class="relative flex gap-6 group">
                     <div class="z-10 w-8 h-8 rounded-full bg-orange-500 text-white flex items-center justify-center shadow-[0_0_15px_rgba(234,88,12,0.4)] shrink-0 transition group-hover:scale-110"><i class="fas fa-user-edit text-[10px]"></i></div>
                     <div class="bg-white/5 border border-white/10 p-4 rounded-2xl flex-1 hover:bg-white/10 transition">
@@ -215,7 +217,7 @@
                             <img src="{{ asset('bookcar.png') }}" alt="Book a Vehicle" class="w-full h-full object-cover">
                         </div>
                         <h4 class="text-white font-bold text-sm">Book a Vehicle</h4>
-                        <p class="text-xs text-gray-400 mt-1">Select pickup location, return location, and dates. Browse your favourable car. Note: Every vehicle has a <span class="text-orange-400">3 hour cooldown</span> between bookings. Please choose your booking date wisely.</p>
+                        <p class="text-xs text-gray-400 mt-1">Select pickup location, return location, and dates. Browse your favourable car. Note: Every vehicle has a <span class="text-orange-400">3 hour cooldown</span> between bookings. Please choose your booking date wisely. Pickup location and return location except for Student Mall, UTM are subject to additional delivery fees.</p>
                     </div>
                 </div>
                 <div class="relative flex gap-6 group">
