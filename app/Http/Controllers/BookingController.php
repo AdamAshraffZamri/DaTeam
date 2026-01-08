@@ -145,7 +145,7 @@ class BookingController extends Controller
         }
 
         // 5. Fetch & Filter in Memory
-        $vehicles = $query->get()->filter(function($vehicle) use ($reqStart, $reqEnd) {
+        $allAvailableVehicles = $query->get()->filter(function($vehicle) use ($reqStart, $reqEnd) {
             
             // Define the Requested "Blocked" Block (Includes its own 3-hour cooldown tail)
             // This represents: [Req Start] ------ [Req End] -- (3h Buffer) --|
@@ -189,8 +189,44 @@ class BookingController extends Controller
 
             return true; // Available
         });
+        
+        $vehicles = $allAvailableVehicles->unique(function ($item) {
+            return $item->brand . $item->model;
+        });
 
         return view('bookings.search_results', compact('vehicles'));
+    }
+
+    // 2. STORE: Silent Assignment
+    public function store(Request $request)
+    {
+        $reqStart = Carbon::parse($request->pickup_date . ' ' . $request->pickup_time);
+        $reqEnd   = Carbon::parse($request->return_date . ' ' . $request->return_time);
+
+        // Find ANY free car of the requested model
+        $targetVehicle = Vehicle::where('model', $request->model)
+            ->where('brand', $request->brand)
+            ->where('availability', true)
+            ->get()
+            ->filter(function($v) use ($reqStart, $reqEnd) {
+                return $this->isVehicleAvailable($v, $reqStart, $reqEnd);
+            })
+            ->first();
+
+        if (!$targetVehicle) {
+            return redirect()->route('book.search')->with('error', 'Sorry, ' . $request->model . ' is fully booked.');
+        }
+
+        // Redirect to Payment with the specific ID (Hidden from user view)
+        return redirect()->route('book.payment', [
+            'id' => $targetVehicle->VehicleID,
+            'pickup_date' => $request->pickup_date,
+            'return_date' => $request->return_date,
+            'pickup_time' => $request->pickup_time,
+            'return_time' => $request->return_time,
+            'pickup_location' => $request->pickup_location,
+            'return_location' => $request->return_location,
+        ]);
     }
 
     // --- 4. VEHICLE DETAILS ---

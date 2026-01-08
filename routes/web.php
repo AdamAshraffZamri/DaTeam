@@ -59,7 +59,8 @@ Route::middleware('auth')->group(function () {
     // 2. Booking Process
     Route::get('/book', [BookingController::class, 'create'])->name('book.create'); 
     Route::get('/book/search', [BookingController::class, 'search'])->name('book.search'); 
-    Route::get('/book/details/{id}', [BookingController::class, 'show'])->name('book.show'); 
+    Route::get('/book/details/{id}', [BookingController::class, 'show'])->name('book.show');
+    Route::get('/book/store', [BookingController::class, 'store'])->name('book.store');
     Route::get('/book/payment/{id}', [BookingController::class, 'payment'])->name('book.payment'); 
     Route::post('/book/payment/submit/{id}', [BookingController::class, 'submitPayment'])->name('book.payment.submit');
 
@@ -131,6 +132,9 @@ Route::middleware('auth')->group(function () {
     Route::post('/bookings/{id}/return', [StaffBookingController::class, 'processReturn'])->name('staff.bookings.return');
     Route::post('/bookings/{id}/refund', [StaffBookingController::class, 'processRefund'])->name('staff.bookings.refund');
     Route::post('/bookings/{id}/reject', [StaffBookingController::class, 'reject'])->name('staff.bookings.reject');
+    Route::post('/bookings/{id}/update-vehicle', [StaffBookingController::class, 'updateVehicle'])->name('staff.bookings.update_vehicle');
+    Route::post('/bookings/{id}/approve', [StaffBookingController::class, 'approve'])->name('staff.bookings.approve');
+
 
     // Inspections
     Route::post('/inspections/{id}/store', [StaffBookingController::class, 'storeInspection'])->name('staff.inspections.store');

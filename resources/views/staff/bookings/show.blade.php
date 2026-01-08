@@ -130,13 +130,34 @@
                     </h3>
                     <img src="{{ asset('storage/' . $booking->vehicle->image) }}" alt="Car" class="w-full h-32 object-cover rounded-xl mb-4 bg-gray-50">
                     
-                    <div class="flex justify-between items-center mb-2">
+                    {{-- MODIFY VEHICLE FORM --}}
+                    @if($booking->bookingStatus == 'Submitted' || $booking->bookingStatus == 'Deposit Paid')
+                        <div class="mt-6 pt-6 border-t border-gray-200">
+                            <form action="{{ route('staff.bookings.update_vehicle', $booking->bookingID) }}" method="POST" class="flex gap-2 items-end">
+                                @csrf
+                                <div class="w-full">
+                                    <label class="text-xs font-bold text-gray-400 uppercase mb-1 block">Change Vehicle (Optional)</label>
+                                    <select name="vehicle_id" class="w-full border-gray-300 rounded-lg text-sm">
+                                        <option value="{{ $booking->vehicleID }}" selected>Keep Current: {{ $booking->vehicle->plateNo }}</option>
+                                        @foreach($availableCars as $car)
+                                            <option value="{{ $car->VehicleID }}">Swap to: {{ $car->brand }} {{ $car->model }} - {{ $car->plateNo }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <button type="submit" class="bg-blue-600 text-white px-4 py-2.5 rounded-lg text-sm font-bold hover:bg-blue-700 transition">
+                                    Save
+                                </button>
+                            </form>
+                        </div>
+                    @endif
+
+                    <div class="flex justify-between items-center mb-2 mt-4">
                         <h4 class="font-bold text-lg text-gray-900">{{ $booking->vehicle->model }}</h4>
                         <span class="bg-gray-100 text-gray-600 px-2 py-1 rounded text-xs font-bold uppercase">
                             {{ $booking->vehicle->plateNo }}
                         </span>
                     </div>
-                    <p class="text-sm text-gray-500">{{ $booking->vehicle->color }} • {{ $booking->vehicle->transmission }} • {{ $booking->vehicle->seat }} Seats</p>
+                    <p class="text-sm text-gray-500">{{ $booking->vehicle->color }} • {{ $booking->vehicle->seat }} Seats</p>
                 </div>
 
             </div>

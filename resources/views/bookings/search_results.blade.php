@@ -64,7 +64,7 @@
                                         </option>
                                     @endfor
                                 </select>
-                                <span class="text-white font-bold text-sm -ml-0.5">: 00</span>
+                                <span class="text-white font-bold text-sm leading-none">:00</span>
                                 <select id="pickup_ampm_search" class="bg-transparent text-white font-bold text-xs border-none p-0 focus:ring-0 cursor-pointer ml-1"
                                         onchange="updateSearchTime('pickup')">
                                     <option value="AM" class="text-black">AM</option>
@@ -99,7 +99,7 @@
                                         </option>
                                     @endfor
                                 </select>
-                                <span class="text-white font-bold text-sm -ml-0.5">: 00</span>
+                                <span class="text-white font-bold text-sm leading-none">:00</span>
                                 <select id="return_ampm_search" class="bg-transparent text-white font-bold text-xs border-none p-0 focus:ring-0 cursor-pointer ml-1"
                                         onchange="updateSearchTime('return')">
                                     <option value="AM" class="text-black">AM</option>
@@ -382,6 +382,34 @@
 @foreach($vehicles as $vehicle)
 <div id="details-modal-{{ $vehicle->VehicleID }}" class="fixed inset-0 z-50 hidden" style="z-index: 100;" role="dialog" aria-modal="true">
     {{-- Backdrop --}}
+    <div class="pt-4 mt-4 border-t border-white/10 flex items-center justify-between">
+    
+    {{-- Price Display --}}
+    <div>
+        <span class="text-xl font-black text-white">RM {{ number_format($totalPrice, 0) }}</span>
+    </div>
+    
+    {{-- SELECT BUTTON FORM --}}
+    <form action="{{ route('book.store') }}" method="POST">
+        @csrf
+        {{-- Pass MODEL info, not ID --}}
+        <input type="hidden" name="model" value="{{ $vehicle->model }}">
+        <input type="hidden" name="brand" value="{{ $vehicle->brand }}">
+        
+        {{-- Pass Search Params --}}
+        <input type="hidden" name="pickup_date" value="{{ request('pickup_date') }}">
+        <input type="hidden" name="pickup_time" value="{{ request('pickup_time') }}">
+        <input type="hidden" name="return_date" value="{{ request('return_date') }}">
+        <input type="hidden" name="return_time" value="{{ request('return_time') }}">
+        <input type="hidden" name="pickup_location" value="{{ request('pickup_location') }}">
+        <input type="hidden" name="return_location" value="{{ request('return_location') }}">
+
+        <button type="submit" class="bg-[#ea580c] hover:bg-orange-600 text-white px-5 py-2 rounded-xl font-bold text-xs shadow-lg">
+            Select This Model
+        </button>
+    </form>
+
+</div>
     <div class="absolute inset-0 bg-black/70 backdrop-blur-md transition-opacity" 
          onclick="document.getElementById('details-modal-{{ $vehicle->VehicleID }}').classList.add('hidden')"></div>
 
