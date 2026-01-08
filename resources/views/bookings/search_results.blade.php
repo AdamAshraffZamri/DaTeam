@@ -64,7 +64,7 @@
                                         </option>
                                     @endfor
                                 </select>
-                                <span class="text-white font-bold text-sm -ml-0.5">:00</span>
+                                <span class="text-white font-bold text-sm -ml-0.5">: 00</span>
                                 <select id="pickup_ampm_search" class="bg-transparent text-white font-bold text-xs border-none p-0 focus:ring-0 cursor-pointer ml-1"
                                         onchange="updateSearchTime('pickup')">
                                     <option value="AM" class="text-black">AM</option>
@@ -99,7 +99,7 @@
                                         </option>
                                     @endfor
                                 </select>
-                                <span class="text-white font-bold text-sm -ml-0.5">:00</span>
+                                <span class="text-white font-bold text-sm -ml-0.5">: 00</span>
                                 <select id="return_ampm_search" class="bg-transparent text-white font-bold text-xs border-none p-0 focus:ring-0 cursor-pointer ml-1"
                                         onchange="updateSearchTime('return')">
                                     <option value="AM" class="text-black">AM</option>

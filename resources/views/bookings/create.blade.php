@@ -93,7 +93,7 @@
 
                             <select id="pickup_hour" 
                                     onchange="updateHiddenTime('pickup')"
-                                    class="bg-transparent text-white font-bold text-sm border-none p-0 focus:ring-0 cursor-pointer appearance-none text-center w-8">
+                                    class="bg-transparent text-white font-bold text-sm border-none p-0 focus:ring-0 cursor-pointer appearance-none text-center w-6">
                                 @for ($i = 1; $i <= 12; $i++)
                                     <option value="{{ $i }}" {{ $i == 10 ? 'selected' : '' }} class="text-black">
                                         {{ $i }}
@@ -101,7 +101,7 @@
                                 @endfor
                             </select>
 
-                            <span class="text-white font-bold text-sm leading-none">:00</span>
+                            <span class="text-white font-bold text-sm leading-none">: 00</span>
 
                             <select id="pickup_ampm"
                                     class="bg-transparent text-white font-bold text-sm border-none p-0 focus:ring-0 cursor-pointer ml-1 leading-none"
@@ -132,7 +132,7 @@
 
                             <select id="return_hour" 
                                     onchange="updateHiddenTime('return')"
-                                    class="bg-transparent text-white font-bold text-sm border-none p-0 focus:ring-0 cursor-pointer appearance-none text-center w-8">
+                                    class="bg-transparent text-white font-bold text-sm border-none p-0 focus:ring-0 cursor-pointer appearance-none text-center w-6">
                                 @for ($i = 1; $i <= 12; $i++)
                                     <option value="{{ $i }}" {{ $i == 10 ? 'selected' : '' }} class="text-black">
                                         {{ $i }}
@@ -140,7 +140,7 @@
                                 @endfor
                             </select>
 
-                            <span class="text-white font-bold text-sm leading-none">:00</span>
+                            <span class="text-white font-bold text-sm leading-none">: 00</span>
 
                             <select id="return_ampm"
                                     class="bg-transparent text-white font-bold text-sm border-none p-0 focus:ring-0 cursor-pointer ml-1 leading-none"
@@ -372,7 +372,7 @@
     <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full max-w-4xl bg-white rounded-3xl shadow-2xl overflow-hidden">
         
         <div class="bg-gray-900 px-6 py-4 flex justify-between items-center">
-            <h3 class="text-white font-bold text-lg"><i class="fas fa-map-marked-alt text-orange-500 mr-2"></i> Pin Location</h3>
+            <h3 class="text-white font-bold text-lg"><i class="fas fa-map-marked-alt text-orange-500 mr-2"></i> Pin Location(RM 6 delivery/pickup fees for every KM from Student Mall, UTM )</h3>
             <button onclick="closeMapModal()" class="text-gray-400 hover:text-white transition"><i class="fas fa-times text-xl"></i></button>
         </div>
 

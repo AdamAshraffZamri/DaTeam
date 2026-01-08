@@ -107,7 +107,7 @@
 
                 {{-- Submit Button --}}
                 <button type="submit" class="w-full bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-500 hover:to-red-500 text-white font-bold py-4 rounded-xl shadow-lg shadow-orange-900/40 transition-all transform hover:-translate-y-0.5 active:translate-y-0 mt-2">
-                    Sign In
+                    Log In
                 </button>
             </form>
 

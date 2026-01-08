@@ -154,7 +154,7 @@
             <div class="bg-white/10 backdrop-blur-md border border-white/20 rounded-full p-1.5 flex items-center shadow-2xl">
                 <a href="{{ route('book.create') }}" 
                    class="px-8 py-2.5 rounded-full font-bold transition {{ (request()->routeIs('book.create') || request()->routeIs('book.search') || request()->routeIs('book.show') || request()->routeIs('book.payment') || request()->routeIs('book.payment.submit')) ? 'nav-link-active' : 'text-white/80 hover:bg-white/10' }}">
-                    Book a Car
+                    Book Now
                 </a>
                 <a href="{{ route('book.index') }}" 
                    class="px-8 py-2.5 rounded-full font-bold transition {{ (request()->routeIs('book.index') || request()->routeIs('book.cancel')) ? 'nav-link-active' : 'text-white/80 hover:bg-white/10' }}">
@@ -186,7 +186,7 @@
         <div class="absolute top-1/2 -right-2 w-1.5 h-1.5 bg-orange-300 rounded-full animate-float-3 opacity-60"></div>
     </button>
 
-    <div id="help-modal" class="fixed inset-0 z-[10000] hidden bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
+    <div id="help-modal" class="fixed inset-0 z-[10000] hidden bg-black/60 backdrop-blur-md flex items-center justify-center p-4">
         <div class="bg-[#1a1a1a] border border-white/10 rounded-[2.5rem] max-w-3xl w-full p-8 relative shadow-2xl overflow-hidden">
             <div class="absolute -top-24 -right-24 w-48 h-48 bg-orange-600/20 blur-[80px] rounded-full"></div>
             <button onclick="document.getElementById('help-modal').classList.add('hidden')" class="absolute top-6 right-6 text-gray-500 hover:text-white transition">
@@ -196,8 +196,10 @@
                 <h3 class="text-4xl font-black text-white tracking-tighter">Rental <span class="text-orange-500">Journey</span></h3>
                 <p class="text-gray-400 text-base mt-2">Follow these steps for a smooth experience.</p>
             </div>
-            <div class="relative space-y-8 max-h-[70vh] overflow-y-auto pr-4 custom-scrollbar">
-                <div class="absolute left-[15px] top-2 bottom-2 w-0.5 bg-gradient-to-b from-orange-500 via-blue-500 to-emerald-500 opacity-20"></div>
+            <div class="relative space-y-8 max-h-[60vh] overflow-y-auto pr-4 custom-scrollbar">
+                <div class="absolute left-[15px] top-0 bottom-0 w-0.5 
+                            bg-gradient-to-b from-orange-500 via-blue-500 to-emerald-500 opacity-20">
+                </div>
                 <div class="relative flex gap-6 group">
                     <div class="z-10 w-8 h-8 rounded-full bg-orange-500 text-white flex items-center justify-center shadow-[0_0_15px_rgba(234,88,12,0.4)] shrink-0 transition group-hover:scale-110"><i class="fas fa-user-edit text-[10px]"></i></div>
                     <div class="bg-white/5 border border-white/10 p-4 rounded-2xl flex-1 hover:bg-white/10 transition">
@@ -205,7 +207,7 @@
                             <img src="{{ asset('profile.png') }}" alt="Complete Profile" class="w-full h-full object-cover">
                         </div>
                         <h4 class="text-white font-bold text-sm">Complete Profile</h4>
-                        <p class="text-xs text-gray-400 mt-1">Upload a valid driving license and ID/Passport in your profile settings.</p>
+                        <p class="text-xs text-gray-400 mt-1">Please complete all information in your profile settings to verify your account. Account verification is required before booking a vehicle. Any failure to complete this step will result in your booking being denied.</p>
                     </div>
                 </div>
                 <div class="relative flex gap-6 group">
@@ -215,7 +217,7 @@
                             <img src="{{ asset('bookcar.png') }}" alt="Book a Vehicle" class="w-full h-full object-cover">
                         </div>
                         <h4 class="text-white font-bold text-sm">Book a Vehicle</h4>
-                        <p class="text-xs text-gray-400 mt-1">Select your car and dates. Note: Every vehicle has a <span class="text-orange-400">1-day cooldown</span> between bookings.</p>
+                        <p class="text-xs text-gray-400 mt-1">Select pickup location, return location, and dates. Browse your favourable car. Note: Every vehicle has a <span class="text-orange-400">3 hour cooldown</span> between bookings. Please choose your booking date wisely. Pickup location and return location except for Student Mall, UTM are subject to additional delivery fees.</p>
                     </div>
                 </div>
                 <div class="relative flex gap-6 group">
@@ -232,40 +234,40 @@
                     <div class="z-10 w-8 h-8 rounded-full bg-blue-500 text-white flex items-center justify-center shadow-[0_0_15px_rgba(59,130,246,0.4)] shrink-0 transition group-hover:scale-110"><i class="fas fa-user-shield text-[10px]"></i></div>
                     <div class="bg-white/5 border border-white/10 p-4 rounded-2xl flex-1 hover:bg-white/10 transition border-l-4 border-l-blue-500">
                         <div class="mb-3 bg-gray-800/50 rounded-xl overflow-hidden border border-white/10 aspect-video ">
-                            <img src="{{ asset('confirmed.png') }}" alt="Staff Verification" class="w-full h-full object-cover">
+                            <img src="{{ asset('confirmed1.png') }}" alt="Staff Verification" class="w-full h-full object-cover">
                         </div>
                         <h4 class="text-white font-bold text-sm">Staff Verification</h4>
-                        <p class="text-xs text-gray-400 mt-1">Wait for verification. Status changes to <span class="text-green-400">Confirmed</span>.</p>
+                        <p class="text-xs text-gray-400 mt-1">Your status after submit is submitted. Please wait for verification. Status changes to <span class="text-green-400">Confirmed</span>.</p>
                     </div>
                 </div>
                 <div class="relative flex gap-6 group">
                     <div class="z-10 w-8 h-8 rounded-full bg-blue-500 text-white flex items-center justify-center shadow-[0_0_15px_rgba(59,130,246,0.4)] shrink-0 transition group-hover:scale-110"><i class="fas fa-camera text-[10px]"></i></div>
                     <div class="bg-white/5 border border-white/10 p-4 rounded-2xl flex-1 hover:bg-white/10 transition border-l-4 border-l-blue-500">
                         <div class="mb-3 bg-gray-800/50 rounded-xl overflow-hidden border border-white/10 aspect-video">
-                            <img src="{{ asset('pickup.png') }}" alt="Pickup Inspection" class="w-full h-full object-cover">
+                            <img src="{{ asset('pickup1.png') }}" alt="Pickup Inspection" class="w-full h-full object-cover">
                         </div>
                         <h4 class="text-white font-bold text-sm">Pickup Inspection</h4>
-                        <p class="text-xs text-gray-400 mt-1">Upload <span class="font-bold text-white">5 specific photos</span> to activate your rental.</p>
+                        <p class="text-xs text-gray-400 mt-1">Upload <span class="font-bold text-white">5 specific photos and some information</span> to activate your rental.</p>
                     </div>
                 </div>
                 <div class="relative flex gap-6 group">
                     <div class="z-10 w-8 h-8 rounded-full bg-blue-500 text-white flex items-center justify-center shadow-[0_0_15px_rgba(59,130,246,0.4)] shrink-0 transition group-hover:scale-110"><i class="fas fa-key text-[10px]"></i></div>
                     <div class="bg-white/5 border border-white/10 p-4 rounded-2xl flex-1 hover:bg-white/10 transition border-l-4 border-l-blue-500">
                         <div class="mb-3 bg-gray-800/50 rounded-xl overflow-hidden border border-white/10 aspect-video ">
-                            <img src="{{ asset('return.png') }}" alt="Return & Key Check" class="w-full h-full object-cover">
+                            <img src="{{ asset('return1.png') }}" alt="Return & Key Check" class="w-full h-full object-cover">
                         </div>
                         <h4 class="text-white font-bold text-sm">Return & Key Check</h4>
-                        <p class="text-xs text-gray-400 mt-1">Upload <span class="font-bold text-white">6 photos</span> upon return to end the session.</p>
+                        <p class="text-xs text-gray-400 mt-1">Upload <span class="font-bold text-white">6 photos and some information</span> upon return to end the session.</p>
                     </div>
                 </div>
                 <div class="relative flex gap-6 group pb-4">
                     <div class="z-10 w-8 h-8 rounded-full bg-emerald-500 text-white flex items-center justify-center shadow-[0_0_15px_rgba(16,185,129,0.4)] shrink-0 transition group-hover:scale-110"><i class="fas fa-check-circle text-[10px]"></i></div>
                     <div class="bg-emerald-500/10 border border-emerald-500/20 p-4 rounded-2xl flex-1 hover:bg-emerald-500/20 transition">
                         <div class="mb-3 bg-gray-800/50 rounded-xl overflow-hidden border border-emerald-500/20 aspect-video">
-                            <img src="{{ asset('done.png') }}" alt="Completion" class="w-full h-full object-cover">
+                            <img src="{{ asset('completed1.png') }}" alt="Completion" class="w-full h-full object-cover">
                         </div>
                         <h4 class="text-emerald-400 font-bold text-sm">Completion</h4>
-                        <p class="text-xs text-gray-300 mt-1">Staff performs final verification and deposit is refunded shortly.</p>
+                        <p class="text-xs text-gray-300 mt-1">Staff performs final verification and deposit is refunded shortly. Your deposit will burn if you break any rules in agreement.</p>
                     </div>
                 </div>
             </div>
@@ -441,10 +443,77 @@
 </script>
 
 <!-- Custom animation keyframes -->
-<style>
-    @keyframes shine {
-        100% { transform: translateX(100%); }
+    <style>
+        @keyframes shine {
+            100% { transform: translateX(100%); }
+        }
+
+        .glow-on-hover {
+        border: none;
+        outline: none;
+        color: #fff;
+        background: #fb5901ff;
+        cursor: pointer;
+        position: relative;
+        z-index: 0;
+        border-radius: 9999px; /* fully rounded */
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        text-decoration: none;
     }
+
+    .glow-on-hover:before {
+        content: '';
+        background: linear-gradient(
+            45deg,
+            #ff0000,
+            #ff7300,
+            #fffb00,
+            #48ff00,
+            #00ffd5,
+            #002bff,
+            #7a00ff,
+            #ff00c8,
+            #ff0000
+        );
+        position: absolute;
+        top: -2px;
+        left: -2px;
+        background-size: 400%;
+        z-index: -1;
+        filter: blur(6px);
+        width: calc(100% + 4px);
+        height: calc(100% + 4px);
+        animation: glowing 20s linear infinite;
+        opacity: 0;
+        transition: opacity .3s ease-in-out;
+        border-radius: 9999px;
+    }
+
+    .glow-on-hover:hover:before {
+        opacity: 1;
+    }
+
+    .glow-on-hover:after {
+        z-index: -1;
+        content: '';
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        background: #fb5901ff;
+        left: 0;
+        top: 0;
+        border-radius: 9999px;
+    }
+
+    @keyframes glowing {
+        0% { background-position: 0 0; }
+        50% { background-position: 400% 0; }
+        100% { background-position: 0 0; }
+    }
+
 </style>
 
 <div id="global-loader" class="fixed inset-0 z-[99999] hidden bg-black/90 flex flex-col items-center justify-center backdrop-blur-md transition-opacity duration-300">
@@ -455,9 +524,9 @@
         </div>
     </div>
     
-    <h3 class="text-white font-black text-2xl tracking-[0.2em] animate-pulse">PROCESSING</h3>
+    <h3 class="text-white font-black text-2xl tracking-[0.2em] animate-pulse">LOADING</h3>
     <p class="text-gray-400 text-sm mt-3 font-medium text-center max-w-xs">
-        We are securing your booking and sending confirmation emails. 
+        Processing your request. This may take a few seconds.
         <br><span class="text-orange-500 text-xs">Please do not close this window.</span>
     </p>
 </div>
