@@ -110,8 +110,8 @@
                     <div class="grid grid-cols-2 gap-4 h-full overflow-y-auto custom-scrollbar pr-1">
                         @foreach($rewards as $reward)
                         @if($reward->name == 'HASTAHD' || $reward->category == 'Milestone') 
-                            @continue 
-                        @endif
+                        @continue 
+                    @endif
                             <div onclick="redeemReward('{{ $reward->id }}', '{{ $reward->name }}', {{ $reward->points_required }})" 
                                  class="relative {{ $reward->color_class }} backdrop-blur-md border rounded-[1.5rem] p-5 text-center group cursor-pointer hover:scale-[1.02] transition-all duration-300 hover:shadow-lg flex flex-col justify-center items-center h-full min-h-[180px]">
 
@@ -135,68 +135,181 @@
             {{-- === RIGHT COLUMN === --}}
             <div class="space-y-8">
 
-                {{-- 3. LOYALTY ROAD (Fixed Height: h-[480px]) --}}
-                <div class="w-full h-[480px] bg-black/50 backdrop-blur-2xl rounded-3xl p-6 border border-white/10 shadow-2xl relative overflow-hidden flex flex-col justify-between">
-                    {{-- Header --}}
-                    <div class="flex justify-between items-center mb-4">
-                        <div class="flex items-center gap-4">
-                            <div class="w-12 h-12 rounded-2xl bg-purple-500/20 flex items-center justify-center border border-purple-500/30">
-                                <i class="fas fa-road text-purple-400 text-2xl"></i>
-                            </div>
-                            <div>
-                                <h2 class="text-2xl font-black text-white">Loyalty Road</h2>
-                                <p class="text-xs text-gray-400">VALID FOR MORE THAN 9 HOURS BOOKINGS ONLY</p>
-                            </div>
-                        </div>
-                        <span class="bg-purple-600 text-white px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest">
-                            Level {{ floor(($qualifiedBookingsCount ?? 0) / 12) + 1 }}
-                        </span>
-                    </div>
-
-                    {{-- Progress Bar Container (Centered) --}}
-                    <div class="w-full bg-black/30 rounded-3xl p-8 border border-white/5 flex flex-col justify-center flex-1 mx-auto my-2">
-                        <div class="flex justify-between items-end mb-6">
-                            <div>
-                                <p class="text-gray-300 text-sm font-bold">Next Reward:</p>
-                                <p class="text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-yellow-300 font-black text-2xl">
-                                    {{ $nextReward ?? '20% OFF' }}
-                                </p>
-                            </div>
-                            <div class="text-right">
-                                <span class="text-white font-black text-3xl tracking-tighter">
-                                    {{ $currentInCycle ?? 0 }}<span class="text-gray-500 text-xl">/12</span>
+            
+                {{-- LOYALTY ROAD CARD (FLIP INTERACTIVE) --}}
+                {{-- Container Utama (Fixed Height) --}}
+                <div class="w-full h-[480px] group perspective-1000 relative mx-auto my-2 cursor-pointer" onclick="toggleFlip(this)">
+                    
+                    {{-- INNER FLIPPER --}}
+                    <div class="relative w-full h-full transition-all duration-700 transform style-preserve-3d shadow-2xl rounded-3xl" id="flipperBox">
+                        
+                        {{-- =============================================== --}}
+                        {{-- MUKA DEPAN (PROGRESS BAR)                       --}}
+                        {{-- =============================================== --}}
+                        <div class="absolute inset-0 w-full h-full bg-black/50 backdrop-blur-2xl rounded-3xl p-6 border border-white/10 flex flex-col justify-between backface-hidden">
+                            
+                            {{-- Header --}}
+                            <div class="flex justify-between items-center mb-4">
+                                <div class="flex items-center gap-4">
+                                    <div class="w-12 h-12 rounded-2xl bg-purple-500/20 flex items-center justify-center border border-purple-500/30">
+                                        <i class="fas fa-road text-purple-400 text-2xl"></i>
+                                    </div>
+                                    <div>
+                                        <h2 class="text-2xl font-black text-white">Loyalty Road</h2>
+                                        <p class="text-xs text-gray-400">VALID FOR MORE THAN 9 HOURS BOOKINGS ONLY</p>
+                                    </div>
+                                </div>
+                                <span class="bg-purple-600 text-white px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest">
+                                    Level {{ floor(($qualifiedBookingsCount ?? 0) / 12) + 1 }}
                                 </span>
                             </div>
-                        </div>
 
-                        <div class="relative w-full h-5 bg-white/10 rounded-full mb-2">
-                            <div class="absolute top-0 left-0 h-full bg-gradient-to-r from-orange-500 via-red-500 to-purple-500 rounded-full transition-all duration-1000 shadow-[0_0_15px_rgba(249,115,22,0.5)]" 
-                                 style="width: {{ $progressPercent ?? 0 }}%">
+                            {{-- Progress Content Wrapper --}}
+                            <div class="w-full bg-black/30 rounded-3xl p-8 border border-white/5 flex flex-col justify-center flex-1 mx-auto my-2">
+                                
+                                {{-- Stats Header --}}
+                                <div class="flex justify-between items-end mb-6">
+                                    <div>
+                                        <p class="text-gray-300 text-sm font-bold">Next Reward:</p>
+                                        <p class="text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-yellow-300 font-black text-2xl">
+                                            {{ $nextReward ?? '20% OFF' }}
+                                        </p>
+                                    </div>
+
+                                    
+                                    <div class="text-right">
+                                        <span class="text-white font-black text-3xl tracking-tighter">
+                                            {{ $currentInCycle ?? 0 }}<span class="text-gray-500 text-xl">/12</span>
+                                        </span>
+                                    </div>
+                                </div>
+
+                                {{-- PROGRESS BAR (Alignment Fixed) --}}
+                                <div class="relative w-full h-5 mb-8">
+                                    {{-- Track --}}
+                                    <div class="absolute top-0 left-0 w-full h-full bg-white/10 rounded-full"></div>
+
+                                    {{-- Fill --}}
+                                    <div class="absolute top-0 left-0 h-full bg-gradient-to-r from-orange-500 via-red-500 to-purple-500 rounded-full transition-all duration-1000 shadow-[0_0_15px_rgba(249,115,22,0.5)]" 
+                                        style="width: {{ $progressPercent ?? 0 }}%">
+                                    </div>
+
+                                    {{-- Dots & Labels --}}
+                                    @foreach([3, 6, 9, 12] as $step)
+                                        @php 
+                                            $pos = ($step / 12) * 100;
+                                            $reached = ($currentInCycle ?? 0) >= $step;
+                                        @endphp
+
+                                        {{-- Dot --}}
+                                        <div class="absolute top-1/2 left-[{{$pos}}%] -translate-x-1/2 -translate-y-1/2 w-3 h-3 rounded-full shadow-lg border-2 z-10 transition-all {{ $reached ? 'border-orange-400 bg-orange-400 scale-125' : 'border-gray-600 bg-gray-700' }}"></div>
+
+                                        {{-- Label --}}
+                                        <div class="absolute top-7 left-[{{$pos}}%] -translate-x-1/2 text-center w-8">
+                                            <span class="text-[10px] font-bold uppercase tracking-wide {{ $reached ? 'text-white' : 'text-gray-500' }}">
+                                                {{ $step }}x
+                                            </span>
+                                        </div>
+                                    @endforeach
+                                </div>
+
+                                {{-- Instruction --}}
+                                <p class="text-gray-400 text-xs mt-2 text-center">
+                                    Book <span class="text-white font-bold">{{ $bookingsNeeded ?? 3 }}</span> more times (>9hrs) to unlock <span class="text-orange-400">{{ $nextReward }}</span>!
+                                </p>
+                                
+                                {{-- Flip Hint --}}
+                                <div class="mt-4 flex justify-center text-gray-500 text-[10px] uppercase font-bold tracking-widest animate-pulse">
+                                    <i class="fas fa-sync-alt mr-2"></i> Tap to View Reward List
+                                </div>
                             </div>
-                            {{-- Checkpoints --}}
-                            <div class="absolute top-1/2 -translate-y-1/2 left-[25%] w-2 h-2 bg-white rounded-full shadow-lg {{ ($currentInCycle ?? 0) >= 3 ? 'bg-orange-400' : 'bg-gray-600' }}"></div>
-                            <div class="absolute top-1/2 -translate-y-1/2 left-[50%] w-3 h-3 bg-white rounded-full shadow-lg {{ ($currentInCycle ?? 0) >= 6 ? 'bg-orange-400' : 'bg-gray-600' }}"></div>
-                            <div class="absolute top-1/2 -translate-y-1/2 left-[75%] w-2 h-2 bg-white rounded-full shadow-lg {{ ($currentInCycle ?? 0) >= 9 ? 'bg-orange-400' : 'bg-gray-600' }}"></div>
+
+                            {{-- Footer T&C --}}
+                            <div class="bg-purple-900/20 border border-purple-500/20 rounded-xl p-3 flex items-start gap-3 mt-2">
+                                <i class="fas fa-info-circle text-purple-400 mt-0.5 text-sm"></i>
+                                <p class="text-[11px] text-purple-200 leading-tight">
+                                    <span class="font-bold text-white">Voucher T&C:</span> Rewards can only be redeemed for bookings made on <span class="font-bold text-yellow-300">Monday - Thursday</span>.
+                                </p>
+                            </div>
                         </div>
 
-                        <div class="flex justify-between text-[10px] text-gray-500 font-bold uppercase tracking-wide">
-                            <span class="pl-[23%]">3x</span>
-                            <span class="pl-[2%]">6x</span>
-                            <span class="pr-[23%]">9x</span>
-                            <span>12x</span>
+            
+                        {{-- =============================================== --}}
+                        {{-- MUKA BELAKANG (REWARD LIST - MILESTONE ONLY)    --}}
+                        {{-- =============================================== --}}
+                        <div class="absolute inset-0 w-full h-full bg-gray-900 rounded-3xl p-8 border border-gray-700 flex flex-col backface-hidden rotate-y-180">
+                            
+                            {{-- Header Belakang --}}
+                            <div class="flex justify-between items-center mb-6 border-b border-gray-800 pb-4">
+                                <div>
+                                    <h3 class="text-white font-black text-xl">Milestone Rewards</h3>
+                                    <p class="text-[10px] text-gray-500 uppercase tracking-widest">Unlock by collecting stamps</p>
+                                </div>
+                                <div class="w-8 h-8 rounded-full bg-gray-800 flex items-center justify-center text-gray-400">
+                                    <i class="fas fa-trophy"></i>
+                                </div>
+                            </div>
+
+                            <div class="flex-grow space-y-3 overflow-y-auto pr-2 custom-scrollbar">
+                                {{-- LOGIC: KITA FILTER 'Milestone' SAHAJA --}}
+                                @php
+                                    // 1. Ambil rewards dari variable $rewards
+                                    // 2. Filter hanya Category = 'Milestone' (Abaikan Merchant/Point)
+                                    // 3. Susun ikut step (3, 6, 9, 12)
+                                    $milestoneRewards = isset($rewards) ? $rewards->where('category', 'Milestone')->sortBy('milestone_step') : collect([]);
+                                    
+                                    // Fallback jika DB kosong (Untuk demo sahaja)
+                                    if($milestoneRewards->isEmpty()){
+                                        $milestoneRewards = collect([
+                                            (object)['milestone_step' => 3, 'name' => '20% OFF', 'offer_description' => '20% Discount for first 3 stamped bookings .'],
+                                            (object)['milestone_step' => 6, 'name' => '50% OFF', 'offer_description' => '50% off for first 6 stamped bookings.'],
+                                            (object)['milestone_step' => 9, 'name' => '70% OFF', 'offer_description' => '70% off for first 9 stamped bookings.'],
+                                            (object)['milestone_step' => 12, 'name' => 'FREE HALF DAY', 'offer_description' => 'Free half-day rental (12 hours).'],
+                                        ]);
+                                    }
+                                @endphp
+
+                                @foreach($milestoneRewards as $reward)
+                                    @php 
+                                        $isUnlocked = ($currentInCycle ?? 0) >= $reward->milestone_step; 
+                                    @endphp
+                                    
+                                    <div class="flex items-center justify-between p-4 rounded-xl border transition-all {{ $isUnlocked ? 'bg-green-500/10 border-green-500/30' : 'bg-white/5 border-white/5 grayscale opacity-60' }}">
+                                        <div class="flex items-center gap-4">
+                                            {{-- Badge Stamp --}}
+                                            <div class="w-10 h-10 rounded-full flex items-center justify-center font-black text-sm shrink-0 {{ $isUnlocked ? 'bg-green-500 text-white shadow-lg shadow-green-500/40' : 'bg-gray-700 text-gray-400' }}">
+                                                {{ $reward->milestone_step }}x
+                                            </div>
+                                            
+                                            {{-- Text --}}
+                                            <div>
+                                                <p class="text-sm font-black {{ $isUnlocked ? 'text-white' : 'text-gray-400' }}">
+                                                    {{ $reward->name }}
+                                                </p>
+                                                <p class="text-[10px] text-gray-500 leading-tight">{{ Str::limit($reward->offer_description, 45) }}</p>
+                                            </div>
+                                        </div>
+
+                                        {{-- Icon Status --}}
+                                        <div>
+                                            @if($isUnlocked)
+                                                <div class="w-6 h-6 rounded-full bg-green-500 flex items-center justify-center">
+                                                    <i class="fas fa-check text-white text-xs"></i>
+                                                </div>
+                                            @else
+                                                <i class="fas fa-lock text-gray-600 text-sm"></i>
+                                            @endif
+                                        </div>
+                                    </div>
+                                @endforeach
+                            </div>
+
+                            <div class="mt-auto pt-4 text-center">
+                                <p class="text-gray-500 text-[10px] font-bold uppercase tracking-widest hover:text-white transition">Tap card to flip back</p>
+                            </div>
+
                         </div>
 
-                        <p class="text-gray-400 text-xs mt-8 text-center">
-                            Book <span class="text-white font-bold">{{ $bookingsNeeded ?? 3 }}</span> more times (>9hrs) to unlock <span class="text-orange-400">{{ $nextReward }}</span>!
-                        </p>
-                    </div>
-
-                    {{-- Footer --}}
-                    <div class="bg-purple-900/20 border border-purple-500/20 rounded-xl p-3 flex items-start gap-3 mt-2">
-                        <i class="fas fa-info-circle text-purple-400 mt-0.5 text-sm"></i>
-                        <p class="text-[11px] text-purple-200 leading-tight">
-                            <span class="font-bold text-white">Voucher T&C:</span> Rewards can only be redeemed for bookings made on <span class="font-bold text-yellow-300">Monday - Thursday</span>. Not valid on weekends or public holidays.
-                        </p>
                     </div>
                 </div>
 
@@ -588,5 +701,39 @@ function closeVoucherModal() {
 document.getElementById('voucherModal').addEventListener('click', function(e) {
     if (e.target === this) closeVoucherModal();
 });
+</script>
+
+<style>
+    /* CSS untuk Effect Flip 3D */
+    .perspective-1000 {
+        perspective: 1000px;
+    }
+    .style-preserve-3d {
+        transform-style: preserve-3d;
+    }
+    .backface-hidden {
+        backface-visibility: hidden;
+        -webkit-backface-visibility: hidden; /* Safari */
+    }
+    .rotate-y-180 {
+        transform: rotateY(180deg);
+    }
+    
+    /* Class untuk trigger pusing */
+    .is-flipped {
+        transform: rotateY(180deg);
+    }
+
+    /* Custom Scrollbar untuk list reward */
+    .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: #4b5563; border-radius: 4px; }
+</style>
+
+<script>
+    function toggleFlip(element) {
+        // Cari container dalam (id="flipperBox") dan toggle class
+        const flipper = element.querySelector('#flipperBox');
+        flipper.classList.toggle('is-flipped');
+    }
 </script>
 @endsection
