@@ -224,6 +224,8 @@ class FleetController extends Controller
 
         // --- 2. MAINTENANCE BLOCKS ---
         foreach($vehicle->maintenances as $block) {
+            // Skip unblocked records for the calendar
+            if($block->type === 'unblocked') continue;
             $color = '#ef4444'; // Red
             $title = 'Maintenance';
             if($block->type === 'holiday') { $color = '#a855f7'; $title = 'Holiday'; }
@@ -276,7 +278,12 @@ class FleetController extends Controller
     public function destroyMaintenance($id)
     {
         $maintenance = Maintenance::findOrFail($id);
-        $maintenance->delete();
+        
+        // Instead of deleting, mark as unblocked
+        $maintenance->type = 'unblocked';
+        $staffName = \Illuminate\Support\Facades\Auth::guard('staff')->user()->name ?? 'System';
+        $maintenance->description .= " | [UNBLOCKED] by $staffName";
+        $maintenance->save();
 
         return back()->with('success', 'Schedule unblocked successfully.');
     }

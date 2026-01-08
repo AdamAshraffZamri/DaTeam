@@ -444,8 +444,8 @@
                             <div class="w-full sm:w-auto bg-gray-50 rounded-xl p-3 border border-gray-100 text-right min-w-[140px]">
                                 <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Rate</p>
                                 <p class="text-lg font-black text-gray-900 mb-2">RM {{ number_format($vehicle->priceHour) }}</p>
-                                <a href="{{ route('staff.fleet.show', $vehicle->VehicleID) }}" class="block w-full text-center bg-gray-900 hover:bg-orange-600 text-white text-[10px] font-bold py-2 rounded-lg transition-colors">
-                                    Select Vehicle
+                                <a href="{{ route('staff.fleet.show', $vehicle->VehicleID) }}" class="block w-full text-center bg-gray-700 hover:bg-orange-600 text-white text-[10px] font-bold py-2 rounded-lg transition-colors">
+                                    View Vehicle
                                 </a>
                             </div>
                         </div>

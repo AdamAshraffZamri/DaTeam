@@ -157,7 +157,7 @@
                             {{ $booking->vehicle->plateNo }}
                         </span>
                     </div>
-                    <p class="text-sm text-gray-500">{{ $booking->vehicle->color }} • {{ $booking->vehicle->seat }} Seats</p>
+                    <p class="text-sm text-gray-500">{{ $booking->vehicle->color }} • {{ $booking->vehicle->fuelType }}</p>
                 </div>
 
             </div>

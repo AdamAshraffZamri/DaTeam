@@ -357,7 +357,25 @@
                                             </div>
                                             <span class="text-[12px] font-bold text-gray-600 truncate max-w-[80px]">{{ $booking->customer->fullName }}</span>
                                         </div>
-                                        <span class="text-xs font-bold text-gray-800">{{ $booking->return_mileage ? number_format($booking->return_mileage).' km' : '-' }}</span>
+
+                                        {{-- Mileage Calculation Logic --}}
+                                        @php
+                                            $pickup = $booking->inspections->where('inspectionType', 'Pickup')->first();
+                                            $return = $booking->inspections->where('inspectionType', 'Return')->first();
+                                            
+                                            // Get start mileage from Pickup inspection
+                                            $start = $pickup ? ($pickup->mileageBefore ?? $pickup->mileageAfter ?? 0) : 0;
+                                            
+                                            // Get end mileage from Return inspection
+                                            $end = $return ? ($return->mileageAfter ?? $return->mileageBefore ?? 0) : 0;
+                                            
+                                            // Calculate distance
+                                            $distance = ($start > 0 && $end > 0) ? max(0, $end - $start) : 0;
+                                        @endphp
+
+                                        <span class="text-xs font-bold text-gray-800">
+                                            {{ $distance > 0 ? '+'.number_format($distance).' km' : '-' }}
+                                        </span>
                                     </div>
                                 </a>
                             @empty
@@ -627,7 +645,7 @@
                                     'maintenance' => 'bg-red-50 text-red-600 border-red-100',
                                     'delivery' => 'bg-blue-50 text-blue-600 border-blue-100',
                                     'holiday' => 'bg-purple-50 text-purple-600 border-purple-100',
-                                    'unblocked' => 'bg-slate-100 text-slate-500 border-slate-200',
+                                    'unblocked' => 'bg-emerald-50 text-emerald-600 border-emerald-100', // Green style for unblocked
                                     default => 'bg-gray-50 text-gray-600 border-gray-200'
                                 };
                                 $icon = match($log->type) {
@@ -642,7 +660,7 @@
                             <div class="flex items-center gap-2">
                                 <span class="px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider border {{ $badgeStyle }} flex items-center gap-1.5">
                                     <i class="fas {{ $icon }} text-[9px]"></i>
-                                    {{ $log->type === 'unblocked' ? 'Archived' : $log->type }}
+                                    {{ $log->type === 'unblocked' ? 'Unblocked' : ucfirst($log->type) }}
                                 </span>
                             </div>
                             
@@ -665,7 +683,7 @@
                                 <div class="w-4 h-4 rounded-full bg-slate-100 flex items-center justify-center text-[8px] text-slate-400">
                                     <i class="fas fa-user"></i>
                                 </div>
-                                <span class="font-medium">By {{ $log->staff->name ?? 'System' }}</span>
+                                <span class="font-medium">Created By {{ $log->staff->name ?? 'System' }}</span>
                             </div>
                         </div>
 
@@ -691,7 +709,7 @@
                                 <span>{{ \Carbon\Carbon::parse($log->end_time)->format('d M') }}</span>
                             </div>
                             
-                            {{-- Duration pill (optional nice-to-have) --}}
+                            {{-- Duration pill --}}
                             @php
                                 $duration = \Carbon\Carbon::parse($log->start_time)->diffInDays(\Carbon\Carbon::parse($log->end_time));
                             @endphp
