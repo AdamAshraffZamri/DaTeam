@@ -73,7 +73,51 @@
                 </div>
             </div>
             @endif
+        <div class="bg-white rounded-[1.5rem] p-6 mb-8 shadow-sm border border-gray-100 flex justify-between items-center">
+            <div>
+                <h3 class="font-bold text-lg text-gray-900">Account Actions</h3>
+                <p class="text-gray-400 text-xs mt-1">Review details and manage access.</p>
+            </div>
+            <div class="flex gap-3">
+                <a href="{{ route('staff.customers.penalty_history', $customer->customerID) }}" class="bg-purple-100 text-purple-600 px-6 py-3 rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-purple-200 transition border border-purple-200">
+                    <i class="fas fa-history mr-2"></i> Penalty History
+                </a>
+    
+                @if($customer->blacklisted)
+                    <form action="{{ route('staff.customers.blacklist', $customer->customerID) }}" method="POST" onsubmit="return confirm('Restore this user account?');">
+                        @csrf
+                        <button type="submit" class="bg-gray-900 text-white px-6 py-3 rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-gray-800 transition shadow-lg shadow-gray-900/20">
+                            <i class="fas fa-unlock mr-2"></i> Remove Blacklist
+                        </button>
+                    </form>
+                @else
+                    <button @click="showPenaltyModal = true" type="button" class="bg-orange-100 text-orange-600 px-6 py-3 rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-orange-200 transition border border-orange-200">
+                        <i class="fas fa-exclamation-triangle mr-2"></i> Penalty
+                    </button>
+                    <button @click="showBlacklistModal = true" type="button" class="bg-gray-100 text-gray-600 px-6 py-3 rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-gray-200 transition">
+                        <i class="fas fa-ban mr-2"></i> Blacklist
+                    </button>
 
+                    {{-- REJECT BUTTON: Hide if Verified OR Already Rejected --}}
+                    @if($customer->accountStat !== 'active' && $customer->accountStat !== 'Confirmed' && $customer->accountStat !== 'rejected')
+                        <button @click="showRejectModal = true" type="button" class="bg-red-50 text-red-600 px-6 py-3 rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-red-100 transition border border-red-100">
+                            <i class="fas fa-times mr-2"></i> Reject
+                        </button>
+                    @endif
+
+                    {{-- APPROVE BUTTON: Hide if already Verified (But KEEP if Rejected, so you can change your mind) --}}
+                    @if($customer->accountStat !== 'active' && $customer->accountStat !== 'Confirmed')
+                        <form action="{{ route('staff.customers.approve', $customer->customerID) }}" method="POST">
+                            @csrf
+                            <button type="submit" onclick="return confirm('Confirm all details are correct?')" class="bg-green-500 text-white px-8 py-3 rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-green-600 transition shadow-lg shadow-green-500/30">
+                                <i class="fas fa-check mr-2"></i> Approve User
+                            </button>
+                        </form>
+                    @endif
+                    
+                @endif
+            </div>
+        </div>
         {{-- 3. LAYOUT GRID --}}
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
             

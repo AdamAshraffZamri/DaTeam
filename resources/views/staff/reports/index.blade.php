@@ -69,10 +69,6 @@
                             @endfor
                         </select>
                     @endif
-                    
-                    <button type="submit" class="bg-slate-100 hover:bg-slate-200 text-slate-600 px-3 py-2 rounded-lg text-xs font-bold transition-colors">
-                        <i class="fas fa-filter"></i> Apply
-                    </button>
                 </form>
             </div>
 

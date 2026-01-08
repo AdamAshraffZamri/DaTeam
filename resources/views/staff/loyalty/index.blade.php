@@ -285,7 +285,7 @@
                                 
                                 {{-- INPUT DINAMIK: PILIH SALAH SATU --}}
                                 <div class="md:col-span-2 bg-pink-50 p-2 rounded-lg border border-pink-100">
-                                    <label class="block text-[10px] font-bold text-pink-600 mb-1 uppercase">For Milestone (Step)</label>
+                                    <label class="block text-[10px] font-bold text-pink-600 mb-1 uppercase">For Milestone (Stamps)</label>
                                     
                                     <input type="number" 
                                         id="milestoneInput" 
@@ -297,7 +297,7 @@
                                 </div>
 
                                 <div class="md:col-span-2 bg-blue-50 p-2 rounded-lg border border-blue-100">
-                                    <label class="block text-[10px] font-bold text-blue-600 mb-1 uppercase">Or Point Cost</label>
+                                    <label class="block text-[10px] font-bold text-blue-600 mb-1 uppercase">Point Cost</label>
                                     
                                     <input type="number" 
                                         id="pointsInput" 
@@ -359,7 +359,7 @@
                                 <tr>
                                     <th class="px-4 py-3 text-left">Reward Name</th>
                                     <th class="px-4 py-3 text-left">Description</th>
-                                    <th class="px-4 py-3 text-center bg-pink-50 text-pink-600 border-x border-pink-100 w-24">Target Step</th>
+                                    <th class="px-4 py-3 text-center bg-pink-50 text-pink-600 border-x border-pink-100 w-24">Target Stamps</th>
                                     <th class="px-4 py-3 text-center bg-blue-50 text-blue-600 border-r border-blue-100 w-24">Points Cost</th>
                                     <th class="px-4 py-3 text-center">Discount %</th>
                                     <th class="px-4 py-3 text-center">Active</th>
