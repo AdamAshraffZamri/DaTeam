@@ -2,201 +2,297 @@
 <html>
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-    <title>Management Report</title>
+    <title>Management Report - {{ $periodLabel }}</title>
     <style>
-        body { font-family: 'Helvetica', 'Arial', sans-serif; color: #333; font-size: 12px; }
-        .header { margin-bottom: 25px; border-bottom: 2px solid #3B82F6; padding-bottom: 10px; }
-        .header h1 { margin: 0; color: #111827; font-size: 24px; }
-        .header p { margin: 5px 0 0; color: #6B7280; }
+        /* PAGE SETUP */
+        @page { margin: 30px 40px; }
+        body { font-family: 'Helvetica', 'Arial', sans-serif; color: #333; font-size: 10px; margin: 0; padding: 0; line-height: 1.1; }
 
-        /* KPI Cards */
-        .kpi-container { width: 100%; margin-bottom: 30px; overflow: hidden; }
-        .kpi-card { width: 48%; float: left; padding: 15px; background-color: #F3F4F6; border-radius: 5px; box-sizing: border-box; }
-        .kpi-card.green { border-left: 5px solid #10B981; margin-right: 4%; }
-        .kpi-card.blue { border-left: 5px solid #3B82F6; }
-        .kpi-title { font-size: 10px; text-transform: uppercase; color: #6B7280; font-weight: bold; }
-        .kpi-value { font-size: 20px; font-weight: bold; color: #1F2937; margin-top: 5px; }
-        .kpi-sub { font-size: 10px; color: #9CA3AF; margin-top: 5px; }
+        /* HEADER */
+        .header { text-align: center; margin-bottom: 20px; border-bottom: 2px solid #4F46E5; padding-bottom: 8px; }
+        .header h1 { margin: 0; font-size: 16px; color: #1F2937; text-transform: uppercase; }
+        .header p { margin: 2px 0 0; color: #6B7280; font-size: 9px; }
 
-        /* Tables */
-        h3 { color: #374151; border-bottom: 1px solid #E5E7EB; padding-bottom: 5px; margin-top: 25px; margin-bottom: 10px; }
-        table { width: 100%; border-collapse: collapse; margin-bottom: 15px; }
-        th { background-color: #F9FAFB; text-align: left; padding: 8px; border-bottom: 1px solid #E5E7EB; color: #6B7280; text-transform: uppercase; font-size: 10px; }
-        td { padding: 8px; border-bottom: 1px solid #E5E7EB; color: #4B5563; }
+        /* HEADINGS */
+        h3 { 
+            background-color: #EEF2FF; 
+            color: #4F46E5; 
+            padding: 4px 8px; 
+            margin: 15px 0 10px 0; 
+            border-radius: 4px; 
+            font-size: 11px; 
+            text-transform: uppercase; 
+            page-break-after: avoid;
+        }
+        h4 { margin: 8px 0 4px; font-size: 10px; color: #374151; }
+
+        /* UTILITY */
+        .keep-together { page-break-inside: avoid; }
         .text-right { text-align: right; }
-        .clear { clear: both; }
-        .badge { font-weight: bold; text-transform: capitalize; }
+        .text-center { text-align: center; }
+        .font-bold { font-weight: bold; }
+        .text-green { color: #10B981; }
+        .text-red { color: #EF4444; }
+
+        /* STANDARD TABLES */
+        .std-table { width: 100%; border-collapse: collapse; margin-bottom: 10px; }
+        .std-table th { background-color: #F9FAFB; text-align: left; padding: 5px; border-bottom: 1px solid #D1D5DB; font-size: 8px; color: #4B5563; text-transform: uppercase; }
+        .std-table td { padding: 5px; border-bottom: 1px solid #E5E7EB; vertical-align: middle; font-size: 9px; }
+
+        /* --- HORIZONTAL GRAPH CSS --- */
+        .graph-container {
+            width: 100%;
+            margin-bottom: 20px;
+            page-break-inside: avoid; /* Keep graph together */
+        }
         
-        .trend-table th { background-color: #EEF2FF; color: #4F46E5; }
+        .h-graph-table { 
+            width: 100%; 
+            border-collapse: collapse; 
+            border: none;
+        }
+        
+        /* Label Column (Date) */
+        .h-col-label { 
+            width: 10%; 
+            text-align: right; 
+            padding-right: 8px; 
+            font-size: 8px; 
+            color: #6B7280; 
+            border-right: 1px solid #9CA3AF; /* Axis Line */
+            vertical-align: middle;
+            height: 12px;
+        }
+
+        /* Bar Column */
+        .h-col-bar { 
+            width: 80%; 
+            padding: 2px 0; 
+            vertical-align: middle;
+        }
+        
+        /* The Bar Itself */
+        .h-bar { 
+            background-color: #4F46E5; 
+            height: 8px; /* Slim bars */
+            border-radius: 0 2px 2px 0; 
+            display: block;
+        }
+
+        /* Value Column */
+        .h-col-value { 
+            width: 10%; 
+            text-align: left; 
+            padding-left: 5px; 
+            font-size: 8px; 
+            font-weight: bold; 
+            color: #111827; 
+            vertical-align: middle;
+        }
+
+        .graph-meta { text-align: center; font-size: 8px; color: #9CA3AF; margin-top: 5px; font-style: italic; }
+
+        /* KPI BOXES */
+        .kpi-row { width: 100%; margin-bottom: 10px; font-size: 0; text-align: center; }
+        .kpi-box { 
+            width: 30%; 
+            display: inline-block; 
+            background: #F9FAFB; 
+            border: 1px solid #E5E7EB; 
+            border-radius: 4px; 
+            padding: 6px 4px; 
+            text-align: center; 
+            vertical-align: top;
+            margin: 0 1.5%; 
+        }
+        .kpi-val { font-size: 11px; font-weight: bold; color: #111827; margin-bottom: 1px; }
+        .kpi-lbl { font-size: 7px; text-transform: uppercase; color: #6B7280; }
+
+        /* COLUMNS */
+        .row-container { width: 100%; margin-top: 5px; }
+        .col-half { width: 49%; display: inline-block; vertical-align: top; }
+        
+        .footer { position: fixed; bottom: 0; left: 0; right: 0; text-align: center; font-size: 8px; color: #9CA3AF; padding: 5px 0; border-top: 1px solid #E5E7EB; }
     </style>
 </head>
 <body>
+
     <div class="header">
-        <h1>Reporting & Analysis [Hasta Travel & Tours]</h1>
-        <p>Generated on: {{ now()->toDayDateTimeString() }} | Staff: {{ auth()->user()->name ?? 'System' }}</p>
+        <h1>Hasta Travel & Tours - Management Report</h1>
+        <p>Period: <strong>{{ $periodLabel }}</strong> | Generated: {{ now()->toDayDateTimeString() }}</p>
     </div>
 
-    <div class="kpi-container">
-        <div class="kpi-card green">
-            <div class="kpi-title">Daily Income</div>
-            <div class="kpi-value">RM {{ number_format($dailyIncome, 2) }}</div>
-            <div class="kpi-sub">Date: {{ now()->toFormattedDateString() }}</div>
-        </div>
-        <div class="kpi-card blue">
-            <div class="kpi-title">Monthly Income</div>
-            <div class="kpi-value">RM {{ number_format($monthlyIncome, 2) }}</div>
-            <div class="kpi-sub">Month: {{ now()->format('F Y') }}</div>
+    <div class="keep-together">
+        <h3>Income Analysis</h3>
+        
+        <div class="graph-container">
+            <table class="h-graph-table">
+                @foreach($graphData as $data)
+                @php 
+                    $pct = $maxIncome > 0 ? ($data['value'] / $maxIncome) * 100 : 0;
+                    // Ensure bar shows at least a sliver if value > 0
+                    if($data['value'] > 0 && $pct < 1) $pct = 1;
+                @endphp
+                <tr>
+                    <td class="h-col-label">{{ $data['label'] }}</td>
+                    <td class="h-col-bar">
+                        <div class="h-bar" style="width: {{ $pct }}%;"></div>
+                    </td>
+                    <td class="h-col-value">
+                        @if($data['value'] > 0)
+                            {{ number_format($data['value']) }}
+                        @else
+                            <span style="color: #ccc;">-</span>
+                        @endif
+                    </td>
+                </tr>
+                @endforeach
+            </table>
+            <div class="graph-meta">Total Revenue Peak: RM {{ number_format($maxIncome, 2) }}</div>
         </div>
     </div>
-    <div class="clear"></div>
 
-    <h3>Booking Status Summary</h3>
-    <table>
+    <div class="keep-together">
+        <h3>Vehicle Profits Overview</h3>
+        <div class="kpi-row">
+            <div class="kpi-box">
+                <div class="kpi-val text-green">RM {{ number_format($totalEarnings, 2) }}</div>
+                <div class="kpi-lbl">Total Earnings</div>
+            </div>
+            <div class="kpi-box">
+                <div class="kpi-val text-red">RM {{ number_format($totalCosts, 2) }}</div>
+                <div class="kpi-lbl">Total Maintenance</div>
+            </div>
+            <div class="kpi-box">
+                <div class="kpi-val" style="color: {{ $totalNetProfit >= 0 ? '#3B82F6' : '#EF4444' }}">
+                    RM {{ number_format($totalNetProfit, 2) }}
+                </div>
+                <div class="kpi-lbl">Net Profit</div>
+            </div>
+        </div>
+
+        <h4>Individual Vehicle Performance</h4>
+        <table class="std-table">
+            <thead>
+                <tr>
+                    <th style="width: 25%">Model</th>
+                    <th style="width: 15%">Plate</th>
+                    <th class="text-right" style="width: 20%">Earn</th>
+                    <th class="text-right" style="width: 20%">Cost</th>
+                    <th class="text-right" style="width: 20%">Net</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach($vehicleProfits as $v)
+                <tr>
+                    <td>{{ $v['model'] }}</td>
+                    <td>{{ $v['plate'] }}</td>
+                    <td class="text-right text-green">{{ number_format($v['earnings'], 2) }}</td>
+                    <td class="text-right text-red">{{ number_format($v['costs'], 2) }}</td>
+                    <td class="text-right font-bold" style="color: {{ $v['profit'] >= 0 ? '#111827' : '#EF4444' }}">
+                        {{ number_format($v['profit'], 2) }}
+                    </td>
+                </tr>
+                @endforeach
+            </tbody>
+        </table>
+    </div>
+
+    <div class="row-container">
+        <div class="col-half" style="margin-right: 1%">
+            <h3>Top Vehicles</h3>
+            <table class="std-table">
+                <thead>
+                    <tr>
+                        <th>Model</th>
+                        <th class="text-right">Qty</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse($topVehicles as $data)
+                    <tr>
+                        <td>{{ $data['model'] }}</td>
+                        <td class="text-right font-bold">{{ $data['count'] }}</td>
+                    </tr>
+                    @empty
+                    <tr><td colspan="2" class="text-center">No data.</td></tr>
+                    @endforelse
+                </tbody>
+            </table>
+
+            <h3>College</h3>
+            <table class="std-table">
+                <thead>
+                    <tr>
+                        <th>Location</th>
+                        <th class="text-right">Qty</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse($byCollege as $col => $count)
+                    <tr>
+                        <td>{{ Str::limit($col, 18) }}</td>
+                        <td class="text-right font-bold">{{ $count }}</td>
+                    </tr>
+                    @empty
+                    <tr><td colspan="2" class="text-center">No data.</td></tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+
+        <div class="col-half">
+            <h3>Faculty</h3>
+            <table class="std-table">
+                <thead>
+                    <tr>
+                        <th>Faculty</th>
+                        <th class="text-right">Qty</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse($byFaculty as $fac => $count)
+                    <tr>
+                        <td>{{ Str::limit($fac, 22) }}</td>
+                        <td class="text-right">{{ $count }}</td>
+                    </tr>
+                    @empty
+                    <tr><td colspan="2" class="text-center">No data.</td></tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <h3>Recent Reviews</h3>
+    <table class="std-table">
         <thead>
             <tr>
-                <th>Status</th>
-                <th>Description</th>
-                <th class="text-right">Total Count</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach($bookingStatus as $status => $count)
-            <tr>
-                <td class="badge">{{ $status }}</td>
-                <td style="color: #999; font-size: 10px;">Current active {{ $status }} bookings</td>
-                <td class="text-right"><strong>{{ $count }}</strong></td>
-            </tr>
-            @endforeach
-        </tbody>
-    </table>
-
-    <h3>Monthly Performance Overview</h3>
-    <table style="width: 100%; border: none;">
-        <tr style="vertical-align: top;">
-            
-            <td style="width: 48%; padding-right: 15px; border: none;">
-                <h4 style="margin-top: 0; margin-bottom: 5px; color: #374151;">Booking Trend (7 Days)</h4>
-                <table class="trend-table">
-                    <thead>
-                        <tr>
-                            <th>Date</th>
-                            <th class="text-right">New Bookings</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @forelse($bookingOverview as $data)
-                        <tr>
-                            <td>{{ \Carbon\Carbon::parse($data->date)->format('D, M d') }}</td>
-                            <td class="text-right"><strong>{{ $data->count }}</strong></td>
-                        </tr>
-                        @empty
-                        <tr><td colspan="2" class="text-center">No bookings last 7 days</td></tr>
-                        @endforelse
-                    </tbody>
-                </table>
-            </td>
-
-            <td style="width: 48%; padding-left: 15px; border: none;">
-                <h4 style="margin-top: 0; margin-bottom: 5px; color: #374151;">Top Rented Vehicles</h4>
-                <table class="trend-table">
-                    <thead>
-                        <tr>
-                            <th>Vehicle Model</th>
-                            <th class="text-right">Bookings</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {{-- Loop through the PHP Collection --}}
-                        @forelse($topVehicles as $vehicleData)
-                        <tr>
-                            <td>{{ $vehicleData['model'] }}</td>
-                            <td class="text-right"><strong>{{ $vehicleData['total_bookings'] }}</strong></td>
-                        </tr>
-                        @empty
-                        <tr><td colspan="2" class="text-center">No bookings found</td></tr>
-                        @endforelse
-                    </tbody>
-                </table>
-            </td>
-        </tr>
-    </table>
-
-    <h3>Detailed Financial Breakdown</h3>
-    <table style="width: 100%; border: none;">
-        <tr style="vertical-align: top;">
-            <td style="width: 48%; padding-right: 15px; border: none;">
-                <h4 style="margin-top: 0; color: #6B7280; font-size: 11px;">Daily Income ({{ now()->format('F') }})</h4>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Date</th>
-                            <th class="text-right">Total</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @forelse($dailyBreakdown as $day)
-                        <tr>
-                            <td>{{ \Carbon\Carbon::parse($day->date)->format('d M') }}</td>
-                            <td class="text-right">RM {{ number_format($day->total, 2) }}</td>
-                        </tr>
-                        @empty
-                        <tr><td colspan="2">No data</td></tr>
-                        @endforelse
-                    </tbody>
-                </table>
-            </td>
-            <td style="width: 48%; padding-left: 15px; border: none;">
-                <h4 style="margin-top: 0; color: #6B7280; font-size: 11px;">Monthly Income ({{ now()->year }})</h4>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Month</th>
-                            <th class="text-right">Total</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @forelse($monthlyBreakdown as $month)
-                        <tr>
-                            <td>{{ \Carbon\Carbon::create()->month($month->month)->format('F') }}</td>
-                            <td class="text-right">RM {{ number_format($month->total, 2) }}</td>
-                        </tr>
-                        @empty
-                        <tr><td colspan="2">No data</td></tr>
-                        @endforelse
-                    </tbody>
-                </table>
-            </td>
-        </tr>
-    </table>
-
-    <h3>Latest Customer Reviews</h3>
-    <table>
-        <thead>
-            <tr>
-                <th style="width: 20%;">Customer</th>
-                <th style="width: 15%;">Car</th>
-                <th style="width: 10%;">Rating</th>
-                <th style="width: 40%;">Comment</th>
-                <th style="width: 15%; text-align: right;">Date</th>
+                <th style="width: 15%">Date</th>
+                <th style="width: 20%">Customer</th>
+                <th style="width: 15%">Car</th>
+                <th style="width: 10%">Star</th>
+                <th style="width: 40%">Comment</th>
             </tr>
         </thead>
         <tbody>
             @forelse($reviews as $review)
             <tr>
-                <td>{{ $review->booking->customer->fullName ?? 'Guest' }}</td>
-                <td>{{ $review->booking->vehicle->model ?? 'N/A' }}</td>
-                <td><strong>{{ $review->rating }}/5</strong></td>
-                <td>"{{ \Illuminate\Support\Str::limit($review->comment, 60) }}"</td>
-                <td class="text-right">{{ $review->created_at->format('d M, Y') }}</td>
+                <td>{{ $review->created_at->format('d/m') }}</td>
+                <td>{{ Str::limit($review->booking->customer->fullName ?? 'Guest', 15) }}</td>
+                <td>{{ Str::limit($review->booking->vehicle->model ?? 'N/A', 10) }}</td>
+                <td>{{ $review->rating }}</td>
+                <td style="font-style: italic; color: #555;">"{{ Str::limit($review->comment, 50) }}"</td>
             </tr>
             @empty
-            <tr><td colspan="5" style="text-align: center; padding: 20px;">No reviews found.</td></tr>
+            <tr><td colspan="5" class="text-center" style="padding: 10px;">No reviews.</td></tr>
             @endforelse
         </tbody>
     </table>
 
-    <div style="margin-top: 40px; border-top: 1px solid #ddd; padding-top: 10px; text-align: center; color: #999; font-size: 10px;">
-        &copy; {{ date('Y') }} Hasta Travel & Tours. This is a computer-generated document.
+    <div class="footer">
+        Generated by System | Hasta Travel & Tours
     </div>
+
 </body>
 </html>
