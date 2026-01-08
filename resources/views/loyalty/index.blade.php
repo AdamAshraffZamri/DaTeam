@@ -22,11 +22,11 @@
 
             {{-- TOP STATS --}}
             <div class="flex gap-4">
-                <div class="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl px-4 py-2 text-center shadow-2xl">
+                <div class="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl px-4 py-2 text-center shadow-2xl gold-glow-card transition-all duration-500">
                     <p class="text-gray-400 text-[10px] font-bold uppercase tracking-widest mb-1">CURRENT TIER</p>
                     <p class="text-orange-500 text-2xl font-black uppercase">{{ ucfirst($loyalty->tier ?? 'Bronze') }}</p>
                 </div>
-                <div class="bg-orange-600 border border-orange-400/50 rounded-2xl px-4 py-6 text-center shadow-lg shadow-orange-600/30 flex flex-col justify-center">
+                <div class="bg-orange-600 border border-orange-400/50 rounded-2xl px-4 py-6 text-center shadow-lg shadow-orange-600/30 flex flex-col justify-center gold-glow-card transition-all duration-500">
                     <p class="text-white text-2xl font-black leading-none">{{ number_format($loyalty->points ?? 0) }} PTS</p>
                 </div>
             </div>
@@ -39,7 +39,8 @@
             <div class="space-y-8">
                 
                 {{-- 1. LOYALTY STATUS CARD (Fixed Height: h-[480px]) --}}
-                <div class="w-full h-[480px] bg-black/50 backdrop-blur-2xl rounded-3xl p-6 border border-white/10 shadow-2xl relative overflow-hidden group flex flex-col justify-between">
+                {{-- Added: gold-glow-card class --}}
+                <div class="w-full h-[480px] bg-black/50 backdrop-blur-2xl rounded-3xl p-6 border border-white/10 shadow-2xl relative overflow-hidden group flex flex-col justify-between gold-glow-card transition-all duration-500">
                     <div class="absolute -top-24 -left-24 w-48 h-48 bg-orange-500/10 rounded-full blur-[80px]"></div>
                     
                     {{-- Header --}}
@@ -96,7 +97,8 @@
                 </div>
 
                 {{-- 2. AVAILABLE REWARDS (Fixed Height: h-[550px]) --}}
-                <div class="w-full h-[550px] bg-black/50 backdrop-blur-2xl rounded-3xl p-6 border border-white/10 shadow-2xl flex flex-col">
+                {{-- Added: gold-glow-card class --}}
+                <div class="w-full h-[550px] bg-black/50 backdrop-blur-2xl rounded-3xl p-6 border border-white/10 shadow-2xl flex flex-col gold-glow-card transition-all duration-500">
                     {{-- Header --}}
                     <div class="flex items-center gap-4 mb-6 shrink-0">
                         <div class="w-10 h-10 rounded-2xl bg-pink-500/20 flex items-center justify-center border border-pink-500/30">
@@ -113,7 +115,7 @@
                         @continue 
                     @endif
                             <div onclick="redeemReward('{{ $reward->id }}', '{{ $reward->name }}', {{ $reward->points_required }})" 
-                                 class="relative {{ $reward->color_class }} backdrop-blur-md border rounded-[1.5rem] p-5 text-center group cursor-pointer hover:scale-[1.02] transition-all duration-300 hover:shadow-lg flex flex-col justify-center items-center h-full min-h-[180px]">
+                                 class="relative {{ $reward->color_class }} backdrop-blur-md border rounded-[1.5rem] p-5 text-center group cursor-pointer hover:scale-[1.02] transition-all duration-300 hover:shadow-lg flex flex-col justify-center items-center h-full min-h-[180px] gold-glow-card">
 
                                 <span class="absolute top-2 right-2 bg-black/40 text-white text-[9px] font-black px-2 py-1 rounded-md border border-white/10 backdrop-blur-sm">
                                     {{ $reward->points_required }} PTS
@@ -138,7 +140,8 @@
             
                 {{-- LOYALTY ROAD CARD (FLIP INTERACTIVE) --}}
                 {{-- Container Utama (Fixed Height) --}}
-                <div class="w-full h-[480px] group perspective-1000 relative mx-auto my-2 cursor-pointer" onclick="toggleFlip(this)">
+                {{-- Added: gold-glow-card to the wrapper --}}
+                <div class="w-full h-[480px] group perspective-1000 relative mx-auto my-2 cursor-pointer gold-glow-card rounded-3xl transition-all duration-500" onclick="toggleFlip(this)">
                     
                     {{-- INNER FLIPPER --}}
                     <div class="relative w-full h-full transition-all duration-700 transform style-preserve-3d shadow-2xl rounded-3xl" id="flipperBox">
@@ -175,7 +178,6 @@
                                             {{ $nextReward ?? '20% OFF' }}
                                         </p>
                                     </div>
-
                                     
                                     <div class="text-right">
                                         <span class="text-white font-black text-3xl tracking-tighter">
@@ -315,7 +317,8 @@
 
                 
                 {{-- 4. MY VOUCHERS (With History Tabs) --}}
-                <div class="w-full h-[550px] bg-black/50 backdrop-blur-2xl rounded-3xl p-6 border border-white/10 shadow-2xl flex flex-col relative overflow-hidden">
+                {{-- Added: gold-glow-card class --}}
+                <div class="w-full h-[550px] bg-black/50 backdrop-blur-2xl rounded-3xl p-6 border border-white/10 shadow-2xl flex flex-col relative overflow-hidden gold-glow-card transition-all duration-500">
                     
                     {{-- Header with Tabs --}}
                     <div class="flex justify-between items-center mb-6 shrink-0 z-10">
@@ -482,41 +485,59 @@
 </div>
 
 
-{{-- VOUCHER DETAIL MODAL (Kod Besar & Use Now) --}}
-<div id="voucherModal" class="fixed inset-0 z-[60] hidden flex items-center justify-center bg-black/90 backdrop-blur-md animate-fade-in">
-    <div class="bg-gray-900 p-8 rounded-[2rem] max-w-sm w-full text-center relative border border-white/10 shadow-[0_0_60px_rgba(234,88,12,0.15)]">
+{{-- [UPDATED] STYLISH VOUCHER DETAIL MODAL --}}
+<div id="voucherModal" class="fixed inset-0 z-[60] hidden flex items-center justify-center bg-black/95 backdrop-blur-xl transition-opacity duration-300 opacity-0" style="transition: opacity 0.3s ease-out;">
+    
+    {{-- Card Container with Pop-Up Animation --}}
+    <div id="voucherModalCard" class="bg-gradient-to-b from-gray-900 via-gray-800 to-black p-8 rounded-[2.5rem] max-w-sm w-full text-center relative border border-white/20 shadow-[0_0_80px_rgba(234,88,12,0.25)] transform scale-90 transition-transform duration-300">
         
         {{-- Close Button --}}
-        <button onclick="closeVoucherModal()" class="absolute top-4 right-4 text-gray-400 hover:text-white transition bg-white/5 w-8 h-8 rounded-full flex items-center justify-center">
-            <i class="fas fa-times"></i>
+        <button onclick="closeVoucherModal()" class="absolute top-5 right-5 text-gray-400 hover:text-white transition bg-white/10 hover:bg-white/20 w-10 h-10 rounded-full flex items-center justify-center z-10 backdrop-blur-md border border-white/5">
+            <i class="fas fa-times text-lg"></i>
         </button>
 
-        {{-- Header --}}
-        <div class="mb-8">
-            <p class="text-xs text-orange-500 font-bold uppercase tracking-widest mb-2">REDEEM VOUCHER</p>
-            <h3 id="modalVoucherName" class="text-3xl font-black text-white leading-tight mb-1">LOADING...</h3>
-            <p id="modalExpiry" class="text-xs text-gray-400"></p>
+        {{-- Top Decoration --}}
+        <div class="absolute top-0 left-1/2 -translate-x-1/2 w-24 h-1 bg-gradient-to-r from-transparent via-orange-500 to-transparent opacity-50"></div>
+
+        {{-- Header Info --}}
+        <div class="mb-8 mt-4">
+            <div class="inline-block px-3 py-1 rounded-full bg-orange-500/10 border border-orange-500/20 mb-3">
+                <p class="text-[10px] text-orange-400 font-black uppercase tracking-[0.2em]">MERCHANT VOUCHER</p>
+            </div>
+            <h3 id="modalVoucherName" class="text-3xl font-black text-white leading-tight mb-2 tracking-tight drop-shadow-lg">LOADING...</h3>
+            <p id="modalExpiry" class="text-xs font-bold text-gray-400 uppercase tracking-wider"></p>
         </div>
         
-        {{-- BIG CODE DISPLAY --}}
-        <div class="mb-8 relative group">
-            <div class="absolute inset-0 bg-orange-500/20 blur-xl rounded-full opacity-50 group-hover:opacity-100 transition duration-500"></div>
-            <div class="relative bg-black border-2 border-dashed border-white/20 rounded-2xl py-6 px-4 flex flex-col items-center justify-center gap-2">
-                <p class="text-[10px] text-gray-500 font-bold uppercase tracking-widest">SHOW TO MERCHANT</p>
-                <p id="modalCodeText" class="text-4xl font-mono font-black text-white tracking-widest drop-shadow-lg">...</p>
+        {{-- BIG GLOWING CODE DISPLAY --}}
+        <div class="mb-10 relative group mx-auto max-w-[280px]">
+            {{-- Glowing Orb Behind --}}
+            <div class="absolute inset-0 bg-orange-500 blur-2xl rounded-full opacity-20 group-hover:opacity-40 transition duration-700 animate-pulse"></div>
+            
+            {{-- Code Box --}}
+            <div class="relative bg-black/80 border-2 border-dashed border-orange-500/30 rounded-2xl py-8 px-4 flex flex-col items-center justify-center gap-3 backdrop-blur-sm">
+                
+                {{-- Cutout Circles (Ticket effect) --}}
+                <div class="absolute -left-3 top-1/2 -translate-y-1/2 w-6 h-6 bg-gray-800 rounded-full"></div>
+                <div class="absolute -right-3 top-1/2 -translate-y-1/2 w-6 h-6 bg-gray-800 rounded-full"></div>
+
+                <p class="text-[9px] text-gray-500 font-bold uppercase tracking-[0.3em] mb-1">SHOW TO CASHIER</p>
+                <p id="modalCodeText" class="text-4xl font-mono font-black text-transparent bg-clip-text bg-gradient-to-r from-white via-gray-200 to-gray-400 tracking-widest drop-shadow-2xl">...</p>
             </div>
         </div>
         
         {{-- ACTION BUTTONS --}}
-        <div id="modalActions" class="space-y-4">
-            {{-- Butang Use Now --}}
+        <div id="modalActions" class="space-y-5">
+            {{-- Stylish Use Now Button --}}
             <button id="btnUseNow" onclick="triggerUseNow()" 
-                    class="w-full bg-[#ea580c] hover:bg-orange-600 text-white font-black py-4 rounded-xl uppercase tracking-widest shadow-lg shadow-orange-900/30 transition-all transform active:scale-95 flex items-center justify-center gap-2 text-sm">
-                <i class="fas fa-check-circle text-lg"></i> USE NOW
+                    class="group relative w-full overflow-hidden rounded-2xl p-[2px] focus:outline-none focus:ring-4 focus:ring-orange-500/30">
+                <span class="absolute inset-[-1000%] animate-[spin_3s_linear_infinite] bg-[conic-gradient(from_90deg_at_50%_50%,#c2410c_0%,#fb923c_50%,#c2410c_100%)]"></span>
+                <span class="inline-flex h-full w-full cursor-pointer items-center justify-center rounded-2xl bg-gray-900 px-8 py-4 text-sm font-black uppercase tracking-widest text-white backdrop-blur-3xl transition-all group-hover:bg-gray-800 gap-3">
+                    <i class="fas fa-qrcode text-orange-500 text-lg group-hover:scale-110 transition-transform"></i> USE NOW
+                </span>
             </button>
             
-            <p class="text-[10px] text-gray-500 px-4 leading-relaxed">
-                <i class="fas fa-info-circle mr-1"></i> Press "Use Now" only when you are at the counter to redeem.
+            <p class="text-[10px] text-gray-500 px-6 leading-relaxed opacity-70">
+                Please ensure you are at the counter before pressing the button. Once used, it cannot be undone.
             </p>
         </div>
     </div>
@@ -599,6 +620,16 @@ document.addEventListener('click', function(event) {
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
     background: rgba(255, 255, 255, 0.3);
 }
+
+/* === GOLD GLOW EFFECT === */
+.gold-glow-card {
+    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.gold-glow-card:hover {
+    border-color: rgba(251, 191, 36, 0.6); /* Amber-400 equivalent */
+    box-shadow: 0 0 30px rgba(251, 191, 36, 0.25);
+    transform: translateY(-4px);
+}
 </style>
 
 <script>
@@ -664,7 +695,7 @@ function switchTab(tab) {
 let currentVoucherCode = '';
 let currentVoucherName = '';
 
-// --- BUKA MODAL DETAIL ---
+// --- BUKA MODAL DETAIL (UPDATED ANIMATION) ---
 function openVoucherDetail(code, name, type, expiryDate) {
     // 1. Simpan data
     currentVoucherCode = code;
@@ -684,8 +715,18 @@ function openVoucherDetail(code, name, type, expiryDate) {
         btnUseNow.classList.add('hidden'); 
     }
 
-    // 4. Tunjuk Modal
-    document.getElementById('voucherModal').classList.remove('hidden');
+    // 4. Tunjuk Modal with Animation
+    const modal = document.getElementById('voucherModal');
+    const modalCard = document.getElementById('voucherModalCard');
+    
+    modal.classList.remove('hidden');
+    
+    // Slight delay to allow display:block to render before opacity transition
+    setTimeout(() => {
+        modal.classList.remove('opacity-0');
+        modalCard.classList.remove('scale-90');
+        modalCard.classList.add('scale-100');
+    }, 10);
 }
 
 // --- FUNGSI USE NOW (TRIGGER) ---
@@ -693,8 +734,19 @@ function triggerUseNow() {
     confirmUseVoucher(currentVoucherCode, currentVoucherName);
 }
 
+// --- CLOSE MODAL (UPDATED ANIMATION) ---
 function closeVoucherModal() {
-    document.getElementById('voucherModal').classList.add('hidden');
+    const modal = document.getElementById('voucherModal');
+    const modalCard = document.getElementById('voucherModalCard');
+
+    modal.classList.add('opacity-0');
+    modalCard.classList.remove('scale-100');
+    modalCard.classList.add('scale-90');
+
+    // Wait for transition to finish before hiding
+    setTimeout(() => {
+        modal.classList.add('hidden');
+    }, 300);
 }
 
 // Tutup modal bila klik luar kotak
