@@ -10,135 +10,109 @@ use App\Models\Vehicle;
 
 class VoucherController extends Controller
 {
-    public function apply(Request $request)
-    {
-        $code = $request->input('code');
-        $currentTotal = $request->input('total_amount');
+
+    // File: app/Http/Controllers/VoucherController.php
+
+public function apply(Request $request)
+{
+    $code = $request->input('code');
+    $currentTotal = $request->input('total_amount');
+    $pickupDate = $request->input('pickup_date'); 
+    $vehicleId = $request->input('vehicle_id');
+
+    // 1. Validate Vehicle
+    if ($vehicleId) {
+        $vehicle = Vehicle::findOrFail($vehicleId);
+    } else {
+        return response()->json(['success' => false, 'message' => 'Vehicle data missing.']);
+    }
+
+    // 2. Find Voucher
+    $voucher = Voucher::where('voucherCode', $code)
+        ->orWhere('code', $code)
+        ->first();
+
+    if (!$voucher) {
+        return response()->json(['success' => false, 'message' => 'Invalid voucher code.']);
+    }
+
+    // 3. Validate Status & Date
+    $now = Carbon::now();
+    if ($now->lt($voucher->validFrom) || $now->gt($voucher->validUntil)) {
+        return response()->json(['success' => false, 'message' => 'This voucher has expired.']);
+    }
+
+    if ($voucher->isUsed) {
+        return response()->json(['success' => false, 'message' => 'This voucher has already been used.']);
+    }
+
+    // 4. Validate Day (Isnin - Khamis sahaja untuk Loyalty)
+    // Check condition FREE HALF DAY
+    $conditionText = strtoupper($voucher->conditions ?? '');
+    $isFreeHalfDay = str_contains($conditionText, 'FREE HALF DAY') || $voucher->voucherType == 'Free Half Day';
+
+    if ($voucher->voucherType == 'Rental Discount' || $isFreeHalfDay) {
+        if (!$pickupDate) {
+            return response()->json(['success' => false, 'message' => 'Pickup date is required.']);
+        }
+        $pickupDay = Carbon::parse($pickupDate);
+        // Block Jumaat(5), Sabtu(6), Ahad(7)
+        if ($pickupDay->dayOfWeekIso > 4) {
+            return response()->json(['success' => false, 'message' => 'Loyalty vouchers are valid Mon-Thu only.']);
+        }
+    }
+
+    // 5. Calculate Discount
+    $baseDepo = $vehicle->baseDepo ?? 0;
+    $rentalOnlyCost = max(0, $currentTotal - $baseDepo); 
+    $discountAmount = 0;
+    $displayTitle = ""; // Variable untuk tajuk voucher
+
+    if ($isFreeHalfDay) {
+        // --- LOGIC: FREE HALF DAY ---
+        $displayTitle = "FREE HALF DAY"; // Set nama kat sini
         
-        // Terima pickup_date dari request untuk semakan hari
-        $pickupDate = $request->input('pickup_date'); 
+        try {
+            $rates = $vehicle->hourly_rates;
+            if (is_string($rates)) $rates = json_decode($rates, true);
 
-
-        // Ambil ID dari request dulu
-        $vehicleId = $request->input('vehicle_id');
-
-        // Pastikan vehicle wujud
-        // Gunakan try-catch atau check kalau ID wujud untuk elak error
-        if ($vehicleId) {
-            $vehicle = Vehicle::findOrFail($vehicleId);
-        } else {
-            return response()->json(['success' => false, 'message' => 'Vehicle data missing.']);
-        }
-
-        // 1. Find the Voucher
-        $voucher = Voucher::where('voucherCode', $code)->orWhere('code', $code)->first();
-
-
-
-        // 2. Validate Voucher Existence
-        if (!$voucher) {
-            return response()->json(['success' => false, 'message' => 'Invalid voucher code.']);
-        }
-
-        // 3. Validate Date (Start & End)
-        $now = Carbon::now();
-        if ($now->lt($voucher->validFrom) || $now->gt($voucher->validUntil)) {
-            return response()->json(['success' => false, 'message' => 'This voucher has expired.']);
-        }
-
-        // 4. Validate Usage
-        if ($voucher->isUsed) {
-            return response()->json(['success' => false, 'message' => 'This voucher has already been used.']);
-        }
-
-        // 5. [BARU] Semak Syarat Hari (Isnin - Khamis Sahaja) untuk Loyalty Voucher
-        // Kita anggap voucher loyalty jenis 'Rental Discount'. 
-        // Anda boleh tambah check specific type jika perlu.
-        if ($voucher->voucherType == 'Rental Discount') {
-            if (!$pickupDate) {
-                return response()->json(['success' => false, 'message' => 'Pickup date is required to validate this voucher.']);
-            }
-
-            $pickupDay = Carbon::parse($pickupDate);
-            
-            // Carbon: Monday=1, Thursday=4, Friday=5, Sunday=7
-            // Jika hari adalah Jumaat (5), Sabtu (6), atau Ahad (7) -> BLOCK
-            if ($pickupDay->dayOfWeekIso > 4) {
-                return response()->json(['success' => false, 'message' => 'Loyalty vouchers are only valid for bookings on Monday - Thursday.']);
-            }
-        }
-
-        // 6. Calculate Discount - EXCLUDE DEPOSIT FROM DISCOUNT CALCULATION
-        $baseDepo = $vehicle->baseDepo; // Ambil harga deposit dari database
-        $rentalOnlyCost = $currentTotal - $baseDepo; // Asingkan harga sewa
-
-        $discountAmount = 0;
-
-        // --- [MULA TAMBAH SINI] ---
-        // Kita check column 'conditions' ada tak tulis FREE HALF DAY
-        $conditionText = strtoupper($voucher->conditions ?? '');
-
-        if (str_contains($conditionText, 'FREE HALF DAY')) {
-            // LOGIC: TOLAK HARGA PAKEJ 12 JAM (VERSION ANTI-CRASH)
-            
-            $discountAmount = 0; // Default
-
-            try {
-                // 1. Ambil raw data dari database
-                $rates = $vehicle->hourly_rates;
-
-                // 2. CHECK JENIS DATA (Ini yg buat error tadi)
-                // Kalau dia string (teks JSON), baru kita decode.
-                if (is_string($rates)) {
-                    $rates = json_decode($rates, true);
-                }
-                // Kalau dia dah memang array (Laravel dah cast), kita guna terus.
-
-                // 3. Ambil rate 12 Jam
-                if (is_array($rates) && isset($rates['12'])) {
-                    // Tukar value jadi float/number siap2
-                    $discountAmount = (float)$rates['12']; 
-                } else {
-                    // Fallback: Kalau tak jumpa rate 12, kira manual
-                    $discountAmount = ($vehicle->priceHour ?? 0) * 12;
-                }
-
-            } catch (\Exception $e) {
-                // 4. JIKA ADA ERROR PELIK, GUNA FALLBACK (JANGAN CRASH)
-                // Kalau JSON rosak ke apa, dia akan masuk sini
+            if (is_array($rates) && isset($rates['12'])) {
+                $discountAmount = (float)$rates['12']; 
+            } else {
                 $discountAmount = ($vehicle->priceHour ?? 0) * 12;
             }
-
-        } elseif ($voucher->discount_percent > 0) {
-             // ... Sambung coding asal ...
-
-        } elseif ($voucher->discount_percent > 0) { 
-            // ... (sambung coding asal bawah ni) ...
-
-        // --- [HABIS TAMBAH SINI, BAWAH NI SAMBUNG CODING ASAL (Tukar if jadi elseif)] ---
-        } elseif ($voucher->discount_percent > 0) {
-            // Kira % berdasarkan harga sewa sahaja
-            $discountAmount = ($rentalOnlyCost * $voucher->discount_percent) / 100;
-        } else {
-            $discountAmount = $voucher->voucherAmount;
+        } catch (\Exception $e) {
+            $discountAmount = ($vehicle->priceHour ?? 0) * 12;
         }
 
-        // Safety: Jangan bagi diskaun lebih dari harga sewa
-        if ($discountAmount > $rentalOnlyCost) {
-            $discountAmount = $rentalOnlyCost;
-        }
+    } elseif ($voucher->discount_percent > 0) {
+        // --- LOGIC: PERCENTAGE ---
+        $displayTitle = intval($voucher->discount_percent) . "% OFF";
+        $discountAmount = ($rentalOnlyCost * $voucher->discount_percent) / 100;
 
-        $newTotal = $currentTotal - $discountAmount;
-
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Voucher applied successfully!',
-            'discount_amount' => number_format($discountAmount, 2),
-            'new_total' => number_format($newTotal, 2),
-            'voucher_id' => $voucher->voucherID 
-        ]);
+    } else {
+        // --- LOGIC: FIXED AMOUNT ---
+        $displayTitle = "RM " . number_format($voucher->voucherAmount, 0) . " OFF";
+        $discountAmount = $voucher->voucherAmount;
     }
+
+    // Safety Limit
+    if ($discountAmount > $rentalOnlyCost) {
+        $discountAmount = $rentalOnlyCost;
+    }
+
+    $newTotal = $currentTotal - $discountAmount;
+
+    // RETURN JSON (INI YANG PENTING)
+    return response()->json([
+        'success' => true,
+        'message' => 'Voucher applied successfully!',
+        'discount_amount' => number_format($discountAmount, 2),
+        'new_total' => number_format($newTotal, 2),
+        'voucherID' => $voucher->voucherID ?? $voucher->id,
+        'display_title' => $displayTitle // <--- Frontend perlukan ini!
+    ]);
+}
 
     // Get available vouchers for logged-in customer
     public function getAvailableVouchers()

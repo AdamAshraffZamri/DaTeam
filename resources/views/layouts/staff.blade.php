@@ -295,7 +295,8 @@
         
         <h3 class="text-gray-900 font-bold text-lg">System Processing</h3>
         <p class="text-gray-500 text-xs text-center mt-2 leading-relaxed">
-            Sending notifications, generating invoices, and updating records.
+            Please wait while we process your request. This may take a few seconds.
+            <br><span class="text-orange-500 text-xs">Please do not close this window.</span>
         </p>
 
         <div class="w-full bg-gray-100 rounded-full h-1.5 mt-6 overflow-hidden">

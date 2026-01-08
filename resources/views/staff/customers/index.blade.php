@@ -27,7 +27,7 @@
                     $currentStatus = request('status', 'all');
                     $statuses = [
                         'all'         => 'All Status',
-                        'confirmed'    => 'Confirmed',
+                        'approved'    => 'Approved',
                         'pending'     => 'Pending',
                         'rejected'    => 'Rejected',
                         'blacklisted' => 'Blacklisted'
@@ -40,7 +40,7 @@
                         return match($status) {
                             'all'         => $query->count(),
                             'blacklisted' => $query->where('blacklisted', 1)->count(),
-                            'confirmed'   => $query->whereIn('accountStat', ['confirmed', 'active'])->count(),
+                            'approved'   => $query->whereIn('accountStat', ['approved', 'active'])->count(),
                             default       => $query->where('accountStat', $status)->count(),
                         };
                     };
@@ -140,9 +140,9 @@
                             <span class="block w-24 text-center px-0 py-1.5 rounded-full text-[10px] font-bold border uppercase tracking-wider bg-gray-900 text-white border-gray-800 shadow-sm">
                                 Blacklisted
                             </span>
-                        @elseif($customer->accountStat == 'Confirmed' || $customer->accountStat == 'active')
+                        @elseif($customer->accountStat == 'Approved' || $customer->accountStat == 'active')
                             <span class="block w-24 text-center px-0 py-1.5 rounded-full text-[10px] font-bold border uppercase tracking-wider bg-green-100 text-green-700 border-green-200">
-                                Confirmed
+                                Approved
                             </span>
                         @elseif($customer->accountStat == 'pending')
                             <span class="block w-24 text-center px-0 py-1.5 rounded-full text-[10px] font-bold border uppercase tracking-wider bg-orange-100 text-orange-700 border-orange-200 animate-pulse">

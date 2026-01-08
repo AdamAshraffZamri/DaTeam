@@ -198,6 +198,20 @@ class StaffCustomerController extends Controller
         return view('staff.customers.penalty-history', compact('customer', 'penalties', 'totalPenalties', 'unpaidPenalties', 'totalAmount'));
     }
 
+    // --- VERIFY PENALTY PAYMENT ---
+    public function verifyPenalty($penaltyId)
+    {
+        $penalty = \App\Models\Penalties::findOrFail($penaltyId);
+
+        $penalty->update([
+            'penaltyStatus' => 'Paid',
+            'status' => 'Paid'
+        ]);
+
+        return back()->with('success', 'Penalty payment verified successfully.');
+    }
+
+
     public function store(Request $request, GoogleDriveService $driveService)
     {
         // 1. Validate the input

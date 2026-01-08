@@ -139,12 +139,34 @@ class BookingController extends Controller
         $query = Vehicle::where('availability', true)
             ->with(['bookings', 'maintenances']); 
 
-        // 4. Apply Vehicle Type Filter (if selected)
+        // 4. Apply Vehicle Category Filter (if selected)
+        if ($request->filled('category')) {
+            $query->whereIn('vehicle_category', $request->category);
+        }
+
+        // 5. Apply Vehicle Type Filter (if selected)
         if ($request->filled('types')) {
             $query->whereIn('type', $request->types);
         }
 
-        // 5. Fetch & Filter in Memory
+        // 6. Apply Price Range Filter (if selected)
+        if ($request->filled('price_range')) {
+            $query->where(function($subQuery) use ($request) {
+                foreach ($request->price_range as $range) {
+                    if ($range === '0-100') {
+                        $subQuery->orWhereBetween('priceHour', [0, 100]);
+                    } elseif ($range === '100-200') {
+                        $subQuery->orWhereBetween('priceHour', [100, 200]);
+                    } elseif ($range === '200-300') {
+                        $subQuery->orWhereBetween('priceHour', [200, 300]);
+                    } elseif ($range === '300-1000') {
+                        $subQuery->orWhere('priceHour', '>=', 300);
+                    }
+                }
+            });
+        }
+
+        // 7. Fetch & Filter in Memory
         $allAvailableVehicles = $query->get()->filter(function($vehicle) use ($reqStart, $reqEnd) {
             
             // Define the Requested "Blocked" Block (Includes its own 3-hour cooldown tail)
@@ -274,10 +296,10 @@ class BookingController extends Controller
         ]);
     }
 
-    // --- 6. SUBMIT BOOKING (Handles Full/Deposit & Vouchers) ---
-    public function submitPayment(Request $request, $id)
+            // --- 6. SUBMIT BOOKING (Handles Full/Deposit & Vouchers) ---
+public function submitPayment(Request $request, $id)
     {
-        // 1. Validation
+        // --- 1. VALIDATION ---
         $request->validate([
             'payment_proof' => 'required|mimes:jpeg,png,jpg|max:4048',
             'agreement_proof' => 'required|file|mimes:pdf|max:4048',
@@ -286,104 +308,146 @@ class BookingController extends Controller
 
         $vehicle = Vehicle::findOrFail($id);
 
-        // 2. Calculate Prices (Existing Logic)
+        // --- 2. CALCULATE BASIC PRICE ---
+        // Kira harga asal sewa tanpa diskaun
         $rentalCharge = $this->calculateRentalPrice(
             $vehicle, 
             $request->input('pickup_date'), $request->input('pickup_time'), 
             $request->input('return_date'), $request->input('return_time')
         );
 
-        // Calculate base deposit and gross total
         $baseDepo = $vehicle->baseDepo ?? 50;
         $grossTotal = $rentalCharge + $baseDepo;
         $discountAmount = 0;
+        
+        // Variable untuk simpan voucher object (kita update status 'used' di hujung function)
+        $voucherToRedeem = null; 
+        $voucherID_ToSave = null;
 
-        if ($request->filled('voucher_id')) {
-            $voucher = \App\Models\Voucher::find($request->input('voucher_id'));
+        // --- 3. VOUCHER LOGIC (MERGED & FIXED) ---
+        if ($request->filled('voucherID')) { 
+            $inputVoucherID = $request->input('voucherID');
             
-            // Check kewujudan voucher DAN pastikan belum digunakan (!isUsed)
+            // Cari voucher guna Primary Key (voucherID)
+            $voucher = \App\Models\Voucher::find($inputVoucherID);
+
+            // Check kewujudan voucher DAN pastikan belum digunakan
             if ($voucher && !$voucher->isUsed) {
-                $voucherID = $voucher->voucherID ?? $voucher->id;
                 
-                // [BARU] VALIDATION HARI (BACKEND SAFETY CHECK)
-                // Pastikan tarikh pickup adalah Isnin - Khamis
+                // A. TENTUKAN JENIS "FREE HALF DAY"
+                // Kita check sama ada type dia 'Free Half Day' ATAU dalam conditions ada tulis perkataan tu
+                $isFreeHalfDay = $voucher->voucherType == 'Free Half Day' || str_contains(strtoupper($voucher->conditions ?? ''), 'FREE HALF DAY');
+
+                // B. VALIDATION HARI (Isnin - Khamis sahaja untuk Rental Discount biasa)
+                // Pengecualian: Kalau "Free Half Day", check logic dia sendiri (kalau nak allow weekend, buang check ni)
                 $pickupDay = Carbon::parse($request->input('pickup_date'));
                 
-                // Carbon: 1=Isnin, 4=Khamis, 5=Jumaat, 6=Sabtu, 7=Ahad
-                if ($voucher->voucherType == 'Rental Discount' && $pickupDay->dayOfWeekIso > 4) {
-                    return back()->with('error', 'Voucher invalid for this date (Mon-Thu only). Transaction cancelled.');
+                // Carbon: 1=Isnin ... 5=Jumaat, 6=Sabtu, 7=Ahad
+                // Logic asal: Rental Discount & Free Half Day (Loyalty) tak boleh guna Jumaat-Ahad
+                if (($voucher->voucherType == 'Rental Discount' || $isFreeHalfDay) && $pickupDay->dayOfWeekIso > 4) {
+                    return back()->with('error', 'Loyalty vouchers are invalid for this date (Mon-Thu only). Transaction cancelled.');
                 }
 
-                // Kira Diskaun
-                if ($voucher->discount_percent > 0) {
-                    // Percentage based discount (Diskaun atas Rental Charge sahaja, bukan Deposit)
+                // C. SIMPAN ID UNTUK BOOKING
+                $voucherID_ToSave = $voucher->voucherID;
+
+                // D. KIRA DISKAUN (LOGIC GABUNGAN)
+                if ($isFreeHalfDay) {
+                    // ---------------------------------------------------------
+                    // LOGIC 1: FREE HALF DAY (DYNAMIC)
+                    // ---------------------------------------------------------
+                    $discountAmount = 0;
+                    try {
+                        // Cuba ambil rate 12 jam dari JSON hourly_rates
+                        $rates = $vehicle->hourly_rates;
+                        
+                        // Decode JSON jika perlu
+                        if (is_string($rates)) {
+                            $rates = json_decode($rates, true);
+                        }
+
+                        // Check jika rate '12' wujud
+                        if (is_array($rates) && isset($rates['12'])) {
+                            $discountAmount = (float)$rates['12']; 
+                        } else {
+                            // Fallback: Harga Sejam * 12
+                            $discountAmount = ($vehicle->priceHour ?? 0) * 12;
+                        }
+                    } catch (\Exception $e) {
+                        // Fallback keselamatan
+                        $discountAmount = ($vehicle->priceHour ?? 0) * 12;
+                    }
+                    
+                    // Pastikan diskaun tak lebih dari harga sewa (tak boleh negatif)
+                    $discountAmount = min($discountAmount, $rentalCharge);
+
+                } elseif ($voucher->discount_percent > 0) {
+                    // ---------------------------------------------------------
+                    // LOGIC 2: PERCENTAGE DISCOUNT (20%, 50% etc)
+                    // ---------------------------------------------------------
                     $discountAmount = ($rentalCharge * $voucher->discount_percent) / 100;
+
                 } else {
-                    // Fixed amount discount
+                    // ---------------------------------------------------------
+                    // LOGIC 3: FIXED AMOUNT (RM 10 OFF)
+                    // ---------------------------------------------------------
                     $discountAmount = $voucher->voucherAmount;
                 }
                 
-                // [PENTING] TANDAKAN VOUCHER SEBAGAI DIGUNAKAN
-                $voucher->update([
-                    'isUsed' => true,
-                    // 'used_at' => now() // Boleh uncomment jika ada column ini
-                ]);
+                // Simpan object voucher dalam variable, JANGAN update DB lagi
+                $voucherToRedeem = $voucher;
             }
         }
 
-    // Calculate Final Total Cost after Discount
-    $finalTotalCost = max(0, $grossTotal - $discountAmount);
-    // --- NEW: VOUCHER LOGIC END ---
+        // --- 4. CALCULATE FINAL TOTAL ---
+        $finalTotalCost = max(0, $grossTotal - $discountAmount);
 
-    // 3. Determine Amount to Pay NOW
-    if ($request->input('payment_type') == 'deposit') {
-        $amountToPayNow = $baseDepo;
-        $bookingStatus = 'Deposit Paid';
-        
-        // Safety: If deposit is greater than total (e.g. huge discount), pay full
-        if ($amountToPayNow >= $finalTotalCost) {
-             $amountToPayNow = $finalTotalCost;
-             $bookingStatus = 'Submitted'; 
+        // --- 5. DETERMINE PAYMENT AMOUNT ---
+        if ($request->input('payment_type') == 'deposit') {
+            $amountToPayNow = $baseDepo;
+            $bookingStatus = 'Deposit Paid';
+            
+            // Safety: Kalau lepas diskaun, total lagi rendah dari deposit
+            if ($amountToPayNow >= $finalTotalCost) {
+                $amountToPayNow = $finalTotalCost;
+                $bookingStatus = 'Submitted'; 
+            }
+        } else {
+            $amountToPayNow = $finalTotalCost;
+            $bookingStatus = 'Submitted';
         }
-    } else {
-        // Full Payment
-        $amountToPayNow = $finalTotalCost;
-        $bookingStatus = 'Submitted';
-    }
 
-        // --- 4. GOOGLE DRIVE UPLOAD LOGIC (NEW) ---
-        
-        // Format: [Name - Date - Time]
+        // --- 6. GOOGLE DRIVE UPLOAD ---
         $timestamp = now()->format('Y-m-d - H-i');
-        $userName = Auth::user()->fullName; // Using fullName from Customer model
+        $userName = Auth::user()->fullName; 
         $fileNameBase = "[{$userName} - {$timestamp}]";
 
-        // A. Upload Receipt
+        // Upload Receipt
         $receiptFile = $request->file('payment_proof');
-        // Fallback to local storage if Drive fails, or use local as temp
         $localProofPath = $receiptFile->store('receipts', 'public'); 
         
-        $receiptLink = $this->driveService->uploadFile(
-            $receiptFile, 
-            env('GOOGLE_DRIVE_RECEIPTS'), // Folder ID from .env
-            $fileNameBase . " - Receipt"
-        );
-
-        // B. Upload Agreement
+        // Upload Agreement
         $agreementFile = $request->file('agreement_proof');
         $localAgreementPath = $agreementFile->store('agreements', 'public');
 
-        $agreementLink = $this->driveService->uploadFile(
-            $agreementFile, 
-            env('GOOGLE_DRIVE_AGREEMENTS'), // Folder ID from .env
-            $fileNameBase . " - Agreement"
-        );
+        // Try Upload to Drive
+        try {
+            $receiptLink = $this->driveService->uploadFile(
+                $receiptFile, env('GOOGLE_DRIVE_RECEIPTS'), $fileNameBase . " - Receipt"
+            );
+            $agreementLink = $this->driveService->uploadFile(
+                $agreementFile, env('GOOGLE_DRIVE_AGREEMENTS'), $fileNameBase . " - Agreement"
+            );
+        } catch (\Exception $e) {
+            \Log::error("Drive Upload Failed: " . $e->getMessage());
+            $receiptLink = null;
+            $agreementLink = null;
+        }
 
-        // Use Drive Link if available, otherwise fallback to local path
         $finalReceiptPath = $receiptLink ?? $localProofPath;
         $finalAgreementPath = $agreementLink ?? $localAgreementPath;
 
-        // --- 5. Create Booking ---
+        // --- 7. CREATE BOOKING ---
         $booking = Booking::create([
             'customerID' => Auth::id(),
             'vehicleID' => $id,
@@ -395,17 +459,17 @@ class BookingController extends Controller
             'pickupLocation' => $request->input('pickup_location'),
             'returnLocation' => $request->input('return_location'),
             'totalCost' => $finalTotalCost, 
-            'voucherID' => $voucherID ?? null,
+            'voucherID' => $voucherID_ToSave, // Masukkan ID voucher (atau null)
             
             'aggreementDate' => now(),
-            'aggreementLink' => $finalAgreementPath, // SAVED GOOGLE DRIVE LINK HERE
+            'aggreementLink' => $finalAgreementPath, 
             
             'bookingStatus' => $bookingStatus,
             'bookingType' => 'Standard',
             'remarks' => $request->input('remarks'),
         ]);
 
-        // --- 6. Create Payment Record ---
+        // --- 8. CREATE PAYMENT RECORD ---
         Payment::create([
             'bookingID' => $booking->bookingID,
             'amount' => $amountToPayNow, 
@@ -415,20 +479,25 @@ class BookingController extends Controller
             'paymentStatus' => 'Pending Verification',
             'depoStatus' => 'Holding',
             'depoRequestDate' => now(),
-            
-            'installmentDetails' => $finalReceiptPath // SAVED GOOGLE DRIVE LINK HERE
+            'installmentDetails' => $finalReceiptPath 
         ]);
         
-        // 7. Notifications
+        // --- 9. REDEEM VOUCHER SEKARANG ---
+        // Kita update status voucher HANYA bila booking & payment dah berjaya create.
+        if ($voucherToRedeem) {
+            $voucherToRedeem->update([
+                'isUsed' => true
+            ]);
+        }
+
+        // --- 10. NOTIFICATIONS ---
         try {
-            // A. Notify Staff (Database + Email via NewBookingSubmitted)
             $staff = Staff::all(); 
             Notification::send($staff, new NewBookingSubmitted($booking));
 
-            // B. Notify Customer (Database + Email via BookingStatusUpdated)
             $booking->customer->notify(new BookingStatusUpdated(
                 $booking, 
-                "Your booking #{$booking->bookingID} has been submitted successfully and is pending approval."
+                "Your booking #{$booking->bookingID} has been submitted successfully."
             ));
 
         } catch (\Exception $e) {

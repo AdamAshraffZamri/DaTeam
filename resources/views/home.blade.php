@@ -81,10 +81,13 @@
             </p>
             
             <div class="flex flex-col sm:flex-row gap-4 justify-center">
-                <a href="{{ route('book.create') }}" class="px-10 py-4 bg-orange-600 hover:bg-orange-700 text-white font-bold rounded-full transition transform hover:scale-105 shadow-lg shadow-orange-600/30 flex items-center justify-center">
+                <a href="{{ route('book.create') }}"
+                class="glow-on-hover px-10 py-4 transition transform hover:scale-105 shadow-lg flex items-center justify-center">
                     Book a Vehicle <i class="fas fa-arrow-right ml-3"></i>
                 </a>
-                <a href="#fleet-showcase" class="px-10 py-4 bg-white/10 hover:bg-white/20 text-white font-bold rounded-full backdrop-blur-md border border-white/20 transition flex items-center justify-center">
+
+                <a href="#fleet-showcase" 
+                class="px-10 py-4 bg-white/10 hover:bg-white/20 text-white font-bold rounded-full backdrop-blur-md border border-white/20 transition flex items-center justify-center">
                     View Fleet
                 </a>
             </div>

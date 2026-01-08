@@ -222,7 +222,7 @@
                     {{-- Dynamic Hidden Fields (JS Updates These) --}}
                     <input type="hidden" name="total" id="hidden_total" value="{{ $total }}">
                     <input type="hidden" name="payment_type" id="hidden_payment_type" value="full">
-                    <input type="hidden" name="voucher_id" id="hidden_voucher_id" value="">
+                    <input type="hidden" name="voucherID" id="hidden_voucherID" value="">
 
                     <div class="bg-black/50 backdrop-blur-xl border border-white/20 rounded-[2rem] p-8 shadow-2xl space-y-8">
                         
@@ -452,12 +452,26 @@
                 msg.innerText = data.message;
                 msg.className = "text-xs mt-2 font-bold text-green-400";
                 
-                // Update the missing variable here
                 currentVoucherDiscount = parseFloat(data.discount_amount.toString().replace(/,/g, ''));
                 
+                // --- UPDATE UI DISKAUN ---
                 document.getElementById('discount_row').classList.remove('hidden');
+                
+                // 1. Tunjuk Jumlah Tolak (RM)
                 document.getElementById('discount_amount').innerText = data.discount_amount;
-                document.getElementById('hidden_voucher_id').value = data.voucher_id;
+                
+                // 2. [FIX UI] Tunjuk Nama Voucher ("FREE HALF DAY" atau "20% OFF")
+                // Cari elemen label sebelah kiri (Voucher Discount) dan update teks dia
+                // Kita create span baru kalau belum ada, atau update text
+                const discountLabel = document.querySelector('#discount_row span:first-child');
+                if(data.display_title) {
+                    discountLabel.innerText = data.display_title; // Papar "FREE HALF DAY"
+                    discountLabel.classList.add('text-orange-400', 'uppercase'); // Tambah style sikit
+                } else {
+                    discountLabel.innerText = "Voucher Discount"; // Fallback
+                }
+
+                document.getElementById('hidden_voucherID').value = data.voucherID;
                 
                 document.getElementById('voucher_code').disabled = true;
                 document.getElementById('voucher_code').classList.add('opacity-50', 'cursor-not-allowed');

@@ -15,28 +15,31 @@ class FinanceController extends Controller
         $user = Auth::user();
 
         // 1. GET CLAIMS (Refunds)
-        // Updated: Load 'payment' relationship to check depoStatus
         $claims = Booking::where('customerID', $user->customerID)
                          ->where('bookingStatus', 'Cancelled')
                          ->with(['vehicle', 'payment']) 
                          ->get();
 
-        // 2. GET OUTSTANDING ITEMS (Both booking-based and customer-level penalties)
+        // 2. GET OUTSTANDING ITEMS (Updated Query)
+        // Kita tambah 'Pending Verification' supaya item tak hilang lepas upload resit
         $fines = Penalties::where(function($query) use ($user) {
-                    // Customer-level penalties (direct customerID match)
+                    // Customer-level penalties
                     $query->where('customerID', $user->customerID)
-                    // OR booking-based penalties (through booking relationship)
+                    // OR booking-based penalties
                     ->orWhereHas('booking', function($q) use ($user) {
                         $q->where('customerID', $user->customerID);
                     });
                  })
                  ->where(function($query) {
-                     $query->where('status', 'Pending')
-                           ->orWhere('penaltyStatus', 'Unpaid');
+                     // Kita check semua status yang relevan: Unpaid, Pending, dan Pending Verification
+                     $query->whereIn('penaltyStatus', ['Unpaid', 'Pending', 'Pending Verification'])
+                           ->orWhereIn('status', ['Unpaid', 'Pending', 'Pending Verification']);
                  })
                  ->with(['booking.vehicle', 'customer'])
+                 ->orderBy('created_at', 'desc') // Susun ikut tarikh terkini
                  ->get();
 
+        // 3. GET BALANCE PAYMENTS
         $balanceBookings = Booking::where('customerID', $user->customerID)
                               ->whereIn('bookingStatus', ['Deposit Paid'])
                               ->with(['vehicle', 'payments'])
@@ -44,7 +47,6 @@ class FinanceController extends Controller
 
         return view('finance.index', compact('claims', 'fines', 'balanceBookings'));
     }
-
     // --- NEW: REQUEST REFUND ---
     public function requestRefund($id)
     {
@@ -136,7 +138,7 @@ class FinanceController extends Controller
     public function submitFine(Request $request, $id)
     {
         $request->validate([
-            'payment_proof' => 'required|image|max:2048',
+            'payment_proof' => 'required|mimes:jpg,jpeg,png,pdf|max:4048',
         ]);
 
         $penalty = Penalties::findOrFail($id);
@@ -152,13 +154,15 @@ class FinanceController extends Controller
             }
         }
         
-        // CALCULATE TOTAL: Use amount if available, otherwise sum the fees
+        // CALCULATE TOTAL
         $totalFine = $penalty->amount ?? ($penalty->penaltyFees + $penalty->fuelSurcharge + $penalty->mileageSurcharge);
 
+        // 1. Simpan Gambar ke Folder 'public/receipts'
         $path = $request->file('payment_proof')->store('receipts', 'public');
 
+        // 2. Create Payment Record (Optional, untuk tracking kewangan)
         Payment::create([
-            'bookingID' => $penalty->bookingID, // Can be null for customer-level penalties
+            'bookingID' => $penalty->bookingID, 
             'amount' => $totalFine,
             'depoAmount' => 0,
             'transactionDate' => now(),
@@ -167,8 +171,14 @@ class FinanceController extends Controller
             'installmentDetails' => $path 
         ]);
 
-        $penalty->update(['status' => 'Paid', 'penaltyStatus' => 'Paid']);
+        // 3. Update Penalty Record (PENTING)
+        $penalty->update([
+            'status' => 'Pending Verification',        // Status umum
+            'penaltyStatus' => 'Pending Verification', // Status spesifik penalty
+            'payment_proof' => $path,                  // Simpan path gambar
+            'paid_at' => now()                         // Tarikh submit
+        ]);
 
-        return redirect()->route('finance.index')->with('success', 'Fine payment submitted successfully!');
+        return redirect()->route('finance.index')->with('success', 'Payment proof submitted! Waiting for staff verification.');
     }
 }

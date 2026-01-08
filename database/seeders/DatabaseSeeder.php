@@ -552,7 +552,7 @@ class DatabaseSeeder extends Seeder
             [3, 20, 'Bronze Tier Reward'],
             [6, 50, 'Silver Tier Reward'],
             [9, 70, 'Gold Tier Reward'],
-            [12, 100, 'Platinum Tier Reward (Free Half Day)'],
+            [12, 100, 'Free Half Day'],
         ];
 
         foreach ($milestones as $m) {
