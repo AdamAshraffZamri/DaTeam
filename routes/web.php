@@ -81,6 +81,8 @@ Route::middleware('auth')->group(function () {
     
     Route::get('/finance/pay-fine/{id}', [FinanceController::class, 'payFine'])->name('finance.pay_fine');
     Route::post('/finance/pay-fine/{id}', [FinanceController::class, 'submitFine'])->name('finance.submit_fine');
+    
+    Route::post('/staff/penalty/{id}/verify', [App\Http\Controllers\StaffCustomerController::class, 'verifyPenalty'])->name('staff.penalty.verify');
 
     // 5. Loyalty & Vouchers (FIXED SECTION)
     Route::get('/loyalty', [LoyaltyController::class, 'index'])->name('loyalty.index');

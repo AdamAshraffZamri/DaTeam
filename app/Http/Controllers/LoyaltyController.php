@@ -38,25 +38,21 @@ class LoyaltyController extends Controller
             ->where('points_change', '<', 0)
             ->sum('points_change'));
 
-        // 3. Get Active Vouchers
-        $vouchers = Voucher::where(function($query) use ($userId) {
-                $query->where('user_id', $userId)->orWhere('customerID', $userId);
-            })
-            ->where('status', 'active') 
-            ->where('isUsed', false)
-            ->whereDate('validUntil', '>=', now())
-            ->get();
+        // 3. Get Active Vouchers [FIXED]
+    $vouchers = Voucher::where('customerID', $userId) // Guna customerID sahaja
+        ->where('status', 'active') 
+        ->where('isUsed', false)
+        ->whereDate('validUntil', '>=', now())
+        ->get();
 
-        // 4. Get Past Vouchers (History)
-        $pastVouchers = Voucher::where(function($query) use ($userId) {
-                $query->where('user_id', $userId)->orWhere('customerID', $userId);
-            })
-            ->where(function($q) {
-                $q->where('isUsed', true) // Dah guna
-                  ->orWhereDate('validUntil', '<', now()); // Atau dah expired
-            })
-            ->orderBy('updated_at', 'desc')
-            ->get();
+    // 4. Get Past Vouchers (History) [FIXED]
+    $pastVouchers = Voucher::where('customerID', $userId) // Guna customerID sahaja
+        ->where(function($q) {
+            $q->where('isUsed', true)
+              ->orWhereDate('validUntil', '<', now());
+        })
+        ->orderBy('updated_at', 'desc')
+        ->get();
 
         // 5. PROGRESS BAR LOGIC (Loyalty Road)
         $allBookings = Booking::where('customerID', $userId)
@@ -74,18 +70,26 @@ class LoyaltyController extends Controller
         $cycleSize = 12;
         $currentInCycle = $qualifiedBookingsCount % $cycleSize; 
         
-        if ($currentInCycle < 3) {
-            $nextReward = "20% OFF";
-            $targetStep = 3;
-        } elseif ($currentInCycle < 6) {
-            $nextReward = "50% OFF";
-            $targetStep = 6;
-        } elseif ($currentInCycle < 9) {
-            $nextReward = "70% OFF";
-            $targetStep = 9;
+        // ✅ INI BETUL: DINAMIK DARI DB
+        // Cari reward milestone seterusnya yang step dia lagi besar dari current count
+        $nextMilestoneData = Reward::where('category', 'Milestone')
+            ->where('milestone_step', '>', $currentInCycle)
+            ->where('is_active', true)
+            ->orderBy('milestone_step', 'asc')
+            ->first();
+
+        if ($nextMilestoneData) {
+            $targetStep = $nextMilestoneData->milestone_step;
+            $nextReward = $nextMilestoneData->name; // Atau $nextMilestoneData->offer_description
         } else {
-            $nextReward = "Free Half Day";
-            $targetStep = 12;
+            // Kalau dah lepas semua level (cth: dah lepas 12), pusing balik ke reward pertama
+            $firstReward = Reward::where('category', 'Milestone')
+                ->where('is_active', true)
+                ->orderBy('milestone_step', 'asc')
+                ->first();
+                
+            $targetStep = $cycleSize; // Atau logic pusingan seterusnya
+            $nextReward = $firstReward ? $firstReward->name : "Max Level Reached";
         }
 
         $bookingsNeeded = $targetStep - $currentInCycle;
@@ -145,7 +149,8 @@ class LoyaltyController extends Controller
         
     }
 
-    // --- LOGIC: REDEEM REWARD (Non-Rental Vouchers) [UPDATED] ---
+
+    // --- LOGIC: REDEEM REWARD (Non-Rental Vouchers) [FIXED] --- wildan
     public function redeemReward(Request $request)
     {
         $userId = Auth::id();
@@ -179,7 +184,7 @@ class LoyaltyController extends Controller
         }
 
         if ($reward->points_required <= 0 || $reward->category == 'Milestone') {
-            return response()->json(['success' => false, 'message' => 'This is a Milestone Reward and cannot be redeemed using points. It is awarded automatically upon booking completion.']);
+            return response()->json(['success' => false, 'message' => 'This is a Milestone Reward and cannot be redeemed using points.']);
         }
 
         // 3. Check Points
@@ -197,14 +202,15 @@ class LoyaltyController extends Controller
             'reason' => "Redeemed {$reward->name} Voucher"
         ]);
 
-        // 5. Generate Voucher
+        // 5. Generate Voucher [FIXED]
+        // Guna 'voucherCode' dan buang 'user_id' & 'code' 
         $uniqueCode = $reward->code_prefix . rand(1000,9999) . Str::upper(Str::random(3)); 
 
         Voucher::create([
-            'customerID' => $userId,
-            'user_id' => $userId,
-            'voucherCode' => $uniqueCode,
-            'code' => $uniqueCode,
+            'customerID' => $userId, // Guna customerID sahaja
+            // 'user_id' => $userId, // ERROR: Column ni tak wujud, buang!
+            'voucherCode' => $uniqueCode, // Guna nama column yang betul
+            // 'code' => $uniqueCode, // ERROR: Column ni tak wujud, buang!
             'voucherAmount' => 0,
             'voucherType' => 'Merchant Reward',
             'redeem_place' => $reward->name,
@@ -223,20 +229,19 @@ class LoyaltyController extends Controller
         ]);
     }
 
-    // --- CUSTOMER SELF-REDEEM (Guna Depan Kaunter) ---
+    // --- CUSTOMER SELF-REDEEM (Guna Depan Kaunter) [FIXED] --- wildan
     public function useVoucherNow(Request $request)
     {
         $userId = Auth::id();
         $code = $request->code;
 
-        $voucher = Voucher::where('code', $code)
-            ->where(function($q) use ($userId) {
-                $q->where('user_id', $userId)->orWhere('customerID', $userId);
-            })
+        // [FIXED] Cari guna 'voucherCode' dan 'customerID' sahaja
+        $voucher = Voucher::where('voucherCode', $code) 
+            ->where('customerID', $userId) // Buang check 'user_id'
             ->first();
 
         if (!$voucher) {
-            return response()->json(['success' => false, 'message' => 'Voucher tidak dijumpai.']);
+            return response()->json(['success' => false, 'message' => 'Voucher tidak dijumpai atau bukan milik anda.']);
         }
 
         if ($voucher->isUsed) {
@@ -541,34 +546,37 @@ class LoyaltyController extends Controller
     // --- HELPER: ISSUE RENTAL VOUCHER (Dynamic) ---
     private function issueRentalVoucher($userId, $reward) {
         
-        $percent = $reward->discount_percent;
         $codePrefix = $reward->code_prefix;
         $desc = $reward->offer_description;
+        
+        // DEFAULT VALUES
         $voucherType = 'Rental Discount';
-
-        // LOGIC KHAS: Jika reward ini adalah untuk Milestone ke-12
-        // Kita paksa jadi type 'Free Half Day' supaya BookingController boleh baca
-        if ($reward->milestone_step == 12) {
+        $percent = $reward->discount_percent; 
+        
+        // --- LOGIC BARU: CHECK NAMA REWARD ---
+        // Kalau staff namakan reward "Free Half Day" (tak kisah huruf besar/kecil)
+        if (stripos($reward->name, 'Half Day') !== false) {
             $voucherType = 'Free Half Day'; 
-            $percent = 0; // Percent 0 sebab kiraan dia manual (tolak 12 jam)
+            $percent = 0; // Percent 0 sebab kita akan tolak ikut harga jam nanti
         }
 
         Voucher::create([
             'customerID' => $userId,
-            'user_id' => $userId,
+            // 'user_id' => $userId, // Buang ni kalau tak guna
             'voucherCode' => $codePrefix . '-' . strtoupper(Str::random(6)),
-            'code' => $codePrefix . '-' . strtoupper(Str::random(6)),
+            // 'code' => ..., // Buang ni kalau tak guna
             'voucherAmount' => 0, 
             'discount_percent' => $percent,
-            'voucherType' => 'Rental Discount',
+            'voucherType' => $voucherType, // Ini akan simpan 'Free Half Day' atau 'Rental Discount'
             'redeem_place' => 'HASTA Platform',
             'validFrom' => now(),
             'validUntil' => now()->addMonths($reward->validity_months), 
-            'conditions' => $desc . ". Valid Mon-Thu only.",
+            'conditions' => $desc,
             'isUsed' => false,
             'status' => 'active'
         ]);
     }
+    
 
     // --- BOOKING COMPLETED ---
     public function bookingCompleted($bookingId)

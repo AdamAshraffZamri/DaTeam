@@ -24,7 +24,9 @@ class Penalties extends Model
         'status', 
         'date_imposed',
         'reason',
-        'amount'
+        'amount',
+        'payment_proof', // <--- TAMBAH INI
+        'paid_at'
     ];
 
 

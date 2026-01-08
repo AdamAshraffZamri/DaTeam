@@ -206,49 +206,7 @@
             <div class="lg:col-span-2 space-y-6">
 
                 {{-- Action Bar --}}
-                <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 flex flex-col md:flex-row justify-between items-center gap-4">
-                    <div>
-                        <h3 class="text-sm font-black text-slate-900 uppercase tracking-wider">Account Actions</h3>
-                        <p class="text-xs text-slate-400 font-medium">Manage access and verification.</p>
-                    </div>
-                    
-                    <div class="flex flex-wrap items-center gap-2">
-                        @if($customer->blacklisted)
-                            <form action="{{ route('staff.customers.blacklist', $customer->customerID) }}" method="POST" onsubmit="return confirm('Restore this user account?');">
-                                @csrf
-                                <button type="submit" class="px-5 py-2.5 rounded-xl bg-slate-900 text-white text-xs font-bold uppercase tracking-wide hover:bg-slate-800 transition shadow-lg">
-                                    <i class="fas fa-unlock mr-2"></i> Unblock
-                                </button>
-                            </form>
-                        @else
-                            {{-- Penalty --}}
-                            <button @click="showPenaltyModal = true" class="px-4 py-2.5 rounded-xl bg-orange-50 text-orange-600 border border-orange-100 text-xs font-bold uppercase tracking-wide hover:bg-orange-100 transition">
-                                <i class="fas fa-gavel mr-1"></i> Penalty
-                            </button>
-                            
-                            {{-- Blacklist --}}
-                            <button @click="showBlacklistModal = true" class="px-4 py-2.5 rounded-xl bg-slate-100 text-slate-600 border border-slate-200 text-xs font-bold uppercase tracking-wide hover:bg-slate-200 transition">
-                                <i class="fas fa-ban mr-1"></i> Blacklist
-                            </button>
-
-                            {{-- Approve/Reject Logic --}}
-                            @if($customer->accountStat !== 'active' && $customer->accountStat !== 'Confirmed')
-                                @if($customer->accountStat !== 'rejected')
-                                    <button @click="showRejectModal = true" class="px-4 py-2.5 rounded-xl bg-white text-red-600 border border-red-100 text-xs font-bold uppercase tracking-wide hover:bg-red-50 transition">
-                                        Reject
-                                    </button>
-                                @endif
-
-                                <form action="{{ route('staff.customers.approve', $customer->customerID) }}" method="POST" class="inline">
-                                    @csrf
-                                    <button type="submit" onclick="return confirm('Confirm all details are correct?')" class="px-6 py-2.5 rounded-xl bg-green-500 text-white text-xs font-bold uppercase tracking-wide hover:bg-green-600 shadow-lg shadow-green-500/30 transition">
-                                        <i class="fas fa-check mr-2"></i> Approve
-                                    </button>
-                                </form>
-                            @endif
-                        @endif
-                    </div>
-                </div>
+                
 
                 {{-- Identity Verification --}}
                 <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-8">
@@ -437,6 +395,7 @@
                                 <option value="Vehicle Damage">Vehicle Damage</option>
                                 <option value="Mileage">Excess Mileage</option>
                                 <option value="Fuel">Fuel Surcharge</option>
+                                <option value="Delivery Fee">Delivery Fee</option>
                                 <option value="Other">Other</option>
                             </select>
                         </div>

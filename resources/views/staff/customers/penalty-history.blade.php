@@ -10,9 +10,9 @@
         <div class="flex justify-between items-center mb-6">
             <div class="flex items-center gap-4">
                 <a href="{{ route('staff.customers.show', $customer->customerID) }}" class="inline-flex items-center text-xs font-bold text-gray-500 hover:text-orange-600 uppercase tracking-widest transition">
-                    <i class="fas fa-arrow-left mr-2"></i> Back to Customer
+                   
                 </a>
-                <div class="h-6 w-px bg-gray-300"></div>
+               
                 <div>
                     <h1 class="text-2xl font-black text-gray-900">Penalty History</h1>
                     <p class="text-sm text-gray-500">{{ $customer->fullName }}</p>
@@ -76,12 +76,15 @@
                                 <th class="px-6 py-4 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">Reason</th>
                                 <th class="px-6 py-4 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">Booking</th>
                                 <th class="px-6 py-4 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">Amount</th>
-                                <th class="px-6 py-4 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">Status</th>
+                                <th class="px-6 py-4 text-center text-[10px] font-black text-gray-400 uppercase tracking-widest">Receipt</th> 
+                                <th class="px-6 py-4 text-center text-[10px] font-black text-gray-400 uppercase tracking-widest">Status</th>
+                                <th class="px-6 py-4 text-center text-[10px] font-black text-gray-400 uppercase tracking-widest">Action</th> 
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-gray-50">
                             @foreach($penalties as $penalty)
                                 <tr class="hover:bg-gray-50 transition-colors">
+                                    {{-- DATE --}}
                                     <td class="px-6 py-4">
                                         <div>
                                             <p class="text-sm font-bold text-gray-900">
@@ -92,6 +95,8 @@
                                             </p>
                                         </div>
                                     </td>
+
+                                    {{-- TYPE --}}
                                     <td class="px-6 py-4">
                                         @if($penalty->bookingID)
                                             <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-blue-100 text-blue-700">
@@ -103,11 +108,15 @@
                                             </span>
                                         @endif
                                     </td>
+
+                                    {{-- REASON --}}
                                     <td class="px-6 py-4">
                                         <p class="text-sm font-medium text-gray-900 max-w-xs truncate" title="{{ $penalty->reason }}">
                                             {{ $penalty->reason ?? 'N/A' }}
                                         </p>
                                     </td>
+
+                                    {{-- BOOKING --}}
                                     <td class="px-6 py-4">
                                         @if($penalty->bookingID && $penalty->booking)
                                             <a href="{{ route('staff.bookings.show', $penalty->bookingID) }}" class="text-sm font-bold text-blue-600 hover:text-blue-800 hover:underline">
@@ -122,6 +131,8 @@
                                             <span class="text-sm text-gray-400 italic">N/A</span>
                                         @endif
                                     </td>
+
+                                    {{-- AMOUNT --}}
                                     <td class="px-6 py-4">
                                         @php
                                             $totalAmount = $penalty->amount ?? ($penalty->penaltyFees + $penalty->fuelSurcharge + $penalty->mileageSurcharge);
@@ -135,13 +146,28 @@
                                             </p>
                                         @endif
                                     </td>
-                                    <td class="px-6 py-4">
-                                        @php
-                                            $isPaid = ($penalty->status == 'Paid' || $penalty->penaltyStatus == 'Paid');
-                                        @endphp
-                                        @if($isPaid)
+
+                                    {{-- RECEIPT COLUMN --}}
+                                    <td class="px-6 py-4 text-center">
+                                        @if($penalty->payment_proof)
+                                            <a href="{{ asset('storage/' . $penalty->payment_proof) }}" target="_blank" 
+                                               class="inline-flex items-center gap-1 text-blue-600 hover:text-blue-800 text-xs font-bold bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-lg transition border border-blue-100">
+                                                <i class="fas fa-file-invoice"></i> View
+                                            </a>
+                                        @else
+                                            <span class="text-xs text-gray-400 italic">No Upload</span>
+                                        @endif
+                                    </td>
+
+                                    {{-- STATUS --}}
+                                    <td class="px-6 py-4 text-center">
+                                        @if($penalty->penaltyStatus == 'Paid' || $penalty->status == 'Paid')
                                             <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-green-100 text-green-700">
                                                 <i class="fas fa-check-circle mr-1.5"></i> Paid
+                                            </span>
+                                        @elseif($penalty->penaltyStatus == 'Pending Verification')
+                                            <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-yellow-100 text-yellow-700 animate-pulse">
+                                                <i class="fas fa-hourglass-half mr-1.5"></i> Verify
                                             </span>
                                         @else
                                             <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-red-100 text-red-700">
@@ -149,6 +175,25 @@
                                             </span>
                                         @endif
                                     </td>
+
+                                    {{-- ACTION COLUMN (VERIFY BUTTON) --}}
+                                    <td class="px-6 py-4 text-center">
+                                        @if($penalty->penaltyStatus == 'Pending Verification')
+                                            <form action="{{ route('staff.penalty.verify', $penalty->penaltyID) }}" method="POST" onsubmit="return confirm('Confirm payment is valid?')">
+                                                @csrf
+                                                <button type="submit" class="bg-green-500 hover:bg-green-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold shadow-md shadow-green-500/20 transition flex items-center justify-center gap-1 w-full">
+                                                    <i class="fas fa-check"></i> Approve
+                                                </button>
+                                            </form>
+                                        @elseif($penalty->penaltyStatus == 'Paid' || $penalty->status == 'Paid')
+                                            <div class="text-green-600 text-xs font-bold flex items-center justify-center gap-1 opacity-70">
+                                                <i class="fas fa-lock"></i> Verified
+                                            </div>
+                                        @else
+                                            <span class="text-gray-300 text-xs font-medium">-</span>
+                                        @endif
+                                    </td>
+
                                 </tr>
                             @endforeach
                         </tbody>
@@ -173,4 +218,3 @@
     </div>
 </div>
 @endsection
-
