@@ -8,25 +8,25 @@
     .no-scrollbar::-webkit-scrollbar { display: none; }
     .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     
-    /* GLASS AESTHETIC (For Fleet, Stats, Features) */
+    /* GLASS AESTHETIC */
     .glass-section {
-        background-color: #111; /* Pitch dark background */
+        background-color: #111;
         position: relative;
         overflow: hidden;
     }
     
     .glass-card {
-        background: rgba(255, 255, 255, 0.05); /* 5% White opacity */
-        backdrop-filter: blur(12px);            /* Blur effect */
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(12px);
         -webkit-backdrop-filter: blur(12px);
-        border: 1px solid rgba(255, 255, 255, 0.1); /* Subtle white border */
-        box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);  /* Deep shadow */
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
         transition: transform 0.5s ease, background 0.5s ease;
     }
 
     .glass-card:hover {
-        background: rgba(255, 255, 255, 0.08); /* Slightly lighter on hover */
-        transform: translateY(-10px);          /* Float up effect */
+        background: rgba(255, 255, 255, 0.08);
+        transform: translateY(-10px);
     }
 
     /* Animation Utilities */
@@ -36,6 +36,86 @@
     }
     .animate-fade-in-up { animation: fade-in-up 1s ease-out forwards; }
     .delay-100 { animation-delay: 100ms; }
+
+    /* --- NEW ANIMATED FLEET BUTTON STYLES (Based on your request) --- */
+    .fleet-anim-btn {
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 180px;
+        height: 55px;
+        border: 2px solid #FFFFFF;
+        border-radius: 100px;
+        color: white;
+        font-weight: bold;
+        text-decoration: none;
+        background: transparent;
+        transition: all 0.3s ease;
+        overflow: visible; /* Allow particles to fly out */
+        cursor: pointer;
+    }
+
+    .fleet-anim-btn:hover {
+        background: white;
+        color: #2C3940; /* Dark color from animation source */
+        box-shadow: 0px 10px 25px -5px rgba(255, 255, 255, 0.4);
+    }
+
+    /* Text Shift Animation */
+    .fleet-anim-btn .btn-text {
+        position: relative;
+        transition: transform 0.4s ease;
+        z-index: 10;
+    }
+    .fleet-anim-btn:hover .btn-text {
+        transform: translateX(5px);
+    }
+
+    /* Particles (Spots) */
+    .fleet-spot {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 4px;
+        height: 4px;
+        border-radius: 50%;
+        background-color: white;
+        opacity: 0;
+        pointer-events: none;
+        z-index: 0;
+    }
+
+    /* Randomize colors for spots on hover */
+    .fleet-anim-btn:hover .fleet-spot:nth-child(odd) { background-color: #00C4FF; }
+    .fleet-anim-btn:hover .fleet-spot:nth-child(even) { background-color: #FF5E00; }
+
+    /* Particle Animation Keyframes */
+    @keyframes spew {
+        0% { opacity: 0; transform: translate(0, 0); }
+        20% { opacity: 1; }
+        100% { opacity: 0; transform: translate(var(--tx), var(--ty)); }
+    }
+
+    /* Trigger animation on hover */
+    .fleet-anim-btn:hover .fleet-spot {
+        animation: spew 0.8s ease-out infinite;
+    }
+
+    /* Hardcoded random directions for 12 spots to mimic SASS loop */
+    .fleet-spot:nth-child(1) { --tx: -20px; --ty: -30px; animation-delay: 0s; }
+    .fleet-spot:nth-child(2) { --tx: 20px; --ty: -40px; animation-delay: 0.1s; }
+    .fleet-spot:nth-child(3) { --tx: -30px; --ty: 10px; animation-delay: 0.2s; }
+    .fleet-spot:nth-child(4) { --tx: 35px; --ty: 20px; animation-delay: 0.05s; }
+    .fleet-spot:nth-child(5) { --tx: -10px; --ty: -50px; animation-delay: 0.3s; }
+    .fleet-spot:nth-child(6) { --tx: 40px; --ty: -10px; animation-delay: 0.15s; }
+    .fleet-spot:nth-child(7) { --tx: -40px; --ty: 30px; animation-delay: 0.25s; }
+    .fleet-spot:nth-child(8) { --tx: 25px; --ty: 40px; animation-delay: 0.1s; }
+    .fleet-spot:nth-child(9) { --tx: 0px; --ty: -60px; animation-delay: 0.4s; }
+    .fleet-spot:nth-child(10) { --tx: -50px; --ty: 0px; animation-delay: 0.2s; }
+    .fleet-spot:nth-child(11) { --tx: 50px; --ty: 5px; animation-delay: 0.35s; }
+    .fleet-spot:nth-child(12) { --tx: 10px; --ty: 50px; animation-delay: 0.05s; }
+
 </style>
 
 {{-- SECTION 1: HERO (With Custom Gradient Overlay + Bottom Fade) --}}
@@ -80,15 +160,27 @@
                 Experience the freedom of movement with HASTA. Affordable, reliable, and premium vehicles curated for UTM students.
             </p>
             
-            <div class="flex flex-col sm:flex-row gap-4 justify-center">
+            <div class="flex flex-col sm:flex-row gap-4 justify-center items-center">
                 <a href="{{ route('book.create') }}"
                 class="glow-on-hover px-10 py-4 transition transform hover:scale-105 shadow-lg flex items-center justify-center">
                     Book a Vehicle <i class="fas fa-arrow-right ml-3"></i>
                 </a>
 
-                <a href="#fleet-showcase" 
-                class="px-10 py-4 bg-white/10 hover:bg-white/20 text-white font-bold rounded-full backdrop-blur-md border border-white/20 transition flex items-center justify-center">
-                    View Fleet
+                {{-- UPDATED VIEW FLEET BUTTON WITH ANIMATION --}}
+                <a href="#fleet-showcase" class="fleet-anim-btn">
+                    <span class="btn-text">View Fleet</span>
+                    <span class="fleet-spot"></span>
+                    <span class="fleet-spot"></span>
+                    <span class="fleet-spot"></span>
+                    <span class="fleet-spot"></span>
+                    <span class="fleet-spot"></span>
+                    <span class="fleet-spot"></span>
+                    <span class="fleet-spot"></span>
+                    <span class="fleet-spot"></span>
+                    <span class="fleet-spot"></span>
+                    <span class="fleet-spot"></span>
+                    <span class="fleet-spot"></span>
+                    <span class="fleet-spot"></span>
                 </a>
             </div>
         </div>
