@@ -436,15 +436,13 @@
     });
 </script>
 
-<!-- Flash error message script -->
 <script>
     @if(session('error'))
         alert("{{ session('error') }}");
     @endif
 </script>
 
-<!-- Custom animation keyframes -->
-    <style>
+<style>
         @keyframes shine {
             100% { transform: translateX(100%); }
         }
@@ -565,5 +563,221 @@
         });
     });
 </script>
+@auth
+<div class="fixed bottom-32 right-6 z-[100000] flex flex-col items-end space-y-4 font-sans pointer-events-none">
+
+    <div id="chat-window" 
+         class="transform transition-all duration-300 ease-in-out opacity-0 translate-y-5 scale-95 pointer-events-none
+                w-[350px] h-[500px] bg-white rounded-2xl shadow-2xl border border-gray-200 flex flex-col overflow-hidden">
+        
+        <div class="bg-slate-900 p-4 flex justify-between items-center shadow-sm shrink-0">
+            <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded-full bg-orange-500 flex items-center justify-center text-white">
+                    <i class="fas fa-robot text-sm"></i>
+                </div>
+                <div class="flex flex-col">
+                    <span class="font-semibold text-white text-sm">Hasta Assistant</span>
+                    <span class="text-[10px] text-green-400 flex items-center gap-1">
+                        <span class="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse"></span> Online
+                    </span>
+                </div>
+            </div>
+            <button onclick="toggleChat()" class="text-gray-400 hover:text-white transition-colors">
+                <i class="fas fa-chevron-down"></i>
+            </button>
+        </div>
+
+        <div id="messages" class="flex-1 p-4 overflow-y-auto bg-slate-50 space-y-4 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
+            
+            <div class="flex gap-3">
+                <div class="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center text-orange-600 shrink-0 mt-1">
+                    <i class="fas fa-robot text-xs"></i>
+                </div>
+                <div class="bg-white border border-gray-100 text-slate-700 p-3 rounded-2xl rounded-tl-none shadow-sm text-sm max-w-[85%] leading-relaxed">
+                    Hello! I'm here to help you with your booking. How can I assist you today?
+                </div>
+            </div>
+
+        </div>
+
+        <div class="p-4 bg-white border-t border-gray-100 shrink-0">
+            <form onsubmit="sendMessage(event)" class="relative flex items-center gap-2">
+                <input type="text" 
+                       id="user-input" 
+                       class="w-full bg-slate-100 text-slate-800 rounded-full pl-5 pr-12 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/50 transition-all placeholder-gray-400" 
+                       placeholder="Type your question..."
+                       autocomplete="off">
+                
+                <button type="submit" 
+                        class="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 bg-orange-600 text-white rounded-full hover:bg-orange-700 flex items-center justify-center transition-transform hover:scale-105 shadow-md">
+                    <i class="fas fa-paper-plane text-xs"></i>
+                </button>
+            </form>
+            <div class="text-center mt-2">
+                <p class="text-[10px] text-gray-400">Powered by DaTeam Ai</p>
+            </div>
+        </div>
+    </div>
+
+    <button onclick="toggleChat()" 
+        id="chat-toggle-btn"
+        class="bg-gradient-to-br from-indigo-600 via-purple-600 to-blue-500 text-white p-3.5 rounded-xl shadow-[0_0_40px_rgba(79,70,229,0.6)] hover:shadow-[0_0_60px_rgba(79,70,229,0.9)] hover:scale-125 transition-all duration-500 border-2 border-white/30 group cursor-pointer animate-bounce-slow backdrop-blur-sm overflow-hidden pointer-events-auto relative">
+    
+    <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -skew-x-12 translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-1000"></div>
+
+    <div class="absolute inset-0 rounded-2xl bg-indigo-500/50 animate-ping opacity-0 group-hover:opacity-75"></div>
+
+    <i class="fas fa-robot text-xl relative z-10 drop-shadow-lg icon-open animate-robot-wave group-hover:animate-none"></i>
+    <i class="fas fa-times text-xl relative z-10 hidden icon-close"></i>
+
+    <span class="absolute -top-10 -right-5 bg-gradient-to-r from-blue-400 to-indigo-500 text-white text-[10px] font-black px-3 py-1 rounded-full shadow-lg animate-pulse-slow group-hover:scale-110 transition-all duration-300 border-2 border-white z-20 whitespace-nowrap">
+        Powered by DaTeam Ai ⚡
+    </span>
+
+    <div class="absolute -top-1 -left-1 w-2 h-2 bg-cyan-300 rounded-full animate-float-1 opacity-70"></div>
+    <div class="absolute -bottom-1 -right-1 w-2 h-2 bg-purple-300 rounded-full animate-float-2 opacity-70"></div>
+    <div class="absolute top-1/2 -left-2 w-1.5 h-1.5 bg-blue-300 rounded-full animate-float-3 opacity-60"></div>
+    </button>
+</div>
+
+<style>
+    .scrollbar-thin::-webkit-scrollbar { width: 6px; }
+    .scrollbar-thin::-webkit-scrollbar-thumb { background-color: #CBD5E1; border-radius: 20px; }
+    .scrollbar-thin::-webkit-scrollbar-track { background-color: transparent; }
+    /* Robot Waving Animation */
+    @keyframes robot-wave {
+        0%, 100% { transform: rotate(0deg); }
+        20% { transform: rotate(-15deg); }
+        70% { transform: rotate(10deg); }
+    }
+    .animate-robot-wave {
+        animation: robot-wave 2s ease-in-out infinite;
+    }
+</style>
+
+<script>
+    let isOpen = false;
+
+    function toggleChat() {
+        const box = document.getElementById('chat-window');
+        const btn = document.getElementById('chat-toggle-btn');
+        // Updated Selectors for new icons
+        const iconRobot = btn.querySelector('.icon-open');
+        const iconClose = btn.querySelector('.icon-close');
+
+        isOpen = !isOpen;
+
+        if (isOpen) {
+            // Open State
+            box.classList.remove('opacity-0', 'translate-y-5', 'pointer-events-none', 'scale-95');
+            box.classList.add('pointer-events-auto'); 
+            
+            // Toggle Icon
+            iconRobot.classList.add('hidden');
+            iconClose.classList.remove('hidden');
+            // Focus input
+            setTimeout(() => document.getElementById('user-input').focus(), 300);
+        } else {
+            // Close State
+            box.classList.remove('pointer-events-auto');
+            box.classList.add('opacity-0', 'translate-y-5', 'pointer-events-none', 'scale-95');
+            
+            // Toggle Icon
+            iconRobot.classList.remove('hidden');
+            iconClose.classList.add('hidden');
+        }
+    }
+
+    // Helper to create typing indicator
+    function showTyping() {
+        const chatBox = document.getElementById('messages');
+        const id = 'typing-' + Date.now();
+        
+        const html = `
+            <div id="${id}" class="flex gap-3 animate-fade-in">
+                <div class="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center text-orange-600 shrink-0 mt-1">
+                    <i class="fas fa-robot text-xs"></i>
+                </div>
+                <div class="bg-white border border-gray-100 p-3 rounded-2xl rounded-tl-none shadow-sm w-16 flex items-center justify-center gap-1">
+                    <div class="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce"></div>
+                    <div class="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce delay-100"></div>
+                    <div class="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce delay-200"></div>
+                </div>
+            </div>`;
+            
+        chatBox.insertAdjacentHTML('beforeend', html);
+        chatBox.scrollTop = chatBox.scrollHeight;
+        return id;
+    }
+
+    async function sendMessage(e) {
+        e.preventDefault();
+        const input = document.getElementById('user-input');
+        const message = input.value.trim();
+        const chatBox = document.getElementById('messages');
+
+        if (!message) return;
+
+        // 1. Add User Message
+        chatBox.innerHTML += `
+            <div class="flex gap-2 justify-end animate-fade-in">
+                <div class="bg-orange-600 text-white p-3 rounded-2xl rounded-tr-none shadow-md text-sm max-w-[85%] leading-relaxed">
+                    ${message}
+                </div>
+            </div>`;
+        
+        input.value = '';
+        chatBox.scrollTop = chatBox.scrollHeight;
+
+        // 2. Show Typing Indicator
+        const typingId = showTyping();
+
+        // 3. Fetch from Laravel
+        try {
+            const response = await fetch("{{ route('chatbot.ask') }}", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRF-TOKEN": "{{ csrf_token() }}"
+                },
+                body: JSON.stringify({ message: message })
+            });
+            
+            const data = await response.json();
+
+            // Remove typing indicator
+            document.getElementById(typingId).remove();
+
+            // 4. Show Bot Response
+            chatBox.innerHTML += `
+                <div class="flex gap-3 animate-fade-in">
+                    <div class="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center text-orange-600 shrink-0 mt-1">
+                        <i class="fas fa-robot text-xs"></i>
+                    </div>
+                    <div class="bg-white border border-gray-100 text-slate-700 p-3 rounded-2xl rounded-tl-none shadow-sm text-sm max-w-[85%] leading-relaxed">
+                        ${data.reply}
+                    </div>
+                </div>`;
+            
+            chatBox.scrollTop = chatBox.scrollHeight;
+
+        } catch (error) {
+            console.error(error);
+            document.getElementById(typingId).remove();
+            
+            // Error Message
+            chatBox.innerHTML += `
+                <div class="flex gap-3">
+                    <div class="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center text-red-600 shrink-0 mt-1">
+                        <i class="fas fa-exclamation-triangle text-xs"></i>
+                    </div>
+                    <div class="bg-white border border-red-100 text-red-600 p-3 rounded-2xl rounded-tl-none shadow-sm text-sm">
+                        Sorry, I'm having trouble connecting right now.
+                    </div>
+                </div>`;
+        }
+    }
+</script>
+@endauth
 </body>
 </html>

@@ -15,7 +15,7 @@ use App\Http\Controllers\InspectionController;
 use App\Http\Controllers\StaffCustomerController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\PageController;
-
+use App\Http\Controllers\ChatbotController; // Add this at the very top
 
 /*
 |--------------------------------------------------------------------------
@@ -23,6 +23,10 @@ use App\Http\Controllers\PageController;
 |--------------------------------------------------------------------------
 */
 
+
+Route::post('/chatbot/ask', [ChatbotController::class, 'ask'])
+    ->middleware(['auth', 'throttle:60,1'])
+    ->name('chatbot.ask');
 // --- Public / Guest Routes ---
 Route::get('/', [HomeController::class, 'index'])->name('home');
 
