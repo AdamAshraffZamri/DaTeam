@@ -225,7 +225,7 @@ class ProfileController extends Controller
         $user->bankName = $request->bank_name;
         $user->bankAccountNo = $request->bank_account_no;
 
-        if (!$user->blacklisted && $user->accountStat == 'rejected') {
+        if (!$user->blacklisted) {
             $user->accountStat = 'pending';
             $user->rejection_reason = null; 
         }
