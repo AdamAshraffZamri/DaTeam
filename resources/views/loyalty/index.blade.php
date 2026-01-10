@@ -624,12 +624,25 @@ document.addEventListener('click', function(event) {
 /* === GOLD GLOW EFFECT === */
 .gold-glow-card {
     transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    /* Optional: Bagi glow sikit walaupun belum hover (subtle) */
+    box-shadow: 0 0 15px rgba(251, 191, 36, 0.05); 
 }
+
 .gold-glow-card:hover {
-    border-color: rgba(251, 191, 36, 0.6); /* Amber-400 equivalent */
-    box-shadow: 0 0 30px rgba(251, 191, 36, 0.25);
-    transform: translateY(-4px);
+    /* 1. Border jadi solid terang (Opacity 1.0) */
+    border-color: #fbbf24 !important; /* Amber-400 */
+
+    /* 2. EFFECT GLOW POWER (Layered Shadows) */
+    box-shadow: 
+        0 0 20px rgba(251, 191, 36, 0.7),   /* Glow dekat yang tajam/terang */
+        0 0 60px rgba(251, 191, 36, 0.4),   /* Glow jauh yang merebak */
+        inset 0 0 20px rgba(251, 191, 36, 0.1); /* Glow sikit di bahagian dalam kad */
+
+    transform: translateY(-5px) scale(1.01); /* Naik atas sikit lagi */
+    z-index: 20; /* Pastikan dia duduk atas element lain bila glow */
 }
+
+
 </style>
 
 <script>
