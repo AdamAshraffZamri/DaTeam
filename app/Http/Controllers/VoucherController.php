@@ -130,7 +130,7 @@ public function apply(Request $request)
                 $query->where('user_id', $userId)->orWhere('customerID', $userId);
             })
             ->where('isUsed', false) // Pastikan belum digunakan
-            ->where('voucherType', 'Rental Discount')
+            ->whereIn('voucherType', ['Rental Discount', 'Free Half Day'])
             ->whereDate('validUntil', '>=', now())
             ->whereDate('validFrom', '<=', now())
             ->get()
@@ -146,16 +146,13 @@ public function apply(Request $request)
                 $conditionText = strtoupper($voucher->conditions ?? '');
                 $displayTitle = "";
 
-                if (str_contains($conditionText, 'FREE HALF DAY')) {
-                    // Kalau voucher ni jenis Free Half Day
+                if ($type == 'Free Half Day' || str_contains($conditionText, 'FREE HALF DAY')) {
                     $displayTitle = "FREE HALF DAY";
                 } 
                 elseif ($discountPercent > 0) {
-                    // Kalau voucher percent biasa (20%, 50%)
                     $displayTitle = $discountPercent . "% OFF";
                 } 
                 else {
-                    // Kalau voucher tolak duit (RM5 OFF)
                     $displayTitle = "RM" . number_format($amount, 0) . " OFF";
                 }
 

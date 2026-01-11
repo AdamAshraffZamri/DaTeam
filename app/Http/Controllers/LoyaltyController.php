@@ -553,11 +553,16 @@ class LoyaltyController extends Controller
         $voucherType = 'Rental Discount';
         $percent = $reward->discount_percent; 
         
-        // --- LOGIC BARU: CHECK NAMA REWARD ---
-        // Kalau staff namakan reward "Free Half Day" (tak kisah huruf besar/kecil)
-        if (stripos($reward->name, 'Half Day') !== false) {
+        // --- [FIX] LOGIC IMPROVED ---
+        // Detect Free Half Day via Name OR if it is the 12th Step (Cycle Completion)
+        if (stripos($reward->name, 'Half Day') !== false || $reward->milestone_step == 12) {
             $voucherType = 'Free Half Day'; 
-            $percent = 0; // Percent 0 sebab kita akan tolak ikut harga jam nanti
+            $percent = 0; // Set to 0 because logic calculates hours dynamically
+            
+            // Ensure description mentions it if missing
+            if (stripos($desc, 'Half Day') === false) {
+                $desc .= " (Free Half Day Reward)";
+            }
         }
 
         Voucher::create([
@@ -565,7 +570,7 @@ class LoyaltyController extends Controller
             'voucherCode' => $codePrefix . '-' . strtoupper(Str::random(6)),
             'voucherAmount' => 0, 
             'discount_percent' => $percent,
-            'voucherType' => $voucherType, // Ini akan simpan 'Free Half Day' atau 'Rental Discount'
+            'voucherType' => $voucherType, // Now correctly sets 'Free Half Day'
             'redeem_place' => 'HASTA Platform',
             'validFrom' => now(),
             'validUntil' => now()->addMonths($reward->validity_months), 
