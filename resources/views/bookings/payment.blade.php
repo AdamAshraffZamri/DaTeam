@@ -105,45 +105,33 @@
                         PAYMENT SUMMARY
                     </h3>
                     
-                    {{-- 1. Cost Breakdown --}}
+                    {{-- COST BREAKDOWN --}}
                     <div class="bg-black/20 rounded-2xl p-6 border border-white/5 mb-6">
                         <h4 class="text-[12px] text-white font-black uppercase tracking-[0.2em] mb-4">Cost Breakdown</h4>
                         <div class="space-y-3">
-                            {{-- Base Rental Charge --}}
+                            {{-- Base Price --}}
                             <div class="flex justify-between items-center text-sm">
                                 <span class="text-gray-400">Base Rental Charges</span>
                                 <span class="text-white font-bold">RM {{ number_format($rentalCharge, 2) }}</span>
                             </div>
-                            
-                            {{-- SURCHARGE ROW (If applicable) --}}
+
+                            {{-- Dynamic Surcharge --}}
                             @if(isset($vehicle->surcharge_amount) && $vehicle->surcharge_amount > 0)
                                 <div class="flex justify-between items-center text-sm">
-                                    <div class="flex items-center gap-2">
-                                        <span class="text-orange-400 font-bold flex items-center">
-                                            <i class="fas fa-fire mr-2"></i> High Demand Surcharge
-                                        </span>
-                                    </div>
-                                    <span class="text-orange-400 font-bold">
-                                        + RM {{ number_format($vehicle->surcharge_amount, 2) }}
-                                    </span>
+                                    <span class="text-orange-400 font-bold"><i class="fas fa-fire mr-1"></i> High Demand Surcharge</span>
+                                    <span class="text-orange-400 font-bold">+ RM {{ number_format($vehicle->surcharge_amount, 2) }}</span>
                                 </div>
                             @endif
 
-                            {{-- DISCOUNT ROW (If applicable) --}}
+                            {{-- Dynamic Discount --}}
                             @if(isset($vehicle->discount_amount) && $vehicle->discount_amount > 0)
                                 <div class="flex justify-between items-center text-sm">
-                                    <div class="flex items-center gap-2">
-                                        <span class="text-green-400 font-bold flex items-center">
-                                            <i class="fas fa-tag mr-2"></i> Special Discount
-                                        </span>
-                                    </div>
-                                    <span class="text-green-400 font-bold">
-                                        - RM {{ number_format($vehicle->discount_amount, 2) }}
-                                    </span>
+                                    <span class="text-green-400 font-bold"><i class="fas fa-tag mr-1"></i> Special Discount</span>
+                                    <span class="text-green-400 font-bold">- RM {{ number_format($vehicle->discount_amount, 2) }}</span>
                                 </div>
                             @endif
-                            
-                            {{-- Security Deposit --}}
+
+                            {{-- Deposit --}}
                             <div class="flex justify-between items-center text-sm">
                                 <div class="flex items-center text-gray-400">
                                     <span>Security Deposit</span>
@@ -151,16 +139,13 @@
                                 </div>
                                 <span class="text-white font-bold">RM {{ number_format($vehicle->baseDepo, 2) }}</span>
                             </div>
-                            {{-- Hidden Discount Row (Show via JS) --}}
-                            <div id="discount_row" class="hidden flex justify-between items-center text-sm">
-                                <span class="text-green-400 font-bold">Voucher Discount</span>
-                                <span class="text-green-400 font-bold">- RM <span id="discount_amount">0.00</span></span>
-                            </div>
                         </div>
 
+                        {{-- Total --}}
                         <div class="mt-6 pt-4 border-t border-white/10 flex justify-between items-center">
                             <span class="text-xs font-black text-orange-500 uppercase tracking-widest">Total Cost</span>
                             <span class="text-2xl font-black text-white tracking-tighter">
+                                {{-- Use Calculated Total from Controller --}}
                                 RM <span id="total_booking_cost_display">{{ number_format($total, 2) }}</span>
                             </span> 
                         </div>

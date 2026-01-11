@@ -214,56 +214,9 @@
         @forelse($vehicles as $vehicle)
         
         @php
-        // 1. Get Inputs
-        $pDate = request('pickup_date', now()->format('Y-m-d'));
-        $pTime = request('pickup_time', '10:00');
-        $rDate = request('return_date', now()->addDay()->format('Y-m-d'));
-        $rTime = request('return_time', '10:00');
-
-        $totalPrice = 0;
-        $durationLabel = '';
-
-        try {
-            $start = \Carbon\Carbon::parse("$pDate $pTime");
-            $end = \Carbon\Carbon::parse("$rDate $rTime");
-            
-            // Prevent negative time
-            if ($end->lt($start)) {
-                $end = $start->copy()->addHour();
-            }
-
-            // 2. Get Total Duration in Hours
-            $totalHours = ceil($start->floatDiffInHours($end));
-            if ($totalHours < 1) $totalHours = 1;
-
-            // 3. Get Rates
-            $rates = is_array($vehicle->hourly_rates) ? $vehicle->hourly_rates : json_decode($vehicle->hourly_rates ?? '[]', true);
-            
-            // Define Base Rates
-            $rate1h = $rates[1] ?? $vehicle->priceHour; 
-            $rate24h = $rates[24] ?? ($rate1h * 24);   
-
-            // 4. Base Price
-            if ($totalHours < 24) {
-                $basePrice = isset($rates[$totalHours]) ? $rates[$totalHours] : ($totalHours * $rate1h);
-                if ($basePrice > $rate24h) $basePrice = $rate24h;
-                $durationLabel = $totalHours . ' Hour' . ($totalHours > 1 ? 's' : '');
-            } else {
-                $days = floor($totalHours / 24);
-                $rem = $totalHours % 24;
-                $remCost = isset($rates[$rem]) ? $rates[$rem] : ($rem * $rate1h);
-                if ($remCost > $rate24h) $remCost = $rate24h;
-                $basePrice = ($days * $rate24h) + $remCost;
-                $durationLabel = $days . ' Day' . ($days > 1 ? 's' : '') . ($rem > 0 ? ' + '.$rem.'h' : '');
-            }
-
-            $totalPrice = $vehicle->display_total_price ?? 0;
-
-            } catch (\Exception $e) {
-                $totalPrice = $vehicle->priceHour * 24;
-                $durationLabel = "1 Day (Est)";
-            }
-    @endphp
+        $totalPrice = $vehicle->display_total_price ?? 0;
+        $durationLabel = $vehicle->duration_label ?? '1 Day';
+        @endphp
 
 
     {{-- Vehicle Card --}}

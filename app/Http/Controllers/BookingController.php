@@ -216,15 +216,15 @@ class BookingController extends Controller
             ->unique(function ($item) {
                 return $item->brand . $item->model;
         });
-        
+
+        // --- CALCULATE PRICES ---
+        // Get rules to display badges
         $rules = Cache::get('dynamic_pricing_rules', []);
         $activeLabels = [];
         
-        // Check which rules apply to this date range just for the Badge Label
         foreach ($rules as $rule) {
             $rStart = Carbon::parse($rule['start'])->startOfDay();
             $rEnd   = Carbon::parse($rule['end'])->endOfDay();
-            // If booking overlaps with rule
             if ($reqStart->lt($rEnd) && $reqEnd->gt($rStart)) {
                 $activeLabels[] = [
                     'percent' => $rule['percent'],
@@ -234,14 +234,25 @@ class BookingController extends Controller
             }
         }
 
-        // Calculate Pricing
-        $vehicles = $allAvailableVehicles->map(function ($vehicle) use ($reqStart, $reqEnd, $rules) {
-            $priceData = $this->calculateSplitPricing($vehicle, $reqStart, $reqEnd, $rules);
+        $vehicles = $allAvailableVehicles->map(function ($vehicle) use ($reqStart, $reqEnd) {
+            // MASTER CALCULATION
+            $priceData = $this->calculateRentalPrice($vehicle, $reqStart, $reqEnd);
             
             $vehicle->display_total_price = $priceData['total'];
-            // Store separate values if needed for search card (optional, but good for consistency)
             $vehicle->surcharge_amount = $priceData['surcharge'];
             $vehicle->discount_amount = $priceData['discount'];
+
+            // GENERATE DURATION LABEL
+            $totalHours = ceil($reqStart->floatDiffInHours($reqEnd));
+            if ($totalHours < 1) $totalHours = 1;
+
+            if ($totalHours < 24) {
+                $vehicle->duration_label = $totalHours . ' Hour' . ($totalHours > 1 ? 's' : '');
+            } else {
+                $days = floor($totalHours / 24);
+                $rem = $totalHours % 24;
+                $vehicle->duration_label = $days . ' Day' . ($days > 1 ? 's' : '') . ($rem > 0 ? ' + '.$rem.'h' : '');
+            }
             
             return $vehicle;
         });
@@ -297,33 +308,35 @@ class BookingController extends Controller
     {
         $vehicle = Vehicle::findOrFail($id);
         
-        $start = Carbon::parse($request->pickup_date . ' ' . $request->pickup_time);
-        $end   = Carbon::parse($request->return_date . ' ' . $request->return_time);
+        $start = \Carbon\Carbon::parse($request->pickup_date . ' ' . $request->pickup_time);
+        $end   = \Carbon\Carbon::parse($request->return_date . ' ' . $request->return_time);
 
-        $rules = Cache::get('dynamic_pricing_rules', []);
+        $priceData = $this->calculateRentalPrice($vehicle, $start, $end);
 
-        // 1. Calculate Prices with Granular Tracking
-        $priceData = $this->calculateSplitPricing($vehicle, $start, $end, $rules);
+        // Attach data for View
+        $vehicle->display_total_price = $priceData['total'];
+        $vehicle->surcharge_amount = $priceData['surcharge'];
+        $vehicle->discount_amount = $priceData['discount'];
+
+        $grandTotal = $priceData['total'] + $vehicle->baseDepo;
         
-        $finalRentalCost = $priceData['total'];
-        $surchargeAmount = $priceData['surcharge'];
-        $discountAmount  = $priceData['discount'];
+        // GENERATE DURATION LABEL
+        $totalHours = ceil($start->floatDiffInHours($end));
+        $durationLabel = '';
         
-        // Base Cost is Final - Surcharge + Discount (Reversed logic to get raw base)
-        $baseRentalCost = $finalRentalCost - $surchargeAmount + $discountAmount;
+        if ($totalHours < 24) {
+            $durationLabel = $totalHours . ' Hour' . ($totalHours > 1 ? 's' : '');
+        } else {
+            $days = floor($totalHours / 24);
+            $rem = $totalHours % 24;
+            $durationLabel = $days . ' Day' . ($days > 1 ? 's' : '') . ($rem > 0 ? ' + '.$rem.'h' : '');
+        }
 
-        // Attach to vehicle for View
-        $vehicle->surcharge_amount = $surchargeAmount;
-        $vehicle->discount_amount = $discountAmount;
-        $vehicle->display_total_price = $finalRentalCost;
-
-        $grandTotal = $finalRentalCost + $vehicle->baseDepo;
-        $totalHours = $start->diffInHours($end);
-        
         return view('bookings.payment', [
             'vehicle' => $vehicle,
             'total' => $grandTotal,
-            'rentalCharge' => $baseRentalCost, // Standard Rate
+            'rentalCharge' => $priceData['base'], // Show Base separately
+            'durationLabel' => $durationLabel,
             'days' => floor($totalHours / 24),
             'extraHours' => $totalHours % 24,
             'totalHours' => $totalHours,
@@ -343,25 +356,17 @@ class BookingController extends Controller
             'agreement_proof' => 'required|file|mimes:pdf|max:4048',
             'payment_type' => 'required|in:full,deposit',
             'pickup_date' => 'required|date',
-            'pickup_time' => 'required',
             'return_date' => 'required|date',
-            'return_time' => 'required',
         ]);
 
         $vehicle = Vehicle::findOrFail($id);
 
-        // --- [FIX] USE DYNAMIC PRICING LOGIC ---
-        // We must calculate using the same "Split & Sum" logic as the Payment Page
         $start = \Carbon\Carbon::parse($request->pickup_date . ' ' . $request->pickup_time);
         $end   = \Carbon\Carbon::parse($request->return_date . ' ' . $request->return_time);
 
-        // Get Active Rules
-        $rules = \Illuminate\Support\Facades\Cache::get('dynamic_pricing_rules', []);
-
-        // Calculate Price using Dynamic Rules
-        // Ensure you have added the 'calculateSplitPricing' helper to your controller!
-        $priceData = $this->calculateSplitPricing($vehicle, $start, $end, $rules);
-        $rentalCharge = $priceData['total']; // This is the Dynamic Price
+        // --- CALCULATE FINAL PRICE (Same as Payment Page) ---
+        $priceData = $this->calculateRentalPrice($vehicle, $start, $end);
+        $rentalCharge = $priceData['total'];
 
         $baseDepo = $vehicle->baseDepo ?? 50;
         $grossTotal = $rentalCharge + $baseDepo;
@@ -554,7 +559,154 @@ class BookingController extends Controller
         return redirect()->route('book.index')->with('show_thank_you', true);
     }
 
-    // --- 7. CANCEL BOOKING ---
+    private function calculateRentalPrice($vehicle, $start, $end)
+    {
+        $rules = Cache::get('dynamic_pricing_rules', []);
+        
+        // 1. CHECK: Are there any active rules for this date range?
+        $hasActiveRules = false;
+        foreach ($rules as $rule) {
+            $rStart = Carbon::parse($rule['start'])->startOfDay();
+            $rEnd   = Carbon::parse($rule['end'])->endOfDay();
+            if ($start->lt($rEnd) && $end->gt($rStart)) {
+                $hasActiveRules = true;
+                break;
+            }
+        }
+
+        // 2. BRANCHING LOGIC
+        if (!$hasActiveRules) {
+            // SCENARIO 3: Standard 24h Cycle Logic
+            return $this->calculateStandardCyclePrice($vehicle, $start, $end);
+        } else {
+            // SCENARIO 1 & 2: Midnight Split Logic
+            return $this->calculateDynamicSplitPrice($vehicle, $start, $end, $rules);
+        }
+    }
+
+    /**
+     * LOGIC A: Standard Cycle (24h blocks from Pickup Time)
+     * Used when NO dynamic rules apply.
+     */
+    private function calculateStandardCyclePrice($vehicle, $start, $end)
+    {
+        $totalHours = ceil($start->floatDiffInHours($end));
+        if ($totalHours < 1) $totalHours = 1;
+
+        $price = 0;
+
+        if ($totalHours < 24) {
+            $price = $this->getTierPrice($vehicle, $totalHours);
+        } else {
+            $days = floor($totalHours / 24);
+            $remainder = $totalHours % 24;
+            
+            // Day Rate is the 24h Tier
+            $dailyRate = $this->getTierPrice($vehicle, 24);
+            
+            $remainderCost = 0;
+            if ($remainder > 0) {
+                $remainderCost = $this->getTierPrice($vehicle, $remainder);
+            }
+
+            $price = ($days * $dailyRate) + $remainderCost;
+        }
+
+        return [
+            'total' => $price,
+            'base' => $price,
+            'surcharge' => 0,
+            'discount' => 0
+        ];
+    }
+
+    /**
+     * LOGIC B: Midnight Split (Day-by-Day segments)
+     * Used when Dynamic Rules APPLY.
+     */
+    private function calculateDynamicSplitPrice($vehicle, $start, $end, $rules)
+    {
+        $totalPrice = 0;
+        $totalBase = 0; // Tracking what it would cost without multiplier
+        $totalSurcharge = 0;
+        $totalDiscount = 0;
+
+        $cursor = $start->copy();
+
+        while ($cursor->lt($end)) {
+            // Cut at Midnight OR End of Booking
+            $nextMidnight = $cursor->copy()->startOfDay()->addDay();
+            $segmentEnd = ($nextMidnight->lt($end)) ? $nextMidnight : $end;
+
+            // Calculate Duration of this segment
+            $floatHours = $cursor->floatDiffInHours($segmentEnd);
+            
+            // Skip tiny overlaps (e.g. seconds)
+            if ($floatHours < 0.01) {
+                $cursor = $segmentEnd;
+                continue;
+            }
+
+            // 1. Get Base Price for this segment duration (e.g. 2h -> Tier 3)
+            // Use ceil() because tiers are integer based (1,3,5...)
+            $ceilHours = ceil($floatHours);
+            $segmentBase = $this->getTierPrice($vehicle, $ceilHours);
+
+            // 2. Find Rule for this specific day
+            $multiplier = 1.0;
+            foreach ($rules as $rule) {
+                $rStart = Carbon::parse($rule['start'])->startOfDay();
+                $rEnd   = Carbon::parse($rule['end'])->endOfDay();
+                // Check if cursor is inside rule dates
+                if ($cursor->between($rStart, $rEnd)) {
+                    $multiplier = 1 + ($rule['percent'] / 100);
+                    break;
+                }
+            }
+
+            // 3. Calculate Final
+            $segmentFinal = $segmentBase * $multiplier;
+
+            $totalPrice += $segmentFinal;
+            $totalBase += $segmentBase;
+
+            if ($multiplier > 1.0) $totalSurcharge += ($segmentFinal - $segmentBase);
+            elseif ($multiplier < 1.0) $totalDiscount += ($segmentBase - $segmentFinal);
+
+            // Move cursor
+            $cursor = $segmentEnd;
+        }
+
+        return [
+            'total' => $totalPrice,
+            'base' => $totalBase,
+            'surcharge' => $totalSurcharge,
+            'discount' => $totalDiscount
+        ];
+    }
+
+    /**
+     * Helper: Get Price from Tier (1, 3, 5, 7, 9, 12, 24)
+     */
+    private function getTierPrice($vehicle, $hours)
+    {
+        if ($hours <= 0) return 0;
+        
+        $rates = is_array($vehicle->hourly_rates) ? $vehicle->hourly_rates : json_decode($vehicle->hourly_rates ?? '[]', true);
+        $tiers = [1, 3, 5, 7, 9, 12, 24];
+
+        foreach ($tiers as $tier) {
+            if ($hours <= $tier) {
+                // If tier rate exists, use it. Else calculate using 1h rate.
+                return $rates[$tier] ?? (($rates[1] ?? $vehicle->priceHour) * $hours);
+            }
+        }
+
+        // If > 24h passed to this function (shouldn't happen in split logic, but safe fallback)
+        return $rates[24] ?? (($rates[1] ?? $vehicle->priceHour) * 24);
+    }
+
+        // --- 7. CANCEL BOOKING ---
     public function cancel($id)
     {
         $booking = Booking::where('customerID', Auth::id())->findOrFail($id);
@@ -768,74 +920,6 @@ class BookingController extends Controller
             'surcharge' => $totalSurcharge,
             'discount' => $totalDiscount
         ];
-    }
-
-    private function getTierPriceForDuration($vehicle, $hours)
-    {
-        $rates = is_array($vehicle->hourly_rates) ? $vehicle->hourly_rates : json_decode($vehicle->hourly_rates ?? '[]', true);
-        $tiers = [1, 3, 5, 7, 9, 12, 24];
-        
-        if ($hours <= 0) return 0;
-        $ceilHours = ceil($hours);
-
-        if ($ceilHours <= 24) {
-            foreach ($tiers as $tier) {
-                if ($ceilHours <= $tier) return $rates[$tier] ?? ($rates[1] * $tier);
-            }
-        }
-
-        $days = floor($ceilHours / 24);
-        $remainder = $ceilHours % 24;
-        $dailyRate = $rates[24] ?? 0;
-        $remainderCost = 0;
-        
-        if ($remainder > 0) {
-            foreach ($tiers as $tier) {
-                if ($remainder <= $tier) {
-                    $remainderCost = $rates[$tier] ?? 0;
-                    break;
-                }
-            }
-        }
-        return ($days * $dailyRate) + $remainderCost;
-    }
-
-    /**
-     * Shared logic to calculate the total rental price.
-     */
-    private function calculateRentalPrice($vehicle, $pickupDate, $pickupTime, $returnDate, $returnTime)
-    {
-        $pickup = Carbon::parse($pickupDate . ' ' . $pickupTime);
-        $return = Carbon::parse($returnDate . ' ' . $returnTime);
-
-        // Calculate Total Hours
-        $totalHours = $pickup->diffInHours($return);
-        if ($pickup->diffInMinutes($return) > $totalHours * 60) {
-            $totalHours++; // Round up for partial hours
-        }
-
-        $rates = is_array($vehicle->hourly_rates) 
-                ? $vehicle->hourly_rates 
-                : json_decode($vehicle->hourly_rates, true);
-
-        $days = floor($totalHours / 24);
-        $balanceHours = $totalHours % 24;
-        $dailyRate = $rates[24] ?? ($vehicle->priceHour * 24);
-        
-        $remainderCost = 0;
-        if ($balanceHours > 0) {
-            $tiers = [1, 3, 5, 7, 9, 12, 24];
-            $selectedTier = 24;
-            foreach ($tiers as $tier) {
-                if ($balanceHours <= $tier) {
-                    $selectedTier = $tier;
-                    break;
-                }
-            }
-            $remainderCost = $rates[$selectedTier] ?? ($vehicle->priceHour * $balanceHours);
-        }
-
-        return ($days * $dailyRate) + $remainderCost;
     }
 
     public function getRemainingBalanceAttribute()

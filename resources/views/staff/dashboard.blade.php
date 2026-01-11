@@ -451,7 +451,7 @@
                 @endphp
 
                 @if(count($activeRules) > 0)
-                    <div class="relative my-3">
+                    <div class="relative my-6">
                         <div class="absolute inset-0 flex items-center" aria-hidden="true">
                             <div class="w-full border-t border-gray-100"></div>
                         </div>
