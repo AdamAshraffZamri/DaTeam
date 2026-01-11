@@ -141,6 +141,11 @@ Route::middleware('auth')->group(function () {
     Route::post('/bookings/{id}/update-vehicle', [StaffBookingController::class, 'updateVehicle'])->name('staff.bookings.update_vehicle');
     Route::post('/bookings/{id}/approve', [StaffBookingController::class, 'approve'])->name('staff.bookings.approve');
 
+    // --- Dynamic Pricing Management ---
+    Route::post('/dynamic-pricing/store', [StaffBookingController::class, 'storeDynamicPricing'])->name('staff.dynamic_pricing.store');
+    // Optional: Route to clear rules if needed
+    Route::post('/dynamic-pricing/clear', [StaffBookingController::class, 'clearDynamicPricing'])->name('staff.dynamic_pricing.clear');
+    Route::delete('/dynamic-pricing/{index}', [StaffBookingController::class, 'deleteDynamicPricingRule'])->name('staff.dynamic_pricing.destroy');
 
     // Inspections
     Route::post('/inspections/{id}/store', [StaffBookingController::class, 'storeInspection'])->name('staff.inspections.store');

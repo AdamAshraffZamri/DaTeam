@@ -58,7 +58,8 @@
         currentTab: 'pickups', 
         {{-- Search Modal Logic --}}
         showResultsModal: {{ (request()->has('pickup_date') || (isset($searchResults) && $searchResults->count() > 0)) ? 'true' : 'false' }},
-        
+        showPricingModal: false,
+
         time: new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: 'numeric', second: 'numeric', hour12: true }),
         date: new Date().toLocaleDateString('en-US', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }),
         
@@ -120,6 +121,24 @@
                         </a>
                     </div>
                 </div>
+
+                {{-- [NEW] DYNAMIC PRICING BUTTON (Updated) --}}
+                <button @click="showPricingModal = true" 
+                    class="group flex items-center justify-center px-6 py-3.5 hover:pr-6 rounded-2xl 
+                        bg-gradient-to-br from-red-700 via-red-600 to-orange-600 
+                        text-white shadow-lg shadow-red-600/30 border border-white/10
+                        transition-all duration-500 ease-out overflow-hidden">
+                    
+                    {{-- Icon --}}
+                    <i class="fas fa-tags text-sm group-hover:rotate-12 transition-transform duration-300"></i>
+                    
+                    {{-- Text (Hidden by default, expands on hover) --}}
+                    <span class="max-w-0 overflow-hidden opacity-0 group-hover:max-w-[150px] group-hover:opacity-100 group-hover:ml-3 
+                                transition-all duration-500 ease-out whitespace-nowrap font-bold text-xs tracking-wide">
+                        Dynamic Pricing
+                    </span>
+                </button>
+
             </div>
 
         </div>
@@ -232,12 +251,10 @@
                 
                 {{-- 1. AVAILABILITY CHECKER (Top) --}}
                 <div class="bg-white rounded-xl p-6 text-slate-900 shadow-lg relative overflow-hidden">
-                    
-                    <div class="absolute -top-10 -right-10 w-32 h-32 bg-orange-200 rounded-full blur-3xl opacity-60 pointer-events-none"></div>
-                    
+                                        
                     <div class="flex justify-between items-start relative z-10 mb-4">
                         <div>
-                            <h2 class="text-lg font-bold text-slate-800 truncate">Check Availability</h2>
+                            <h2 class="text-lg font-bold text-slate-800 truncate">Check Vehicle Availability</h2>
                             <p class="text-slate-500 text-xs font-medium">Instant fleet search.</p>
                         </div>
                         <button @click="setToday()" type="button" class="bg-slate-100 hover:bg-slate-200 text-slate-700 text-[10px] font-bold px-3 py-1.5 rounded-lg transition-all flex items-center gap-1 cursor-pointer hover:shadow-md active:scale-95 transform">
@@ -292,7 +309,7 @@
                         </div>
 
                         <button type="submit" class="w-full bg-orange-600 hover:bg-orange-500 text-white py-3 rounded-lg font-bold text-xs uppercase tracking-widest shadow-lg shadow-orange-200 transition-all flex items-center justify-center gap-2 transform active:scale-[0.98]">
-                            <i class="fas fa-search"></i> Find Vehicles
+                            <i class="fas fa-search"></i> View Vehicles
                         </button>
                     </form>
                 </div>
@@ -355,6 +372,141 @@
                         </div>
                     </div>
                 </div>
+
+            </div>
+        </div>
+    </div>
+
+    {{-- [NEW] DYNAMIC PRICING MODAL (PREMIUM & DELETE SUPPORT) --}}
+    <div x-show="showPricingModal" 
+        class="fixed inset-0 z-[80] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm px-4"
+        x-transition.opacity
+        x-cloak>
+        
+        <div class="bg-orange-50 rounded-[2rem] shadow-2xl w-full max-w-lg relative overflow-hidden flex flex-col max-h-[90vh]" @click.away="showPricingModal = false">
+            
+            {{-- Header --}}
+            <div class="px-8 py-6 border-b border-gray-100 flex justify-between items-center bg-white sticky top-0 z-10">
+                <div>
+                    <h3 class="text-2xl font-black bg-gradient-to-r from-orange-600 to-red-600 bg-clip-text text-transparent">
+                        Smart Pricing Manager
+                    </h3>
+                    <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1">Configure Surcharges</p>
+                </div>
+                <button @click="showPricingModal = false" class="w-8 h-8 rounded-full bg-gray-50 text-gray-400 hover:bg-gray-100 hover:text-gray-600 flex items-center justify-center transition-colors">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            {{-- Scrollable Content --}}
+            <div class="p-8 overflow-y-auto custom-scrollbar space-y-6">
+                
+                {{-- 1. CREATE NEW RULE --}}
+                <section>
+                    <form action="{{ route('staff.dynamic_pricing.store') }}" method="POST" class="space-y-5">
+                        @csrf
+                        
+                        {{-- Date Inputs --}}
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="space-y-1.5">
+                                <label class="text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Start Date</label>
+                                <div class="relative">
+                                    <i class="fas fa-calendar-alt absolute left-3 top-1/2 -translate-y-1/2 text-gray-300 text-xs"></i>
+                                    <input type="date" name="start_date" class="w-full bg-slate-50 border border-slate-200 rounded-xl pl-9 pr-3 py-2.5 font-bold text-xs text-slate-700 focus:bg-white focus:border-orange-500 focus:ring-0 transition-colors outline-none cursor-pointer" required>
+                                </div>
+                            </div>
+                            <div class="space-y-1.5">
+                                <label class="text-xs font-black text-gray-400 uppercase tracking-widest ml-1">End Date</label>
+                                <div class="relative">
+                                    <i class="fas fa-calendar-check absolute left-3 top-1/2 -translate-y-1/2 text-gray-300 text-xs"></i>
+                                    <input type="date" name="end_date" class="w-full bg-slate-50 border border-slate-200 rounded-xl pl-9 pr-3 py-2.5 font-bold text-xs text-slate-700 focus:bg-white focus:border-orange-500 focus:ring-0 transition-colors outline-none cursor-pointer" required>
+                                </div>
+                            </div>
+                        </div>
+
+                        {{-- Percentage Input --}}
+                        <div class="space-y-1.5">
+                            <label class="text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Percentage Adjustment</label>
+                            <div class="relative group">
+                                <div class="absolute left-0 top-0 bottom-0 w-12 bg-orange-100 rounded-l-xl flex items-center justify-center border-y border-l border-orange-200 text-orange-600">
+                                    <i class="fas fa-percentage text-sm"></i>
+                                </div>
+                                <input type="number" name="percentage" placeholder="20 / -15" min="-100" max="100" class="w-full bg-white border border-slate-200 rounded-xl pl-16 pr-4 py-3 font-black text-lg text-slate-800 focus:border-orange-500 focus:ring-0 outline-none transition-colors" required>
+                                <div class="absolute right-8 top-1/2 -translate-y-1/2 text-[10px] font-bold text-gray-400 uppercase">Surcharge / Discount</div>
+                            </div>
+                            <p class="text-[10px] text-gray-400 ml-1">
+                                Applied automatically to all vehicles during this period.
+                            </p>
+                        </div>
+
+                        <button type="submit" class="w-full bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-500 hover:to-red-500 text-white py-3.5 rounded-xl font-bold text-xs uppercase tracking-widest shadow-lg shadow-orange-500/30 transition-all transform active:scale-[0.98]">
+                            <i class="fas fa-plus-circle mr-2"></i> Add Pricing Rule
+                        </button>
+                    </form>
+                </section>
+
+                {{-- 2. ACTIVE RULES LIST --}}
+                @php
+                    $activeRules = \Illuminate\Support\Facades\Cache::get('dynamic_pricing_rules', []);
+                @endphp
+
+                @if(count($activeRules) > 0)
+                    <div class="relative my-3">
+                        <div class="absolute inset-0 flex items-center" aria-hidden="true">
+                            <div class="w-full border-t border-gray-100"></div>
+                        </div>
+                        <div class="relative flex items-center justify-center">
+                            <span class="bg-white border border-red-500 rounded-full px-3 py-1.5 text-[10px] font-black text-black uppercase tracking-widest">Active Rules</span>
+                        </div>
+                    </div>
+
+                    <div class="space-y-2">
+                        {{-- Loop through rules with Index Key --}}
+                        {{-- array_reverse(..., true) preserves the original index keys for deletion --}}
+                        @foreach(array_reverse($activeRules, true) as $index => $rule)
+                        @php $isDiscount = $rule['percent'] < 0; @endphp
+                        <div class="group flex items-center justify-between p-3 bg-white border border-red-300 rounded-2xl shadow-sm hover:shadow-md transition-all {{ $isDiscount ? 'hover:border-green-200' : 'hover:border-red-200' }}">
+                            <div class="flex items-center gap-3">
+                                <div class="w-9 h-9 rounded-full {{ $isDiscount ? 'bg-green-50 text-green-600 border-green-100' : 'bg-red-50 text-red-600 border-red-100' }} flex items-center justify-center font-black text-[10px] border">
+                                    {{ $rule['percent'] > 0 ? '+' : '' }}{{ $rule['percent'] }}%
+                                </div>
+                                <div>
+                                    <div class="flex items-center gap-2 text-xs font-bold text-gray-800">
+                                        <span>{{ \Carbon\Carbon::parse($rule['start'])->format('d M') }}</span>
+                                        <i class="fas fa-arrow-right text-[9px] text-gray-600"></i>
+                                        <span>{{ \Carbon\Carbon::parse($rule['end'])->format('d M') }}</span>
+                                    </div>
+                                    <p class="text-[9px] font-bold {{ $isDiscount ? 'text-green-400' : 'text-red-400' }} mt-0.5 uppercase tracking-wide">
+                                        {{ $isDiscount ? 'Discount or Promotion' : 'High Demand Surcharge' }}
+                                    </p>
+                                </div>
+                            </div>
+                            {{-- Delete Button (Keep existing) --}}
+                            <form action="{{ route('staff.dynamic_pricing.destroy', $index) }}" method="POST" onsubmit="return confirm('Remove rule?');">
+                                @csrf @method('DELETE')
+                                <button class="w-7 h-7 rounded-lg bg-gray-50 text-gray-400 hover:bg-red-50 hover:text-red-500 flex items-center justify-center transition"><i class="fas fa-trash-alt text-[10px]"></i></button>
+                            </form>
+                        </div>
+                    @endforeach
+                    </div>
+                    
+                    {{-- Clear All (Subtle at bottom) --}}
+                    <div class="text-center pt-2">
+                        <form action="{{ route('staff.dynamic_pricing.clear') }}" method="POST" onsubmit="return confirm('Are you sure you want to delete ALL rules?');">
+                            @csrf
+                            <button class="text-[11px] font-bold text-gray-400 hover:text-red-500 transition-colors decoration-dotted uppercase">
+                                Reset all configurations
+                            </button>
+                        </form>
+                    </div>
+                @else
+                    {{-- Empty State --}}
+                    <div class="text-center py-6 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+                        <i class="fas fa-tag text-slate-300 text-2xl mb-2"></i>
+                        <p class="text-xs font-bold text-slate-400">No active surges.</p>
+                        <p class="text-[10px] text-slate-400">Standard rates apply.</p>
+                    </div>
+                @endif
 
             </div>
         </div>

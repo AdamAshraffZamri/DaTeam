@@ -109,10 +109,41 @@
                     <div class="bg-black/20 rounded-2xl p-6 border border-white/5 mb-6">
                         <h4 class="text-[12px] text-white font-black uppercase tracking-[0.2em] mb-4">Cost Breakdown</h4>
                         <div class="space-y-3">
+                            {{-- Base Rental Charge --}}
                             <div class="flex justify-between items-center text-sm">
-                                <span class="text-gray-400">Rental Charges</span>
+                                <span class="text-gray-400">Base Rental Charges</span>
                                 <span class="text-white font-bold">RM {{ number_format($rentalCharge, 2) }}</span>
                             </div>
+                            
+                            {{-- SURCHARGE ROW (If applicable) --}}
+                            @if(isset($vehicle->surcharge_amount) && $vehicle->surcharge_amount > 0)
+                                <div class="flex justify-between items-center text-sm">
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-orange-400 font-bold flex items-center">
+                                            <i class="fas fa-fire mr-2"></i> High Demand Surcharge
+                                        </span>
+                                    </div>
+                                    <span class="text-orange-400 font-bold">
+                                        + RM {{ number_format($vehicle->surcharge_amount, 2) }}
+                                    </span>
+                                </div>
+                            @endif
+
+                            {{-- DISCOUNT ROW (If applicable) --}}
+                            @if(isset($vehicle->discount_amount) && $vehicle->discount_amount > 0)
+                                <div class="flex justify-between items-center text-sm">
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-green-400 font-bold flex items-center">
+                                            <i class="fas fa-tag mr-2"></i> Special Discount
+                                        </span>
+                                    </div>
+                                    <span class="text-green-400 font-bold">
+                                        - RM {{ number_format($vehicle->discount_amount, 2) }}
+                                    </span>
+                                </div>
+                            @endif
+                            
+                            {{-- Security Deposit --}}
                             <div class="flex justify-between items-center text-sm">
                                 <div class="flex items-center text-gray-400">
                                     <span>Security Deposit</span>
