@@ -752,46 +752,53 @@ class BookingController extends Controller
 
     public function previewAgreement(Request $request)
     {
+        // 1. Validate Inputs (Prevent crash if data is missing)
+        $request->validate([
+            'vehicle_id' => 'required|integer',
+            'pickup_date' => 'required|date',
+            'pickup_time' => 'required',
+            'return_date' => 'required|date',
+            'return_time' => 'required',
+        ]);
+
         $user = Auth::user();
         $vehicle = Vehicle::findOrFail($request->vehicle_id);
         
+        // 2. Setup Temporary Booking Object
         $booking = new Booking();
-        $booking->bookingID = "PENDING"; 
+        $booking->bookingID = "PREVIEW"; 
         $booking->aggreementDate = now();
         
-        // Fill details from Request
-        $booking->originalDate = $request->pickup_date; // Use originalDate column name
+        $booking->originalDate = $request->pickup_date;
         $booking->bookingTime = $request->pickup_time;
         $booking->returnDate = $request->return_date;
         $booking->returnTime = $request->return_time;
-        $booking->pickupLocation = $request->pickup_location;
-        $booking->returnLocation = $request->return_location;
+        $booking->pickupLocation = $request->pickup_location ?? 'N/A';
+        $booking->returnLocation = $request->return_location ?? 'N/A';
         
-        // Set Relations
         $booking->setRelation('customer', $user);
         $booking->setRelation('vehicle', $vehicle);
 
-        // --- FIX: CALCULATE PRICE FOR PREVIEW ---
-        // We reuse the private method logic
-        $rentalCharge = $this->calculateRentalPrice(
-            $vehicle,
-            $request->pickup_date,
-            $request->pickup_time,
-            $request->return_date,
-            $request->return_time
-        );
+        // 3. Calculate Price using Hybrid Logic
+        try {
+            $start = \Carbon\Carbon::parse($request->pickup_date . ' ' . $request->pickup_time);
+            $end   = \Carbon\Carbon::parse($request->return_date . ' ' . $request->return_time);
+            
+            // Ensure end is after start
+            if ($end->lte($start)) {
+                $end = $start->copy()->addHour();
+            }
 
-        // --- [FIX] Use Dynamic Pricing Logic ---
-        $start = \Carbon\Carbon::parse($request->pickup_date . ' ' . $request->pickup_time);
-        $end   = \Carbon\Carbon::parse($request->return_date . ' ' . $request->return_time);
-        $rules = \Illuminate\Support\Facades\Cache::get('dynamic_pricing_rules', []);
+            // USE THE NEW MASTER CALCULATION (3 Arguments)
+            $priceData = $this->calculateRentalPrice($vehicle, $start, $end);
+            
+            // Set Total Cost (Rental + Deposit)
+            $booking->totalCost = $priceData['total'] + ($vehicle->baseDepo ?? 0);
 
-        $priceData = $this->calculateSplitPricing($vehicle, $start, $end, $rules);
-        $rentalCharge = $priceData['total'];
-        
-        // Don't forget to add Base Deposit for "Grand Total"
-        // (Assuming Grand Total = Rental + Deposit, based on payment method)
-        $booking->totalCost = $rentalCharge + $vehicle->baseDepo;
+        } catch (\Exception $e) {
+            \Log::error("Preview Price Calc Error: " . $e->getMessage());
+            $booking->totalCost = 0;
+        }
 
         return view('bookings.agreement', compact('booking'));
     }

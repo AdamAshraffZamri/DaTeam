@@ -251,10 +251,12 @@
                             
                             <a href="{{ route('book.agreement.preview', [
                                 'vehicle_id' => $vehicle->VehicleID, 
-                                'pickup_location' => $pickupLoc,
-                                'return_location' => $returnLoc,
+                                'pickup_date' => $pickupDate,                      {{-- ADDED --}}
+                                'pickup_time' => request('pickup_time', '10:00'),  {{-- ADDED --}}
                                 'return_date' => $returnDate,
-                                'return_time' => request('return_time', '10:00')
+                                'return_time' => request('return_time', '10:00'),
+                                'pickup_location' => $pickupLoc,
+                                'return_location' => $returnLoc
                             ]) }}" target="_blank" class="block w-full text-center py-2 rounded-lg border border-white/20 text-gray-300 text-xs font-bold hover:bg-white/5 transition mb-4">
                                 <i class="fas fa-download mr-1"></i> Download Agreement PDF
                             </a>
@@ -357,7 +359,7 @@
     let fullTotal = {{ $total }}; 
     let depositAmount = {{ $vehicle->baseDepo }}; 
     let currentVoucherDiscount = 0; 
-    let activeMode = 'full'; 
+    let activeMode = 'full';
 
     function updatePaymentMode(mode) {
         activeMode = mode;
@@ -450,6 +452,7 @@
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
+                "Accept": "application/json",
                 "X-CSRF-TOKEN": "{{ csrf_token() }}"
             },
             body: JSON.stringify({
