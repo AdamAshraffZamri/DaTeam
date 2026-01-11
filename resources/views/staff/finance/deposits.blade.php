@@ -92,6 +92,7 @@
                         <div>
                             <div class="text-sm font-bold text-slate-900 leading-tight">{{ $booking->vehicle->model }}</div>
                             <div class="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-0.5">{{ $booking->vehicle->plateNo }}</div>
+                            <div class="text-[10px] text-slate-600 font-medium uppercase tracking-wider mt-0.5">{{ \Carbon\Carbon::parse($booking->bookingDate)->format('d M Y') }}</div>
                             
                             @if(in_array($booking->bookingStatus, ['Cancelled', 'Rejected']))
                                 <span class="inline-block mt-1 text-[9px] px-1.5 py-0.5 rounded bg-red-50 text-red-600 font-bold uppercase tracking-wide border border-red-100">

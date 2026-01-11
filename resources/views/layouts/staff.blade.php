@@ -133,6 +133,7 @@
                 </a>
 
                 {{-- Reporting --}}
+                @if(Auth::guard('staff')->user()->role === 'admin')
                 <a href="{{ route('staff.reports.index') }}" 
                    class="group flex items-center px-4 py-3.5 rounded-xl font-bold text-sm relative overflow-hidden mb-1 transition-all duration-300 {{ request()->routeIs('staff.reports.*') ? $activeClass : $inactiveClass }}"
                    :class="sidebarOpen ? '' : 'justify-center'">
@@ -143,6 +144,7 @@
                     </div>
                     <div x-show="!sidebarOpen" class="absolute left-16 bg-slate-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 pointer-events-none z-50 ml-1 shadow-lg transition-opacity duration-200">Reports</div>
                 </a>
+                @endif
 
                 {{-- Loyalty --}}
                 <a href="{{ route('staff.loyalty.index') }}" 

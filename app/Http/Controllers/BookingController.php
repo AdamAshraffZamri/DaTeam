@@ -14,8 +14,10 @@ use App\Notifications\BookingStatusUpdated;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Notification;
 use Carbon\Carbon;
+use Carbon\CarbonPeriod;
 use Barryvdh\DomPDF\Facade\Pdf;
 
 class BookingController extends Controller
@@ -31,22 +33,22 @@ class BookingController extends Controller
     // --- 1. MY BOOKINGS PAGE ---
     public function index(Request $request)
     {
-    $query = Booking::where('customerID', Auth::id())
-                ->with(['vehicle', 'payments', 'penalties', 'inspections']); // Added 'inspections'
-                
-    // Filter by Status
-    if ($request->filled('status') && $request->status != 'all') {
-        $query->where('bookingStatus', $request->status);
-    }
+        $query = Booking::where('customerID', Auth::id())
+                    ->with(['vehicle', 'payments', 'penalties', 'inspections']); // Added 'inspections'
+                    
+        // Filter by Status
+        if ($request->filled('status') && $request->status != 'all') {
+            $query->where('bookingStatus', $request->status);
+        }
 
-    // Filter by Date (Month)
-    if ($request->filled('date')) {
-        $query->whereMonth('bookingDate', Carbon::parse($request->date)->month);
-    }
+        // Filter by Date (Month)
+        if ($request->filled('date')) {
+            $query->whereMonth('bookingDate', Carbon::parse($request->date)->month);
+        }
 
-    $bookings = $query->orderBy('originalDate', 'desc')->get();
+        $bookings = $query->orderBy('originalDate', 'desc')->get();
 
-        return view('bookings.index', compact('bookings'));
+            return view('bookings.index', compact('bookings'));
     }
 
     // --- 2. LANDING / SEARCH FORM ---
@@ -210,13 +212,41 @@ class BookingController extends Controller
             }
 
             return true; // Available
+        })
+            ->unique(function ($item) {
+                return $item->brand . $item->model;
         });
         
-        $vehicles = $allAvailableVehicles->unique(function ($item) {
-            return $item->brand . $item->model;
+        $rules = Cache::get('dynamic_pricing_rules', []);
+        $activeLabels = [];
+        
+        // Check which rules apply to this date range just for the Badge Label
+        foreach ($rules as $rule) {
+            $rStart = Carbon::parse($rule['start'])->startOfDay();
+            $rEnd   = Carbon::parse($rule['end'])->endOfDay();
+            // If booking overlaps with rule
+            if ($reqStart->lt($rEnd) && $reqEnd->gt($rStart)) {
+                $activeLabels[] = [
+                    'percent' => $rule['percent'],
+                    'label' => $rule['percent'] > 0 ? 'High Demand' : 'Discount',
+                    'date' => $rStart->format('d M')
+                ];
+            }
+        }
+
+        // Calculate Pricing
+        $vehicles = $allAvailableVehicles->map(function ($vehicle) use ($reqStart, $reqEnd, $rules) {
+            $priceData = $this->calculateSplitPricing($vehicle, $reqStart, $reqEnd, $rules);
+            
+            $vehicle->display_total_price = $priceData['total'];
+            // Store separate values if needed for search card (optional, but good for consistency)
+            $vehicle->surcharge_amount = $priceData['surcharge'];
+            $vehicle->discount_amount = $priceData['discount'];
+            
+            return $vehicle;
         });
 
-        return view('bookings.search_results', compact('vehicles'));
+        return view('bookings.search_results', compact('vehicles', 'activeLabels'));
     }
 
     // 2. STORE: Silent Assignment
@@ -263,29 +293,37 @@ class BookingController extends Controller
         return view('bookings.show', compact('vehicle', 'days'));
     }
 
-    // --- 5. PAYMENT PAGE ---
     public function payment(Request $request, $id)
     {
         $vehicle = Vehicle::findOrFail($id);
         
-        // Calculate using shared logic
-        $rentalCharge = $this->calculateRentalPrice(
-            $vehicle, 
-            $request->pickup_date, $request->pickup_time, 
-            $request->return_date, $request->return_time
-        );
+        $start = Carbon::parse($request->pickup_date . ' ' . $request->pickup_time);
+        $end   = Carbon::parse($request->return_date . ' ' . $request->return_time);
 
-        $grandTotal = $rentalCharge + $vehicle->baseDepo;
+        $rules = Cache::get('dynamic_pricing_rules', []);
 
-        // We still need these for the display badge
-        $pickup = Carbon::parse($request->pickup_date . ' ' . $request->pickup_time);
-        $return = Carbon::parse($request->return_date . ' ' . $request->return_time);
-        $totalHours = $pickup->diffInHours($return);
+        // 1. Calculate Prices with Granular Tracking
+        $priceData = $this->calculateSplitPricing($vehicle, $start, $end, $rules);
+        
+        $finalRentalCost = $priceData['total'];
+        $surchargeAmount = $priceData['surcharge'];
+        $discountAmount  = $priceData['discount'];
+        
+        // Base Cost is Final - Surcharge + Discount (Reversed logic to get raw base)
+        $baseRentalCost = $finalRentalCost - $surchargeAmount + $discountAmount;
+
+        // Attach to vehicle for View
+        $vehicle->surcharge_amount = $surchargeAmount;
+        $vehicle->discount_amount = $discountAmount;
+        $vehicle->display_total_price = $finalRentalCost;
+
+        $grandTotal = $finalRentalCost + $vehicle->baseDepo;
+        $totalHours = $start->diffInHours($end);
         
         return view('bookings.payment', [
             'vehicle' => $vehicle,
             'total' => $grandTotal,
-            'rentalCharge' => $rentalCharge,
+            'rentalCharge' => $baseRentalCost, // Standard Rate
             'days' => floor($totalHours / 24),
             'extraHours' => $totalHours % 24,
             'totalHours' => $totalHours,
@@ -296,25 +334,34 @@ class BookingController extends Controller
         ]);
     }
 
-            // --- 6. SUBMIT BOOKING (Handles Full/Deposit & Vouchers) ---
-public function submitPayment(Request $request, $id)
+    // --- 6. SUBMIT BOOKING (Handles Full/Deposit & Vouchers) ---
+    public function submitPayment(Request $request, $id)
     {
         // --- 1. VALIDATION ---
         $request->validate([
             'payment_proof' => 'required|mimes:jpeg,png,jpg|max:4048',
             'agreement_proof' => 'required|file|mimes:pdf|max:4048',
             'payment_type' => 'required|in:full,deposit',
+            'pickup_date' => 'required|date',
+            'pickup_time' => 'required',
+            'return_date' => 'required|date',
+            'return_time' => 'required',
         ]);
 
         $vehicle = Vehicle::findOrFail($id);
 
-        // --- 2. CALCULATE BASIC PRICE ---
-        // Kira harga asal sewa tanpa diskaun
-        $rentalCharge = $this->calculateRentalPrice(
-            $vehicle, 
-            $request->input('pickup_date'), $request->input('pickup_time'), 
-            $request->input('return_date'), $request->input('return_time')
-        );
+        // --- [FIX] USE DYNAMIC PRICING LOGIC ---
+        // We must calculate using the same "Split & Sum" logic as the Payment Page
+        $start = \Carbon\Carbon::parse($request->pickup_date . ' ' . $request->pickup_time);
+        $end   = \Carbon\Carbon::parse($request->return_date . ' ' . $request->return_time);
+
+        // Get Active Rules
+        $rules = \Illuminate\Support\Facades\Cache::get('dynamic_pricing_rules', []);
+
+        // Calculate Price using Dynamic Rules
+        // Ensure you have added the 'calculateSplitPricing' helper to your controller!
+        $priceData = $this->calculateSplitPricing($vehicle, $start, $end, $rules);
+        $rentalCharge = $priceData['total']; // This is the Dynamic Price
 
         $baseDepo = $vehicle->baseDepo ?? 50;
         $grossTotal = $rentalCharge + $baseDepo;
@@ -581,6 +628,14 @@ public function submitPayment(Request $request, $id)
             $request->return_date,
             $request->return_time
         );
+
+        // --- [FIX] Use Dynamic Pricing Logic ---
+        $start = \Carbon\Carbon::parse($request->pickup_date . ' ' . $request->pickup_time);
+        $end   = \Carbon\Carbon::parse($request->return_date . ' ' . $request->return_time);
+        $rules = \Illuminate\Support\Facades\Cache::get('dynamic_pricing_rules', []);
+
+        $priceData = $this->calculateSplitPricing($vehicle, $start, $end, $rules);
+        $rentalCharge = $priceData['total'];
         
         // Don't forget to add Base Deposit for "Grand Total"
         // (Assuming Grand Total = Rental + Deposit, based on payment method)
@@ -653,6 +708,99 @@ public function submitPayment(Request $request, $id)
     }
 
     /**
+     * [UPDATED] Calculate Split Pricing with Separate Surcharge/Discount Tracking
+     */
+    private function calculateSplitPricing($vehicle, $start, $end, $rules)
+    {
+        $totalPrice = 0;
+        $totalSurcharge = 0;
+        $totalDiscount = 0;
+        
+        $cursor = $start->copy();
+
+        while ($cursor->lt($end)) {
+            $endOfDay = $cursor->copy()->endOfDay(); 
+            $segmentEnd = ($endOfDay->lt($end)) ? $endOfDay : $end;
+            
+            $floatHours = $cursor->floatDiffInHours($segmentEnd);
+            
+            if ($floatHours <= 0) {
+                $cursor = $segmentEnd->copy()->addSecond(); 
+                continue; 
+            }
+
+            // 1. Base Price for this segment
+            $segmentBasePrice = $this->getTierPriceForDuration($vehicle, $floatHours);
+
+            // 2. Find Multiplier
+            $multiplier = 1.0;
+            foreach ($rules as $rule) {
+                $rStart = Carbon::parse($rule['start'])->startOfDay();
+                $rEnd   = Carbon::parse($rule['end'])->endOfDay();
+                if ($cursor->between($rStart, $rEnd)) {
+                    $multiplier = 1 + ($rule['percent'] / 100);
+                    break; 
+                }
+            }
+
+            // 3. Track Amounts Separately
+            $segmentFinalPrice = $segmentBasePrice * $multiplier;
+            
+            if ($multiplier > 1.0) {
+                // It's a Surcharge
+                $totalSurcharge += ($segmentFinalPrice - $segmentBasePrice);
+            } elseif ($multiplier < 1.0) {
+                // It's a Discount (Track amount saved as positive number)
+                $totalDiscount += ($segmentBasePrice - $segmentFinalPrice);
+            }
+
+            $totalPrice += $segmentFinalPrice;
+
+            // Next Segment
+            $cursor = $segmentEnd->copy();
+            if ($cursor->format('H:i:s') === '23:59:59') {
+                $cursor->addSecond();
+            }
+        }
+
+        return [
+            'total' => $totalPrice, 
+            'surcharge' => $totalSurcharge,
+            'discount' => $totalDiscount
+        ];
+    }
+
+    private function getTierPriceForDuration($vehicle, $hours)
+    {
+        $rates = is_array($vehicle->hourly_rates) ? $vehicle->hourly_rates : json_decode($vehicle->hourly_rates ?? '[]', true);
+        $tiers = [1, 3, 5, 7, 9, 12, 24];
+        
+        if ($hours <= 0) return 0;
+        $ceilHours = ceil($hours);
+
+        if ($ceilHours <= 24) {
+            foreach ($tiers as $tier) {
+                if ($ceilHours <= $tier) return $rates[$tier] ?? ($rates[1] * $tier);
+            }
+        }
+
+        $days = floor($ceilHours / 24);
+        $remainder = $ceilHours % 24;
+        $dailyRate = $rates[24] ?? 0;
+        $remainderCost = 0;
+        
+        if ($remainder > 0) {
+            foreach ($tiers as $tier) {
+                if ($remainder <= $tier) {
+                    $remainderCost = $rates[$tier] ?? 0;
+                    break;
+                }
+            }
+        }
+        return ($days * $dailyRate) + $remainderCost;
+    }
+
+    /**
      * Shared logic to calculate the total rental price.
      */
     private function calculateRentalPrice($vehicle, $pickupDate, $pickupTime, $returnDate, $returnTime)
@@ -689,7 +837,6 @@ public function submitPayment(Request $request, $id)
 
         return ($days * $dailyRate) + $remainderCost;
     }
-
 
     public function getRemainingBalanceAttribute()
     {

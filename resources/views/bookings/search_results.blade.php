@@ -2,6 +2,16 @@
 
 {{-- Load Leaflet CSS --}}
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+<style>
+    @keyframes gradient-move {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+    }
+    .animate-gradient {
+        animation: gradient-move 8s ease infinite;
+    }
+</style>
 
 @section('content')
 {{-- 1. FIXED BACKGROUND --}}
@@ -199,12 +209,11 @@
                 </div>
             </div>
 
-{{-- RESULTS GRID --}}
-<div class="lg:col-span-3 grid grid-cols-1 md:grid-cols-2 gap-6">
-    @forelse($vehicles as $vehicle)
-    
-    {{-- CALCULATION LOGIC --}}
-    @php
+    {{-- RESULTS GRID --}}
+    <div class="lg:col-span-3 grid grid-cols-1 md:grid-cols-2 gap-6">
+        @forelse($vehicles as $vehicle)
+        
+        @php
         // 1. Get Inputs
         $pDate = request('pickup_date', now()->format('Y-m-d'));
         $pTime = request('pickup_time', '10:00');
@@ -223,7 +232,7 @@
                 $end = $start->copy()->addHour();
             }
 
-            // 2. Get Total Duration in Hours (Round up partial hours, e.g., 1.5h -> 2h)
+            // 2. Get Total Duration in Hours
             $totalHours = ceil($start->floatDiffInHours($end));
             if ($totalHours < 1) $totalHours = 1;
 
@@ -231,64 +240,81 @@
             $rates = is_array($vehicle->hourly_rates) ? $vehicle->hourly_rates : json_decode($vehicle->hourly_rates ?? '[]', true);
             
             // Define Base Rates
-            $rate1h = $rates[1] ?? $vehicle->priceHour; // Cost for 1 hour
-            $rate24h = $rates[24] ?? ($rate1h * 24);    // Cost for 1 full day
+            $rate1h = $rates[1] ?? $vehicle->priceHour; 
+            $rate24h = $rates[24] ?? ($rate1h * 24);   
 
-            // 4. Calculation Strategy
+            // 4. Base Price
             if ($totalHours < 24) {
-                // SCENARIO A: Less than 1 Day
-                if (isset($rates[$totalHours])) {
-                    $totalPrice = $rates[$totalHours]; // Use exact fixed rate if exists
-                } else {
-                    $totalPrice = $totalHours * $rate1h; // Fallback to hourly mult
-                }
-
-                // Cap: If hourly calculation exceeds daily rate, charge daily rate
-                if ($totalPrice > $rate24h) {
-                    $totalPrice = $rate24h;
-                }
-                
+                $basePrice = isset($rates[$totalHours]) ? $rates[$totalHours] : ($totalHours * $rate1h);
+                if ($basePrice > $rate24h) $basePrice = $rate24h;
                 $durationLabel = $totalHours . ' Hour' . ($totalHours > 1 ? 's' : '');
-
             } else {
-                // SCENARIO B: More than 1 Day (Days + Remainder Hours)
                 $days = floor($totalHours / 24);
-                $remainderHours = $totalHours % 24;
-
-                // Calculate base cost for full days
-                $daysCost = $days * $rate24h;
-
-                // Calculate cost for remaining hours
-                if (isset($rates[$remainderHours])) {
-                    $remainderCost = $rates[$remainderHours];
-                } else {
-                    $remainderCost = $remainderHours * $rate1h;
-                }
-
-                // Optimization: If remainder cost is more than a full day, just add another day
-                if ($remainderCost > $rate24h) {
-                    $remainderCost = $rate24h;
-                }
-
-                $totalPrice = $daysCost + $remainderCost;
-
-                // Label formatting
-                $durationLabel = $days . ' Day' . ($days > 1 ? 's' : '');
-                if ($remainderHours > 0) {
-                    $durationLabel .= ' + ' . $remainderHours . 'h';
-                }
+                $rem = $totalHours % 24;
+                $remCost = isset($rates[$rem]) ? $rates[$rem] : ($rem * $rate1h);
+                if ($remCost > $rate24h) $remCost = $rate24h;
+                $basePrice = ($days * $rate24h) + $remCost;
+                $durationLabel = $days . ' Day' . ($days > 1 ? 's' : '') . ($rem > 0 ? ' + '.$rem.'h' : '');
             }
 
-        } catch (\Exception $e) {
-            // Fallback for errors
-            $totalPrice = $vehicle->priceHour * 24;
-            $durationLabel = "1 Day (Est)";
-        }
+            $totalPrice = $vehicle->display_total_price ?? 0;
+
+            } catch (\Exception $e) {
+                $totalPrice = $vehicle->priceHour * 24;
+                $durationLabel = "1 Day (Est)";
+            }
     @endphp
+
 
     {{-- Vehicle Card --}}
     <div onclick="document.getElementById('details-modal-{{ $vehicle->VehicleID }}').classList.remove('hidden')" 
         class="group bg-black/25 backdrop-blur-[2px] border border-white/15 rounded-3xl p-6 shadow-xl hover:shadow-orange-500/10 hover:bg-black/60 transition-all duration-300 relative overflow-hidden flex flex-col h-full cursor-pointer">
+
+        {{-- DYNAMIC PRICING BADGES (High Demand & Discount) --}}
+        @if(isset($activeLabels) && count($activeLabels) > 0)
+            <div class="absolute top-3 left-3 z-20 flex flex-col gap-2 items-start">
+                @foreach($activeLabels as $rule)
+                    @if($rule['percent'] > 0)
+                        {{-- 1. SURCHARGE BADGE (Red/Orange) --}}
+                        <div class="relative group">
+                            {{-- 1. Ping Effect (The expanding ring animation) --}}
+                            <div class="absolute inset-0 bg-orange-400 rounded-xl animate-ping opacity-75"></div>
+
+                            {{-- 2. Main Badge --}}
+                            <div class="relative bg-gradient-to-r from-red-600 via-red-500 to-red-600 bg-[length:200%_auto] animate-gradient 
+                                        text-white text-[10px] font-bold px-3 py-1.5 rounded-xl 
+                                        shadow-[0_0_15px_rgba(249,115,22,0.6)] flex items-center gap-1.5 border border-white/20">
+                                
+                                {{-- Fire Icon with Pulse --}}
+                                <i class="fas fa-fire animate-pulse text-yellow-200"></i> 
+                                                    
+                                <span class="tracking-wide uppercase">
+                                    HIGH DEMAND (+{{ $rule['percent'] }}%) - {{ strtoupper($rule['date']) }}
+                                </span>
+                            </div>
+                        </div>
+                    @else
+                        {{-- 2. DISCOUNT BADGE (Green/Emerald) --}}
+                        <div class="relative group">
+                            {{-- Ping Effect --}}
+                            <div class="absolute inset-0 bg-emerald-400 rounded-xl animate-ping opacity-75"></div>
+                            
+                            {{-- Badge Content --}}
+                            <div class="relative bg-gradient-to-r from-emerald-800 via-green-700 to-emerald-800 bg-[length:200%_auto] animate-gradient 
+                                        text-white text-[10px] font-bold px-3 py-1.5 rounded-xl 
+                                        shadow-[0_0_15px_rgba(16,185,129,0.6)] flex items-center gap-1.5 border border-white/20">
+                                
+                                <i class="fas fa-tags animate-pulse text-white"></i> 
+                                
+                                <span class="tracking-wide uppercase">
+                                    SPECIAL OFFER ({{ $rule['percent'] }}%) - {{ strtoupper($rule['date']) }}
+                                </span>
+                            </div>
+                        </div>
+                    @endif
+                @endforeach
+            </div>
+        @endif
 
         {{-- Image Area --}}
         <div class="h-60 flex items-center justify-center mb-4 relative overflow-hidden rounded-2xl bg-black/30 border border-white/5">
@@ -338,7 +364,7 @@
                     Total for {{ $durationLabel }}
                 </span>
                 <span class="text-xl font-black text-white tracking-tighter">
-                    RM {{ number_format($totalPrice, 0) }}
+                    RM {{ (floor($totalPrice) == $totalPrice) ? number_format($totalPrice, 0) : number_format($totalPrice, 2) }}
                 </span>
             </div>
             
@@ -381,39 +407,13 @@
 {{-- 3. VEHICLE DETAILS MODALS (MOVED OUTSIDE SCROLL CONTAINER) --}}
 @foreach($vehicles as $vehicle)
 <div id="details-modal-{{ $vehicle->VehicleID }}" class="fixed inset-0 z-50 hidden" style="z-index: 100;" role="dialog" aria-modal="true">
-    {{-- Backdrop --}}
-    <div class="pt-4 mt-4 border-t border-white/10 flex items-center justify-between">
     
-    {{-- Price Display --}}
-    <div>
-        <span class="text-xl font-black text-white">RM {{ number_format($totalPrice, 0) }}</span>
-    </div>
-    
-    {{-- SELECT BUTTON FORM --}}
-    <form action="{{ route('book.store') }}" method="POST">
-        @csrf
-        {{-- Pass MODEL info, not ID --}}
-        <input type="hidden" name="model" value="{{ $vehicle->model }}">
-        <input type="hidden" name="brand" value="{{ $vehicle->brand }}">
-        
-        {{-- Pass Search Params --}}
-        <input type="hidden" name="pickup_date" value="{{ request('pickup_date') }}">
-        <input type="hidden" name="pickup_time" value="{{ request('pickup_time') }}">
-        <input type="hidden" name="return_date" value="{{ request('return_date') }}">
-        <input type="hidden" name="return_time" value="{{ request('return_time') }}">
-        <input type="hidden" name="pickup_location" value="{{ request('pickup_location') }}">
-        <input type="hidden" name="return_location" value="{{ request('return_location') }}">
-
-        <button type="submit" class="bg-[#ea580c] hover:bg-orange-600 text-white px-5 py-2 rounded-xl font-bold text-xs shadow-lg">
-            Select This Model
-        </button>
-    </form>
-
-</div>
+    {{-- 1. Backdrop (Click to close) --}}
     <div class="absolute inset-0 bg-black/70 backdrop-blur-md transition-opacity" 
          onclick="document.getElementById('details-modal-{{ $vehicle->VehicleID }}').classList.add('hidden')"></div>
 
-    <div class="relative z-10 flex items-center justify-center min-h-screen p-4 pointer-events-none">
+    {{-- 2. Centering Wrapper --}}
+    <div class="relative z-10 flex items-center justify-center h-screen p-4 pointer-events-none">
         <div class="bg-[#151515] border border-white/10 w-full max-w-4xl rounded-[2.5rem] shadow-2xl overflow-hidden pointer-events-auto flex flex-col md:flex-row max-h-[90vh]">
             
             {{-- Left: Image & Technical Specs --}}
@@ -463,7 +463,6 @@
                         <h2 class="text-4xl font-black text-white tracking-tighter">{{ $vehicle->model }}</h2>
                         <div class="flex items-center space-x-2 mt-2">
                             <span class="bg-green-500/10 text-green-500 text-[9px] font-black px-2 py-0.5 rounded border border-green-500/20 uppercase">Available</span>
-                            <span class="text-gray-600 text-[10px] font-bold tracking-widest uppercase">{{ $vehicle->plateNo }}</span>
                         </div>
                     </div>
                     <button onclick="document.getElementById('details-modal-{{ $vehicle->VehicleID }}').classList.add('hidden')" class="bg-white/5 hover:bg-white/10 w-10 h-10 rounded-full flex items-center justify-center text-gray-500 hover:text-white transition-all">
@@ -473,7 +472,7 @@
 
                 {{-- HOURLY RATE ARCHITECTURE --}}
                 <div class="mb-10">
-                    <h4 class="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] mb-4">Rate Architecture (RM)</h4>
+                    <h4 class="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] mb-4">Standard Price Rate Architecture (RM)</h4>
                     <div class="grid grid-cols-4 sm:grid-cols-7 gap-2">
                         @php
                             $rates = is_array($vehicle->hourly_rates) ? $vehicle->hourly_rates : json_decode($vehicle->hourly_rates ?? '[]', true);
@@ -503,7 +502,7 @@
                 {{-- Action Footer --}}
                 <div class="pt-8 border-t border-white/10 flex items-center justify-between mt-auto">
                     <div>
-                        <p class="text-[9px] text-gray-500 font-black uppercase tracking-widest">Full Day (24H)</p>
+                        <p class="text-[9px] text-gray-500 font-black uppercase tracking-widest">Standard Full Day Price (24H)</p>
                         <p class="text-3xl font-black text-white tracking-tighter">RM {{ number_format($rates[24] ?? 0, 0) }}</p>
                     </div>
                     <a href="{{ route('book.payment', [

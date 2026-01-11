@@ -13,6 +13,7 @@ use App\Notifications\BookingStatusUpdated;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Cache;
 use Carbon\Carbon;
 use App\Services\GoogleDriveService;
 use Illuminate\Support\Facades\Log;
@@ -492,6 +493,49 @@ class StaffBookingController extends Controller
         $request->validate(['staff_id' => 'required']);
         Booking::findOrFail($id)->update(['staffID' => $request->staff_id]);
         return back()->with('success', "Agent assigned.");
+    }
+
+    public function storeDynamicPricing(Request $request)
+    {
+        $request->validate([
+            'start_date' => 'required|date',
+            'end_date'   => 'required|date|after_or_equal:start_date',
+            'percentage' => 'required|numeric|min:-100|max:100', // [CHANGED] Allow negative for discounts
+        ]);
+
+        $rules = Cache::get('dynamic_pricing_rules', []);
+
+        $rules[] = [
+            'start' => $request->start_date,
+            'end'   => $request->end_date,
+            'percent' => $request->percentage,
+            'created_at' => now(),
+            'author' => Auth::guard('staff')->user()->name ?? 'Staff'
+        ];
+
+        Cache::put('dynamic_pricing_rules', $rules);
+
+        $type = $request->percentage > 0 ? "Surcharge (+{$request->percentage}%)" : "Discount ({$request->percentage}%)";
+        return back()->with('success', "Rule Added: $type from {$request->start_date} to {$request->end_date}.");
+    }
+
+    public function deleteDynamicPricingRule($index)
+    {
+        $rules = Cache::get('dynamic_pricing_rules', []);
+        
+        if (isset($rules[$index])) {
+            unset($rules[$index]);
+            Cache::put('dynamic_pricing_rules', array_values($rules));
+            return back()->with('success', 'Pricing rule removed.');
+        }
+        
+        return back()->with('error', 'Rule not found.');
+    }
+
+    public function clearDynamicPricing()
+    {
+        Cache::forget('dynamic_pricing_rules');
+        return back()->with('success', 'All dynamic pricing rules have been reset.');
     }
 
     // [NEW] UPDATE VEHICLE (Swap Plate No)
