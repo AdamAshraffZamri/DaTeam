@@ -96,7 +96,7 @@
                         <table class="w-full border-collapse border border-gray-300 text-[10px]">
                             <tr class="bg-gray-50">
                                 <td class="border border-gray-300 p-1 font-bold w-1/5">Vehicle</td>
-                                <td class="border border-gray-300 p-1">{{ $booking->vehicle->model }} ({{ $booking->vehicle->plateNo }})</td>
+                                <td class="border border-gray-300 p-1">{{ $booking->vehicle->model }}</td>
                                 <td class="border border-gray-300 p-1 font-bold w-1/5">Duration</td>
                                 <td class="border border-gray-300 p-1">
                                     @php
@@ -153,7 +153,6 @@
                             <h3 class="font-bold uppercase border-b border-gray-300 mb-1 pb-0">Vehicle Info</h3>
                             <table class="w-full">
                                 <tr><td class="py-0 font-bold text-gray-600 w-1/3">Model:</td><td class="py-0">{{ $booking->vehicle->model }}</td></tr>
-                                <tr><td class="py-0 font-bold text-gray-600">Plate:</td><td class="py-0 font-bold border border-black px-1 inline-block">{{ $booking->vehicle->plateNo }}</td></tr>
                                 <tr><td class="py-0 font-bold text-gray-600">Color:</td><td class="py-0">{{ $booking->vehicle->color ?? 'N/A' }}</td></tr>
                             </table>
                         </div>
