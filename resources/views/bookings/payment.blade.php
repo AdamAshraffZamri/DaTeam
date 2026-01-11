@@ -131,6 +131,12 @@
                                 </div>
                             @endif
 
+                            {{-- 🛑 [ADDED] VOUCHER DISCOUNT ROW (Hidden by default) --}}
+                            <div id="discount_row" class="flex justify-between items-center text-sm hidden">
+                                <span class="text-green-400 font-bold"><i class="fas fa-tag mr-1"></i> Voucher Discount</span>
+                                <span class="text-green-400 font-bold">- RM <span id="discount_amount">0.00</span></span>
+                            </div>
+
                             {{-- Deposit --}}
                             <div class="flex justify-between items-center text-sm">
                                 <div class="flex items-center text-gray-400">
@@ -249,7 +255,7 @@
                             </h4>
                             <p class="text-xs text-gray-400 mb-4">Please download, sign, and upload agreement form.</p>
                             
-                            <a href="{{ route('book.agreement.preview', [
+                            <a id="btn_download_agreement" href="{{ route('book.agreement.preview', [
                                 'vehicle_id' => $vehicle->VehicleID, 
                                 'pickup_date' => $pickupDate,                      {{-- ADDED --}}
                                 'pickup_time' => request('pickup_time', '10:00'),  {{-- ADDED --}}
@@ -478,6 +484,14 @@
                 
                 // 1. Tunjuk Jumlah Tolak (RM)
                 document.getElementById('discount_amount').innerText = data.discount_amount;
+
+                // Update Agreement Link with Voucher ID
+                const agreementBtn = document.getElementById('btn_download_agreement');
+                if (agreementBtn) {
+                    let currentUrl = new URL(agreementBtn.href);
+                    currentUrl.searchParams.set('voucher_id', data.voucherID);
+                    agreementBtn.href = currentUrl.toString();
+                }
                 
                 // 2. [FIX UI] Tunjuk Nama Voucher ("FREE HALF DAY" atau "20% OFF")
                 // Cari elemen label sebelah kiri (Voucher Discount) dan update teks dia

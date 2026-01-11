@@ -61,8 +61,8 @@ class LoyaltyController extends Controller
 
         // Filter: Hanya kira booking yang tempoh > 9 jam
         $qualifiedBookingsCount = $allBookings->filter(function ($booking) {
-            $start = \Carbon\Carbon::parse($booking->originalDate . ' ' . $booking->bookingTime);
-            $end = \Carbon\Carbon::parse($booking->returnDate . ' ' . $booking->returnTime);
+            $start = Carbon::parse($booking->originalDate . ' ' . $booking->bookingTime);
+            $end = Carbon::parse($booking->returnDate . ' ' . $booking->returnTime);
             return $start->diffInHours($end) > 9;
         })->count();
 
@@ -562,9 +562,7 @@ class LoyaltyController extends Controller
 
         Voucher::create([
             'customerID' => $userId,
-            // 'user_id' => $userId, // Buang ni kalau tak guna
             'voucherCode' => $codePrefix . '-' . strtoupper(Str::random(6)),
-            // 'code' => ..., // Buang ni kalau tak guna
             'voucherAmount' => 0, 
             'discount_percent' => $percent,
             'voucherType' => $voucherType, // Ini akan simpan 'Free Half Day' atau 'Rental Discount'
@@ -614,8 +612,8 @@ class LoyaltyController extends Controller
             ->get();
 
         $qualifiedCount = $allBookings->filter(function ($b) {
-            $start = \Carbon\Carbon::parse($b->originalDate . ' ' . $b->bookingTime);
-            $end = \Carbon\Carbon::parse($b->returnDate . ' ' . $b->returnTime);
+            $start = Carbon::parse($b->originalDate . ' ' . $b->bookingTime);
+            $end = Carbon::parse($b->returnDate . ' ' . $b->returnTime);
             return $start->diffInHours($end) > 9;
         })->count();
 
@@ -627,7 +625,7 @@ class LoyaltyController extends Controller
 
             // Cari Reward dalam Database yang match step ini
             $milestoneReward = Reward::where('category', 'Milestone')
-                ->where('milestone_step', $qualifiedCount)
+                ->where('milestone_step', $positionInCycle)
                 ->where('is_active', true)
                 ->first();
 

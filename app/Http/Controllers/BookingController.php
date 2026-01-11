@@ -308,8 +308,8 @@ class BookingController extends Controller
     {
         $vehicle = Vehicle::findOrFail($id);
         
-        $start = \Carbon\Carbon::parse($request->pickup_date . ' ' . $request->pickup_time);
-        $end   = \Carbon\Carbon::parse($request->return_date . ' ' . $request->return_time);
+        $start = Carbon::parse($request->pickup_date . ' ' . $request->pickup_time);
+        $end   = Carbon::parse($request->return_date . ' ' . $request->return_time);
 
         $priceData = $this->calculateRentalPrice($vehicle, $start, $end);
 
@@ -361,8 +361,8 @@ class BookingController extends Controller
 
         $vehicle = Vehicle::findOrFail($id);
 
-        $start = \Carbon\Carbon::parse($request->pickup_date . ' ' . $request->pickup_time);
-        $end   = \Carbon\Carbon::parse($request->return_date . ' ' . $request->return_time);
+        $start = Carbon::parse($request->pickup_date . ' ' . $request->pickup_time);
+        $end   = Carbon::parse($request->return_date . ' ' . $request->return_time);
 
         // --- CALCULATE FINAL PRICE (Same as Payment Page) ---
         $priceData = $this->calculateRentalPrice($vehicle, $start, $end);
@@ -759,6 +759,7 @@ class BookingController extends Controller
             'pickup_time' => 'required',
             'return_date' => 'required|date',
             'return_time' => 'required',
+            'voucher_id'  => 'nullable|integer'
         ]);
 
         $user = Auth::user();
@@ -781,19 +782,56 @@ class BookingController extends Controller
 
         // 3. Calculate Price using Hybrid Logic
         try {
-            $start = \Carbon\Carbon::parse($request->pickup_date . ' ' . $request->pickup_time);
-            $end   = \Carbon\Carbon::parse($request->return_date . ' ' . $request->return_time);
+            $start = Carbon::parse($request->pickup_date . ' ' . $request->pickup_time);
+            $end   = Carbon::parse($request->return_date . ' ' . $request->return_time);
             
             // Ensure end is after start
             if ($end->lte($start)) {
                 $end = $start->copy()->addHour();
             }
 
-            // USE THE NEW MASTER CALCULATION (3 Arguments)
-            $priceData = $this->calculateRentalPrice($vehicle, $start, $end);
+            // Calculate Base Price
+        $priceData = $this->calculateRentalPrice($vehicle, $start, $end);
+        $rentalCharge = $priceData['total'];
+        $baseDepo = $vehicle->baseDepo ?? 0;
+        
+        // 4. Calculate Discount (New Logic)
+        $discountAmount = 0;
+        
+        if ($request->filled('voucher_id')) {
+            $voucher = Voucher::find($request->voucher_id);
             
-            // Set Total Cost (Rental + Deposit)
-            $booking->totalCost = $priceData['total'] + ($vehicle->baseDepo ?? 0);
+            if ($voucher) {
+                // Check for Free Half Day Logic
+                $conditionText = strtoupper($voucher->conditions ?? '');
+                $isFreeHalfDay = $voucher->voucherType == 'Free Half Day' || str_contains($conditionText, 'FREE HALF DAY');
+
+                if ($isFreeHalfDay) {
+                     try {
+                        $rates = $vehicle->hourly_rates;
+                        if (is_string($rates)) $rates = json_decode($rates, true);
+
+                        if (is_array($rates) && isset($rates['12'])) {
+                            $discountAmount = (float)$rates['12']; 
+                        } else {
+                            $discountAmount = ($vehicle->priceHour ?? 0) * 12;
+                        }
+                    } catch (\Exception $e) {
+                        $discountAmount = ($vehicle->priceHour ?? 0) * 12;
+                    }
+                    // Cap discount at rental charge
+                    $discountAmount = min($discountAmount, $rentalCharge);
+                
+                } elseif ($voucher->discount_percent > 0) {
+                    $discountAmount = ($rentalCharge * $voucher->discount_percent) / 100;
+                } else {
+                    $discountAmount = $voucher->voucherAmount;
+                }
+            }
+        }
+
+        // 5. Set Final Total Cost
+        $booking->totalCost = max(0, ($rentalCharge + $baseDepo) - $discountAmount);
 
         } catch (\Exception $e) {
             \Log::error("Preview Price Calc Error: " . $e->getMessage());
