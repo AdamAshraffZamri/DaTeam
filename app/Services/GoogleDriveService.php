@@ -15,11 +15,11 @@ class GoogleDriveService
 
     public function __construct()
     {
-        // 1. Initialize Client with .env credentials
+        // 1. Initialize Client using config() for caching support
         $this->client = new Client();
-        $this->client->setClientId(env('GOOGLE_DRIVE_CLIENT_ID'));
-        $this->client->setClientSecret(env('GOOGLE_DRIVE_CLIENT_SECRET'));
-        $this->client->refreshToken(env('GOOGLE_DRIVE_REFRESH_TOKEN'));
+        $this->client->setClientId(config('services.google.client_id'));
+        $this->client->setClientSecret(config('services.google.client_secret'));
+        $this->client->refreshToken(config('services.google.refresh_token'));
         
         // 2. Define Scope
         $this->client->addScope(Drive::DRIVE_FILE);
