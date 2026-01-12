@@ -8,28 +8,28 @@
 </div>
 
 {{-- 2. MAIN CONTENT --}}
-<div class="relative z-10 min-h-[calc(100vh-64px)] py-12">
+<div class="relative z-10 min-h-[calc(100vh-64px)] py-8 md:py-12">
     <div class="container mx-auto px-4 max-w-4xl">
         
         {{-- HEADER WITH FILTERS --}}
-        <div class="flex flex-col md:flex-row justify-between items-end mb-10 gap-4">
+        {{-- Changed items-end to items-start md:items-end for proper mobile alignment --}}
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-end mb-8 md:mb-10 gap-4">
             <div>
-                <h1 class="text-4xl font-black text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]">My Bookings</h1>
-                <p class="text-gray-300 mt-2">Manage your active and past rentals.</p>
+                <h1 class="text-3xl md:text-4xl font-black text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]">My Bookings</h1>
+                <p class="text-gray-300 mt-2 text-sm md:text-base">Manage your active and past rentals.</p>
             </div>
 
-            {{-- SERVER-SIDE FILTER BAR (MODERN STATUS DROPDOWN) --}}
-            <form action="{{ route('book.index') }}" method="GET" id="filterForm" class="relative z-50">
+            {{-- SERVER-SIDE FILTER BAR --}}
+            <form action="{{ route('book.index') }}" method="GET" id="filterForm" class="relative z-50 w-full md:w-auto">
                 @php
                     $currentStatus = request('status', 'all');
                     
-                    // Comprehensive list of booking and payment statuses
                     $statuses = [
                         'all'          => 'All Bookings',
                         'Submitted'    => 'Submitted', 
                         'Deposit Paid' => 'Deposit Paid',
                         'Paid'         => 'Paid (Full)',
-                        'Confirmed'     => 'Confirmed',
+                        'Confirmed'    => 'Confirmed',
                         'Active'       => 'Active',
                         'Completed'    => 'Completed',
                         'Cancelled'    => 'Cancelled',
@@ -57,7 +57,7 @@
 
                     {{-- DROPDOWN MENU --}}
                     <div id="dropdownMenu" 
-                        class="absolute top-full right-0 mt-2 w-full bg-[#1a1a1a] border border-white/10 rounded-2xl shadow-2xl overflow-hidden hidden transform origin-top transition-all duration-200 z-50 max-h-[350px] overflow-y-auto custom-scrollbar">
+                        class="absolute top-full right-0 mt-2 w-full bg-[#1a1a1a] border border-white/10 rounded-2xl shadow-2xl overflow-hidden hidden transform origin-top transition-all duration-200 z-50 max-h-[300px] overflow-y-auto custom-scrollbar">
                         
                         @foreach($statuses as $value => $label)
                         <div onclick="selectStatus('{{ $value }}')" 
@@ -74,28 +74,27 @@
                     </div>
                 </div>
             </form>
-
         </div>
 
-        <div class="space-y-7 min-h-[300px]">
+        <div class="space-y-6 md:space-y-7 min-h-[300px]">
             {{-- LOOP: CARDS --}}
             @forelse($bookings as $booking)
-                <div class="group bg-black/50 backdrop-blur-[2px] border border-white/15 rounded-3xl p-6 shadow-xl hover:shadow-orange-500/10 hover:bg-black/60 transition-all duration-300 relative overflow-hidden animate-fade-in">
+                <div class="group bg-black/50 backdrop-blur-[2px] border border-white/15 rounded-3xl p-5 md:p-6 shadow-xl hover:shadow-orange-500/10 hover:bg-black/60 transition-all duration-300 relative overflow-hidden animate-fade-in">
                     <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/2 to-transparent opacity-0 group-hover:opacity-10 transition-opacity duration-500 pointer-events-none"></div>
                     
-                    {{-- Clickable Area for Details --}}
+                    {{-- Clickable Area --}}
                     <div onclick="document.getElementById('modal-{{ $booking->bookingID }}').classList.remove('hidden')" class="cursor-pointer">
                         {{-- Card Header --}}
                         <div class="flex justify-between items-start mb-4">
-                            <div class="flex items-center gap-4">
+                            <div class="flex items-center gap-3 md:gap-4">
                                 {{-- Numbering Badge --}}
-                                <div class="bg-orange-500 text-white font-bold w-10 h-10 rounded-full flex items-center justify-center text-sm shadow-lg shrink-0">
+                                <div class="bg-orange-500 text-white font-bold w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center text-xs md:text-sm shadow-lg shrink-0">
                                     {{ $loop->iteration }}
                                 </div>
 
                                 {{-- BOOKING DATE --}}
                                 <div>
-                                    <p class="text-[10px] text-gray-400 font-bold uppercase tracking-wider leading-none mb-1">Your booking starts:</p>
+                                    <p class="text-[9px] md:text-[10px] text-gray-400 font-bold uppercase tracking-wider leading-none mb-1">Your booking starts:</p>
                                     <p class="text-white text-sm font-bold leading-none">
                                         {{ \Carbon\Carbon::parse($booking->originalDate)->format('d M Y') }}
                                     </p>
@@ -103,7 +102,7 @@
                             </div>
 
                             {{-- Status Badge --}}
-                            <span class="px-3 py-1.5 rounded-full text-[11px] font-bold border uppercase tracking-wide
+                            <span class="px-2.5 py-1 md:px-3 md:py-1.5 rounded-full text-[10px] md:text-[11px] font-bold border uppercase tracking-wide
                                 {{ $booking->bookingStatus == 'Submitted' ? 'bg-blue-500/15 text-blue-300 border-blue-500/30' : 
                                   ($booking->bookingStatus == 'Cancelled' ? 'bg-red-500/15 text-red-300 border-red-500/30' : 
                                   'bg-emerald-500/15 text-emerald-300 border-emerald-500/30') }}">
@@ -111,56 +110,54 @@
                             </span>
                         </div>
 
-                        {{-- [UPDATED] Vehicle Info with IMAGE --}}
+                        {{-- Vehicle Info --}}
                         <div class="flex items-center gap-4 mb-4">
                             {{-- Car Image Container --}}
-                            <div class="h-16 w-24 rounded-xl bg-gray-800 overflow-hidden border border-white/10 shrink-0 relative shadow-md">
+                            <div class="h-14 w-20 md:h-16 md:w-24 rounded-xl bg-gray-800 overflow-hidden border border-white/10 shrink-0 relative shadow-md">
                                 @if($booking->vehicle->image)
                                     <img src="{{ asset('storage/' . $booking->vehicle->image) }}" 
                                          alt="{{ $booking->vehicle->model }}" 
                                          class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500">
                                 @else
                                     <div class="w-full h-full flex items-center justify-center">
-                                        <i class="fas fa-car text-2xl text-gray-600"></i>
+                                        <i class="fas fa-car text-xl md:text-2xl text-gray-600"></i>
                                     </div>
                                 @endif
                             </div>
 
-                            <div>
-                                <h3 class="text-xl font-black text-white leading-tight">{{ $booking->vehicle->model }}</h3>
+                            <div class="min-w-0">
+                                <h3 class="text-lg md:text-xl font-black text-white leading-tight truncate">{{ $booking->vehicle->model }}</h3>
                                 
-                                {{-- CONDITIONAL PLATE DISPLAY --}}
+                                {{-- PLATE DISPLAY --}}
                                 @if($booking->bookingStatus == 'Confirmed' || $booking->bookingStatus == 'Active' || $booking->bookingStatus == 'Completed')
-                                    <p class="text-xs text-orange-400 font-bold mt-1 tracking-wide">
+                                    <p class="text-xs text-orange-400 font-bold mt-1 tracking-wide truncate">
                                         PLATE: {{ $booking->vehicle->plateNo }}
                                     </p>
                                 @else
-                                    <p class="text-xs text-gray-500 font-medium mt-1 italic">
-                                        <i class="fas fa-spinner fa-spin mr-1"></i> Plate No. pending confirmation
+                                    <p class="text-xs text-gray-500 font-medium mt-1 italic truncate">
+                                        <i class="fas fa-spinner fa-spin mr-1"></i> Plate No. pending
                                     </p>
                                 @endif
-                                
                             </div>
                         </div>
 
-                        {{-- AGENT INFO ON CARD --}}
+                        {{-- AGENT INFO --}}
                         @if($booking->staff)
                         <div class="flex items-center gap-2 mb-2 pb-2 border-b border-white/5">
                             <div class="w-5 h-5 rounded-full bg-orange-500/20 flex items-center justify-center text-orange-500 text-[10px]">
                                 <i class="fas fa-user-tie"></i>
                             </div>
-                            <p class="text-xs text-gray-400">Agent: <span class="text-gray-200 font-bold">{{ $booking->staff->name }}</span></p>
+                            <p class="text-xs text-gray-400 truncate">Agent: <span class="text-gray-200 font-bold">{{ $booking->staff->name }}</span></p>
                         </div>
                         @endif
 
-                        <div class="text-[11px] text-gray-400 font-medium text-center mt-2 opacity-90 mb-4">Click to view full details</div>
+                        <div class="text-[10px] md:text-[11px] text-gray-400 font-medium text-center mt-2 opacity-90 mb-2">Tap to view full details</div>
                     </div>
 
                     {{-- ACTIONS: INSPECTION & FEEDBACK --}}
                     
                     {{-- 1. INSPECTION BUTTON --}}
                     @php
-                        // Check if customer has already uploaded for the current stage
                         $isReturn = ($booking->bookingStatus == 'Active');
                         $typeCheck = $isReturn ? 'Return' : 'Pickup';
 
@@ -197,35 +194,29 @@
                         </div>
                     @endif
                     
-                    {{-- 3. INVOICE BUTTON (NEW) --}}
+                    {{-- 3. INVOICE BUTTON --}}
                     @if($booking->bookingStatus == 'Completed')
                     <div class="border-t border-white/10 pt-4 mt-2">
-                        <td>
-                            {{-- Existing Agreement/Receipt Buttons... --}}
-
-                            {{-- NEW: View Invoice Button --}}
-                            @if($booking->bookingStatus == 'Completed' && $booking->invoiceLink)
-                                <a href="{{ $booking->invoiceLink }}" target="_blank" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-3 rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 shadow-lg">
+                        @if($booking->bookingStatus == 'Completed' && $booking->invoiceLink)
+                            <a href="{{ $booking->invoiceLink }}" target="_blank" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-3 rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 shadow-lg">
                                 <i class="fas fa-file-invoice-dollar"></i> View Invoice
-                                </a>
-                            @elseif($booking->bookingStatus == 'Completed')
-                                {{-- Fallback if generation failed (or for old bookings) --}}
-                                <a href="{{ route('book.invoice', $booking->bookingID) }}" target="_blank" class="btn btn-sm btn-outline-secondary mt-1">
-                                    Generate Invoice
-                                </a>
-                            @endif
-                        </td>
+                            </a>
+                        @elseif($booking->bookingStatus == 'Completed')
+                            <a href="{{ route('book.invoice', $booking->bookingID) }}" target="_blank" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-3 rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 shadow-lg">
+                                Generate Invoice
+                            </a>
+                        @endif
                     </div>
                     @endif
                 </div>
             @empty
                 {{-- Empty State --}}
-                <div class="text-center py-24 bg-white/8 backdrop-blur-sm rounded-3xl border border-white/15">
-                    <div class="bg-white/10 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-5">
-                        <i class="fas fa-filter text-3xl text-gray-500"></i>
+                <div class="text-center py-12 md:py-24 bg-white/8 backdrop-blur-sm rounded-3xl border border-white/15 px-6">
+                    <div class="bg-white/10 w-16 h-16 md:w-20 md:h-20 rounded-full flex items-center justify-center mx-auto mb-5">
+                        <i class="fas fa-filter text-2xl md:text-3xl text-gray-500"></i>
                     </div>
-                    <h3 class="text-xl font-black text-white mb-2">No bookings found</h3>
-                    <p class="text-gray-400 max-w-md mx-auto mb-7">
+                    <h3 class="text-lg md:text-xl font-black text-white mb-2">No bookings found</h3>
+                    <p class="text-gray-400 max-w-md mx-auto mb-7 text-sm">
                         @if(request('status') && request('status') != 'all')
                             No {{ request('status') }} bookings found.
                         @else
@@ -245,87 +236,84 @@
 @foreach($bookings as $booking)
     @if($booking->bookingStatus == 'Confirmed' || $booking->bookingStatus == 'Active')
     
-    {{-- Determine Required Count --}}
     @php
         $requiredCount = ($booking->bookingStatus == 'Confirmed') ? 5 : 6;
     @endphp
 
     <div id="inspection-modal-{{ $booking->bookingID }}" class="fixed inset-0 z-[10000] hidden bg-black/70 backdrop-blur-md flex items-center justify-center p-4">
-        <div class="bg-[#1a1a1a] border border-white/15 rounded-2xl w-full max-w-md p-6 relative shadow-2xl">
-            <button onclick="document.getElementById('inspection-modal-{{ $booking->bookingID }}').classList.add('hidden')" class="absolute top-4 right-4 text-gray-400 hover:text-white">
+        {{-- Mobile Scroll Fix: Added flex-col and max-h --}}
+        <div class="bg-[#1a1a1a] border border-white/15 rounded-2xl w-full max-w-md flex flex-col max-h-[90vh] relative shadow-2xl">
+            
+            <button onclick="document.getElementById('inspection-modal-{{ $booking->bookingID }}').classList.add('hidden')" class="absolute top-4 right-4 text-gray-400 hover:text-white z-10">
                 <i class="fas fa-times text-xl"></i>
             </button>
             
-            <h3 class="text-xl font-bold text-white mb-2">
-                {{ $booking->bookingStatus == 'Confirmed' ? 'Pre-Rental Inspection' : 'Post-Rental Inspection' }}
-            </h3>
-
-            {{-- Photo Requirement Instructions --}}
-            <div class="p-3 bg-white/5 rounded-xl border border-white/10 mb-6">
-                <p class="text-[10px] text-orange-500 font-black uppercase tracking-widest mb-1">Requirements:</p>
-                <ul class="text-[11px] text-gray-300 space-y-1">
-                    <li class="flex items-center gap-2"><i class="fas fa-check-circle text-[8px]"></i> 4 External Views (Front, Back, Left, Right)</li>
-                    <li class="flex items-center gap-2"><i class="fas fa-check-circle text-[8px]"></i> 1 Dashboard View (Mileage & Fuel)</li>
-                    @if($booking->bookingStatus == 'Active')
-                        <li class="flex items-center gap-2 text-orange-400"><i class="fas fa-key text-[8px]"></i> 1 Car Key Location (Required for Return)</li>
-                    @endif
-                </ul>
+            {{-- Modal Header --}}
+            <div class="p-6 pb-2 shrink-0">
+                <h3 class="text-xl font-bold text-white mb-2">
+                    {{ $booking->bookingStatus == 'Confirmed' ? 'Pre-Rental Inspection' : 'Post-Rental Inspection' }}
+                </h3>
             </div>
 
-            <form action="{{ route('book.inspection.upload', $booking->bookingID) }}" method="POST" enctype="multipart/form-data">
-                @csrf
-                
-                {{-- FILE INPUT LABEL --}}
-                <label class="block w-full h-32 border-2 border-dashed border-white/20 rounded-xl flex flex-col items-center justify-center cursor-pointer hover:border-orange-500 hover:bg-white/5 transition mb-4 group relative">
-                    <i class="fas fa-images text-2xl text-gray-500 group-hover:text-orange-500 mb-2 transition"></i>
-                    
-                    {{-- Dynamic Text Span --}}
-                    <span id="file-text-{{ $booking->bookingID }}" class="text-sm text-gray-300 group-hover:text-white font-medium transition-colors">
-                        Tap to Select Photos
-                    </span>
-                    
-                    <span class="text-[10px] text-orange-500 font-bold uppercase mt-1">
-                        (Upload Exactly {{ $requiredCount }} Photos)
-                    </span>
-
-                    {{-- FILE INPUT --}}
-                    {{-- Added 'id' and 'onchange' to trigger validation --}}
-                    <input type="file" 
-                           name="photos[]" 
-                           multiple 
-                           class="hidden" 
-                           required 
-                           id="file-input-{{ $booking->bookingID }}"
-                           accept="image/*"
-                           onchange="validateFiles({{ $booking->bookingID }}, {{ $requiredCount }})">
-                </label>
-
-                <div class="grid grid-cols-2 gap-4 mb-6">
-                    <div>
-                        <label class="text-[10px] text-gray-500 uppercase font-bold">Fuel Level</label>
-                        <select name="fuel_level" class="w-full bg-white/10 border border-white/20 rounded-lg text-white text-sm p-2 mt-1 focus:border-orange-500 focus:outline-none">
-                            <option value="Full" class="text-gray-900">Full</option>
-                            <option value="3/4" class="text-gray-900">3/4</option>
-                            <option value="1/2" class="text-gray-900">1/2</option>
-                            <option value="1/4" class="text-gray-900">1/4</option>
-                            <option value="E" class="text-gray-900">Empty</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="text-[10px] text-gray-500 uppercase font-bold">Mileage (km)</label>
-                        <input type="number" name="mileage" class="w-full bg-white/10 border border-white/20 rounded-lg text-white text-sm p-2 mt-1 focus:border-orange-500 focus:outline-none" placeholder="e.g. 12345" required>
-                    </div>
+            {{-- Modal Body (Scrollable) --}}
+            <div class="p-6 pt-0 overflow-y-auto custom-scrollbar">
+                <div class="p-3 bg-white/5 rounded-xl border border-white/10 mb-6">
+                    <p class="text-[10px] text-orange-500 font-black uppercase tracking-widest mb-1">Requirements:</p>
+                    <ul class="text-[11px] text-gray-300 space-y-1">
+                        <li class="flex items-center gap-2"><i class="fas fa-check-circle text-[8px]"></i> 4 External Views (Front, Back, Left, Right)</li>
+                        <li class="flex items-center gap-2"><i class="fas fa-check-circle text-[8px]"></i> 1 Dashboard View (Mileage & Fuel)</li>
+                        @if($booking->bookingStatus == 'Active')
+                            <li class="flex items-center gap-2 text-orange-400"><i class="fas fa-key text-[8px]"></i> 1 Car Key Location (Required for Return)</li>
+                        @endif
+                    </ul>
                 </div>
 
-                {{-- SUBMIT BUTTON --}}
-                {{-- Added 'id', 'disabled' state, and opacity classes --}}
-                <button type="submit" 
-                        id="submit-btn-{{ $booking->bookingID }}"
-                        class="w-full bg-[#ea580c] hover:bg-orange-600 text-white font-bold py-3.5 rounded-xl shadow-lg transition transform hover:scale-[1.02] opacity-50 cursor-not-allowed"
-                        disabled>
-                    Submit {{ $booking->bookingStatus == 'Confirmed' ? 'Pickup' : 'Return' }} Inspection
-                </button>
-            </form>
+                <form action="{{ route('book.inspection.upload', $booking->bookingID) }}" method="POST" enctype="multipart/form-data">
+                    @csrf
+                    
+                    <label class="block w-full h-32 border-2 border-dashed border-white/20 rounded-xl flex flex-col items-center justify-center cursor-pointer hover:border-orange-500 hover:bg-white/5 transition mb-4 group relative">
+                        <i class="fas fa-images text-2xl text-gray-500 group-hover:text-orange-500 mb-2 transition"></i>
+                        <span id="file-text-{{ $booking->bookingID }}" class="text-sm text-gray-300 group-hover:text-white font-medium transition-colors text-center px-2">
+                            Tap to Select Photos
+                        </span>
+                        <span class="text-[10px] text-orange-500 font-bold uppercase mt-1">
+                            (Upload Exactly {{ $requiredCount }} Photos)
+                        </span>
+                        <input type="file" 
+                               name="photos[]" 
+                               multiple 
+                               class="hidden" 
+                               required 
+                               id="file-input-{{ $booking->bookingID }}"
+                               accept="image/*"
+                               onchange="validateFiles({{ $booking->bookingID }}, {{ $requiredCount }})">
+                    </label>
+
+                    <div class="grid grid-cols-2 gap-4 mb-6">
+                        <div>
+                            <label class="text-[10px] text-gray-500 uppercase font-bold">Fuel Level</label>
+                            <select name="fuel_level" class="w-full bg-white/10 border border-white/20 rounded-lg text-white text-sm p-2 mt-1 focus:border-orange-500 focus:outline-none">
+                                <option value="Full" class="text-gray-900">Full</option>
+                                <option value="3/4" class="text-gray-900">3/4</option>
+                                <option value="1/2" class="text-gray-900">1/2</option>
+                                <option value="1/4" class="text-gray-900">1/4</option>
+                                <option value="E" class="text-gray-900">Empty</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="text-[10px] text-gray-500 uppercase font-bold">Mileage (km)</label>
+                            <input type="number" name="mileage" class="w-full bg-white/10 border border-white/20 rounded-lg text-white text-sm p-2 mt-1 focus:border-orange-500 focus:outline-none" placeholder="e.g. 12345" required>
+                        </div>
+                    </div>
+
+                    <button type="submit" 
+                            id="submit-btn-{{ $booking->bookingID }}"
+                            class="w-full bg-[#ea580c] hover:bg-orange-600 text-white font-bold py-3.5 rounded-xl shadow-lg transition transform hover:scale-[1.02] opacity-50 cursor-not-allowed text-xs sm:text-sm"
+                            disabled>
+                        Submit {{ $booking->bookingStatus == 'Confirmed' ? 'Pickup' : 'Return' }} Inspection
+                    </button>
+                </form>
+            </div>
         </div>
     </div>
     @endif
@@ -335,68 +323,73 @@
 @foreach($bookings as $booking)
     @if($booking->bookingStatus == 'Completed' && !$booking->feedback)
     <div id="feedback-modal-{{ $booking->bookingID }}" class="fixed inset-0 z-[10000] hidden bg-black/70 backdrop-blur-md flex items-center justify-center p-4">
-        <div class="bg-[#1a1a1a] border border-white/15 rounded-2xl w-full max-w-md p-6 relative shadow-2xl">
-            <button onclick="document.getElementById('feedback-modal-{{ $booking->bookingID }}').classList.add('hidden')" class="absolute top-4 right-4 text-gray-400 hover:text-white">
+        {{-- Mobile Scroll Fix --}}
+        <div class="bg-[#1a1a1a] border border-white/15 rounded-2xl w-full max-w-md flex flex-col max-h-[90vh] relative shadow-2xl">
+            <button onclick="document.getElementById('feedback-modal-{{ $booking->bookingID }}').classList.add('hidden')" class="absolute top-4 right-4 text-gray-400 hover:text-white z-10">
                 <i class="fas fa-times text-xl"></i>
             </button>
-            <h3 class="text-xl font-bold text-white mb-2">Rate Your Experience</h3>
             
-            {{-- Google Review Link Section --}}
-            <div class="mb-6 p-4 bg-orange-500/10 border border-orange-500/30 rounded-xl">
-                <p class="text-[10px] text-orange-500 font-black uppercase tracking-widest mb-2">Support Us on Google</p>
-                <a href="https://share.google/VmSuaHx7XHvnaSiwU" target="_blank" class="flex items-center justify-between bg-white/5 hover:bg-white/10 p-3 rounded-lg transition group">
-                    <div class="flex items-center gap-3">
-                        <i class="fab fa-google text-white"></i>
-                        <span class="text-sm text-white font-bold">Write a Google Review</span>
-                    </div>
-                    <i class="fas fa-external-link-alt text-xs text-gray-400 group-hover:text-white"></i>
-                </a>
+            <div class="p-6 pb-2 shrink-0">
+                <h3 class="text-xl font-bold text-white mb-2">Rate Your Experience</h3>
             </div>
-
-            <p class="text-xs text-gray-400 mb-6">Alternatively, leave a private review for our team:</p>
             
-            <form action="{{ route('feedback.store', $booking->bookingID) }}" method="POST">
-                @csrf
-                
-                {{-- STAR RATING --}}
-                <div class="flex flex-row-reverse justify-center gap-2 mb-6 group">
-                    @for($i=5; $i>=1; $i--)
-                        <input type="radio" id="star{{ $i }}-{{ $booking->bookingID }}" name="rating" value="{{ $i }}" class="hidden peer" required>
-                        <label for="star{{ $i }}-{{ $booking->bookingID }}" class="text-3xl text-gray-600 cursor-pointer peer-checked:text-yellow-400 peer-hover:text-yellow-400 hover:text-yellow-400 transition">
-                            <i class="fas fa-star"></i>
-                        </label>
-                    @endfor
+            <div class="p-6 pt-0 overflow-y-auto custom-scrollbar">
+                <div class="mb-6 p-4 bg-orange-500/10 border border-orange-500/30 rounded-xl">
+                    <p class="text-[10px] text-orange-500 font-black uppercase tracking-widest mb-2">Support Us on Google</p>
+                    <a href="https://share.google/VmSuaHx7XHvnaSiwU" target="_blank" class="flex items-center justify-between bg-white/5 hover:bg-white/10 p-3 rounded-lg transition group">
+                        <div class="flex items-center gap-3">
+                            <i class="fab fa-google text-white"></i>
+                            <span class="text-sm text-white font-bold">Write a Google Review</span>
+                        </div>
+                        <i class="fas fa-external-link-alt text-xs text-gray-400 group-hover:text-white"></i>
+                    </a>
                 </div>
 
-                {{-- NEW: DROPDOWN SUGGESTIONS --}}
-                <div class="mb-4">
-                    <label class="text-[10px] text-gray-500 uppercase font-bold mb-2 block">Quick Suggestions</label>
-                    <div class="relative">
-                        <select onchange="this.closest('form').querySelector('textarea[name=comment]').value = this.value" 
-                                class="w-full bg-white/10 border border-white/20 rounded-xl text-white text-sm p-3 focus:border-yellow-500 focus:outline-none appearance-none cursor-pointer">
-                            <option value="" class="bg-gray-800 text-gray-400">Select a phrase...</option>
-                            <option value="Car was clean and comfortable." class="bg-gray-800">Car was clean and comfortable.</option>
-                            <option value="Great service, very punctual!" class="bg-gray-800">Great service, very punctual!</option>
-                            <option value="Smooth booking process." class="bg-gray-800">Smooth booking process.</option>
-                            <option value="Friendly staff and good vehicle." class="bg-gray-800">Friendly staff and good vehicle.</option>
-                            <option value="Will definitely rent again!" class="bg-gray-800">Will definitely rent again!</option>
-                        </select>
-                        <div class="absolute right-3 top-3.5 text-gray-400 pointer-events-none">
-                            <i class="fas fa-chevron-down text-xs"></i>
+                <p class="text-xs text-gray-400 mb-6">Alternatively, leave a private review for our team:</p>
+                
+                <form action="{{ route('feedback.store', $booking->bookingID) }}" method="POST">
+                    @csrf
+                    
+                    {{-- STAR RATING --}}
+                    <div class="flex flex-row-reverse justify-center gap-2 mb-6 group">
+                        @for($i=5; $i>=1; $i--)
+                            <input type="radio" id="star{{ $i }}-{{ $booking->bookingID }}" name="rating" value="{{ $i }}" class="hidden peer" required>
+                            <label for="star{{ $i }}-{{ $booking->bookingID }}" class="text-3xl text-gray-600 cursor-pointer peer-checked:text-yellow-400 peer-hover:text-yellow-400 hover:text-yellow-400 transition">
+                                <i class="fas fa-star"></i>
+                            </label>
+                        @endfor
+                    </div>
+
+                    {{-- SUGGESTIONS --}}
+                    <div class="mb-4">
+                        <label class="text-[10px] text-gray-500 uppercase font-bold mb-2 block">Quick Suggestions</label>
+                        <div class="relative">
+                            <select onchange="this.closest('form').querySelector('textarea[name=comment]').value = this.value" 
+                                    class="w-full bg-white/10 border border-white/20 rounded-xl text-white text-sm p-3 focus:border-yellow-500 focus:outline-none appearance-none cursor-pointer">
+                                <option value="" class="bg-gray-800 text-gray-400">Select a phrase...</option>
+                                <option value="Car was clean and comfortable." class="bg-gray-800">Car was clean and comfortable.</option>
+                                <option value="Great service, very punctual!" class="bg-gray-800">Great service, very punctual!</option>
+                                <option value="Smooth booking process." class="bg-gray-800">Smooth booking process.</option>
+                                <option value="Friendly staff and good vehicle." class="bg-gray-800">Friendly staff and good vehicle.</option>
+                                <option value="Will definitely rent again!" class="bg-gray-800">Will definitely rent again!</option>
+                            </select>
+                            <div class="absolute right-3 top-3.5 text-gray-400 pointer-events-none">
+                                <i class="fas fa-chevron-down text-xs"></i>
+                            </div>
                         </div>
                     </div>
-                </div>
 
-                {{-- COMMENT AREA --}}
-                <div class="mb-6">
-                    <label class="text-[10px] text-gray-500 uppercase font-bold mb-2 block">Comment (Optional)</label>
-                    <textarea name="comment" rows="3" class="w-full bg-white/10 border border-white/20 rounded-xl text-white text-sm p-3 focus:border-yellow-500 focus:outline-none placeholder-gray-500" placeholder="Share your feedback..."></textarea>
-                </div>
+                    {{-- COMMENT AREA --}}
+                    <div class="mb-6">
+                        <label class="text-[10px] text-gray-500 uppercase font-bold mb-2 block">Comment (Optional)</label>
+                        <textarea name="comment" rows="3" class="w-full bg-white/10 border border-white/20 rounded-xl text-white text-sm p-3 focus:border-yellow-500 focus:outline-none placeholder-gray-500" placeholder="Share your feedback..."></textarea>
+                    </div>
 
-                <button type="submit" class="w-full bg-yellow-500 hover:bg-yellow-600 text-black font-bold py-3.5 rounded-xl shadow-lg transition transform hover:scale-[1.02]">
-                    Submit Internal Feedback
-                </button>
-            </form>
+                    <button type="submit" class="w-full bg-yellow-500 hover:bg-yellow-600 text-black font-bold py-3.5 rounded-xl shadow-lg transition transform hover:scale-[1.02]">
+                        Submit Internal Feedback
+                    </button>
+                </form>
+            </div>
         </div>
     </div>
     @endif
@@ -409,17 +402,19 @@
              onclick="document.getElementById('modal-{{ $booking->bookingID }}').classList.add('hidden')"></div>
 
         <div class="flex items-center justify-center min-h-screen p-4 sm:p-6 pointer-events-none">
-            <div class="relative bg-[#1a1a1a] border border-white/15 rounded-[2rem] max-w-2xl w-full shadow-2xl overflow-hidden transform transition-all duration-300 scale-95 opacity-0 animate-fade-in pointer-events-auto">
+            {{-- Fixed: Added flex flex-col and max-h to ensure scrolling on mobile --}}
+            <div class="relative bg-[#1a1a1a] border border-white/15 rounded-[2rem] max-w-2xl w-full shadow-2xl flex flex-col max-h-[90vh] transform transition-all duration-300 scale-95 opacity-0 animate-fade-in pointer-events-auto">
+                
                 {{-- Header --}}
-                <div class="bg-white/7 p-6 border-b border-white/15 flex justify-between items-center">
-                    <h3 class="text-xl font-black text-white tracking-tight">Booking Details #{{ $booking->bookingID }}</h3>
+                <div class="bg-white/7 p-6 border-b border-white/15 flex justify-between items-center shrink-0">
+                    <h3 class="text-lg md:text-xl font-black text-white tracking-tight">Booking Details #{{ $booking->bookingID }}</h3>
                     <button onclick="document.getElementById('modal-{{ $booking->bookingID }}').classList.add('hidden')" class="text-gray-400 hover:text-white transition-colors duration-200">
                         <i class="fas fa-times text-xl"></i>
                     </button>
                 </div>
 
-                {{-- Body --}}
-                <div class="p-7 sm:p-8 space-y-7">
+                {{-- Body (Scrollable) --}}
+                <div class="p-6 sm:p-8 space-y-7 overflow-y-auto custom-scrollbar">
                 @if($booking->bookingStatus == 'Rejected' && $booking->remarks)
                     <div class="bg-red-500/10 border border-red-500/50 rounded-2xl p-4 flex items-start gap-4">
                         <div class="bg-red-500 text-white rounded-full p-2 mt-1">
@@ -432,7 +427,6 @@
                     </div>
                 @endif    
 
-                {{-- NOTES / REFUND REMARKS (NEW SECTION) --}}
                 @if($booking->bookingStatus != 'Rejected' && $booking->remarks)
                     <div class="bg-white/5 border border-white/10 rounded-2xl p-4 flex items-start gap-4">
                         <div class="bg-blue-500/20 text-blue-400 rounded-full p-2 mt-0.5 shrink-0">
@@ -448,16 +442,14 @@
                 @endif
                 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-7">
-                        {{-- LEFT COLUMN: Dates & Person In Charge --}}
+                        {{-- LEFT COLUMN --}}
                         <div class="space-y-6">
-                            {{-- Dates Timeline --}}
                             <div class="relative pl-5 border-l-2 border-dashed border-white/25 space-y-5">
-                                {{-- PICKUP SECTION --}}
+                                {{-- PICKUP --}}
                                 <div>
                                     <p class="text-[10px] text-gray-400 uppercase font-bold tracking-wider">Pickup</p>
                                     <div class="flex items-baseline gap-2">
                                         <p class="text-white font-black text-lg">{{ \Carbon\Carbon::parse($booking->originalDate)->format('d M Y') }}</p>
-                                        {{-- ADDED TIME --}}
                                         <p class="text-orange-400 font-bold text-sm">
                                             {{ \Carbon\Carbon::parse($booking->bookingTime)->format('h:i A') }}
                                         </p>
@@ -467,12 +459,11 @@
                                     </p>
                                 </div>
 
-                                {{-- RETURN SECTION --}}
+                                {{-- RETURN --}}
                                 <div>
                                     <p class="text-[10px] text-gray-400 uppercase font-bold tracking-wider">Return</p>
                                     <div class="flex items-baseline gap-2">
                                         <p class="text-white font-black text-lg">{{ \Carbon\Carbon::parse($booking->returnDate)->format('d M Y') }}</p>
-                                        {{-- ADDED TIME --}}
                                         <p class="text-orange-400 font-bold text-sm">
                                             {{ \Carbon\Carbon::parse($booking->returnTime)->format('h:i A') }}
                                         </p>
@@ -483,7 +474,7 @@
                                 </div>
                             </div>
 
-                            {{-- PERSON IN CHARGE SECTION --}}
+                            {{-- PERSON IN CHARGE --}}
                             <div>
                                 <p class="text-[10px] text-gray-400 uppercase font-bold tracking-wider mb-2">Person In Charge</p>
                                 @if($booking->staff)
@@ -516,7 +507,7 @@
                             </div>
                         </div>
                         
-                        {{-- RIGHT COLUMN: Financials & Docs --}}
+                        {{-- RIGHT COLUMN --}}
                         <div class="space-y-6">
                             {{-- Financials --}}
                             <div class="bg-white/8 rounded-2xl p-5 border border-white/10">
@@ -545,34 +536,31 @@
                             <div>
                                 <p class="text-[10px] text-gray-400 uppercase font-bold mb-3 tracking-wider">Documents</p>
                                 <div class="grid grid-cols-2 gap-3">
-                                    <td>
-                                        {{-- Agreement Link --}}
-                                        @if(str_contains($booking->aggreementLink, 'drive.google.com'))
-                                            <a href="{{ $booking->aggreementLink }}" target="_blank" class="flex items-center justify-center gap-2 p-3.5 bg-blue-500/10 rounded-xl border border-blue-500/20 hover:bg-blue-500 hover:text-white text-blue-300 text-sm transition-all duration-200">
-                                                <i class="bi bi-file-earmark-pdf"></i> View Agreement
-                                            </a>
-                                        @elseif($booking->aggreementLink)
-                                            {{-- Fallback for old local files --}}
-                                            <a href="{{ route('book.agreement', $booking->bookingID) }}" target="_blank" class="flex items-center justify-center gap-2 p-3.5 bg-blue-500/10 rounded-xl border border-blue-500/20 hover:bg-blue-500 hover:text-white text-blue-300 text-sm transition-all duration-200">
-                                                View Agreement
-                                            </a>
-                                        @endif
+                                    {{-- Agreement --}}
+                                    @if(str_contains($booking->aggreementLink, 'drive.google.com'))
+                                        <a href="{{ $booking->aggreementLink }}" target="_blank" class="flex items-center justify-center gap-2 p-3.5 bg-blue-500/10 rounded-xl border border-blue-500/20 hover:bg-blue-500 hover:text-white text-blue-300 text-sm transition-all duration-200">
+                                            <i class="bi bi-file-earmark-pdf"></i> View Agreement
+                                        </a>
+                                    @elseif($booking->aggreementLink)
+                                        <a href="{{ route('book.agreement', $booking->bookingID) }}" target="_blank" class="flex items-center justify-center gap-2 p-3.5 bg-blue-500/10 rounded-xl border border-blue-500/20 hover:bg-blue-500 hover:text-white text-blue-300 text-sm transition-all duration-200">
+                                            View Agreement
+                                        </a>
+                                    @endif
 
-                                        {{-- Receipt Link (Assuming the first payment contains the receipt) --}}
-                                        @php
-                                            $receipt = $booking->payments->first(); // Get the initial payment
-                                        @endphp
+                                    {{-- Receipt --}}
+                                    @php
+                                        $receipt = $booking->payments->first(); 
+                                    @endphp
 
-                                        @if($receipt && str_contains($receipt->installmentDetails, 'drive.google.com'))
-                                            <a href="{{ $receipt->installmentDetails }}" target="_blank" class="flex items-center justify-center gap-2 p-3.5 bg-black/25 rounded-xl border border-dashed border-white/20 hover:border-orange-500 hover:text-orange-400 text-gray-300 text-sm transition-colors duration-200">
-                                                <i class="bi bi-receipt"></i> View Receipt
-                                            </a>
-                                        @elseif($receipt && $receipt->installmentDetails)
-                                            <a href="{{ asset('storage/' . $receipt->installmentDetails) }}" target="_blank" class="flex items-center justify-center gap-2 p-3.5 bg-black/25 rounded-xl border border-dashed border-white/20 hover:border-orange-500 hover:text-orange-400 text-gray-300 text-sm transition-colors duration-200">
-                                                View Receipt
-                                            </a>
-                                        @endif
-                                    </td>
+                                    @if($receipt && str_contains($receipt->installmentDetails, 'drive.google.com'))
+                                        <a href="{{ $receipt->installmentDetails }}" target="_blank" class="flex items-center justify-center gap-2 p-3.5 bg-black/25 rounded-xl border border-dashed border-white/20 hover:border-orange-500 hover:text-orange-400 text-gray-300 text-sm transition-colors duration-200">
+                                            <i class="bi bi-receipt"></i> View Receipt
+                                        </a>
+                                    @elseif($receipt && $receipt->installmentDetails)
+                                        <a href="{{ asset('storage/' . $receipt->installmentDetails) }}" target="_blank" class="flex items-center justify-center gap-2 p-3.5 bg-black/25 rounded-xl border border-dashed border-white/20 hover:border-orange-500 hover:text-orange-400 text-gray-300 text-sm transition-colors duration-200">
+                                            View Receipt
+                                        </a>
+                                    @endif
                                 </div>
                             </div>
                         </div>
@@ -580,7 +568,7 @@
                 </div>
 
                 @if(in_array($booking->bookingStatus, ['Submitted', 'Deposit Paid', 'Paid', 'Confirmed']))
-                <div class="bg-white/7 p-6 border-t border-white/15">
+                <div class="bg-white/7 p-6 border-t border-white/15 shrink-0">
                     <form action="{{ route('book.cancel', $booking->bookingID) }}" method="POST" onsubmit="return confirm('Cancel booking?');" class="w-full">
                         @csrf
                         <button type="submit" class="w-full py-3.5 rounded-xl font-bold text-red-400 bg-red-500/10 border border-red-500/20 hover:bg-red-500 hover:text-white transition-all duration-200 flex items-center justify-center gap-2 group">

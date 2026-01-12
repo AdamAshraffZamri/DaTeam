@@ -13,18 +13,20 @@ class StaffProfileController extends Controller
     public function edit()
     {
         // Get the currently authenticated staff member
-        $staff = Auth::guard('staff')->user();
-        return view('staff.profile', compact('staff'));
+        // FIX: Renamed variable from $staff to $user to match the view's expectation
+        $user = Auth::guard('staff')->user();
+        
+        return view('staff.profile', compact('user'));
     }
 
     public function update(Request $request)
     {
-        /** @var \App\Models\Staff $staff */
-        $staff = Auth::guard('staff')->user();
+        /** @var \App\Models\Staff $user */
+        $user = Auth::guard('staff')->user();
 
         $request->validate([
             'name' => 'required|string|max:255',
-            'email' => ['required', 'email', Rule::unique('staff')->ignore($staff->staffID, 'staffID')],
+            'email' => ['required', 'email', Rule::unique('staff')->ignore($user->staffID, 'staffID')],
             'phoneNo' => 'nullable|string|max:20',
             'password' => 'nullable|min:6|confirmed',
         ]);
@@ -41,7 +43,7 @@ class StaffProfileController extends Controller
         }
 
         // Perform the update on the model
-        $staff->update($data);
+        $user->update($data);
 
         return redirect()->route('staff.profile.edit')
             ->with('success', 'Profile updated successfully.');

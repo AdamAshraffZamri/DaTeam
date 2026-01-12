@@ -109,6 +109,7 @@
                                 {{ $booking->customer->fullName ?? 'Guest' }}
                             </h4>
                             <p class="text-xs text-gray-400 truncate">{{ $booking->customer->email ?? 'No email' }}</p>
+                            <div class="text-[10px] text-slate-600 font-medium uppercase tracking-wider mt-0.5">{{ \Carbon\Carbon::parse($booking->bookingDate)->format('d M Y') }}</div>
                         </div>
                     </div>
 
