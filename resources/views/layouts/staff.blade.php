@@ -21,7 +21,7 @@
         [x-cloak] { display: none !important; }
         
         /* Transitions */
-        .sidebar-transition { transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        .sidebar-transition { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
         .content-transition { transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
         
         /* Scrollbars */
@@ -42,6 +42,10 @@
               localStorage.setItem('sidebarOpen', this.sidebarOpen);
           },
           init() {
+              // Close sidebar on mobile by default
+              if (window.innerWidth < 768) {
+                  this.sidebarOpen = false;
+              }
               // Prevent flicker on load
               setTimeout(() => { this.animationsOn = true; }, 300);
           }
@@ -49,11 +53,24 @@
       x-init="init()"
 >
 
+    {{-- === MOBILE BACKDROP === --}}
+    <div x-show="sidebarOpen" 
+         class="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm md:hidden transition-opacity duration-300"
+         x-transition:enter="ease-out duration-300"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="ease-in duration-200"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0"
+         @click="sidebarOpen = false"
+         aria-hidden="true">
+    </div>
+
     {{-- === SIDEBAR === --}}
     <aside 
-        class="fixed inset-y-0 left-0 z-50 bg-orange-100/45 border-r border-gray-100 flex flex-col justify-between shadow-[4px_0_24px_rgba(0,0,0,0.02)] backdrop-blur-sm"
+        class="fixed inset-y-0 left-0 z-50 bg-orange-100/85 md:bg-orange-100/45 border-r border-gray-100 flex flex-col justify-between shadow-[4px_0_24px_rgba(0,0,0,0.02)] backdrop-blur-xl md:backdrop-blur-sm transform transition-all duration-300 ease-in-out"
         :class="[
-            sidebarOpen ? 'w-64' : 'w-20',
+            sidebarOpen ? 'translate-x-0 w-64' : '-translate-x-full w-64 md:translate-x-0 md:w-20',
             animationsOn ? 'sidebar-transition' : '' 
         ]"
     >
@@ -81,7 +98,7 @@
                         <i class="fas fa-th-large w-6 text-center text-lg {{ request()->routeIs('staff.dashboard') ? $iconActive : $iconInactive }}" :class="sidebarOpen ? 'mr-3' : ''"></i> 
                         <span x-show="sidebarOpen">Dashboard</span>
                     </div>
-                    <div x-show="!sidebarOpen" class="absolute left-16 bg-slate-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 pointer-events-none z-50 ml-1 shadow-lg transition-opacity duration-200">Dashboard</div>
+                    <div x-show="!sidebarOpen" class="hidden md:block absolute left-16 bg-slate-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 pointer-events-none z-50 ml-1 shadow-lg transition-opacity duration-200">Dashboard</div>
                 </a>
 
                 {{-- Manage Bookings --}}
@@ -93,7 +110,7 @@
                         <i class="fas fa-file-invoice w-6 text-center text-lg {{ request()->routeIs('staff.bookings.*') ? $iconActive : $iconInactive }}" :class="sidebarOpen ? 'mr-3' : ''"></i> 
                         <span x-show="sidebarOpen">Manage Bookings</span>
                     </div>
-                    <div x-show="!sidebarOpen" class="absolute left-16 bg-slate-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 pointer-events-none z-50 ml-1 shadow-lg transition-opacity duration-200">Bookings</div>
+                    <div x-show="!sidebarOpen" class="hidden md:block absolute left-16 bg-slate-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 pointer-events-none z-50 ml-1 shadow-lg transition-opacity duration-200">Bookings</div>
                 </a>
 
                 {{-- Deposit Management --}}
@@ -105,7 +122,7 @@
                         <i class="fas fa-wallet w-6 text-center text-lg {{ request()->routeIs('staff.finance.*') ? $iconActive : $iconInactive }}" :class="sidebarOpen ? 'mr-3' : ''"></i> 
                         <span x-show="sidebarOpen">Deposit Management</span>
                     </div>
-                    <div x-show="!sidebarOpen" class="absolute left-16 bg-slate-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 pointer-events-none z-50 ml-1 shadow-lg transition-opacity duration-200">Deposits</div>
+                    <div x-show="!sidebarOpen" class="hidden md:block absolute left-16 bg-slate-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 pointer-events-none z-50 ml-1 shadow-lg transition-opacity duration-200">Deposits</div>
                 </a>
 
                 {{-- Fleet Management --}}
@@ -117,7 +134,7 @@
                         <i class="fas fa-car w-6 text-center text-lg {{ request()->routeIs('staff.fleet.*') ? $iconActive : $iconInactive }}" :class="sidebarOpen ? 'mr-3' : ''"></i> 
                         <span x-show="sidebarOpen">Fleet Management</span>
                     </div>
-                    <div x-show="!sidebarOpen" class="absolute left-16 bg-slate-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 pointer-events-none z-50 ml-1 shadow-lg transition-opacity duration-200">Fleet</div>
+                    <div x-show="!sidebarOpen" class="hidden md:block absolute left-16 bg-slate-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 pointer-events-none z-50 ml-1 shadow-lg transition-opacity duration-200">Fleet</div>
                 </a>
 
                 {{-- Customer Management --}}
@@ -129,7 +146,7 @@
                         <i class="fas fa-user w-6 text-center text-lg {{ request()->routeIs('staff.customers.*') ? $iconActive : $iconInactive }}" :class="sidebarOpen ? 'mr-3' : ''"></i> 
                         <span x-show="sidebarOpen">Customer Management</span>
                     </div>
-                    <div x-show="!sidebarOpen" class="absolute left-16 bg-slate-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 pointer-events-none z-50 ml-1 shadow-lg transition-opacity duration-200">Customers</div>
+                    <div x-show="!sidebarOpen" class="hidden md:block absolute left-16 bg-slate-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 pointer-events-none z-50 ml-1 shadow-lg transition-opacity duration-200">Customers</div>
                 </a>
 
                 {{-- Reporting --}}
@@ -142,7 +159,7 @@
                         <i class="fas fa-chart-bar w-6 text-center text-lg {{ request()->routeIs('staff.reports.*') ? $iconActive : $iconInactive }}" :class="sidebarOpen ? 'mr-3' : ''"></i> 
                         <span x-show="sidebarOpen">Reporting & Analysis</span>
                     </div>
-                    <div x-show="!sidebarOpen" class="absolute left-16 bg-slate-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 pointer-events-none z-50 ml-1 shadow-lg transition-opacity duration-200">Reports</div>
+                    <div x-show="!sidebarOpen" class="hidden md:block absolute left-16 bg-slate-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 pointer-events-none z-50 ml-1 shadow-lg transition-opacity duration-200">Reports</div>
                 </a>
                 @endif
 
@@ -155,7 +172,7 @@
                         <i class="fas fa-medal w-6 text-center text-lg {{ request()->routeIs('staff.loyalty.*') ? $iconActive : $iconInactive }}" :class="sidebarOpen ? 'mr-3' : ''"></i> 
                         <span x-show="sidebarOpen">Loyalty & Rewards</span>
                     </div>
-                    <div x-show="!sidebarOpen" class="absolute left-16 bg-slate-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 pointer-events-none z-50 ml-1 shadow-lg transition-opacity duration-200">Loyalty</div>
+                    <div x-show="!sidebarOpen" class="hidden md:block absolute left-16 bg-slate-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 pointer-events-none z-50 ml-1 shadow-lg transition-opacity duration-200">Loyalty</div>
                 </a>
 
                 {{-- Staff Management (Admin Only) --}}
@@ -168,7 +185,7 @@
                             <i class="fas fa-users-cog w-6 text-center text-lg {{ request()->routeIs('staff.management.*') ? $iconActive : $iconInactive }}" :class="sidebarOpen ? 'mr-3' : ''"></i> 
                             <span x-show="sidebarOpen">Staff Management</span>
                         </div>
-                        <div x-show="!sidebarOpen" class="absolute left-16 bg-slate-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 pointer-events-none z-50 ml-1 shadow-lg transition-opacity duration-200">Staff</div>
+                        <div x-show="!sidebarOpen" class="hidden md:block absolute left-16 bg-slate-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 pointer-events-none z-50 ml-1 shadow-lg transition-opacity duration-200">Staff</div>
                     </a>
                 @endif
             </nav>
@@ -189,15 +206,15 @@
     </aside>
 
     {{-- === MAIN CONTENT WRAPPER === --}}
-    <div class="flex-1 flex flex-col h-screen overflow-hidden"
+    <div class="flex-1 flex flex-col h-screen overflow-hidden ml-0"
          :class="[
-            sidebarOpen ? 'ml-64' : 'ml-20',
+            sidebarOpen ? 'md:ml-64' : 'md:ml-20',
             animationsOn ? 'content-transition' : ''
          ]"
     >
         
         {{-- TOP HEADER --}}
-        <header class="h-20 bg-slate-100 border-b border-gray-100 flex justify-between items-center px-8 sticky top-0 z-40">
+        <header class="h-20 bg-slate-100 border-b border-gray-100 flex justify-between items-center px-4 md:px-8 sticky top-0 z-40">
             
             <div class="flex items-center gap-4">
                 {{-- HAMBURGER TOGGLE --}}
@@ -205,10 +222,10 @@
                     <i class="fas fa-bars text-xl"></i>
                 </button>
 
-                <h2 class="text-2xl font-medium text-gray-800">@yield('title', 'Staff Overview')</h2>
+                <h2 class="text-xl md:text-2xl font-medium text-gray-800 truncate max-w-[200px] md:max-w-none">@yield('title', 'Staff Overview')</h2>
             </div>
             
-            <div class="flex items-center space-x-6">
+            <div class="flex items-center space-x-4 md:space-x-6">
 
                 {{-- NOTIFICATION BELL --}}
                 <div class="relative" x-data="{ notifOpen: false }">
@@ -226,7 +243,7 @@
                          x-transition:enter="transition ease-out duration-200"
                          x-transition:enter-start="opacity-0 translate-y-2"
                          x-transition:enter-end="opacity-100 translate-y-0"
-                         class="absolute right-0 mt-3 w-80 bg-white border border-gray-100 rounded-2xl shadow-2xl z-50 overflow-hidden" 
+                         class="absolute right-0 mt-3 w-72 md:w-80 bg-white border border-gray-100 rounded-2xl shadow-2xl z-50 overflow-hidden" 
                          style="display: none;">
                         
                         <div class="p-4 border-b border-gray-50 flex justify-between items-center bg-gray-50/50">
@@ -261,11 +278,14 @@
                 </div>
 
                 {{-- USER PROFILE --}}
-                <a href="{{ route('staff.profile.edit') }}" class="flex items-center space-x-3 border-l border-gray-100 pl-6 hover:bg-gray-50 transition-colors duration-200 rounded-l-lg py-1 pr-2">
+                <a href="{{ route('staff.profile.edit') }}" 
+                   class="flex items-center space-x-3 border-gray-100 pl-4 md:pl-6 transition-colors duration-200 rounded-lg py-1.5 pr-2 {{ request()->routeIs('staff.profile.edit') ? 'bg-orange-50 border-gray-200' : 'hover:bg-gray-50' }}">
+                    
                     <div class="text-right hidden md:block">
                         <p class="text-sm font-bold text-gray-900 leading-none">{{ Auth::guard('staff')->user()->name }}</p>
                         <p class="text-xs text-gray-400 mt-1 uppercase">{{ Auth::guard('staff')->user()->role }}</p>
                     </div>
+                    
                     <div class="w-10 h-10 bg-orange-600 rounded-full flex items-center justify-center text-white font-bold text-lg shadow-md shadow-orange-500/20">
                         {{ substr(Auth::guard('staff')->user()->name, 0, 1) }}
                     </div>
@@ -280,7 +300,8 @@
             @if(!request()->routeIs('staff.dashboard'))
                 <div class="max-w-auto mx-auto mb-4 px-2 pt-1">
                     <a href="{{ url()->previous() }}" 
-                       class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-orange-200 text-orange-600 hover:bg-orange-50 hover:border-orange-300 transition-all group">
+                    onclick="event.preventDefault(); history.back();"
+                    class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-orange-200 text-orange-600 hover:bg-orange-50 hover:border-orange-300 transition-all group">
                         <i class="fas fa-chevron-left text-[10px] transform group-hover:-translate-x-0.5 transition-transform"></i>
                         <span class="text-xs font-bold uppercase tracking-wide">Back</span>
                     </a>
@@ -290,19 +311,36 @@
             @yield('content')
         </main>
 
-    </div>
-<div id="staff-loader" class="fixed inset-0 z-[99999] hidden bg-slate-900/80 backdrop-blur-sm flex items-center justify-center transition-opacity duration-300">
-    <div class="bg-white rounded-2xl shadow-2xl p-8 flex flex-col items-center max-w-sm w-full mx-4">
-        <div class="w-12 h-12 border-4 border-indigo-100 border-t-indigo-600 rounded-full animate-spin mb-4"></div>
+    <div id="staff-loader" class="fixed inset-0 z-[99999] hidden bg-slate-900/50 backdrop-blur-md flex items-center justify-center transition-all duration-300">
+    <div class="relative bg-white/90 backdrop-blur-xl rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] p-8 flex flex-col items-center max-w-sm w-full mx-4 border border-white/20 ring-1 ring-slate-200">
         
-        <h3 class="text-gray-900 font-bold text-lg">System Processing</h3>
-        <p class="text-gray-500 text-xs text-center mt-2 leading-relaxed">
-            Please wait while we process your request. This may take a few seconds.
-            <br><span class="text-orange-500 text-xs">Please do not close this window.</span>
-        </p>
+        <div class="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-indigo-500 rounded-t-2xl"></div>
 
-        <div class="w-full bg-gray-100 rounded-full h-1.5 mt-6 overflow-hidden">
-            <div class="bg-indigo-600 h-1.5 rounded-full animate-[loading_2s_ease-in-out_infinite] w-1/2"></div>
+        <div class="relative mb-6">
+            <div class="absolute inset-0 bg-indigo-100 rounded-full animate-ping opacity-75"></div>
+            
+            <div class="relative w-16 h-16 border-4 border-slate-100 border-t-indigo-600 rounded-full animate-spin"></div>
+            
+            <div class="absolute inset-0 flex items-center justify-center">
+                <i class="fas fa-cog text-indigo-500 text-xl animate-[spin_4s_linear_infinite_reverse]"></i>
+            </div>
+        </div>
+        
+        <div class="text-center space-y-2">
+            <h3 class="text-slate-800 font-bold text-xl tracking-tight">System Processing</h3>
+            <p class="text-slate-500 text-sm font-medium leading-relaxed">
+                Please wait while we process your request.
+            </p>
+            
+            <div class="pt-2">
+                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-orange-50 text-orange-600 border border-orange-100 text-[11px] font-bold tracking-wide uppercase">
+                    <i class="fas fa-exclamation-circle"></i> Do not close this window
+                </span>
+            </div>
+        </div>
+
+        <div class="w-full bg-slate-100 rounded-full h-1.5 mt-8 overflow-hidden relative">
+            <div class="absolute inset-0 bg-gradient-to-r from-indigo-500 to-purple-600 w-[50%] animate-[loading_1.5s_ease-in-out_infinite] rounded-full"></div>
         </div>
     </div>
 </div>
