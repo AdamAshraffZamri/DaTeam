@@ -15,31 +15,40 @@ class GoogleDriveService
 
     public function __construct()
     {
-        // 1. Initialize Client with .env credentials
         $this->client = new Client();
-        $this->client->setClientId(env('GOOGLE_DRIVE_CLIENT_ID'));
-        $this->client->setClientSecret(env('GOOGLE_DRIVE_CLIENT_SECRET'));
-        $this->client->refreshToken(env('GOOGLE_DRIVE_REFRESH_TOKEN'));
         
-        // 2. Define Scope
+        $clientId = config('services.google.client_id');
+        $clientSecret = config('services.google.client_secret');
+        $refreshToken = config('services.google.refresh_token');
+
+        if (!$refreshToken) {
+            throw new \Exception('Google Refresh Token is missing. Please check .env and config/services.php.');
+        }
+
+        $this->client->setClientId($clientId);
+        $this->client->setClientSecret($clientSecret);
+        
+        // 1. Fetch the new Access Token
+        $token = $this->client->fetchAccessTokenWithRefreshToken($refreshToken);
+
+        // 2. CHECK FOR ERRORS: If the refresh token is invalid, Google returns an error key
+        if (isset($token['error'])) {
+            $errorMsg = 'Google Drive Auth Error: ' . json_encode($token);
+            Log::error($errorMsg);
+            throw new \Exception($errorMsg . " (Your Refresh Token is likely expired or revoked. Please generate a new one.)");
+        }
+
+        // 3. Explicitly set the token on the client
+        $this->client->setAccessToken($token);
+
+        // 4. Define Scope & Service
         $this->client->addScope(Drive::DRIVE_FILE);
-        
-        // 3. Initialize Drive Service
         $this->service = new Drive($this->client);
     }
 
-    /**
-     * Upload a file to Google Drive.
-     *
-     * @param UploadedFile $file
-     * @param string|null $folderId
-     * @param string|null $customName
-     * @return string The Web View Link (URL) of the uploaded file.
-     */
     public function uploadFile(UploadedFile $file, $folderId = null, $customName = null)
     {
         try {
-            // Determine filename: Use custom name if provided, else original
             $name = $customName 
                 ? $customName . '.' . $file->getClientOriginalExtension() 
                 : $file->getClientOriginalName();
@@ -51,34 +60,24 @@ class GoogleDriveService
 
             $content = file_get_contents($file->getRealPath());
 
-            // Upload
             $uploadedFile = $this->service->files->create($fileMetadata, [
                 'data' => $content,
                 'mimeType' => $file->getMimeType(),
                 'uploadType' => 'multipart',
-                'fields' => 'id, webViewLink' // Request the View Link immediately
+                'fields' => 'id, webViewLink'
             ]);
 
-            // Return the clickable link
             return $uploadedFile->webViewLink;
 
         } catch (\Exception $e) {
             Log::error('Google Drive Upload Error: ' . $e->getMessage());
-            return null; // Return null if upload fails so we can fallback
+            throw $e; 
         }
     }
 
-    /**
-     * Upload raw content (string) to Google Drive.
-     * Useful for generated PDFs.
-     */
     public function uploadFromString($content, $fileName, $folderId = null)
     {
         try {
-            if ($this->client->isAccessTokenExpired()) {
-                $this->client->fetchAccessTokenWithRefreshToken();
-            }
-
             $fileMetadata = new DriveFile([
                 'name' => $fileName,
                 'parents' => $folderId ? [$folderId] : []
@@ -95,7 +94,7 @@ class GoogleDriveService
 
         } catch (\Exception $e) {
             Log::error('Drive Upload Error: ' . $e->getMessage());
-            return null;
+            throw $e;
         }
     }
 }

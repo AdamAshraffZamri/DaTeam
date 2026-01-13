@@ -8,6 +8,11 @@
         <span class="font-bold">Success!</span> {{ session('success') }}
     </div>
 @endif
+@if(session('error'))
+    <div class="p-4 mb-6 text-sm text-red-800 rounded-2xl bg-red-50 border border-red-100 shadow-sm" role="alert">
+        <span class="font-bold">Error!</span> {{ session('error') }}
+    </div>
+@endif
 
 {{-- Main Dashboard Container --}}
 <div class="min-h-screen bg-slate-100 rounded-2xl p-6">
