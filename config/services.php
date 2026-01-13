@@ -35,17 +35,5 @@ return [
         ],
     ],
 
-    // ADDED: Google Drive Configuration
-    'google' => [
-        'client_id' => env('GOOGLE_DRIVE_CLIENT_ID'),
-        'client_secret' => env('GOOGLE_DRIVE_CLIENT_SECRET'),
-        'refresh_token' => env('GOOGLE_DRIVE_REFRESH_TOKEN'),
-        // Folders
-        'folder_reports' => env('GOOGLE_DRIVE_REPORTS'),
-        'folder_customer_info' => env('GOOGLE_DRIVE_CUSTOMER_INFORMATION'),
-        'folder_agreements' => env('GOOGLE_DRIVE_AGREEMENTS'),
-        'folder_invoices' => env('GOOGLE_DRIVE_INVOICES'),
-        'folder_receipts' => env('GOOGLE_DRIVE_RECEIPTS'),
-    ],
 
 ];
