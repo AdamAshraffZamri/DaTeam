@@ -15,6 +15,7 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use Google\Client;
 use Google\Service\Drive;
 use Google\Service\Drive\DriveFile;
+use App\Services\GoogleDriveService;
 
 class ReportController extends Controller
 {
@@ -295,7 +296,7 @@ class ReportController extends Controller
         ));
     }
 
-    public function exportToDrive(Request $request)
+    public function exportToDrive(Request $request, GoogleDriveService $driveService)
     {
         try {
             // --- 1. GET USER SELECTION ---
@@ -425,22 +426,12 @@ class ReportController extends Controller
             $pdfContent = $pdf->output();
             $filename = "{$filenameLabel}_" . now()->format('His') . '.pdf';
 
-            // Google Drive Upload
-            $client = new Client();
-            $client->setClientId(env('GOOGLE_DRIVE_CLIENT_ID'));
-            $client->setClientSecret(env('GOOGLE_DRIVE_CLIENT_SECRET'));
-            $client->refreshToken(env('GOOGLE_DRIVE_REFRESH_TOKEN'));
-            $service = new Drive($client);
             $folderId = env('GOOGLE_DRIVE_REPORTS');
             
-            $fileMetadata = new DriveFile(['name' => $filename, 'parents' => [$folderId]]);
-            $service->files->create($fileMetadata, [
-                'data' => $pdfContent,
-                'mimeType' => 'application/pdf',
-                'uploadType' => 'multipart'
-            ]);
+            // Use the injected service to upload
+            $link = $driveService->uploadFromString($pdfContent, $filename, $folderId);
 
-            return back()->with('success', "Report generated and saved to Drive: $filename");
+            return back()->with('success', "Report generated and saved to Drive! Link: " . $link);
 
         } catch (\Exception $e) {
             return back()->with('error', 'Error: ' . $e->getMessage());
