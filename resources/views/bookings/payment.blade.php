@@ -231,7 +231,10 @@
                  RIGHT COLUMN: FORM & ACTION
                  ============================== --}}
             {{-- SERVER VALIDATION --}}
-            @if ($errors->any())
+            
+
+            <div class="lg:col-span-5">
+                @if ($errors->any())
                 <div style="background-color: red; color: white; padding: 15px; margin-bottom: 20px; border-radius: 8px;">
                     <h3>Sila betulkan error berikut:</h3>
                     <ul>
@@ -241,8 +244,6 @@
                     </ul>
                 </div>
             @endif
-
-            <div class="lg:col-span-5">
                 <form id="paymentForm" action="{{ route('book.payment.submit', ['id' => $vehicle->VehicleID]) }}" method="POST" enctype="multipart/form-data" novalidate>                    @csrf 
                     @csrf
                     {{-- Hidden Info Inputs --}}
