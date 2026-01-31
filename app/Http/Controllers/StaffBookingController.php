@@ -18,11 +18,59 @@ use Carbon\Carbon;
 use App\Services\GoogleDriveService;
 use Illuminate\Support\Facades\Log;
 
+/**
+ * StaffBookingController
+ * 
+ * Manages staff-side booking operations including verification, payment processing, and operational tracking.
+ * Provides dashboard analytics, booking management, inspection coordination, and revenue reporting.
+ * 
+ * Key Features:
+ * - Dashboard with revenue metrics, charts, and operational overview
+ * - Real-time analytics (active rentals, pending bookings, utilization rates)
+ * - Booking listing and searching with status filtering
+ * - Payment verification and dispute handling
+ * - Inspection coordination (pickup/return inspections)
+ * - PDF agreement and receipt generation
+ * - Email notifications to customers
+ * - Booking cancellation and modification
+ * - Revenue reporting (daily, weekly, monthly)
+ * 
+ * Database Constraints:
+ * - bookingStatus: max 50 characters (Pending, Confirmed, Active, Completed, Cancelled)
+ * - reason: max 150 characters (cancellation or modification reason)
+ * - totalCost: decimal(10,2)
+ * - remarks: max 150 characters
+ * 
+ * Authentication:
+ * - Staff guard required for all operations
+ * - Only authorized staff can manage bookings
+ * 
+ * Key Workflows:
+ * 1. Dashboard: View real-time metrics and upcoming tasks
+ * 2. Verification: Approve bookings after payment confirmation
+ * 3. Inspection: Coordinate vehicle inspections before pickup and after return
+ * 4. Payment: Process deposits and balances
+ * 5. Reporting: Generate revenue reports and performance metrics
+ * 
+ * Dependencies:
+ * - GoogleDriveService: Document storage and backup
+ * - Booking model: Booking records and relationships
+ * - Payment model: Payment tracking and verification
+ * - Customer notification system: Email and notification dispatch
+ * - DomPDF: PDF document generation
+ */
 class StaffBookingController extends Controller
 {
     protected $driveService;
 
-    // 1. Inject the Service
+    /**
+     * __construct()
+     * 
+     * Inject Google Drive Service for document operations.
+     * Enables file backup, storage, and retrieval functionality.
+     * 
+     * @param GoogleDriveService $driveService The Google Drive service instance
+     */
     public function __construct(GoogleDriveService $driveService)
     {
         $this->driveService = $driveService;
@@ -501,6 +549,7 @@ class StaffBookingController extends Controller
             'start_date' => 'required|date',
             'end_date'   => 'required|date|after_or_equal:start_date',
             'percentage' => 'required|numeric|min:-100|max:100', // [CHANGED] Allow negative for discounts
+            'reason' => 'nullable|string|max:150',
         ]);
 
         $rules = Cache::get('dynamic_pricing_rules', []);
@@ -580,7 +629,7 @@ class StaffBookingController extends Controller
     {
         $request->validate([
             'reject_action' => 'required|in:fraud,refund',
-            'reason' => 'required|string|max:255',
+            'reason' => 'required|string|max:150',
         ]);
 
         $booking = Booking::with('payment')->findOrFail($id);

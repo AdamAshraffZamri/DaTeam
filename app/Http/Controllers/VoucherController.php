@@ -8,12 +8,92 @@ use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Vehicle;
 
+/**
+ * VoucherController
+ * 
+ * Manages voucher application and retrieval for booking discounts.
+ * Handles voucher validation, discount calculation, and availability checks.
+ * 
+ * Key Features:
+ * - Voucher code validation and application
+ * - Discount calculation (percentage, fixed amount, or free time)
+ * - Day-based restrictions (Monday-Thursday for loyalty vouchers)
+ * - Expiry date validation
+ * - Usage status tracking (single-use or multi-use)
+ * - Multiple discount types (Rental Discount, Free Half Day, etc.)
+ * - Vehicle-specific pricing integration
+ * 
+ * Voucher Types:
+ * 1. Rental Discount: Percentage-based or fixed amount discount
+ * 2. Free Half Day: 12-hour rental free (loyalty reward)
+ * 3. Seasonal Promotion: Time-limited special offers
+ * 4. Referral Voucher: Special promotional codes
+ * 
+ * Database Constraints:
+ * - voucherCode, code: max 50 characters (unique identifier)
+ * - voucherType: max 50 characters
+ * - voucherAmount: decimal(10,2)
+ * - discount_percent: decimal(5,2) percentage discount
+ * - conditions: text field for detailed terms
+ * 
+ * Discount Rules:
+ * - Loyalty vouchers (Free Half Day): Monday-Thursday only
+ * - Discount cannot exceed rental cost (after deposit deduction)
+ * - 12-hour free rental calculated from vehicle hourly rates
+ * - Percentage and fixed amount automatically calculated
+ * 
+ * Authentication:
+ * - Customer authenticated (via web guard)
+ * - Returns JSON for AJAX requests
+ */
 class VoucherController extends Controller
 {
 
-    // File: app/Http/Controllers/VoucherController.php
-
-public function apply(Request $request)
+    /**
+     * apply()
+     * 
+     * Validate and apply voucher code to current booking, calculating discount amount.
+     * Performs comprehensive validation including expiry, usage, day restrictions, and discount calculation.
+     * 
+     * Process:
+     * 1. Validate vehicle exists and load pricing data
+     * 2. Find voucher by code in database
+     * 3. Verify validity period (validFrom to validUntil)
+     * 4. Check usage status (not already used if single-use)
+     * 5. Validate day restrictions for loyalty vouchers (Mon-Thu only)
+     * 6. Calculate discount based on voucher type:
+     *    - Free Half Day: 12 hours from hourly_rates or base price
+     *    - Percentage: Discount on rental cost (excluding deposit)
+     *    - Fixed Amount: Direct deduction from rental cost
+     * 7. Ensure discount doesn't exceed rental cost
+     * 8. Calculate and return new total
+     * 
+     * Request Parameters:
+     * - code: Voucher code to validate
+     * - total_amount: Current booking total (RM)
+     * - pickup_date: Date of vehicle pickup (format: YYYY-MM-DD)
+     * - vehicle_id: Vehicle ID for pricing lookup
+     * 
+     * Response JSON:
+     * - success: Boolean indicating validation result
+     * - message: Success or error message
+     * - discount_amount: Amount discounted (if successful)
+     * - new_total: New total after discount (if successful)
+     * - voucherID: Voucher database ID (if successful)
+     * - display_title: Display name for voucher ("FREE HALF DAY", "25% OFF", "RM 100 OFF")
+     * 
+     * Error Cases:
+     * - Invalid voucher code: "Invalid voucher code."
+     * - Expired voucher: "This voucher has expired."
+     * - Already used: "This voucher has already been used."
+     * - Wrong day (loyalty): "Loyalty vouchers are valid Mon-Thu only."
+     * - Missing vehicle: "Vehicle data missing."
+     * - Missing pickup date: "Pickup date is required."
+     * 
+     * @param Request $request The HTTP request with voucher and booking details
+     * @return \Illuminate\Http\JsonResponse JSON response with validation result and discount info
+     */
+    public function apply(Request $request)
 {
     $code = $request->input('code');
     $currentTotal = $request->input('total_amount');

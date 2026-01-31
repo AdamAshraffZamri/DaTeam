@@ -6,19 +6,76 @@ use App\Models\LoyaltyPoint;
 use App\Models\Voucher;
 use App\Models\Booking;
 use App\Models\LoyaltyHistory;
-use App\Models\Reward; // <--- PASTIKAN MODEL INI WUJUD
+use App\Models\Reward;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 use Carbon\Carbon;
 
+/**
+ * LoyaltyController
+ * 
+ * Manages customer loyalty program including points earning, redemption, rewards, and tier progression.
+ * Handles both customer-side dashboard and staff-side reward administration.
+ * 
+ * Key Features:
+ * - Loyalty points tracking and calculation
+ * - Tier management (Bronze, Silver, Gold, etc.)
+ * - Milestone-based rewards (every 12 qualified bookings)
+ * - Voucher generation and management
+ * - Reward redemption and history
+ * - Leaderboard/rankings display
+ * - Activity tracking (points earned/redeemed)
+ * - Staff reward administration and creation
+ * 
+ * Database Constraints:
+ * - points: integer, non-negative
+ * - tier: max 50 characters (Bronze, Silver, Gold, Platinum)
+ * - description: max 150 characters (reward/voucher descriptions)
+ * - voucherCode, code: max 50 characters
+ * - voucherAmount: decimal(10,2)
+ * - discount_percent: decimal(5,2) - percentage discount value
+ * 
+ * Loyalty Mechanics:
+ * 1. Points Earning: 1 point per booking over 9 hours
+ * 2. Milestone Rewards: Every 12 qualified bookings triggers a reward
+ * 3. Tier Progression: Based on total points accumulated
+ * 4. Voucher Redemption: Convert points to vouchers or discounts
+ * 5. Leaderboard: Top 10 customers by points
+ * 
+ * Authentication:
+ * - web guard: Customer loyalty dashboard
+ * - staff guard: Reward administration (admin only)
+ * 
+ * Dependencies:
+ * - LoyaltyPoint model: Customer loyalty records
+ * - Reward model: Reward definitions and catalog
+ * - Voucher model: Voucher management
+ * - Booking model: Points calculation basis
+ * - Carbon: Date calculations for voucher validity
+ */
 class LoyaltyController extends Controller
 {
-    // =========================================================================
-    // CUSTOMER SIDE
-    // =========================================================================
-
-    // --- DISPLAY DASHBOARD ---
+    /**
+     * index()
+     * 
+     * Display customer loyalty dashboard with points, tier, rewards, and activity.
+     * Shows loyalty progress, available and past vouchers, leaderboard, and upcoming rewards.
+     * 
+     * Dashboard Sections:
+     * 1. Loyalty Status: Current points, tier, and progression to next tier
+     * 2. Rewards Progress: Milestone tracking (12-booking cycle), next reward preview
+     * 3. Vouchers: Active/usable vouchers and redemption history
+     * 4. Leaderboard: Top 10 customers by points and user's current rank
+     * 5. Activity: Recent points transactions (earned/redeemed) with filtering
+     * 
+     * Filters (Activity Section):
+     * - activity_type: Filter by earned, redeemed, or all
+     * - date: Filter by specific date
+     * 
+     * @param Request $request The HTTP request containing filter parameters
+     * @return \Illuminate\View\View The loyalty dashboard view with all metrics
+     */
     public function index(Request $request)
     {
         $userId = Auth::id();
@@ -342,8 +399,8 @@ class LoyaltyController extends Controller
     {
         //simple validation
         $request->validate([
-            'name' => 'required',
-            'offer' => 'required',
+            'name' => 'required|max:100',
+            'offer' => 'required|max:150',
             'points' => $request->filled('milestone_step') ? 'nullable' : 'required|integer',
             'code_prefix' => 'required|max:10',
         ]);
@@ -415,7 +472,7 @@ class LoyaltyController extends Controller
             'type' => 'required|in:Rental Discount,Merchant Reward',
             'valid_from' => 'required', // Boleh terima datetime string
             'valid_until' => 'required',
-            'description' => 'nullable|string|max:255',
+            'description' => 'nullable|string|max:150',
         ]);
 
         // 1. Tentukan masuk column mana (RM atau %)
@@ -513,7 +570,7 @@ class LoyaltyController extends Controller
             'type' => 'required|in:Rental Discount,Merchant Reward',
             'valid_from' => 'required',
             'valid_until' => 'required',
-            'description' => 'nullable|string|max:255',
+            'description' => 'nullable|string|max:150',
         ]);
 
         $voucher = Voucher::findOrFail($voucherId);

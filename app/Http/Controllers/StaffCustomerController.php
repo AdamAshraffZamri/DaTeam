@@ -10,9 +10,58 @@ use App\Services\GoogleDriveService;
 use Illuminate\Support\Facades\Storage;
 use Carbon\Carbon;
 
+/**
+ * StaffCustomerController
+ * 
+ * Manages staff operations on customer accounts including verification, blacklisting, and penalty management.
+ * Handles customer lifecycle from application approval through to account maintenance and restrictions.
+ * 
+ * Key Features:
+ * - Customer listing and searching (by name, email, student/staff ID)
+ * - Customer application approval/rejection with reasons
+ * - Blacklist management (add, remove) with automatic status restoration
+ * - Penalty viewing and dispute resolution
+ * - Customer document verification
+ * - Account status tracking
+ * 
+ * Database Constraints:
+ * - accountStat: max 50 characters (unverified, Confirmed, rejected, etc.)
+ * - rejection_reason: text field for storing rejection explanations
+ * - blacklist_reason: text field for blacklist reasons
+ * - fullName: max 100 characters
+ * - email: max 100 characters
+ * - stustaffID: max 50 characters
+ * 
+ * Authentication:
+ * - Staff guard required for all operations
+ * - Only authorized staff can manage customers
+ * 
+ * Key Workflows:
+ * 1. Approval: Verify customer details → Update status to 'Confirmed'
+ * 2. Rejection: Review application → Set status to 'rejected' with reasons
+ * 3. Blacklisting: Restrict customer temporarily → Stores previous status for restoration
+ * 4. Penalties: View unpaid penalties → Manage dispute resolutions
+ * 
+ * Dependencies:
+ * - Customer model: Core customer data and relationships
+ * - Penalties model: Penalty history and tracking
+ * - GoogleDriveService: Document backup and verification
+ */
 class StaffCustomerController extends Controller
 {
-    // Show the list of customers
+    /**
+     * index()
+     * 
+     * Display paginated list of all customers with search functionality.
+     * Allows staff to search by customer name, email, or student/staff ID.
+     * Returns 10 customers per page in descending order (newest first).
+     * 
+     * Search Parameters:
+     * - search: String to match against fullName, email, or stustaffID
+     * 
+     * @param Request $request The HTTP request containing search parameters
+     * @return \Illuminate\View\View The customer listing view
+     */
     public function index(Request $request)
     {
         $query = Customer::query();

@@ -9,10 +9,58 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Carbon\Carbon;
 
+/**
+ * FleetController
+ * 
+ * Manages vehicle fleet operations including vehicle creation, editing, maintenance tracking, and availability management.
+ * Handles the complete vehicle lifecycle from registration to retirement.
+ * 
+ * Key Features:
+ * - Vehicle inventory listing with search and filtering (by brand, model, plate number)
+ * - Vehicle creation and editing (specifications, pricing, documents)
+ * - Availability and activation/deactivation management
+ * - Maintenance tracking and scheduling
+ * - Next booking prediction
+ * - Status calculations (available, booked, maintenance, inactive)
+ * - Document upload for vehicle registration, insurance, permits
+ * 
+ * Database Constraints:
+ * - plateNo: max 20 characters (vehicle license plate)
+ * - brand: max 100 characters (manufacturer name)
+ * - model: max 100 characters (vehicle model name)
+ * - vehicle_category: max 50 characters (car, motorcycle, etc.)
+ * - type: max 50 characters (sedan, compact, scooter, etc.)
+ * - color: max 50 characters
+ * - fuelType: max 50 characters (petrol, diesel, electric, etc.)
+ * - image, road_tax_image, grant_image, insurance_image: file paths (up to 255)
+ * - hourly_rates: JSON field storing tiered pricing (1h, 3h, 12h, 24h rates)
+ * - baseDepo: decimal(10,2) - security deposit amount
+ * - priceHour: decimal(10,2) - base hourly rate
+ * 
+ * Authentication:
+ * - Staff guard required for all operations
+ * - Only authorized staff can manage fleet
+ * 
+ * Dependencies:
+ * - Storage facade: Local file storage for vehicle images
+ * - Carbon: Date calculations for maintenance scheduling
+ * - Booking model: Check current vehicle reservations
+ */
 class FleetController extends Controller
 {
     /**
-     * Display a listing of the fleet with status filters.
+     * index()
+     * 
+     * Display paginated list of vehicles with search, filter, and status information.
+     * Shows vehicle details including next booking date, current status, and availability.
+     * 
+     * Filter Options:
+     * - search: Full-text search on brand, model, and plate number
+     * - model: Filter by specific vehicle model
+     * - status: Filter by availability (active/inactive)
+     * 
+     * @param Request $request The HTTP request containing filter parameters
+     * @return \Illuminate\View\View The fleet listing view with vehicles and metadata
      */
     public function index(Request $request)
     {
@@ -95,10 +143,10 @@ class FleetController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'plateNo' => 'required|string|unique:vehicles,plateNo',
+            'plateNo' => 'required|string|max:20|unique:vehicles,plateNo',
             'image' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
-            'brand'   => 'required',
-            'model'   => 'required',
+            'brand'   => 'required|max:100',
+            'model'   => 'required|max:100',
             'road_tax_image' => 'nullable|mimes:jpeg,png,jpg,pdf|max:2048',
             'grant_image'    => 'nullable|mimes:jpeg,png,jpg,pdf|max:2048',
             'insurance_image'=> 'nullable|mimes:jpeg,png,jpg,pdf|max:2048',

@@ -11,9 +11,71 @@ use Illuminate\Support\Facades\Auth;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Mail;
 
+/**
+ * InspectionController
+ * 
+ * Manages vehicle condition inspections before pickup (pre-rental) and after return (post-rental).
+ * Captures vehicle condition, documentation, and digital staff signatures for legal protection.
+ * 
+ * Key Features:
+ * - Pre-pickup inspection: Verify vehicle condition before rental starts
+ * - Post-return inspection: Document vehicle condition upon return
+ * - Photo documentation: Multiple photos of vehicle condition, damage
+ * - Fuel level recording: Track fuel state for surcharge calculation
+ * - Mileage recording: Track distance for overage charges
+ * - Digital staff signatures: Legal verification of inspection
+ * - Penalty calculation: Automatic penalties for damage or fuel/mileage issues
+ * - Status updates: Transition bookings from Confirmed → Active → Completed
+ * 
+ * Inspection Workflow:
+ * 1. Pickup Inspection:
+ *    - Customer arrives at pickup location
+ *    - Staff inspects vehicle condition, photographs damage
+ *    - Records initial fuel level and mileage
+ *    - Both agree on condition and sign agreement
+ *    - Booking status: Confirmed → Active
+ * 
+ * 2. Return Inspection:
+ *    - Customer returns vehicle
+ *    - Staff inspects for new damage
+ *    - Records final fuel level and mileage
+ *    - Calculates fuel and mileage surcharges
+ *    - Generates penalty record if issues found
+ *    - Booking status: Active → Completed
+ * 
+ * Database Constraints:
+ * - bookingID: Foreign key to bookings
+ * - staffID: Foreign key to staff
+ * - inspectionType: max 50 characters (Pickup, Return)
+ * - fuelLevel: max 50 characters (Full, 3/4, 1/2, 1/4, Empty, or percentage)
+ * - mileage: integer - odometer reading
+ * - notes: text field for inspection observations
+ * 
+ * Authentication:
+ * - Staff guard required for all operations
+ * - Only authorized staff can create and modify inspections
+ */
 class InspectionController extends Controller
 {
-    // --- 1. TASK LIST (To Pickup / To Return) ---
+    /**
+     * index()
+     * 
+     * Display inspection task lists showing vehicles pending pickup and return inspections.
+     * Separates bookings into two categories based on current status.
+     * 
+     * Task Categories:
+     * 1. "To Pickup": Bookings with Confirmed status
+     *    - Customer has made payment and signed agreement
+     *    - Ready for vehicle pickup inspection
+     *    - Sorted by earliest booking date
+     * 
+     * 2. "To Return": Bookings with Active status
+     *    - Customer has rental vehicle
+     *    - Return inspection pending
+     *    - Sorted by earliest return date
+     * 
+     * @return \Illuminate\View\View The inspection task list view
+     */
     public function index()
     {
         // "To Pickup": Bookings that are CONFIRMED (Payment verified, Agreement signed)

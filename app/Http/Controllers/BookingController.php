@@ -20,6 +20,40 @@ use Carbon\Carbon;
 use Carbon\CarbonPeriod;
 use Barryvdh\DomPDF\Facade\Pdf;
 
+/**
+ * BookingController
+ * 
+ * Manages customer rental booking workflows including search, creation, management, and cancellation.
+ * Handles the complete booking lifecycle from vehicle selection through to completion/cancellation.
+ * 
+ * Key Features:
+ * - Vehicle search and availability filtering
+ * - Booking validation (profile completion, blacklist checks, penalty settlements)
+ * - Payment processing and deposit handling
+ * - Agreement signing and PDF generation
+ * - Booking status tracking and history
+ * - Penalty calculations and dispute handling
+ * - Email notifications for booking status changes
+ * - Google Drive integration for document backup
+ * 
+ * Database Constraints:
+ * - bookingStatus: max 50 characters (Pending, Confirmed, Active, Completed, Cancelled, etc.)
+ * - remarks: max 150 characters
+ * - totalCost: decimal(10,2)
+ * - Booking dates use date and time fields for flexibility
+ * 
+ * Security:
+ * - All operations authenticated via web guard (customers only)
+ * - Profile validation before booking creation
+ * - Booking owner verification before modifications
+ * - CSRF token requirement for form submissions
+ * 
+ * Dependencies:
+ * - GoogleDriveService: File backup and storage
+ * - Payment model: Payment tracking and history
+ * - Vehicle model: Availability and rate information
+ * - Carbon library: Date/time calculations
+ */
 class BookingController extends Controller
 {
     protected $driveService;
