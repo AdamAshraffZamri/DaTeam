@@ -13,8 +13,8 @@ return new class extends Migration
     {
         Schema::table('customers', function (Blueprint $table) {
             // Existing lines
-            $table->string('bankName')->nullable()->after('password');
-            $table->string('bankAccountNo')->nullable()->after('bankName');
+            $table->string('bankName', 100)->nullable()->after('password');
+            $table->string('bankAccountNo', 50)->nullable()->after('bankName');
         });
     }
 

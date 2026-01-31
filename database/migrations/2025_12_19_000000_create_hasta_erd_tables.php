@@ -10,7 +10,7 @@ return new class extends Migration
     {
         // 0. SYSTEM TABLES (Required by Laravel)
         Schema::create('sessions', function (Blueprint $table) {
-            $table->string('id')->primary();
+            $table->string('id', 100)->primary();
             $table->foreignId('user_id')->nullable()->index();
             $table->string('ip_address', 45)->nullable();
             $table->text('user_agent')->nullable();
@@ -19,20 +19,20 @@ return new class extends Migration
         });
 
         Schema::create('cache', function (Blueprint $table) {
-            $table->string('key')->primary();
+            $table->string('key', 100)->primary();
             $table->mediumText('value');
             $table->integer('expiration');
         });
 
         Schema::create('cache_locks', function (Blueprint $table) {
-            $table->string('key')->primary();
-            $table->string('owner');
+            $table->string('key', 100)->primary();
+            $table->string('owner', 100);
             $table->integer('expiration');
         });
 
         Schema::create('jobs', function (Blueprint $table) {
             $table->id();
-            $table->string('queue')->index();
+            $table->string('queue', 100)->index();
             $table->longText('payload');
             $table->unsignedTinyInteger('attempts');
             $table->unsignedInteger('reserved_at')->nullable();
@@ -41,8 +41,8 @@ return new class extends Migration
         });
 
         Schema::create('job_batches', function (Blueprint $table) {
-            $table->string('id')->primary();
-            $table->string('name');
+            $table->string('id', 100)->primary();
+            $table->string('name', 100);
             $table->integer('total_jobs');
             $table->integer('pending_jobs');
             $table->integer('failed_jobs');
@@ -55,7 +55,7 @@ return new class extends Migration
 
         Schema::create('failed_jobs', function (Blueprint $table) {
             $table->id();
-            $table->string('uuid')->unique();
+            $table->string('uuid', 100)->unique();
             $table->text('connection');
             $table->text('queue');
             $table->longText('payload');
@@ -67,11 +67,11 @@ return new class extends Migration
         // 1. STAFF (Independent)
         Schema::create('staff', function (Blueprint $table) {
             $table->id('staffID'); // PK
-            $table->string('name');
-            $table->string('role')->default('staff');
-            $table->string('email')->unique();
-            $table->string('phoneNo')->nullable();
-            $table->string('password');
+            $table->string('name', 100);
+            $table->string('role', 50)->default('staff');
+            $table->string('email', 100)->unique();
+            $table->string('phoneNo', 20)->nullable();
+            $table->string('password', 255);
             $table->boolean('active')->default(true);
             $table->timestamps();
         });
@@ -79,30 +79,30 @@ return new class extends Migration
         // 2. CUSTOMER (Independent) - UPDATED FOR PROFILE FORM
         Schema::create('customers', function (Blueprint $table) {
             $table->id('customerID'); // PK
-            $table->string('fullName'); // Maps to 'name' in form
-            $table->string('email')->unique();
-            $table->string('phoneNo')->nullable();
-            $table->string('stustaffID')->nullable();
-            $table->string('driving_license_expiry')->nullable()->unique();
+            $table->string('fullName', 100); // Maps to 'name' in form
+            $table->string('email', 100)->unique();
+            $table->string('phoneNo', 20)->nullable();
+            $table->string('stustaffID', 50)->nullable();
+            $table->string('driving_license_expiry', 50)->nullable()->unique();
             $table->text('homeAddress')->nullable();
             $table->text('collegeAddress')->nullable();
-            $table->string('password');
+            $table->string('password', 255);
             
             // --- NEWLY ADDED FIELDS ---
-            $table->string('faculty')->nullable(); // Added as requested
-            $table->string('ic_passport')->nullable();
-            $table->string('nationality')->nullable();
+            $table->string('faculty', 100)->nullable(); // Added as requested
+            $table->string('ic_passport', 50)->nullable();
+            $table->string('nationality', 50)->nullable();
             $table->date('dob')->nullable();
-            $table->string('emergency_contact_no')->nullable();
+            $table->string('emergency_contact_no', 20)->nullable();
             
             // Image Upload Paths
-            $table->string('avatar')->nullable();
-            $table->string('student_card_image')->nullable();
-            $table->string('ic_passport_image')->nullable();
-            $table->string('driving_license_image')->nullable();
+            $table->string('avatar', 255)->nullable();
+            $table->string('student_card_image', 255)->nullable();
+            $table->string('ic_passport_image', 255)->nullable();
+            $table->string('driving_license_image', 255)->nullable();
             // --------------------------
 
-            $table->string('accountStat')->default('active');
+            $table->string('accountStat', 50)->default('active');
             $table->boolean('blacklisted')->default(false);
             $table->timestamps();
         });
@@ -110,13 +110,13 @@ return new class extends Migration
         // 3. VEHICLE (Independent)
         Schema::create('vehicles', function (Blueprint $table) {
             $table->id('VehicleID'); // PK
-            $table->string('plateNo')->unique();
-            $table->string('model');
-            $table->string('type');
+            $table->string('plateNo', 20)->unique();
+            $table->string('model', 100);
+            $table->string('type', 50);
             $table->decimal('priceHour', 10, 2);
             $table->boolean('availability')->default(true);
             $table->integer('mileage');
-            $table->string('fuelType');
+            $table->string('fuelType', 50);
             $table->decimal('baseDepo', 10, 2);
             $table->timestamps();
         });
@@ -125,9 +125,9 @@ return new class extends Migration
         Schema::create('vouchers', function (Blueprint $table) {
             $table->id('voucherID'); // PK
             $table->unsignedBigInteger('customerID')->nullable();
-            $table->string('voucherCode')->unique();
+            $table->string('voucherCode', 50)->unique();
             $table->decimal('voucherAmount', 10, 2);
-            $table->string('voucherType');
+            $table->string('voucherType', 50);
             $table->date('validFrom');
             $table->date('validUntil');
             $table->text('conditions')->nullable();
@@ -155,15 +155,15 @@ return new class extends Migration
             $table->date('actualReturnDate')->nullable();
             $table->time('actualReturnTime')->nullable();
 
-            $table->string('pickupLocation');
-            $table->string('returnLocation');
+            $table->string('pickupLocation', 150);
+            $table->string('returnLocation', 150);
             $table->decimal('totalCost', 10, 2);
             
             $table->date('aggreementDate')->nullable(); 
-            $table->string('aggreementLink')->nullable(); 
+            $table->string('aggreementLink', 255)->nullable(); 
 
-            $table->string('bookingStatus')->default('Pending');
-            $table->string('bookingType')->default('Standard');
+            $table->string('bookingStatus', 50)->default('Pending');
+            $table->string('bookingType', 50)->default('Standard');
 
             $table->timestamps();
 
@@ -181,10 +181,10 @@ return new class extends Migration
             $table->decimal('amount', 10, 2);
             $table->decimal('depoAmount', 10, 2);
             $table->dateTime('transactionDate');
-            $table->string('paymentMethod');
-            $table->string('paymentStatus');
+            $table->string('paymentMethod', 50);
+            $table->string('paymentStatus', 50);
             
-            $table->string('depoStatus')->default('Pending');
+            $table->string('depoStatus', 50)->default('Pending');
             $table->date('depoRequestDate')->nullable();
             $table->date('depoRefundedDate')->nullable();
             
@@ -203,10 +203,10 @@ return new class extends Migration
 
             $table->integer('lateReturnHour')->default(0);
             $table->decimal('penaltyFees', 10, 2)->default(0.00);
-            $table->string('penaltyStatus')->default('Unpaid');
+            $table->string('penaltyStatus', 50)->default('Unpaid');
             $table->decimal('fuelSurcharge', 10, 2)->default(0.00);
             $table->decimal('mileageSurcharge', 10, 2)->default(0.00);
-            $table->string('status')->default('Pending');
+            $table->string('status', 50)->default('Pending');
 
             $table->timestamps();
 
@@ -219,14 +219,14 @@ return new class extends Migration
             $table->unsignedBigInteger('bookingID');
             $table->unsignedBigInteger('staffID')->nullable();
 
-            $table->string('inspectionType');
+            $table->string('inspectionType', 50);
             $table->dateTime('inspectionDate');
             $table->decimal('damageCosts', 10, 2)->default(0.00);
             
             $table->text('photosBefore')->nullable();
             $table->text('photosAfter')->nullable();
-            $table->string('fuelBefore')->nullable();
-            $table->string('fuelAfter')->nullable();
+            $table->string('fuelBefore', 50)->nullable();
+            $table->string('fuelAfter', 50)->nullable();
             $table->integer('mileageBefore')->nullable();
             $table->integer('mileageAfter')->nullable();
 
@@ -241,7 +241,7 @@ return new class extends Migration
             $table->id('loyaltyID'); // PK
             $table->unsignedBigInteger('customerID')->unique(); // 1-to-1 relationship
 
-            $table->string('tier')->default('Bronze');
+            $table->string('tier', 50)->default('Bronze');
             $table->integer('pointsEarned')->default(0);
             $table->integer('pointsRedeemed')->default(0);
             $table->integer('totalPoints')->default(0);
@@ -259,8 +259,8 @@ return new class extends Migration
 
             $table->integer('rating');
             $table->text('comment')->nullable();
-            $table->string('type');
-            $table->string('status')->default('Pending');
+            $table->string('type', 50);
+            $table->string('status', 50)->default('Pending');
             $table->text('adminNotes')->nullable();
 
             $table->timestamps();
@@ -275,7 +275,7 @@ return new class extends Migration
             $table->unsignedBigInteger('customerID')->nullable();
             $table->unsignedBigInteger('staffID')->nullable();
 
-            $table->string('loginStatus');
+            $table->string('loginStatus', 50);
             $table->dateTime('timestamp');
             $table->text('eventDetails')->nullable();
 
@@ -291,7 +291,7 @@ return new class extends Migration
             $table->unsignedBigInteger('VehicleID');
             $table->unsignedBigInteger('StaffID')->nullable();
             $table->date('date')->nullable(); 
-            $table->string('description')->nullable();
+            $table->string('description', 255)->nullable();
             $table->decimal('cost', 10, 2)->default(0.00);
 
             $table->timestamps();

@@ -12,15 +12,15 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('vehicles', function (Blueprint $table) {
-            $table->string('vehicle_category')->default('car'); // car or bike
-            $table->string('brand')->nullable();
+            $table->string('vehicle_category', 50)->default('car'); // car or bike
+            $table->string('brand', 100)->nullable();
             $table->integer('year')->nullable();
-            $table->string('color')->nullable();
+            $table->string('color', 50)->nullable();
             $table->json('hourly_rates')->nullable(); // Store tiers: 1, 3, 5, 7, 9, 12, 24
-            $table->string('owner_name')->nullable();
-            $table->string('owner_phone')->nullable();
-            $table->string('owner_nric')->nullable();
-            $table->string('image')->nullable();
+            $table->string('owner_name', 100)->nullable();
+            $table->string('owner_phone', 20)->nullable();
+            $table->string('owner_nric', 50)->nullable();
+            $table->string('image', 255)->nullable();
             $table->json('blocked_dates')->nullable()->after('availability');
         });
     }
