@@ -129,17 +129,13 @@ class FleetController extends Controller
         return view('staff.fleet.index', compact('vehicles', 'vehicleModels', 'total', 'activeCount', 'inactiveCount'));
     }
 
-    /**
-     * Show the form for creating a new vehicle.
-     */
+    // Show Create Vehicle Form
     public function create()
     {
         return view('staff.fleet.create');
     }
 
-    /**
-     * Store a newly created vehicle in storage.
-     */
+    // Store New Vehicle
     public function store(Request $request)
     {
         $request->validate([
@@ -231,6 +227,7 @@ class FleetController extends Controller
             ->with('success', 'Vehicle registered successfully.');
     }
 
+    // Show Vehicle Details
     public function show($id)
     {
         // [UPDATED] Eager load 'staff' for maintenance history
@@ -319,10 +316,8 @@ class FleetController extends Controller
 
         return view('staff.fleet.show', compact('vehicle', 'currentMileage', 'events', 'netProfit', 'totalEarnings', 'totalMaintenanceCost'));
     }
-
-    // ... [Rest of the controller methods destroyMaintenance, storeMaintenance, etc. remain unchanged]
     
-    // This method handles the "Unblock Date" button
+    // Unblock Maintenance / Block Date
     public function destroyMaintenance($id)
     {
         $maintenance = Maintenance::findOrFail($id);
@@ -336,6 +331,7 @@ class FleetController extends Controller
         return back()->with('success', 'Schedule unblocked successfully.');
     }
 
+    // Log Maintenance / Block Date
     public function storeMaintenance(Request $request, $id)
     {
         $request->validate([
@@ -372,9 +368,7 @@ class FleetController extends Controller
         return back()->with('success', 'Schedule updated successfully.');
     }
 
-    /**
-     * Update the specified vehicle in storage.
-     */
+    // Update Vehicle
     public function update(Request $request, $id)
     {
         $vehicle = Vehicle::findOrFail($id);
@@ -495,6 +489,7 @@ class FleetController extends Controller
             ->with('success', 'Vehicle updated successfully.');
     }
 
+    // Update Vehicle Status (Activate/Deactivate)
     public function updateStatus($id)
     {
         $vehicle = Vehicle::findOrFail($id);
@@ -507,7 +502,7 @@ class FleetController extends Controller
         return back()->with('success', "Vehicle marked as $statusMsg.");
     }
 
-    // 6. DELETE VEHICLE
+    // Delete Vehicle
     public function destroy($id)
     {
         $vehicle = Vehicle::findOrFail($id);
@@ -520,7 +515,7 @@ class FleetController extends Controller
             ->with('success', 'Vehicle removed from fleet inventory successfully.');
     }
 
-    // 7. EDIT FORM (Placeholder for the Modify button)
+    // Edit Vehicle
     public function edit($id)
     {
         $vehicle = Vehicle::findOrFail($id);
@@ -528,9 +523,7 @@ class FleetController extends Controller
         return view('staff.fleet.edit', compact('vehicle')); 
     }
 
-    /**
-     * Update the availability status of a vehicle.
-     */
+    // Toggle Vehicle Availability
     public function toggleAvailability($id)
     {
         $vehicle = Vehicle::findOrFail($id);

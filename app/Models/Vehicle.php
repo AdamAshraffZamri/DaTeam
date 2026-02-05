@@ -103,27 +103,27 @@ class Vehicle extends Model
      * @var array
      */
     protected $fillable = [
-        'plateNo', 
-        'brand', 
-        'model', 
-        'vehicle_category', // 'car' or 'bike' [cite: 672, 723]
-        'type',             // compact, sedan, scooter, etc. [cite: 723, 1102]
-        'color', 
-        'year', 
-        'mileage', 
-        'fuelType',
-        'baseDepo', 
-        'availability', 
+        'plateNo',          // License plate number
+        'brand',            // Vehicle brand
+        'model',            // Vehicle model
+        'vehicle_category', // Car or Bike
+        'type',             // Vehicle type (e.g., sedan, scooter)
+        'color',            // Vehicle color
+        'year',             // Manufacturing year
+        'mileage',          // Current mileage
+        'fuelType',         // Fuel type (petrol, diesel, electric)
+        'baseDepo',         // Security deposit amount
+        'availability',     // Availability status
         'priceHour',        // The base hourly rate (usually the 1H tier)
         'hourly_rates',     // JSON field for tiered pricing (1h, 3h, 24h, etc.)
         'image',            // Path to the vehicle photo
-        'owner_name',       // [cite: 748, 852, 1014]
-        'owner_phone', 
+        'owner_name',       // Owner name
+        'owner_phone',      // Owner phone number
         'owner_nric',       // NRIC or Company Reg Number 
-        'road_tax_image', // Add this
-        'grant_image',    // Add this
-        'insurance_image',// Add this
-        'blocked_dates',
+        'road_tax_image',   // Path to road tax image
+        'grant_image',      // Path to grant/ownership image
+        'insurance_image',  // Path to insurance document image
+        'blocked_dates',    // JSON array of blocked dates
     ];
 
     /**
@@ -164,20 +164,19 @@ class Vehicle extends Model
         return $this->hourly_rates[$hours] ?? $this->priceHour;
     }
 
-    /**
-     * Scope: Filter only available vehicles.
-     */
+    // Scope: Filter available vehicles
     public function scopeAvailable($query)
     {
         return $query->where('availability', true);
     }
 
-    //availability checking function
+    // Relationships
     public function bookings()
     {
         return $this->hasMany(Booking::class, 'vehicleID', 'VehicleID');
     }
 
+    // Maintenance relationship
     public function maintenances()
     {
         return $this->hasMany(Maintenance::class, 'VehicleID', 'VehicleID');

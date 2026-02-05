@@ -150,30 +150,31 @@ Route::middleware('auth')->group(function () {
     // Inspections
     Route::post('/inspections/{id}/store', [StaffBookingController::class, 'storeInspection'])->name('staff.inspections.store');
 
-    // Fleet
     // --- FLEET MANAGEMENT ---
-    // List Vehicles
+    // LIST ALL VEHICLES
     Route::get('/fleet', [FleetController::class, 'index'])->name('staff.fleet.index');
-    // Create
+    // CREATE NEW VEHICLE
     Route::get('/fleet/create', [FleetController::class, 'create'])->name('staff.fleet.create');
+    // STORE NEW VEHICLE
     Route::post('/fleet/store', [FleetController::class, 'store'])->name('staff.fleet.store');
-    // SHOW DETAILS (The new page)
+    // SHOW DETAILS OF A VEHICLE
     Route::get('/fleet/{id}', [FleetController::class, 'show'])->name('staff.fleet.show');
-    // Edit/Update
+    // EDIT VEHICLE
     Route::get('/fleet/{id}/edit', [FleetController::class, 'edit'])->name('staff.fleet.edit');
+    // UPDATE VEHICLE
     Route::put('/fleet/{id}', [FleetController::class, 'update'])->name('staff.fleet.update');
-    // Status & Delete
+    // UPDATE VEHICLE STATUS
     Route::post('/fleet/status/{id}', [FleetController::class, 'updateStatus'])->name('staff.fleet.status');
+    // DELETE VEHICLE
     Route::delete('/fleet/{id}', [FleetController::class, 'destroy'])->name('staff.fleet.destroy');
-    // BLOCK DATE (Add to JSON)
+    // BLOCK DATE
     Route::post('/fleet/{id}/block', [FleetController::class, 'blockDate'])->name('staff.fleet.block');
-    // UNBLOCK DATE (Remove from JSON)
+    // UNBLOCK DATE
     Route::post('/fleet/{id}/unblock', [FleetController::class, 'unblockDate'])->name('staff.fleet.unblock');
     // LOG MAINTENANCE
     Route::post('/fleet/{id}/maintenance', [FleetController::class, 'storeMaintenance'])->name('staff.fleet.maintenance.store');
-    // Inside your staff middleware group
-    Route::delete('/fleet/maintenance/{id}', [App\Http\Controllers\FleetController::class, 'destroyMaintenance'])
-        ->name('staff.fleet.maintenance.destroy');
+    // DELETE MAINTENANCE RECORD
+    Route::delete('/fleet/maintenance/{id}', [FleetController::class, 'destroyMaintenance'])->name('staff.fleet.maintenance.destroy');
 
     // Customer Management
     Route::get('/customers', [App\Http\Controllers\StaffCustomerController::class, 'index'])->name('staff.customers.index');
