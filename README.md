@@ -1,8 +1,8 @@
-# Car Rental Management System
+# Vehicle Rental Management System
 
 ## Project Overview
 
-The **Car Rental Management System** is a web-based application developed using **Laravel** to digitalize and manage car rental operations for **Hasta Travel & Tours Sdn. Bhd.** The system is designed to be **mobile-friendly**, user-centric, and scalable, supporting three main stakeholders: **Customers, Employees, and Employers (Admin)**.
+The **Vehicle Rental Management System** is a web-based application developed using **Laravel** to digitalize and manage car rental operations for **Hasta Travel & Tours Sdn. Bhd.** The system is designed to be **mobile-friendly**, user-centric, and scalable, supporting three main stakeholders: **Customers, Employees, and Employers (Admin)**.
 
 This project is developed using the **Scrum framework**. Development work is organized into **time-boxed sprints**, with progress tracked using **GitHub Projects** as a visual Scrum board.
 
