@@ -126,7 +126,7 @@ class VoucherController extends Controller
         return response()->json(['success' => false, 'message' => 'This voucher has already been used.']);
     }
 
-    // 4. Validate Day (Isnin - Khamis sahaja untuk Loyalty)
+    // 4. Validate Day (Mon - Thu only for Loyalty)
     // Check condition FREE HALF DAY
     $conditionText = strtoupper($voucher->conditions ?? '');
     $isFreeHalfDay = str_contains($conditionText, 'FREE HALF DAY') || $voucher->voucherType == 'Free Half Day';
@@ -136,7 +136,7 @@ class VoucherController extends Controller
             return response()->json(['success' => false, 'message' => 'Pickup date is required.']);
         }
         $pickupDay = Carbon::parse($pickupDate);
-        // Block Jumaat(5), Sabtu(6), Ahad(7)
+        // Block Fri(5), Sat(6), Sun(7)
         if ($pickupDay->dayOfWeekIso > 4) {
             return response()->json(['success' => false, 'message' => 'Loyalty vouchers are valid Mon-Thu only.']);
         }

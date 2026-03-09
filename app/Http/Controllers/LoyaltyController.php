@@ -127,7 +127,7 @@ class LoyaltyController extends Controller
         $cycleSize = 12;
         $currentInCycle = $qualifiedBookingsCount % $cycleSize; 
         
-        // ✅ INI BETUL: DINAMIK DARI DB
+        // DINAMIK DARI DB
         // Cari reward milestone seterusnya yang step dia lagi besar dari current count
         $nextMilestoneData = Reward::where('category', 'Milestone')
             ->where('milestone_step', '>', $currentInCycle)
@@ -207,7 +207,7 @@ class LoyaltyController extends Controller
     }
 
 
-    // --- LOGIC: REDEEM REWARD (Non-Rental Vouchers) [FIXED] --- wildan
+    // --- LOGIC: REDEEM REWARD (Non-Rental Vouchers) [FIXED] --- 
     public function redeemReward(Request $request)
     {
         $userId = Auth::id();
