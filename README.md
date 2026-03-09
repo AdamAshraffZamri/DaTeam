@@ -1,59 +1,82 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+<div align="center">
 
 <p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
+  <img src="https://readme-typing-svg.herokuapp.com?font=Orbitron&size=35&pause=1000&color=FF1010&center=true&vCenter=true&width=750&lines=DATEAM+OS:+OPERATIONAL;CENTRALIZED+DATABASE+ACTIVATED;REVOLUTIONIZING+UTM+MOBILITY" alt="DaTeam Header" />
 </p>
 
-## About Laravel
+<h1>🏎️ Hasta Vehicle Rental Management System</h1>
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+<p align="center">
+  <img src="https://img.shields.io/badge/Status-Operational-00FF00?style=for-the-badge&logo=statuspage&logoColor=white" />
+  <img src="https://img.shields.io/badge/Security-RBAC_Enforced-red?style=for-the-badge&logo=databricks&logoColor=white" />
+  <img src="https://img.shields.io/badge/Database-BCNF_Normalized-blue?style=for-the-badge&logo=airtable&logoColor=white" />
+</p>
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+<br/>
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+| 🏷️ **Course** | SECP3723 |
+| :--- | :--- |
+| 📅 **Session** | SEM I 2025/2026 |
+| 🔢 **Section** | 02 |
+| 👥 **Group Name** | **DaTeam** |
+| 👨‍🏫 **Lecturer** | Dr. Ahmad Najmi bin Amerhaider Nuar |
+| 🏢 **Stakeholder** | Hasta Travel & Tours Sdn. Bhd. |
 
-## Learning Laravel
+<br/>
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+<img src="https://img.shields.io/badge/MySQL_8.0-00758F?style=for-the-badge&logo=mysql&logoColor=white" />
+<img src="https://img.shields.io/badge/Laravel_12-FF2D20?style=for-the-badge&logo=laravel&logoColor=white" />
+<img src="https://img.shields.io/badge/PHP_8.3-777BB4?style=for-the-badge&logo=php&logoColor=white" />
+<img src="https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white" />
+<img src="https://img.shields.io/badge/Blade_Engine-FF2D20?style=for-the-badge&logo=laravel&logoColor=white" />
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+</div>
 
-## Laravel Sponsors
+---
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+## ⚡ The DaTeam Avengers
+<div align="center">
+<p><i>"A high-performance task force engineered for digital transformation."</i></p>
+<img width="540" height="450" alt="image" src="https://github.com/user-attachments/assets/9255e57f-8876-4ee7-9f3a-c2e2f06e794f" />
 
-### Premium Partners
+| <img src="https://github.com/adamashraffzamri.png" width="120px;" style="border-radius:50%; border:3px solid #FF1010;"/><br/>**MUHAMMD ADAM ASHRAFF BIN ZAMRI**<br/>A24CS0119<br/>🚀 <i>Project Leader</i> | <img src="https://github.com/MikaelHaqimi.png" width="120px;" style="border-radius:50%; border:3px solid #FF1010;"/><br/>**MIKAEL HAQIMI BIN NAHAR JUNAIDI<br/>A24CS0111**<br/>🔍 <i>System Analyst | <img src="https://github.com/wildanmazani.png" width="120px;" style="border-radius:50%; border:3px solid #FF1010;"/><br/>**AHMAD WILDAN BIN MAZANI**<br/>A24CS0222<br/>🏗️ <i>DB Architect | <img src="https://github.com/JoshuaLing0612.png" width="120px;" style="border-radius:50%; border:3px solid #FF1010;"/><br/>**JOSHUA LING SHANG YANG**<br/>A24CS0089<br/>🧪 <i>QA & Docs |
+| :---: | :---: | :---: | :---: |
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+</div>
 
-## Contributing
+---
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+## 🌌 Project Intelligence
 
-## Code of Conduct
+DaTeam has engineered a high-performance, **device-agnostic centralized management solution** designed to modernize vehicle rental services. Our system targets a massive ecosystem of **30,000 university students and staff** within the UTM community. By deploying a synchronized digital lifecycle, we have eliminated the friction of manual "AS-IS" workflows.
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
 
-## Security Vulnerabilities
+## 📸 System Sneak Peek [🚀 Click here to access our system!](https://hastatrial.danzign.com/)
+<div align="center">
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+| 🛰️ **Customer** | 🏁 **Staff/Admin** |
+| :---: | :---: |
+| <img width="1920" height="1080" alt="DATEAM" src="https://github.com/user-attachments/assets/80875ec2-0835-4918-b652-89176a703d96" /> | <img width="1920" height="1080" alt="DATEAM (1)" src="https://github.com/user-attachments/assets/ce0096f3-b5f2-4c62-bdfb-94e5770bbd5d" /> |
+| <img width="1920" height="1080" alt="DATEAM (3)" src="https://github.com/user-attachments/assets/7164cca2-bdc8-4154-8992-e010f819f2b4" /> | <img width="1920" height="1080" alt="DATEAM (2)" src="https://github.com/user-attachments/assets/b6bfce4b-bf24-44a8-8d8a-1d6d538a02ce" /> |
 
-## License
+</div>
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+---
+
+## 📊 DaTeam Feature Matrix
+
+| 🛠️ Module | 🔥 Mindblowing Feature | 🚀 Operational Impact |
+| :--- | :--- | :--- |
+| **Fleet Command** | Mileage-based Maintenance Tracking | Eliminates manual physical logs for service cycles |
+| **Identity Core** | Digital Document Onboarding | Secure, paperless verification of Student IDs and Licenses |
+| **Finance Engine** | Automated Late Fee Calculation | Real-time detect-and-apply logic for overdue returns |
+| **Admin Analytics** | Demand Trend Visualization | Enables data-driven pricing and business expansion |
+| **Loyalty Hub** | Tier-based Point Redemption | Increases customer retention through automated rewards |
+
+<div align="center">
+
+---
+**© 2026 DaTeam | SECP2523 Database Project (WBL)**
+**Universiti Teknologi Malaysia**
+
+</div>
