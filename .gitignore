@@ -47,3 +47,6 @@ Thumbs.db
 
 # --- IGNORE ---
 /storage/app/google-drive/*
+
+*.csv
+storage/app/*.csv

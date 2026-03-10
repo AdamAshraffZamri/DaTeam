@@ -16,6 +16,7 @@ use App\Http\Controllers\StaffCustomerController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\PageController;
 use App\Http\Controllers\ChatbotController; // Add this at the very top
+use App\Http\Controllers\UserImportController;
 
 /*
 |--------------------------------------------------------------------------
@@ -48,6 +49,8 @@ Route::get('/about', [PageController::class, 'about'])->name('pages.about');
 Route::get('/faq', [PageController::class, 'faq'])->name('pages.faq');
 Route::get('/contact', [PageController::class, 'contact'])->name('pages.contact');
 
+// --- USER IMPORT (For Testing) ---
+Route::get('/import-users', [UserImportController::class, 'import']);
 // ====================================================
 //  CUSTOMER ROUTES (Middleware: auth)
 // ====================================================
