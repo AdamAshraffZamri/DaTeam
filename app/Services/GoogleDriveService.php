@@ -193,4 +193,13 @@ class GoogleDriveService
             throw $e;
         }
     }
+
+    public function getAuthUrl()
+    {
+        $this->client->setAccessType('offline');    // Ensures you get a refresh token
+        $this->client->setPrompt('consent');       // Forces the consent screen to ensure refresh token is issued
+        $this->client->setIncludeGrantedScopes(true);
+        
+        return $this->client->createAuthUrl();
+    }
 }
