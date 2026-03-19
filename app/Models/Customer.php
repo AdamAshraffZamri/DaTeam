@@ -6,7 +6,8 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-
+use Illuminate\Auth\Passwords\CanResetPassword;
+use Illuminate\Contracts\Auth\CanResetPassword as CanResetPasswordContract;
 /**
  * Customer Model
  * 
@@ -70,9 +71,9 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property string $ic_passport_image IC/passport image path
  * @property string $driving_license_image License image path
  */
-class Customer extends Authenticatable
+class Customer extends Authenticatable implements CanResetPasswordContract
 {
-    use HasFactory, Notifiable;
+    use HasFactory, Notifiable, CanResetPassword;
 
     // 1. Link to the correct table
     protected $table = 'customers'; 
