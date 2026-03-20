@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Imports\UsersImport;
+use App\Imports\BookingsImport;
 
 class UserImportController extends Controller
 {
@@ -15,6 +16,18 @@ class UserImportController extends Controller
             return $result;
         } catch (\Exception $e) {
             return "Import failed: " . $e->getMessage();
+        }
+    }
+
+    public function importBookings()
+    {
+        try {
+            $import = new BookingsImport();
+            $result = $import->import(storage_path('app/bookings.csv'));
+
+            return $result;
+        } catch (\Exception $e) {
+            return "Booking Import failed: " . $e->getMessage();
         }
     }
 }
