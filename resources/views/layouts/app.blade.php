@@ -108,17 +108,17 @@
                    class="transition border-b-2 pb-1 {{ request()->routeIs('home') ? 'text-orange-100 border-white' : 'border-transparent hover:text-orange-100 hover:border-white' }}">
                    Home
                 </a>
-                <a href="{{ route('pages.about') }}" 
-                   class="transition border-b-2 pb-1 {{ request()->routeIs('pages.about') ? 'text-orange-100 border-white' : 'border-transparent hover:text-orange-100 hover:border-white' }}">
-                   About Us
+                <a href="{{ route('pages.singapore') }}" 
+                   class="transition border-b-2 pb-1 {{ request()->routeIs('pages.singapore') ? 'text-orange-100 border-white' : 'border-transparent hover:text-orange-100 hover:border-white' }}">
+                   Drive to Singapore
                 </a>
-                <a href="{{ route('pages.faq') }}" 
-                   class="transition border-b-2 pb-1 {{ request()->routeIs('pages.faq') ? 'text-orange-100 border-white' : 'border-transparent hover:text-orange-100 hover:border-white' }}">
-                   FAQ
+                <a href="{{ route('pages.travel') }}" 
+                   class="transition border-b-2 pb-1 {{ request()->routeIs('pages.travel') ? 'text-orange-100 border-white' : 'border-transparent hover:text-orange-100 hover:border-white' }}">
+                   Travel Guides
                 </a>
-                <a href="{{ route('pages.contact') }}" 
-                   class="transition border-b-2 pb-1 {{ request()->routeIs('pages.contact') ? 'text-orange-100 border-white' : 'border-transparent hover:text-orange-100 hover:border-white' }}">
-                   Contact Us
+                <a href="{{ route('pages.flight') }}" 
+                   class="transition border-b-2 pb-1 {{ request()->routeIs('pages.flight') ? 'text-orange-100 border-white' : 'border-transparent hover:text-orange-100 hover:border-white' }}">
+                   Ticket & Flight
                 </a>
             </div>
 
@@ -233,7 +233,11 @@
         </div>
     </nav>
 
-    @if(!request()->routeIs('home') && !request()->routeIs('pages.about') && !request()->routeIs('pages.contact') && !request()->routeIs('login') && !request()->routeIs('staff.login') && !request()->routeIs('register') && !request()->routeIs('password.*') && !request()->routeIs('pages.faq'))
+    @if(!request()->routeIs('home') && !request()->routeIs('pages.about') && !request()->routeIs('pages.contact') && !request()->routeIs('login') && !request()->routeIs('staff.login') && !request()->routeIs('register') && !request()->routeIs('password.*') && !request()->routeIs('pages.faq') && !request()->routeIs('pages.singapore') && !request()->routeIs('pages.travel') && !request()->routeIs('pages.flight'))
+         <div class="w-full bg-gradient-to-r from-orange-500 to-red-600 text-white text-center py-3 animate-banner-wiggle">
+            <p class="text-sm md:text-base font-bold tracking-wide">
+                🚗 Need help renting a car? Click the <span class="underline">Help</span> button at the bottom right! 🔥
+            </p>
         <div class="w-full flex justify-center py-4 md:py-6 relative z-40">
             {{-- 
                 Mobile Fixes:
@@ -545,7 +549,7 @@
                      <h4 class="font-bold text-lg mb-4 text-white">Support</h4>
                      <ul class="space-y-3 text-gray-400">
                          <li><a href="#" class="hover:text-[#ea580c] transition">My Account</a></li>
-                         <li><a href="{{ route('pages.faq') }}" class="hover:text-[#ea580c] transition">Help Center</a></li>
+                         <li><a href="{{ route('pages.faq') }}" class="hover:text-[#ea580c] transition">FAQ</a></li>
                          <li><a href="#" class="hover:text-[#ea580c] transition">Report a Bug</a></li>
                      </ul>
                 </div>
@@ -560,7 +564,16 @@
                             <i class="fas fa-phone text-[#ea580c]"></i>
                             <span>+60 11-1090 0700</span>
                         </li>
-                    </ul>
+                        
+                        <li class="pt-4 flex flex-col items-center md:items-start border-t border-gray-800 w-full">
+                            <p class="text-xs text-gray-500 mb-3 font-medium uppercase tracking-wider">More Ways Access to Our Company?</p>
+                            <a href="{{ route('pages.contact') }}" 
+                            class="bg-[#ea580c] hover:bg-orange-600 text-white px-5 py-2.5 rounded-xl font-bold text-sm transition-all shadow-lg hover:shadow-orange-500/20 active:scale-95 flex items-center gap-2">
+                                <span>View Contact Page</span>
+                                <i class="fas fa-external-link-alt text-[10px]"></i>
+                            </a>
+                        </li>
+                        </ul>
                 </div>
             </div>
             <div class="pt-8 text-center text-gray-500 flex flex-col md:flex-row justify-between items-center text-xs md:text-sm">

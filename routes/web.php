@@ -44,6 +44,11 @@ Route::post('/forgot-password', [AuthController::class, 'sendResetLinkEmail'])->
 Route::get('/reset-password/{token}', [AuthController::class, 'showResetForm'])->name('password.reset');
 Route::post('/reset-password', [AuthController::class, 'reset'])->name('password.update');
 
+// --- New Content Pages ---
+Route::get('/drive-to-singapore', [PageController::class, 'singapore'])->name('pages.singapore');
+Route::get('/travel-guides', [PageController::class, 'travel'])->name('pages.travel');
+Route::get('/ticket-flight', [PageController::class, 'flight'])->name('pages.flight');
+
 // Static Pages
 Route::get('/about', [PageController::class, 'about'])->name('pages.about');
 Route::get('/faq', [PageController::class, 'faq'])->name('pages.faq');

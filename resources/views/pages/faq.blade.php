@@ -38,59 +38,6 @@
 {{-- 2. MAIN CONTENT --}}
 <div class="relative z-10 w-full min-h-[calc(100vh-64px)] flex flex-col items-center px-4 pt-24 md:pt-32 pb-20">
 
-    {{-- NAVIGATION PILL (Mobile Optimized) --}}
-    <div class="w-full flex justify-center py-4 md:py-6 relative z-40">
-            {{-- 
-                Mobile Fixes:
-                1. w-fit + mx-auto: Centers the container.
-                2. max-w-full: Prevents overflowing the screen width.
-                3. px-4: Ensures a small gap from the screen edges.
-            --}}
-            <div class="w-fit max-w-full px-4 mx-auto overflow-x-auto no-scrollbar">
-                
-                {{-- Container --}}
-                <div class="bg-white/10 backdrop-blur-md border border-white/20 rounded-full p-1 md:p-1.5 flex items-center shadow-2xl">
-                    
-                    {{-- Book Now --}}
-                    {{-- Updated: text-xs (was text-[10px]) and px-4 (was px-3) for better mobile visibility --}}
-                    <a href="{{ route('book.create') }}" 
-                       class="px-4 sm:px-6 py-2 sm:py-2.5 rounded-full font-bold text-[10px] sm:text-[15px] transition-all duration-300 whitespace-nowrap active:scale-95
-                       {{ (request()->routeIs('book.create') || request()->routeIs('book.search') || request()->routeIs('book.show') || request()->routeIs('book.payment') || request()->routeIs('book.payment.submit')) 
-                           ? 'nav-link-active' 
-                           : 'text-white hover:bg-white/10' }}">
-                        Book Now
-                    </a>
-                    
-                    {{-- My Bookings --}}
-                    <a href="{{ route('book.index') }}" 
-                       class="px-4 sm:px-6 py-2 sm:py-2.5 rounded-full font-bold text-[10px] sm:text-[15px] transition-all duration-300 whitespace-nowrap active:scale-95
-                       {{ (request()->routeIs('book.index') || request()->routeIs('book.cancel')) 
-                           ? 'nav-link-active' 
-                           : 'text-white hover:bg-white/10' }}">
-                        My Bookings
-                    </a>
-                    
-                    {{-- Loyalty --}}
-                    <a href="{{ route('loyalty.index') }}" 
-                       class="px-4 sm:px-6 py-2 sm:py-2.5 rounded-full font-bold text-[10px] sm:text-[15px] transition-all duration-300 whitespace-nowrap active:scale-95
-                       {{ (request()->routeIs('loyalty.index') || request()->routeIs('loyalty.redeem') || request()->routeIs('voucher.apply') || request()->routeIs('voucher.available')) 
-                           ? 'nav-link-active' 
-                           : 'text-white hover:bg-white/10' }}">
-                        Loyalty
-                    </a>
-                    
-                    {{-- Payments --}}
-                    <a href="{{ route('finance.index') }}" 
-                       class="px-4 sm:px-6 py-2 sm:py-2.5 rounded-full font-bold text-[10px] sm:text-[15px] transition-all duration-300 whitespace-nowrap active:scale-95
-                       {{ (request()->routeIs('finance.index') || request()->routeIs('finance.claim') || request()->routeIs('finance.pay') || request()->routeIs('finance.submit_balance') || request()->routeIs('finance.pay_fine') || request()->routeIs('finance.submit_fine')) 
-                           ? 'nav-link-active' 
-                           : 'text-white hover:bg-white/10' }}">
-                        Payments
-                    </a>
-                </div>
-            </div>
-        </div>
-
     {{-- HEADER SECTION --}}
     <div class="text-center mb-12 max-w-3xl animate-fade-in-up delay-100">
         {{-- Responsive Text Size: text-4xl on mobile, text-6xl on desktop --}}
