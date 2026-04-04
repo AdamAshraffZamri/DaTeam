@@ -2,4 +2,4 @@
 deployment:
   tasks:
     - export DEPLOYPATH=/home/hastatra/public_html/main_site
-    - /bin/cp -R * $DEPLOYPATH
+    - /bin/rsync -av --exclude='.git' --exclude='node_modules' --exclude='storage' * $DEPLOYPATH
