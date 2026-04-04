@@ -1,5 +1,5 @@
 ---
 deployment:
   tasks:
-    - export DEPLOYPATH=/home/hastatra/repositories/DaTeamGit/
+    - export DEPLOYPATH=/home/hastatra/public_html/main_site
     - /bin/cp -R * $DEPLOYPATH
