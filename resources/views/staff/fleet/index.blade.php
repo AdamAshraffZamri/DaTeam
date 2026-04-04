@@ -79,58 +79,95 @@
                         </div>
                     </div>
 
-                    {{-- 3. Status Filter (With Visible Count) --}}
-                    <div class="relative w-full md:w-[180px]" id="customDropdown">
+                    {{-- 3. View Filter (Grouped Status & Ownership) --}}
+                    <div class="relative w-full md:w-[220px]" id="customDropdown">
                         <input type="hidden" name="status" id="statusInput" value="{{ request('status', 'all') }}">
+                        <input type="hidden" name="ownership" id="ownershipInput" value="{{ request('ownership', 'all') }}">
                         
                         @php
                             $currentStatus = request('status', 'all');
-                            // Helper logic for display
-                            $statusLabel = match($currentStatus) {
-                                'active' => 'Active',
-                                'inactive' => 'Inactive',
-                                'ready' => 'Ready',
-                                'rented' => 'Rented',
-                                default => 'All Status'
-                            };
+                            $currentOwnership = request('ownership', 'all');
+                            
+                            // Dynamic Label Based on What is Selected
+                            $dropdownLabel = 'All Records';
+                            if ($currentStatus !== 'all') {
+                                $dropdownLabel = match($currentStatus) {
+                                    'ready' => 'Status: Ready',
+                                    'rented' => 'Status: Rented',
+                                    'inactive' => 'Status: Inactive',
+                                    default => 'Status: ' . ucfirst($currentStatus)
+                                };
+                            } elseif ($currentOwnership !== 'all') {
+                                $dropdownLabel = 'Owner: ' . strtoupper($currentOwnership);
+                            }
                         @endphp
 
                         <button type="button" onclick="toggleDropdown()" 
                             class="w-full flex items-center justify-between bg-white border border-gray-200 text-gray-700 text-xs font-bold py-3.5 px-5 rounded-2xl hover:border-orange-500 hover:text-orange-600 transition-all shadow-sm hover:shadow-md group">
                             
-                            <div class="flex items-center gap-2">
-                                <i class="fas fa-filter text-orange-500"></i>
-                                <span id="dropdownLabel" class="capitalize">{{ $statusLabel }}</span>
+                            <div class="flex items-center gap-2 truncate">
+                                <i class="fas fa-layer-group text-orange-500 shrink-0"></i>
+                                <span id="dropdownLabel" class="capitalize truncate">{{ $dropdownLabel }}</span>
                             </div>
 
                             <i class="fas fa-chevron-down text-[10px] text-gray-400 group-hover:text-orange-500 transition-transform duration-300" id="dropdownArrow"></i>
                         </button>
 
                         <div id="dropdownMenu" 
-                            class="absolute top-full right-0 mt-2 w-full bg-white border border-gray-100 rounded-2xl shadow-xl overflow-hidden hidden transform origin-top transition-all duration-200 z-50">
+                            class="absolute top-full right-0 mt-2 w-full bg-white border border-gray-100 rounded-2xl shadow-xl overflow-hidden hidden transform origin-top transition-all duration-200 z-50 max-h-[300px] overflow-y-auto custom-scrollbar">
                             
-                            <div onclick="selectStatus('all')" class="px-5 py-3 text-xs font-bold cursor-pointer transition-colors flex items-center justify-between border-b border-gray-50 {{ $currentStatus == 'all' ? 'bg-orange-50 text-orange-600' : 'text-gray-600 hover:bg-gray-50' }}">
-                                <span>All Status</span>
-                                @if($currentStatus == 'all') <i class="fas fa-check"></i> @endif
+                            {{-- All Records View --}}
+                            <div onclick="selectCombined('all', 'all')" class="px-5 py-3 text-xs font-bold cursor-pointer transition-colors flex items-center justify-between border-b border-gray-100 {{ ($currentStatus == 'all' && $currentOwnership == 'all') ? 'bg-orange-50 text-orange-600' : 'text-gray-600 hover:bg-gray-50' }}">
+                                <span>All Records</span>
+                                @if($currentStatus == 'all' && $currentOwnership == 'all') <i class="fas fa-check"></i> @endif
                             </div>
                             
-                            <div onclick="selectStatus('ready')" class="px-5 py-3 text-xs font-bold cursor-pointer transition-colors flex items-center justify-between border-b border-gray-50 {{ $currentStatus == 'ready' ? 'bg-orange-50 text-orange-600' : 'text-gray-600 hover:bg-gray-50' }}">
-                                <span class="flex items-center gap-2"><span class="w-1.5 h-1.5 rounded-full bg-green-500"></span> Ready</span>
-                                @if($currentStatus == 'ready') <i class="fas fa-check"></i> @endif
+                            {{-- Status Group --}}
+                            <div class="px-5 py-2 text-[10px] font-black text-gray-400 uppercase tracking-wider bg-gray-50 border-b border-gray-100">
+                                By Status
                             </div>
 
-                            <div onclick="selectStatus('rented')" class="px-5 py-3 text-xs font-bold cursor-pointer transition-colors flex items-center justify-between border-b border-gray-50 {{ $currentStatus == 'rented' ? 'bg-orange-50 text-orange-600' : 'text-gray-600 hover:bg-gray-50' }}">
+                            <div onclick="selectCombined('available', 'all')" class="px-5 py-3 text-xs font-bold cursor-pointer transition-colors flex items-center justify-between border-b border-gray-50 {{ $currentStatus == 'available' ? 'bg-orange-50 text-orange-600' : 'text-gray-600 hover:bg-gray-50' }}">
+                                <span class="flex items-center gap-2"><span class="w-1.5 h-1.5 rounded-full bg-green-500"></span> Ready</span>
+                                @if($currentStatus == 'available') <i class="fas fa-check"></i> @endif
+                            </div>
+
+                            <div onclick="selectCombined('rented', 'all')" class="px-5 py-3 text-xs font-bold cursor-pointer transition-colors flex items-center justify-between border-b border-gray-50 {{ $currentStatus == 'rented' ? 'bg-orange-50 text-orange-600' : 'text-gray-600 hover:bg-gray-50' }}">
                                 <span class="flex items-center gap-2"><span class="w-1.5 h-1.5 rounded-full bg-orange-500"></span> Rented</span>
                                 @if($currentStatus == 'rented') <i class="fas fa-check"></i> @endif
                             </div>
 
-                            <div onclick="selectStatus('inactive')" class="px-5 py-3 text-xs font-bold cursor-pointer transition-colors flex items-center justify-between {{ $currentStatus == 'inactive' ? 'bg-orange-50 text-orange-600' : 'text-gray-600 hover:bg-gray-50' }}">
+                            <div onclick="selectCombined('maintenance', 'all')" class="px-5 py-3 text-xs font-bold cursor-pointer transition-colors flex items-center justify-between border-b border-gray-50 {{ $currentStatus == 'maintenance' ? 'bg-orange-50 text-orange-600' : 'text-gray-600 hover:bg-gray-50' }}">
+                                <span class="flex items-center gap-2"><span class="w-1.5 h-1.5 rounded-full bg-blue-500"></span> Maintenance</span>
+                                @if($currentStatus == 'maintenance') <i class="fas fa-check"></i> @endif
+                            </div>
+
+                            <div onclick="selectCombined('inactive', 'all')" class="px-5 py-3 text-xs font-bold cursor-pointer transition-colors flex items-center justify-between border-b border-gray-100 {{ $currentStatus == 'inactive' ? 'bg-orange-50 text-orange-600' : 'text-gray-600 hover:bg-gray-50' }}">
                                 <span class="flex items-center gap-2"><span class="w-1.5 h-1.5 rounded-full bg-gray-400"></span> Inactive</span>
                                 @if($currentStatus == 'inactive') <i class="fas fa-check"></i> @endif
                             </div>
+
+                            {{-- Ownership Group --}}
+                            <div class="px-5 py-2 text-[10px] font-black text-gray-400 uppercase tracking-wider bg-gray-50 border-b border-gray-100">
+                                By Ownership
+                            </div>
+
+                            <div onclick="selectCombined('all', 'HASTA')" class="px-5 py-3 text-xs font-bold cursor-pointer transition-colors flex items-center justify-between border-b border-gray-50 {{ $currentOwnership == 'HASTA' ? 'bg-orange-50 text-orange-600' : 'text-gray-600 hover:bg-gray-50' }}">
+                                <span class="flex items-center gap-2"><i class="fas fa-id-badge text-gray-400"></i> HASTA</span>
+                                @if($currentOwnership == 'HASTA') <i class="fas fa-check"></i> @endif
+                            </div>
+
+                            <div onclick="selectCombined('all', 'BROKER')" class="px-5 py-3 text-xs font-bold cursor-pointer transition-colors flex items-center justify-between border-b border-gray-50 {{ $currentOwnership == 'BROKER' ? 'bg-orange-50 text-orange-600' : 'text-gray-600 hover:bg-gray-50' }}">
+                                <span class="flex items-center gap-2"><i class="fas fa-handshake text-gray-400"></i> BROKER</span>
+                                @if($currentOwnership == 'BROKER') <i class="fas fa-check"></i> @endif
+                            </div>
+
+                            <div onclick="selectCombined('all', 'AGENT')" class="px-5 py-3 text-xs font-bold cursor-pointer transition-colors flex items-center justify-between {{ $currentOwnership == 'AGENT' ? 'bg-orange-50 text-orange-600' : 'text-gray-600 hover:bg-gray-50' }}">
+                                <span class="flex items-center gap-2"><i class="fas fa-user-tag text-gray-400"></i> AGENT</span>
+                                @if($currentOwnership == 'AGENT') <i class="fas fa-check"></i> @endif
+                            </div>
                         </div>
                     </div>
-                </form>
 
                 {{-- Add Button --}}
                 <a href="{{ route('staff.fleet.create') }}" class="bg-orange-600 hover:bg-orange-500 text-white px-6 py-3.5 rounded-2xl font-bold text-xs shadow-lg shadow-orange-900/20 transition-all transform hover:scale-105 flex items-center gap-2 shrink-0 whitespace-nowrap">
@@ -182,34 +219,40 @@
                         <p class="text-sm font-mono font-bold text-gray-700 bg-gray-50 inline-block px-2 py-0.5 rounded border border-gray-200">{{ $vehicle->plateNo }}</p>
                     </div>
                     
-                    {{-- NEXT BOOKING DATE --}}
+                    {{-- OWNERSHIP TYPE --}}
                     <div class="flex-1 w-full md:w-auto text-center md:text-left border-t md:border-t-0 md:border-l border-gray-100 pt-2 md:pt-0 md:pl-6">
-                        <label class="text-[9px] font-bold text-gray-400 uppercase tracking-wider block mb-0.5">Next Booking</label>
+                        <label class="text-[9px] font-bold text-gray-400 uppercase tracking-wider block mb-0.5">Ownership</label>
                         <div class="flex items-center justify-center md:justify-start gap-2">
-                            <i class="fas fa-calendar-alt text-gray-300 text-xs"></i>
-                            <span class="text-sm font-bold {{ $vehicle->nextBookingDate ? 'text-orange-600' : 'text-gray-400' }}">
-                                {{ $vehicle->nextBookingDate ? $vehicle->nextBookingDate->format('d M Y') : 'No Upcoming' }}
+                            <i class="fas fa-id-badge text-gray-300 text-xs"></i>
+                            <span class="text-sm font-bold text-blue-600 uppercase">
+                                {{ $vehicle->ownership_type ?? 'HASTA' }}
                             </span>
                         </div>
                     </div>
 
                     {{-- STATUS & TOGGLE --}}
                     <div class="flex items-center justify-between w-full md:w-auto md:justify-end gap-6 border-t md:border-t-0 border-gray-100 pt-3 md:pt-0 mt-2 md:mt-0">
-                        <div class="text-right">
-                            @if($vehicle->isBookedToday)
-                                <div class="flex items-center bg-orange-50 px-3 py-1.5 rounded-lg border border-orange-100">
-                                    <span class="w-1.5 h-1.5 rounded-full bg-orange-500 mr-2 animate-pulse"></span><span class="text-[10px] font-bold text-orange-600 uppercase">Rented</span>
-                                </div>
-                            @elseif($vehicle->availability == 0)
-                                <div class="flex items-center bg-gray-100 px-3 py-1.5 rounded-lg border border-gray-200">
-                                    <span class="w-1.5 h-1.5 rounded-full bg-gray-400 mr-2"></span><span class="text-[10px] font-bold text-gray-500 uppercase">Offline</span>
-                                </div>
-                            @else
-                                <div class="flex items-center bg-green-50 px-3 py-1.5 rounded-lg border border-green-100">
-                                    <span class="w-1.5 h-1.5 rounded-full bg-green-500 mr-2"></span><span class="text-[10px] font-bold text-green-700 uppercase">Ready</span>
-                                </div>
-                            @endif
+                        @php
+                            // Read directly from the new database column
+                            $currentStatus = strtolower($vehicle->status ?? 'available'); 
+                            
+                            if($vehicle->isBookedToday) {
+                                $currentStatus = 'rented';
+                            }
+
+                            $statusConfig = match($currentStatus) {
+                                'rented' => ['text' => 'Rented', 'bg' => 'bg-orange-50', 'border' => 'border-orange-100', 'text_color' => 'text-orange-600', 'dot' => 'bg-orange-500', 'pulse' => 'animate-pulse'],
+                                'maintenance' => ['text' => 'Maintenance', 'bg' => 'bg-blue-50', 'border' => 'border-blue-100', 'text_color' => 'text-blue-700', 'dot' => 'bg-blue-500', 'pulse' => ''],
+                                'inactive' => ['text' => 'Inactive', 'bg' => 'bg-gray-100', 'border' => 'border-gray-200', 'text_color' => 'text-gray-500', 'dot' => 'bg-gray-400', 'pulse' => ''],
+                                default => ['text' => 'Ready', 'bg' => 'bg-green-50', 'border' => 'border-green-100', 'text_color' => 'text-green-700', 'dot' => 'bg-green-500', 'pulse' => ''],
+                            };
+                        @endphp
+
+                        <div class="flex items-center {{ $statusConfig['bg'] }} px-3 py-1.5 rounded-lg border {{ $statusConfig['border'] }}">
+                            <span class="w-1.5 h-1.5 rounded-full {{ $statusConfig['dot'] }} mr-2 {{ $statusConfig['pulse'] }}"></span>
+                            <span class="text-[10px] font-bold {{ $statusConfig['text_color'] }} uppercase">{{ $statusConfig['text'] }}</span>
                         </div>
+                        
                         <form action="{{ route('staff.fleet.status', $vehicle->VehicleID) }}" method="POST" @click.stop>
                             @csrf
                             <button type="submit" class="w-9 h-9 rounded-lg flex items-center justify-center transition-all border shadow-sm {{ ($vehicle->availability || $vehicle->isBookedToday) ? 'bg-white text-gray-300 border-gray-200 hover:bg-red-50 hover:text-red-500' : 'bg-gray-800 text-white border-transparent hover:bg-gray-700' }}">
@@ -267,11 +310,14 @@
         if(currentId !== 'modelMenu') document.getElementById('modelMenu').classList.add('hidden');
     }
 
-    function selectStatus(value) {
-        document.getElementById('statusInput').value = value;
+    // Handles the combined Status and Ownership group submission
+    function selectCombined(statusValue, ownershipValue) {
+        document.getElementById('statusInput').value = statusValue;
+        document.getElementById('ownershipInput').value = ownershipValue;
         document.getElementById('filterForm').submit();
     }
 
+    // Standard single-select for the model dropdown
     function selectModel(value) {
         document.getElementById('modelInput').value = value;
         document.getElementById('filterForm').submit();
