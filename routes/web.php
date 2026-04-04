@@ -49,6 +49,10 @@ Route::get('/drive-to-singapore', [PageController::class, 'singapore'])->name('p
 Route::get('/travel-guides', [PageController::class, 'travel'])->name('pages.travel');
 Route::get('/ticket-flight', [PageController::class, 'flight'])->name('pages.flight');
 
+// --- Autopass Pages ---
+Route::get('/autopass-payment', [PageController::class, 'autopass'])->name('pages.autopass');
+Route::post('/autopass-submit', [BookingController::class, 'submitAutopassPayment'])->name('autopass.submit');
+
 // Static Pages
 Route::get('/about', [PageController::class, 'about'])->name('pages.about');
 Route::get('/faq', [PageController::class, 'faq'])->name('pages.faq');

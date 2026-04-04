@@ -15,4 +15,6 @@ class PageController extends Controller
     public function travel() { return view('pages.travel'); }
 
     public function flight() { return view('pages.flight'); }
+
+    public function autopass() { return view('pages.autopass'); }
 }

@@ -114,11 +114,11 @@
                 </a>
                 <a href="{{ route('pages.travel') }}" 
                    class="transition border-b-2 pb-1 {{ request()->routeIs('pages.travel') ? 'text-orange-100 border-white' : 'border-transparent hover:text-orange-100 hover:border-white' }}">
-                   Travel Guides
+                   Travel
                 </a>
                 <a href="{{ route('pages.flight') }}" 
                    class="transition border-b-2 pb-1 {{ request()->routeIs('pages.flight') ? 'text-orange-100 border-white' : 'border-transparent hover:text-orange-100 hover:border-white' }}">
-                   Ticket & Flight
+                   Ticket Flight
                 </a>
             </div>
 
@@ -233,7 +233,7 @@
         </div>
     </nav>
 
-    @if(!request()->routeIs('home') && !request()->routeIs('pages.about') && !request()->routeIs('pages.contact') && !request()->routeIs('login') && !request()->routeIs('staff.login') && !request()->routeIs('register') && !request()->routeIs('password.*') && !request()->routeIs('pages.faq') && !request()->routeIs('pages.singapore') && !request()->routeIs('pages.travel') && !request()->routeIs('pages.flight'))
+    @if(!request()->routeIs('home') && !request()->routeIs('pages.about') && !request()->routeIs('pages.contact') && !request()->routeIs('login') && !request()->routeIs('staff.login') && !request()->routeIs('register') && !request()->routeIs('password.*') && !request()->routeIs('pages.faq') && !request()->routeIs('pages.singapore') && !request()->routeIs('pages.travel') && !request()->routeIs('pages.flight') && !request()->routeIs('pages.autopass'))
          <div class="w-full bg-gradient-to-r from-orange-500 to-red-600 text-white text-center py-3 animate-banner-wiggle">
             <p class="text-sm md:text-base font-bold tracking-wide">
                 🚗 Need help renting a car? Click the <span class="underline">Help</span> button at the bottom right! 🔥
