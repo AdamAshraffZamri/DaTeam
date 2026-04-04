@@ -63,10 +63,10 @@
             0%, 100% { transform: translateY(0); }
             50% { transform: translateY(-10px); }
         }
-       /* @keyframes help-wiggle {
+       @keyframes help-wiggle {
             0%, 100% { transform: rotate(-3deg); }
             50% { transform: rotate(3deg); } 
-        }*/
+        }
         @keyframes float-1 {
             0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.7; }
             33% { transform: translate(10px, -15px) scale(1.5); opacity: 1; }
@@ -289,6 +289,7 @@
                 </div>
             </div>
         </div>
+     </div>        
     @endif
 
     <button onclick="document.getElementById('help-modal').classList.remove('hidden')" 
