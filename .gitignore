@@ -23,11 +23,11 @@ Homestead.yaml
 Thumbs.db
 # 1. Ignore everything in these public subfolders by default
 /public/storage/agreements/*
-/public/storage/inspections/*
+
 /public/storage/receipts/*
 /public/storage/uploads/*
 /storage/app/public/agreements/*
-/storage/app/public/inspections/*
+
 /storage/app/public/receipts/*
 /storage/app/public/uploads/*
 # 2. But keep the folders themselves (by tracking .gitkeep files)
@@ -44,6 +44,7 @@ Thumbs.db
 !/public/storage/vehicles/*
 !/public/storage/vehiclesDocs/
 !/public/storage/vehiclesDocs/*
+!/public/storage/inspections/*
 
 # --- IGNORE ---
 /storage/app/google-drive/*

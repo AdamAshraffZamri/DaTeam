@@ -60,6 +60,9 @@ Route::get('/contact', [PageController::class, 'contact'])->name('pages.contact'
 
 // --- USER IMPORT (For Testing) ---
 Route::get('/import-users', [UserImportController::class, 'import']);
+
+Route::get('/import-bookings', [UserImportController::class, 'importBookings']);
+
 // ====================================================
 //  CUSTOMER ROUTES (Middleware: auth)
 // ====================================================
