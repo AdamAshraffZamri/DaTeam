@@ -41,21 +41,68 @@
             </div>
 
             {{-- RIGHT: Actions (Your Original Button Styles) --}}
-            <div class="flex gap-3">
-                {{-- Edit Button --}}
-                <a href="{{ route('staff.fleet.edit', $vehicle->VehicleID) }}" 
-                   class="bg-gray-600 hover:bg-gray-500 text-white px-6 py-3.5 rounded-2xl font-bold text-xs shadow-lg shadow-gray-900/20 transition-all transform hover:scale-105 flex items-center gap-2 whitespace-nowrap">
-                    <i class="fas fa-edit"></i>
-                    <span>Edit</span>
+            {{-- TOP RIGHT ACTION BUTTONS --}}
+            <div class="flex items-center gap-3 relative">
+                
+                {{-- 1. NEW STATUS DROPDOWN --}}
+                <div class="relative">
+                    @php
+                    // Map the vehicle's current status to UI colors
+                    // Note: Change '$vehicle->status' if your database uses a different column name
+                    $currentStatus = strtolower($vehicle->status ?? 'available'); 
+                    
+                    $statusConfig = match($currentStatus) {
+                        'rented' => ['text' => 'Rented', 'bg' => 'bg-orange-50', 'border' => 'border-orange-200', 'text_color' => 'text-orange-600', 'dot' => 'bg-orange-500'],
+                        'maintenance' => ['text' => 'Maintenance', 'bg' => 'bg-blue-50', 'border' => 'border-blue-200', 'text_color' => 'text-blue-600', 'dot' => 'bg-blue-500'],
+                        'inactive' => ['text' => 'Inactive', 'bg' => 'bg-gray-50', 'border' => 'border-gray-200', 'text_color' => 'text-gray-600', 'dot' => 'bg-gray-400'],
+                        default => ['text' => 'Available', 'bg' => 'bg-green-50', 'border' => 'border-green-200', 'text_color' => 'text-green-700', 'dot' => 'bg-green-500'],
+                    };
+                @endphp
+
+                <button type="button" onclick="toggleStatusUpdateDropdown()" 
+                    class="{{ $statusConfig['bg'] }} {{ $statusConfig['border'] }} {{ $statusConfig['text_color'] }} border px-5 py-2.5 rounded-xl font-bold text-sm shadow-sm hover:opacity-80 transition-all flex items-center gap-2">
+                    <span class="w-1.5 h-1.5 rounded-full {{ $statusConfig['dot'] }}"></span>
+                    <span class="capitalize">{{ $statusConfig['text'] }}</span>
+                    <i class="fas fa-chevron-down text-[10px] ml-1"></i>
+                </button>
+
+                    {{-- Status Dropdown Menu --}}
+                    <div id="statusUpdateMenu" class="absolute right-0 mt-2 w-48 bg-white rounded-2xl shadow-xl border border-gray-100 hidden z-50 overflow-hidden transform origin-top transition-all duration-200">
+                        {{-- Note: Adjust the action route to match your actual controller logic --}}
+                        <form action="{{ route('staff.fleet.status', $vehicle->VehicleID ?? $vehicle->id) }}" method="POST">
+                            @csrf
+                            @method('POST')
+                            
+                            <button type="submit" name="status" value="available" class="w-full text-left px-5 py-3 text-xs font-bold text-green-700 hover:bg-green-50 border-b border-gray-50 transition-colors flex items-center gap-2">
+                                <span class="w-1.5 h-1.5 rounded-full bg-green-500"></span> Available
+                            </button>
+                            
+                            <button type="submit" name="status" value="rented" class="w-full text-left px-5 py-3 text-xs font-bold text-orange-600 hover:bg-orange-50 border-b border-gray-50 transition-colors flex items-center gap-2">
+                                <span class="w-1.5 h-1.5 rounded-full bg-orange-500"></span> Rented
+                            </button>
+
+                            <button type="submit" name="status" value="maintenance" class="w-full text-left px-5 py-3 text-xs font-bold text-blue-600 hover:bg-blue-50 border-b border-gray-50 transition-colors flex items-center gap-2">
+                                <span class="w-1.5 h-1.5 rounded-full bg-blue-500"></span> Maintenance
+                            </button>
+                            
+                            <button type="submit" name="status" value="inactive" class="w-full text-left px-5 py-3 text-xs font-bold text-gray-600 hover:bg-gray-50 transition-colors flex items-center gap-2">
+                                <span class="w-1.5 h-1.5 rounded-full bg-gray-400"></span> Inactive
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                {{-- 2. EXISTING EDIT BUTTON --}}
+                <a href="{{ route('staff.fleet.edit', $vehicle->VehicleID ?? $vehicle->id) }}" class="bg-slate-700 hover:bg-slate-800 text-white px-5 py-2.5 rounded-xl font-bold text-sm shadow-sm transition-all flex items-center gap-2">
+                    <i class="fas fa-edit"></i> Edit
                 </a>
 
-                {{-- Delete Button --}}
-                <form action="{{ route('staff.fleet.destroy', $vehicle->VehicleID) }}" method="POST" onsubmit="return confirm('Confirm to delete this vehicle? This action can\'t be undone.');">
-                    @csrf @method('DELETE')
-                    <button type="submit" 
-                            class="bg-red-600 hover:bg-red-500 text-white px-6 py-3.5 rounded-2xl font-bold text-xs shadow-lg shadow-red-900/20 transition-all transform hover:scale-105 flex items-center gap-2 whitespace-nowrap">
-                        <i class="fas fa-trash-alt"></i>
-                        <span>Delete</span>
+                {{-- 3. EXISTING DELETE BUTTON --}}
+                <form action="{{ route('staff.fleet.destroy', $vehicle->VehicleID ?? $vehicle->id) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this vehicle?');">
+                    @csrf
+                    @method('DELETE')
+                    <button type="submit" class="bg-red-600 hover:bg-red-700 text-white px-5 py-2.5 rounded-xl font-bold text-sm shadow-sm transition-all flex items-center gap-2">
+                        <i class="fas fa-trash"></i> Delete
                     </button>
                 </form>
             </div>
@@ -92,7 +139,10 @@
                                         {{ substr($vehicle->owner_name ?? 'H', 0, 1) }}
                                     </div>
                                     <div class="space-y-1 overflow-hidden">
-                                        <p class="text-sm font-bold text-gray-900 leading-none truncate" title="{{ $vehicle->owner_name }}">{{ $vehicle->owner_name ?? 'Hasta Travel & Tours' }}</p>
+                                        <div class="flex items-center gap-2">
+                                            <p class="text-sm font-bold text-gray-900 leading-none truncate" title="{{ $vehicle->owner_name }}">{{ $vehicle->owner_name ?? 'Hasta Travel & Tours' }}</p>
+                                            <span class="px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-wider bg-blue-100 text-blue-700 border border-blue-200">{{ $vehicle->ownership_type ?? 'HASTA' }}</span>
+                                        </div>
                                         <div class="flex flex-wrap gap-x-4 gap-y-1 text-[10px] text-gray-500 font-medium pt-1">
                                             <div class="flex items-center gap-1" title="Phone">
                                                 <i class="fas fa-phone text-[9px] opacity-70"></i>
@@ -913,6 +963,21 @@
         document.getElementById('customCalendarTitle').innerText = calendar.view.title;
         document.getElementById('prevBtn').addEventListener('click', function() { calendar.prev(); document.getElementById('customCalendarTitle').innerText = calendar.view.title; });
         document.getElementById('nextBtn').addEventListener('click', function() { calendar.next(); document.getElementById('customCalendarTitle').innerText = calendar.view.title; });
+    });
+
+    function toggleStatusUpdateDropdown() {
+        const menu = document.getElementById('statusUpdateMenu');
+        menu.classList.toggle('hidden');
+    }
+
+    // Close dropdown when clicking outside
+    document.addEventListener('click', function(event) {
+        const menu = document.getElementById('statusUpdateMenu');
+        const button = event.target.closest('button[onclick="toggleStatusUpdateDropdown()"]');
+        
+        if (!button && menu && !menu.contains(event.target)) {
+            menu.classList.add('hidden');
+        }
     });
 </script>
 @endsection

@@ -117,6 +117,7 @@ class Vehicle extends Model
         'priceHour',        // The base hourly rate (usually the 1H tier)
         'hourly_rates',     // JSON field for tiered pricing (1h, 3h, 24h, etc.)
         'image',            // Path to the vehicle photo
+        'ownership_type',   // HASTA, BROKER, or AGENT
         'owner_name',       // Owner name
         'owner_phone',      // Owner phone number
         'owner_nric',       // NRIC or Company Reg Number 
@@ -124,6 +125,7 @@ class Vehicle extends Model
         'grant_image',      // Path to grant/ownership image
         'insurance_image',  // Path to insurance document image
         'blocked_dates',    // JSON array of blocked dates
+        'status',           // Vehicle status (active, booked, maintenance, inactive)
     ];
 
     /**
