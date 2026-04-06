@@ -275,10 +275,10 @@ class AuthController extends Controller
         $status = Password::broker('customers')->reset(
             $request->only('email', 'password', 'password_confirmation', 'token'),
             function ($user, $password) {
-                // Update user password and regenerate remember token
+                // Update user password
                 $user->forceFill([
                     'password' => Hash::make($password)
-                ])->setRememberToken(Str::random(60));
+                ]);
 
                 // Save updated user to database
                 $user->save();
