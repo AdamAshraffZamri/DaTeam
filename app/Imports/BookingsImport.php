@@ -27,7 +27,16 @@ class BookingsImport
         // Skip the header row (Row 1)
         fgetcsv($file);
 
-        $testCounter = 1; // ADD THIS HERE
+        $lastBooking = Booking::where('aggreementLink', 'LIKE', 'agreements/agreement_Test%.pdf')
+        ->orderByRaw('CAST(SUBSTRING_INDEX(SUBSTRING_INDEX(aggreementLink, "Test", -1), ".", 1) AS UNSIGNED) DESC')
+        ->first();
+
+        $testCounter = 1;
+        if ($lastBooking) {
+            // Regex to extract the number from the string
+            preg_match('/Test(\d+)/', $lastBooking->aggreementLink, $matches);
+            $testCounter = isset($matches[1]) ? (int)$matches[1] + 1 : 1;
+        }
 
         try {
             while (($row = fgetcsv($file)) !== false) {
@@ -42,16 +51,34 @@ class BookingsImport
                 $returnTime = trim($row[7]);
                 $returnLocation = trim($row[8]);
                 $totalCost = trim($row[9]);
-                $mileageBefore = trim($row[10]);
-                $mileageAfter = trim($row[11]);
-                $fuelBefore = trim($row[12]);
-                $fuelAfter = trim($row[13]);
+
+                // Force mileage to be a number (removes non-numeric characters)
+                $mileageBefore = (float) filter_var(trim($row[10]), FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION);
+                $mileageAfter  = (float) filter_var(trim($row[11]), FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION);
+
+                // If fuel is "6/8", you might need to handle it as a string or calculate the decimal
+                $fuelBefore = trim($row[12]); 
+                $fuelAfter  = trim($row[13]);
 
                 // Find existing customer and vehicle
                 $customer = Customer::where('email', $email)->first();
                 $vehicle = Vehicle::where('plateNo', $plateNo)->first();
 
-                if (!$customer || !$vehicle) {
+                $customer = Customer::where('email', $email)->first();
+
+                if (!$customer) {
+                    // Adjust these fields to match your 'customers' table schema
+                    $customer = Customer::create([
+                        'email' => $email,
+                        'fullName' => 'New Customer',
+                        'password' => bcrypt('8888'),  // Using bcrypt for Laravel security
+                    ]);
+                }
+
+                $vehicle = Vehicle::where('plateNo', $plateNo)->first();
+
+                // If vehicle still doesn't exist, we skip
+                if (!$vehicle) {
                     $skipped++;
                     continue; 
                 }
