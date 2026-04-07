@@ -256,9 +256,19 @@
                             </div>
 
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
-                                <div class="col-span-full">
+                                <div>
+                                    <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-1.5 ml-1">Ownership Type <span class="text-red-500">*</span></label>
+                                    <div class="relative">
+                                        <select name="ownership_type" class="w-full bg-blue-50/50 border border-blue-100 rounded-xl px-4 py-3 font-medium text-gray-900 outline-none focus:bg-white focus:border-blue-500 appearance-none cursor-pointer" required>
+                                            <option value="HASTA" {{ old('ownership_type') == 'HASTA' ? 'selected' : '' }}>HASTA</option>
+                                            <option value="BROKER" {{ old('ownership_type') == 'BROKER' ? 'selected' : '' }}>BROKER</option>
+                                            <option value="AGENT" {{ old('ownership_type') == 'AGENT' ? 'selected' : '' }}>AGENT</option>
+                                        </select>
+                                        <div class="absolute inset-y-0 right-4 flex items-center pointer-events-none text-blue-400"><i class="fas fa-chevron-down text-[10px]"></i></div>
+                                    </div>
+                                </div>
+                                <div>
                                     <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-1.5 ml-1">Owner Name <span class="text-red-500">*</span></label>
-                                    {{-- Valid: Letters, spaces, dots. Invalid: Numbers, special chars --}}
                                     <input type="text" name="owner_name" placeholder="Hasta Travel & Tours" value="{{ old('owner_name') }}" 
                                            class="w-full bg-blue-50/50 border border-blue-100 rounded-xl px-4 py-3 font-medium text-gray-900 outline-none focus:bg-white focus:border-blue-500 transition-all" 
                                            required x-on:input="$el.value = $el.value.replace(/[^a-zA-Z\s\.]/g, '')">

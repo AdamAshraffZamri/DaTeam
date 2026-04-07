@@ -90,6 +90,11 @@ class FleetController extends Controller
             }
         }
 
+        // 4. Ownership Filter
+        if ($request->filled('ownership') && $request->ownership !== 'all') {
+            $query->where('ownership_type', $request->ownership);
+        }
+
         // Fetch distinct models for the dropdown
         $vehicleModels = Vehicle::select('model')->distinct()->orderBy('model')->pluck('model');
 
@@ -141,6 +146,7 @@ class FleetController extends Controller
         $request->validate([
             'plateNo' => 'required|string|max:20|unique:vehicles,plateNo',
             'image' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
+            'ownership_type' => 'required|in:HASTA,BROKER,AGENT',
             'brand'   => 'required|max:100',
             'model'   => 'required|max:100',
             'road_tax_image' => 'nullable|mimes:jpeg,png,jpg,pdf|max:2048',
@@ -208,6 +214,7 @@ class FleetController extends Controller
             'mileage'          => $request->mileage ?? 0,
             'fuelType'         => $request->fuelType,
             'baseDepo'         => $request->baseDepo,
+            'ownership_type'   => $request->ownership_type,
             'owner_name'       => $request->owner_name ?? 'Hasta Travel & Tours',
             'owner_phone'      => $request->owner_phone,
             'owner_nric'       => $request->owner_nric,
@@ -379,6 +386,7 @@ class FleetController extends Controller
             'image' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
             'brand'   => 'required',
             'model'   => 'required',
+            'ownership_type' => 'required|in:HASTA,BROKER,AGENT',
             'road_tax_image' => 'nullable|mimes:jpeg,png,jpg,pdf|max:2048',
             'grant_image'    => 'nullable|mimes:jpeg,png,jpg,pdf|max:2048',
             'insurance_image'=> 'nullable|mimes:jpeg,png,jpg,pdf|max:2048',
@@ -489,17 +497,27 @@ class FleetController extends Controller
             ->with('success', 'Vehicle updated successfully.');
     }
 
-    // Update Vehicle Status (Activate/Deactivate)
+    // Update Vehicle Status
     public function updateStatus($id)
     {
         $vehicle = Vehicle::findOrFail($id);
-        
-        // Toggle: If 1 make 0, if 0 make 1
-        $vehicle->availability = !$vehicle->availability;
+
+        // Get the exact status sent from the dropdown form
+        $newStatus = request('status'); 
+
+        // 1. Save the exact text status to our new database column
+        $vehicle->status = $newStatus;
+
+        // 2. Keep the old availability boolean synced just in case other parts of your app still rely on it
+        if ($newStatus === 'available' || $newStatus === 'rented') {
+            $vehicle->availability = 1; 
+        } else {
+            $vehicle->availability = 0; 
+        }
+
         $vehicle->save();
 
-        $statusMsg = $vehicle->availability ? 'Active' : 'Inactive';
-        return back()->with('success', "Vehicle marked as $statusMsg.");
+        return back()->with('success', "Vehicle marked as " . ucfirst($newStatus) . ".");
     }
 
     // Delete Vehicle

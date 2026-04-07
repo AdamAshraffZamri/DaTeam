@@ -44,6 +44,15 @@ Route::post('/forgot-password', [AuthController::class, 'sendResetLinkEmail'])->
 Route::get('/reset-password/{token}', [AuthController::class, 'showResetForm'])->name('password.reset');
 Route::post('/reset-password', [AuthController::class, 'reset'])->name('password.update');
 
+// --- New Content Pages ---
+Route::get('/drive-to-singapore', [PageController::class, 'singapore'])->name('pages.singapore');
+Route::get('/travel-guides', [PageController::class, 'travel'])->name('pages.travel');
+Route::get('/ticket-flight', [PageController::class, 'flight'])->name('pages.flight');
+
+// --- Autopass Pages ---
+Route::get('/autopass-payment', [PageController::class, 'autopass'])->name('pages.autopass');
+Route::post('/autopass-submit', [BookingController::class, 'submitAutopassPayment'])->name('autopass.submit');
+
 // Static Pages
 Route::get('/about', [PageController::class, 'about'])->name('pages.about');
 Route::get('/faq', [PageController::class, 'faq'])->name('pages.faq');
@@ -51,6 +60,9 @@ Route::get('/contact', [PageController::class, 'contact'])->name('pages.contact'
 
 // --- USER IMPORT (For Testing) ---
 Route::get('/import-users', [UserImportController::class, 'import']);
+
+Route::get('/import-bookings', [UserImportController::class, 'importBookings']);
+
 // ====================================================
 //  CUSTOMER ROUTES (Middleware: auth)
 // ====================================================

@@ -320,73 +320,62 @@
     </div>
 </div>
 
-{{-- SECTION 2: FLEET SHOWCASE --}}
-<div id="fleet-showcase" class="glass-section py-16 md:py-24 border-b border-white/5 w-full">
-    <div class="absolute top-0 right-0 w-[300px] md:w-[500px] h-[300px] md:h-[500px] bg-orange-600/10 blur-[120px] rounded-full pointer-events-none"></div>
-
-    <div class="container mx-auto px-4 mb-8 md:mb-12 flex justify-between items-end relative z-10">
-        <div>
-            <h2 class="text-3xl md:text-5xl font-black text-white mb-2">Our Fleet</h2>
-            <p class="text-gray-400 text-sm md:text-base">Browsing {{ count($vehicles) }} premium vehicles.</p>
-        </div>
+{{-- SECTION: JOHOR HIGHLIGHTS & BAZAARS --}}
+<div id="highlights" class="py-20 bg-[#111] relative overflow-hidden">
+    <div class="container mx-auto px-4 md:px-12 relative z-10">
         
-        <div class="hidden md:flex gap-3">
-            <button id="slidePrev" class="w-12 h-12 rounded-full border border-gray-600 text-white flex items-center justify-center hover:bg-white hover:text-black transition">
-                <i class="fas fa-chevron-left"></i>
-            </button>
-            <button id="slideNext" class="w-12 h-12 rounded-full bg-white text-black flex items-center justify-center hover:bg-orange-600 hover:text-white transition shadow-lg">
-                <i class="fas fa-chevron-right"></i>
-            </button>
+        <div class="flex flex-col md:flex-row justify-between items-end mb-12 gap-6">
+            <div>
+                <h2 class="text-4xl md:text-6xl font-black text-white mb-4 tracking-tighter">
+                    JOHOR <span class="text-orange-500">HIGHLIGHTS</span>
+                </h2>
+                <p class="text-gray-400 max-w-xl">Discover the latest traveling fairs and seasonal bazaars happening around Johor Bahru this April.</p>
+            </div>
         </div>
-    </div>
 
-    <div class="relative w-full z-10">
-        @if($vehicles->count() > 0)
-        <div class="flex overflow-x-auto gap-4 md:gap-8 px-4 pb-8 md:pb-12 scroll-smooth no-scrollbar" id="carouselTrack">
-            @foreach($vehicles as $vehicle)
-            <div class="glass-card w-[85vw] md:w-[400px] rounded-[2rem] md:rounded-[2.5rem] relative group flex-shrink-0">
-                
-                <div class="h-48 md:h-64 w-full flex items-center justify-center relative mt-6 perspective-1000">
-                    <img src="{{ $vehicle->image_url }}" alt="{{ $vehicle->model }}" 
-                         class="w-[85%] object-contain drop-shadow-2xl transform group-hover:scale-110 group-hover:-rotate-2 transition duration-500 ease-out z-10">
-                    <div class="absolute top-0 left-6 bg-black/40 backdrop-blur-md border border-white/10 text-white px-3 md:px-4 py-1.5 rounded-full text-[10px] md:text-xs font-bold z-20">
-                        {{ strtoupper($vehicle->type) }}
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-8">
+            
+            {{-- ADVERTISEMENT: MATTA FAIR JOHOR --}}
+            <div class="glass-card rounded-[2.5rem] overflow-hidden group cursor-pointer" 
+                 onclick="window.open('https://visitjohor2026.my/', '_blank')">
+                <div class="relative h-64 md:h-80 overflow-hidden">
+                    <img src="https://images.unsplash.com/photo-1506461883276-594a12b11cf3?auto=format&fit=crop&q=80&w=800" 
+                         class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 opacity-60">
+                    <div class="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent"></div>
+                    <div class="absolute top-6 left-6 bg-orange-500 text-white px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest">
+                        Traveling Ad
                     </div>
                 </div>
-                <div class="p-6 md:p-8 relative bg-gradient-to-b from-transparent to-black/40 rounded-b-[2rem] md:rounded-b-[2.5rem]">
-                    <div class="flex justify-between items-start mb-6">
-                        <div>
-                            <p class="text-orange-500 text-xs font-bold tracking-widest uppercase mb-1">{{ $vehicle->brand }}</p>
-                            <h3 class="text-2xl md:text-3xl font-bold text-white truncate max-w-[150px] md:max-w-[200px]">{{ $vehicle->model }}</h3>
-                        </div>
-                        <div class="text-right">
-                            <p class="text-white font-bold text-xl md:text-2xl">RM {{ number_format($vehicle->priceHour, 0) }}</p>
-                            <p class="text-gray-400 text-[10px] md:text-xs">/ hour</p>
-                        </div>
-                    </div>
-                    <div class="flex gap-2 md:gap-3 text-gray-300 mb-6 md:mb-8 text-xs md:text-sm overflow-x-auto no-scrollbar">
-                        <div class="flex items-center gap-2 bg-white/5 px-3 py-2 rounded-xl border border-white/5 whitespace-nowrap">
-                            <i class="fas fa-gas-pump text-orange-500"></i> {{ $vehicle->fuelType }}
-                        </div>
-                        <div class="flex items-center gap-2 bg-white/5 px-3 py-2 rounded-xl border border-white/5 whitespace-nowrap">
-                            <i class="fas fa-calendar-alt text-orange-500"></i> {{ $vehicle->year }}
-                        </div>
-                        <div class="flex items-center gap-2 bg-white/5 px-3 py-2 rounded-xl border border-white/5 whitespace-nowrap">
-                            <i class="fas fa-palette text-orange-500"></i> {{ $vehicle->color }}
-                        </div>
-                    </div>
-                    <a href="{{ route('book.create', ['vehicle_id' => $vehicle->VehicleID]) }}" class="block w-full py-3 md:py-4 bg-white text-black font-bold text-center rounded-2xl hover:bg-orange-600 hover:text-white transition shadow-[0_0_20px_rgba(255,255,255,0.2)]">
-                        Rent Now
-                    </a>
+                <div class="p-8">
+                    <h3 class="text-3xl font-bold text-white mb-2">MATTA Fair Johor 2026</h3>
+                    <p class="text-gray-400 mb-6">The biggest travel fair returns to Austin International Convention Centre (AICC) from 10–12 April 2026.</p>
+                    <span class="text-orange-500 font-bold flex items-center gap-2 group-hover:gap-4 transition-all">
+                        Visit Official Website <i class="fas fa-arrow-right"></i>
+                    </span>
                 </div>
             </div>
-            @endforeach
+
+            {{-- BAZAAR: LARKIN RAMADAN BAZAAR --}}
+            <div class="glass-card rounded-[2.5rem] overflow-hidden group cursor-pointer" 
+                 onclick="window.open('https://maps.app.goo.gl/3fXmNqX1Y7B2', '_blank')">
+                <div class="relative h-64 md:h-80 overflow-hidden">
+                    <img src="https://images.unsplash.com/photo-1555939594-58d7cb561ad1?auto=format&fit=crop&q=80&w=800" 
+                         class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 opacity-60">
+                    <div class="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent"></div>
+                    <div class="absolute top-6 left-6 bg-green-600 text-white px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest">
+                        Local Bazaar
+                    </div>
+                </div>
+                <div class="p-8">
+                    <h3 class="text-3xl font-bold text-white mb-2">Bazaar Ramadan Larkin</h3>
+                    <p class="text-gray-400 mb-6">Explore authentic local street food right beside Larkin Sentral. A must-visit for traditional desserts and grilled delicacies.</p>
+                    <span class="text-orange-500 font-bold flex items-center gap-2 group-hover:gap-4 transition-all">
+                        Navigate to Location <i class="fas fa-map-marker-alt"></i>
+                    </span>
+                </div>
+            </div>
+
         </div>
-        @else
-        <div class="text-center py-12 text-gray-500">
-            <p>No vehicles are currently available.</p>
-        </div>
-        @endif
     </div>
 </div>
 
