@@ -49,14 +49,14 @@
             0%, 100% { opacity: 0.6; }
             50% { opacity: 1; }
         }
-        @keyframes banner-wiggle {
+        /* @keyframes banner-wiggle {
             0%, 100% { transform: rotate(-5deg); }
             50% { transform: rotate(5deg); }
-        }
+        } */
         .animate-shine { animation: shine 4s ease-in-out infinite; }
         .animate-bounce-subtle { animation: bounce-subtle 2s ease-in-out infinite; }
         .animate-pulse-slow { animation: pulse-slow 3s ease-in-out infinite; }
-        .animate-banner-wiggle { animation: banner-wiggle 0.5s ease-in-out infinite; }
+        /* .animate-banner-wiggle { animation: banner-wiggle 0.5s ease-in-out infinite; } */
 
         /* Help Button Animations */
         @keyframes bounce-slow {
@@ -234,7 +234,7 @@
     </nav>
 
     @if(!request()->routeIs('home') && !request()->routeIs('pages.about') && !request()->routeIs('pages.contact') && !request()->routeIs('login') && !request()->routeIs('staff.login') && !request()->routeIs('register') && !request()->routeIs('password.*') && !request()->routeIs('pages.faq') && !request()->routeIs('pages.singapore') && !request()->routeIs('pages.travel') && !request()->routeIs('pages.flight') && !request()->routeIs('pages.autopass'))
-         <div class="w-full bg-gradient-to-r from-orange-500 to-red-600 text-white text-center py-3 animate-banner-wiggle">
+    <div class="w-full bg-gradient-to-r from-orange-500 to-red-600 text-white text-center py-3 animate-banner-wiggle">
             <p class="text-sm md:text-base font-bold tracking-wide">
                 🚗 Need help renting a car? Click the <span class="underline">Help</span> button at the bottom right! 🔥
             </p>
@@ -289,7 +289,7 @@
                 </div>
             </div>
         </div>
-     </div>        
+    </div>        
     @endif
 
     <button onclick="document.getElementById('help-modal').classList.remove('hidden')" 
