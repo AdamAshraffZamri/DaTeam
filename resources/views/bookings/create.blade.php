@@ -114,38 +114,56 @@
 
                 {{-- RETURN DATE & TIME --}}
                 <div class="px-4 py-3 w-full md:w-auto border-b border-white/10 md:border-b-0 md:border-transparent">
-                    <label class="block text-[10px] md:text-[12px] font-bold text-gray-300 md:text-white uppercase tracking-wider mb-1">RETURN DATE</label>
-                    <div class="flex items-center bg-white/5 rounded-xl px-3 py-2 md:py-1 hover:bg-white/10 transition h-auto md:h-[42px] justify-between md:justify-start">
+                    <label class="block text-[10px] md:text-[12px] font-bold text-gray-300 md:text-white uppercase tracking-wider mb-1">RETURN</label>
+                    
+                    <input type="hidden" name="return_date" id="return_date_hidden" value="{{ date('Y-m-d', strtotime('+1 day')) }}">
+                    <input type="hidden" name="return_time" id="return_time_hidden" value="11:00">
 
-                        {{-- Date Input --}}
-                        <input type="date" name="return_date" min="{{ date('Y-m-d') }}" value="{{ date('Y-m-d', strtotime('+1 day')) }}"
-                               class="bg-transparent border-none p-0 text-sm font-bold text-white focus:ring-0 [color-scheme:dark] cursor-pointer w-[110px]">
+                    {{-- Duration Preset Row --}}
+                    <div class="flex items-center bg-white/5 rounded-xl px-3 py-2 md:py-1 hover:bg-white/10 transition h-auto md:h-[42px]">
+                        <select id="duration_select" onchange="onDurationChange()"
+                                class="bg-transparent text-white font-bold text-sm border-none p-0 focus:ring-0 cursor-pointer w-full">
+                            <option value="1"      class="text-black">+ 1 hour</option>
+                            <!-- <option value="2"      class="text-black">+ 2 hours</option> -->
+                            <option value="3"      class="text-black">+ 3 hours</option>
+                            <option value="5"      class="text-black">+ 5 hours</option>
+                            <option value="7"      class="text-black">+ 7 hours</option>
+                            <option value="9"      class="text-black">+ 9 hours</option>
+                            <option value="12"     class="text-black">+ 12 hours</option>
+                            <option value="24"     class="text-black">+ 24 hours (1 day)</option>
+                            <option value="48"     class="text-black">+ 48 hours (2 days)</option>
+                            <option value="72"     class="text-black">+ 72 hours (3 days)</option>
+                            <option value="custom" class="text-black">Custom date & time...</option>
+                        </select>
+                    </div>
 
-                        {{-- Divider --}}
-                        <div class="w-px h-5 bg-white/20 mx-2 md:mx-3"></div>
+                    {{-- Computed return label (shown for presets) --}}
+                    <p id="return_computed_label" class="text-gray-400 text-[10px] mt-1 pl-1"></p>
 
-                        {{-- Time Input Group --}}
-                        <div class="flex items-center">
-                            <input type="hidden" name="return_time" id="return_time_hidden" value="">
+                    {{-- Custom date+time pickers (hidden by default) --}}
+                    <div id="custom_return_wrap" class="hidden mt-2">
+                        <div class="flex items-center bg-white/5 rounded-xl px-3 py-2 md:py-1 hover:bg-white/10 transition h-auto md:h-[42px] justify-between md:justify-start">
+                            
+                            <input type="date" id="return_date_custom" min="{{ date('Y-m-d') }}" value="{{ date('Y-m-d', strtotime('+1 day')) }}"
+                                class="bg-transparent border-none p-0 text-sm font-bold text-white focus:ring-0 [color-scheme:dark] cursor-pointer w-[110px]"
+                                onchange="syncCustomReturn()">
 
-                            <select id="return_hour" 
-                                    onchange="updateHiddenTime('return')"
-                                    class="bg-transparent text-white font-bold text-sm border-none p-0 focus:ring-0 cursor-pointer appearance-none text-center w-6">
-                                @for ($i = 1; $i <= 12; $i++)
-                                    <option value="{{ $i }}" {{ $i == 10 ? 'selected' : '' }} class="text-black">
-                                        {{ $i }}
-                                    </option>
-                                @endfor
-                            </select>
+                            <div class="w-px h-5 bg-white/20 mx-2 md:mx-3"></div>
 
-                            <span class="text-white font-bold text-sm leading-none mx-0.5">: 00</span>
-
-                            <select id="return_ampm"
-                                    class="bg-transparent text-white font-bold text-sm border-none p-0 focus:ring-0 cursor-pointer ml-1 leading-none"
-                                    onchange="updateHiddenTime('return')">
-                                <option value="AM" class="text-black">AM</option>
-                                <option value="PM" class="text-black" selected>PM</option>
-                            </select>
+                            <div class="flex items-center">
+                                <select id="return_hour" onchange="syncCustomReturn()"
+                                        class="bg-transparent text-white font-bold text-sm border-none p-0 focus:ring-0 cursor-pointer appearance-none text-center w-6">
+                                    @for ($i = 1; $i <= 12; $i++)
+                                        <option value="{{ $i }}" {{ $i == 10 ? 'selected' : '' }} class="text-black">{{ $i }}</option>
+                                    @endfor
+                                </select>
+                                <span class="text-white font-bold text-sm leading-none mx-0.5">: 00</span>
+                                <select id="return_ampm" onchange="syncCustomReturn()"
+                                        class="bg-transparent text-white font-bold text-sm border-none p-0 focus:ring-0 cursor-pointer ml-1 leading-none">
+                                    <option value="AM" class="text-black">AM</option>
+                                    <option value="PM" class="text-black" selected>PM</option>
+                                </select>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -275,34 +293,78 @@
 
     // --- 3. VALIDATION ---
     function validateForm(e) {
+    updateHiddenTime('pickup');
+
+    const pDate = document.querySelector('input[name="pickup_date"]').value;
+    const rDate = document.getElementById('return_date_hidden').value;
+    const pTime = document.getElementById('pickup_time_hidden').value || '00:00';
+    const rTime = document.getElementById('return_time_hidden').value || '00:00';
+
+    const start = new Date(pDate + 'T' + pTime);
+    const end   = new Date(rDate + 'T' + rTime);
+
+    if ((end - start) / 3600000 < 1) {
+        e.preventDefault();
+        alert("⚠️ Invalid Duration!\n\nThe return time must be at least 1 hour after the pickup time.");
+        return false;
+    }
+    return true;
+}
+
+    function applyDurationFromPickup(hours) {
         updateHiddenTime('pickup');
-        updateHiddenTime('return');
 
         const pDate = document.querySelector('input[name="pickup_date"]').value;
-        const rDate = document.querySelector('input[name="return_date"]').value;
-        const pHour = parseInt(document.getElementById('pickup_hour').value);
-        const pAmPm = document.getElementById('pickup_ampm').value;
-        const rHour = parseInt(document.getElementById('return_hour').value);
-        const rAmPm = document.getElementById('return_ampm').value;
+        const pTime = document.getElementById('pickup_time_hidden').value || '10:00';
+        const [pH] = pTime.split(':').map(Number);
 
-        let p24 = (pAmPm === 'PM' && pHour < 12) ? pHour + 12 : (pAmPm === 'AM' && pHour === 12 ? 0 : pHour);
-        let r24 = (rAmPm === 'PM' && rHour < 12) ? rHour + 12 : (rAmPm === 'AM' && rHour === 12 ? 0 : rHour);
+        const pickupDt = new Date(pDate);
+        pickupDt.setHours(pH, 0, 0, 0);
 
-        const start = new Date(pDate);
-        start.setHours(p24, 0, 0, 0);
-        const end = new Date(rDate);
-        end.setHours(r24, 0, 0, 0);
+        const returnDt = new Date(pickupDt.getTime() + hours * 3600000);
 
-        const diffHours = (end - start) / (1000 * 60 * 60);
+        // Write to hidden fields
+        const yyyy = returnDt.getFullYear();
+        const mm   = String(returnDt.getMonth() + 1).padStart(2, '0');
+        const dd   = String(returnDt.getDate()).padStart(2, '0');
+        document.getElementById('return_date_hidden').value = `${yyyy}-${mm}-${dd}`;
+        document.getElementById('return_time_hidden').value = String(returnDt.getHours()).padStart(2, '0') + ':00';
 
-        if (diffHours < 1) {
-            e.preventDefault();
-            alert("⚠️ Invalid Duration!\n\nThe return time must be at least 1 hour after the pickup time.");
-            return false;
-        }
-        return true;
+        // Show human-readable label
+        const label = returnDt.toLocaleString('en-MY', { 
+            weekday: 'short', month: 'short', day: 'numeric', 
+            hour: 'numeric', minute: '2-digit', hour12: true 
+        });
+        document.getElementById('return_computed_label').textContent = '↳ ' + label;
     }
 
+    function onDurationChange() {
+        const val = document.getElementById('duration_select').value;
+        const customWrap = document.getElementById('custom_return_wrap');
+        const label = document.getElementById('return_computed_label');
+
+        if (val === 'custom') {
+            customWrap.classList.remove('hidden');
+            label.textContent = '';
+            syncCustomReturn();
+        } else {
+            customWrap.classList.add('hidden');
+            applyDurationFromPickup(parseInt(val));
+        }
+    }
+
+    function syncCustomReturn() {
+        // Sync the custom date+time pickers into the hidden fields
+        const date = document.getElementById('return_date_custom').value;
+        let hour = parseInt(document.getElementById('return_hour').value);
+        const ampm = document.getElementById('return_ampm').value;
+
+        if (ampm === 'PM' && hour < 12) hour += 12;
+        if (ampm === 'AM' && hour === 12) hour = 0;
+
+        document.getElementById('return_date_hidden').value = date;
+        document.getElementById('return_time_hidden').value = String(hour).padStart(2, '0') + ':00';
+    }
     // --- 4. INIT ---
     window.addEventListener('DOMContentLoaded', () => {
         const pDateInput = document.querySelector('input[name="pickup_date"]');
@@ -310,7 +372,27 @@
         
         pDateInput.addEventListener('change', syncDates);
         rDateInput.addEventListener('change', syncDates);
+        // Re-apply duration when pickup date or time changes
+        pDateInput.addEventListener('change', () => {
+            syncDates();
+            const val = document.getElementById('duration_select').value;
+            if (val !== 'custom') applyDurationFromPickup(parseInt(val));
+        });
 
+        document.getElementById('pickup_hour').addEventListener('change', () => {
+            updateHiddenTime('pickup');
+            const val = document.getElementById('duration_select').value;
+            if (val !== 'custom') applyDurationFromPickup(parseInt(val));
+        });
+
+        document.getElementById('pickup_ampm').addEventListener('change', () => {
+            updateHiddenTime('pickup');
+            const val = document.getElementById('duration_select').value;
+            if (val !== 'custom') applyDurationFromPickup(parseInt(val));
+        });
+
+        // Init
+        onDurationChange();
         const form = document.getElementById('searchForm');
         if (form) {
             form.addEventListener('submit', validateForm);
