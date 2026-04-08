@@ -298,7 +298,7 @@
                                 <p class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">MAYBANK</p>
                                 <div class="flex items-center justify-center space-x-2 mt-1">
                                     <p class="text-xl font-bold text-white font-mono tracking-widest">551306541568</p>
-                                    <button type="button" class="text-gray-500 hover:text-orange-500 transition"><i class="far fa-copy"></i></button>
+                                    <!-- <button type="button" class="text-gray-500 hover:text-orange-500 transition"><i class="far fa-copy"></i></button> -->
                                 </div>
                             </div>
                         </div>
