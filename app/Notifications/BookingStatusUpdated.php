@@ -53,7 +53,7 @@ class BookingStatusUpdated extends Notification
             ->line('💰 **Total Cost:** RM ' . number_format($this->booking->totalCost, 2))
             ->line('📊 **Current Status:** ' . $this->booking->bookingStatus)
             ->line('')
-            ->action('View Booking Details', url('/bookings'))
+            ->action('View Booking Details', route('book.index'))
             ->line('If you have any questions or require further assistance, please do not hesitate to contact our support team.')
             ->salutation('Best regards,' . "\n" . 'The DaTeam Management');
     }
