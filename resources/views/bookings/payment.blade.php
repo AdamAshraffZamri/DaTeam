@@ -291,12 +291,13 @@
                         {{-- 2. QR & BANK SECTION --}}
                         <div class="border-t border-white/10 pt-6 text-center">
                             <div class="bg-white rounded-2xl p-3 w-48 h-48 flex items-center justify-center overflow-hidden mx-auto mb-4 shadow-2xl border-4 border-white/10">
-                                <img src="{{ asset('qr.JPG') }}" alt="Payment QR Code" class="w-full h-full object-contain">
+                                <img src="{{ asset('qr.jpeg') }}" alt="Payment QR Code" class="w-full h-full object-contain">
                             </div>
                             <div class="mt-4">
-                                <p class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Bank Account (HASTA)</p>
+                                <p class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Bank Account (HASTA TRAVEL & TOURS SDN. BHD.)</p>
+                                <p class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">MAYBANK</p>
                                 <div class="flex items-center justify-center space-x-2 mt-1">
-                                    <p class="text-xl font-bold text-white font-mono tracking-widest">8821 3491 0022</p>
+                                    <p class="text-xl font-bold text-white font-mono tracking-widest">551306541568</p>
                                     <button type="button" class="text-gray-500 hover:text-orange-500 transition"><i class="far fa-copy"></i></button>
                                 </div>
                             </div>
