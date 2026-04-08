@@ -331,9 +331,12 @@
                                  <p class="text-sm font-bold text-yellow-400">Notice</p>
                                  <p class="text-xs text-gray-300">
                                      Please complete your payment <span class="font-bold text-white">ASAP</span>. 
-                                     Bookings are not secured until proof of payment is uploaded.
+                                     Bookings are not secured until proof of payment is uploaded. 
                                  </p>
-                             </div>
+                                 <p class="text-xs text-gray-300">
+                                    If you did not receive any email after submitting the booking, please check your spam email and report as not spam if found.
+                                    </p>
+                                </div>
                         </div>
 
                         <button type="submit" class="w-full bg-[#ea580c] hover:bg-orange-600 text-white py-4 rounded-xl font-black text-sm uppercase tracking-widest shadow-lg shadow-orange-500/20 transition-all transform hover:scale-[1.02] active:scale-95 flex items-center justify-center group">
