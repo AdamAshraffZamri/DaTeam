@@ -130,13 +130,13 @@
 
                     {{-- DOB --}}
                     <div>
-                        <label class="block text-gray-400 mb-2 font-bold text-xs uppercase tracking-wider">Date Of Birth</label>
+                        <label class="block text-gray-400 mb-2 font-bold text-xs uppercase tracking-wider">Date Of Birth<span class="text-red-500">*</span></label>
                         <input type="date" name="dob" value="{{ old('dob', optional($user->dob)->format('Y-m-d')) }}" class="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white focus:outline-none focus:border-orange-500 focus:bg-white/10 transition [color-scheme:dark]">
                     </div>
 
                     {{-- NATIONALITY --}}
                     <div>
-                        <label class="block text-gray-400 mb-2 font-bold text-xs uppercase tracking-wider">Nationality</label>
+                        <label class="block text-gray-400 mb-2 font-bold text-xs uppercase tracking-wider">Nationality<span class="text-red-500">*</span></label>
                         <select name="nationality" class="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white focus:outline-none focus:border-orange-500 focus:bg-white/10 transition cursor-pointer">
                             <option value="" class="text-black">-- Select Country --</option>
                             @php $countries = ["Malaysia","Indonesia","Singapore","Brunei","Thailand","Vietnam","Philippines","China","India","Pakistan","Bangladesh","Yemen","Saudi Arabia","United Kingdom","United States","Nigeria","Egypt","Japan","Korea, Republic of"]; @endphp
@@ -179,7 +179,7 @@
 
                     {{-- STUDENT ID --}}
                     <div>
-                        <label class="block text-gray-400 mb-2 font-bold text-xs uppercase tracking-wider">Student/Staff ID <span class="text-red-500">*</span></label>
+                        <label class="block text-gray-400 mb-2 font-bold text-xs uppercase tracking-wider">Student/Staff ID <span class="text-red-500">*</span>make sure to upload a clear image of your student/staff ID</label>
                         <div class="flex">
                             <input type="text" name="student_staff_id" value="{{ old('student_staff_id', $user->stustaffID) }}" 
                                    class="w-full bg-white/5 border border-white/10 rounded-l-xl p-3 text-white focus:outline-none focus:border-orange-500 focus:bg-white/10 transition placeholder-gray-500 uppercase"
@@ -187,13 +187,13 @@
                             <button type="button" onclick="document.getElementById('student_file').click()" class="bg-white/10 px-4 rounded-r-xl border border-l-0 border-white/10 text-gray-400 hover:bg-white/20 hover:text-white transition" id="btn_student">
                                 <i class="fas fa-camera" id="icon_student"></i>
                             </button>
-                            <input type="file" name="student_card_image" id="student_file" class="hidden" accept="image/*" onchange="fileSelected('student')">
+                            <input type="file" name="student_card_image" id="student_file" class="hidden" accept="image/*" onchange="fileSelected('student')"required>
                         </div>
                     </div>
 
                     {{-- IC/PASSPORT --}}
                     <div>
-                        <label class="block text-gray-400 mb-2 font-bold text-xs uppercase tracking-wider">IC / Passport No. <span class="text-red-500">*</span></label>
+                        <label class="block text-gray-400 mb-2 font-bold text-xs uppercase tracking-wider">IC / Passport No. <span class="text-red-500">*</span>make sure to upload a clear image of your IC/Passport</label>
                         <div class="flex">
                             <input type="text" name="ic_passport" value="{{ old('ic_passport', $user->ic_passport) }}" 
                                    class="w-full bg-white/5 border border-white/10 rounded-l-xl p-3 text-white focus:outline-none focus:border-orange-500 focus:bg-white/10 transition placeholder-gray-500 uppercase"
@@ -201,20 +201,20 @@
                             <button type="button" onclick="document.getElementById('ic_file').click()" class="bg-white/10 px-4 rounded-r-xl border border-l-0 border-white/10 text-gray-400 hover:bg-white/20 hover:text-white transition" id="btn_ic">
                                 <i class="fas fa-camera" id="icon_ic"></i>
                             </button>
-                            <input type="file" name="ic_passport_image" id="ic_file" class="hidden" accept="image/*" onchange="fileSelected('ic')">
+                            <input type="file" name="ic_passport_image" id="ic_file" class="hidden" accept="image/*" onchange="fileSelected('ic')"required>
                         </div>
                     </div>
 
                     {{-- LICENSE --}}
                     <div>
-                        <label class="block text-gray-400 mb-2 font-bold text-xs uppercase tracking-wider">Driving License Expired Date <span class="text-red-500">*</span></label>
+                        <label class="block text-gray-400 mb-2 font-bold text-xs uppercase tracking-wider">Driving License Expired Date <span class="text-red-500">*</span>make sure to upload a clear image of your driving license</label>
                         <div class="flex">
                             <input type="date" name="driving_license_expiry" value="{{ old('driving_license_expiry', $user->driving_license_expiry) }}" 
                                    class="w-full bg-white/5 border border-white/10 rounded-l-xl p-3 text-white focus:outline-none focus:border-orange-500 focus:bg-white/10 transition [color-scheme:dark]" required>
                              <button type="button" onclick="document.getElementById('license_file').click()" class="bg-white/10 px-4 rounded-r-xl border border-l-0 border-white/10 text-gray-400 hover:bg-white/20 hover:text-white transition" id="btn_license">
                                 <i class="fas fa-camera" id="icon_license"></i>
                             </button>
-                            <input type="file" name="driving_license_image" id="license_file" class="hidden" accept="image/*" onchange="fileSelected('license')">
+                            <input type="file" name="driving_license_image" id="license_file" class="hidden" accept="image/*" onchange="fileSelected('license')"required>
                         </div>
                     </div>
 

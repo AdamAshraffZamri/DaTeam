@@ -124,7 +124,7 @@
                         <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                             <i class="fas fa-phone text-gray-500 group-focus-within:text-orange-500 transition-colors"></i>
                         </div>
-                        <input type="text" name="phone" placeholder="+601..." 
+                        <input type="text" name="phone" placeholder="01..." 
                             class="glass-input w-full rounded-xl py-3 md:py-3.5 pl-11 pr-4 text-sm font-medium focus:ring-0">
                     </div>
                 </div>
