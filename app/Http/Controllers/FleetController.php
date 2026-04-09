@@ -103,13 +103,20 @@ class FleetController extends Controller
         $activeCount = Vehicle::where('availability', 1)->count();
         $inactiveCount = Vehicle::where('availability', 0)->count();
 
-        // Eager load active/future bookings to determine status and next booking
-        $vehicles = $query->with(['bookings' => function($q) {
-            $today = Carbon::now()->toDateString();
-            $q->whereIn('bookingStatus', ['Confirmed', 'Active', 'Deposit Paid'])
-              ->whereDate('returnDate', '>=', $today) // Active or Future
-              ->orderBy('originalDate', 'asc');
-        }])->orderBy('created_at', 'desc')->get();
+        // Define the custom status order priority
+        $statusOrder = "FIELD(status, 'rented', 'available', 'maintenance', 'inactive')";
+
+        $vehicles = $query->orderByRaw($statusOrder)
+                        ->orderBy('model', 'asc')
+                        ->get();
+
+        // // Eager load active/future bookings to determine status and next booking
+        // $vehicles = $query->with(['bookings' => function($q) {
+        //     $today = Carbon::now()->toDateString();
+        //     $q->whereIn('bookingStatus', ['Confirmed', 'Active', 'Deposit Paid'])
+        //       ->whereDate('returnDate', '>=', $today) // Active or Future
+        //       ->orderBy('originalDate', 'asc');
+        // }])->orderBy('created_at', 'desc')->get();
 
         // Process derived attributes
         foreach($vehicles as $vehicle) {
