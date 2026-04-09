@@ -509,7 +509,7 @@ class FleetController extends Controller
         $vehicle->status = $newStatus;
 
         // 2. Keep the old availability boolean synced just in case other parts of your app still rely on it
-        if ($newStatus === 'available' || $newStatus === 'rented') {
+        if ($newStatus === 'available') {
             $vehicle->availability = 1; 
         } else {
             $vehicle->availability = 0; 

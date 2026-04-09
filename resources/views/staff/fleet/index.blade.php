@@ -244,7 +244,7 @@
                                 'rented' => ['text' => 'Rented', 'bg' => 'bg-orange-50', 'border' => 'border-orange-100', 'text_color' => 'text-orange-600', 'dot' => 'bg-orange-500', 'pulse' => 'animate-pulse'],
                                 'maintenance' => ['text' => 'Maintenance', 'bg' => 'bg-blue-50', 'border' => 'border-blue-100', 'text_color' => 'text-blue-700', 'dot' => 'bg-blue-500', 'pulse' => ''],
                                 'inactive' => ['text' => 'Inactive', 'bg' => 'bg-gray-100', 'border' => 'border-gray-200', 'text_color' => 'text-gray-500', 'dot' => 'bg-gray-400', 'pulse' => ''],
-                                default => ['text' => 'Ready', 'bg' => 'bg-green-50', 'border' => 'border-green-100', 'text_color' => 'text-green-700', 'dot' => 'bg-green-500', 'pulse' => ''],
+                                default => ['text' => 'Available', 'bg' => 'bg-green-50', 'border' => 'border-green-100', 'text_color' => 'text-green-700', 'dot' => 'bg-green-500', 'pulse' => ''],
                             };
                         @endphp
 
@@ -253,12 +253,12 @@
                             <span class="text-[10px] font-bold {{ $statusConfig['text_color'] }} uppercase">{{ $statusConfig['text'] }}</span>
                         </div>
                         
-                        <form action="{{ route('staff.fleet.status', $vehicle->VehicleID) }}" method="POST" @click.stop>
+                        <!-- <form action="{{ route('staff.fleet.status', $vehicle->VehicleID) }}" method="POST" @click.stop>
                             @csrf
                             <button type="submit" class="w-9 h-9 rounded-lg flex items-center justify-center transition-all border shadow-sm {{ ($vehicle->availability || $vehicle->isBookedToday) ? 'bg-white text-gray-300 border-gray-200 hover:bg-red-50 hover:text-red-500' : 'bg-gray-800 text-white border-transparent hover:bg-gray-700' }}">
                                 <i class="fas fa-power-off text-sm"></i>
                             </button>
-                        </form>
+                        </form> -->
                     </div>
                 </div>
             </a>
