@@ -22,7 +22,7 @@
                     <i class="fas fa-search absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 group-hover:text-gray-600 transition-colors"></i>
                 </div>
 
-                {{-- 2. STATUS DROPDOWN (UPDATED WITH COUNTS) --}}
+                {{-- 2. STATUS DROPDOWN --}}
                 @php
                     $currentStatus = request('status', 'all');
                     $statuses = [
@@ -34,17 +34,15 @@
                     ];
                     $currentLabel = $statuses[$currentStatus] ?? 'All Status';
 
-                    // Helper to get counts (Direct Model Query to ensure accuracy across pages)
                     $getCount = function($status) {
                         $query = \App\Models\Customer::query();
                         return match($status) {
                             'all'         => $query->count(),
                             'blacklisted' => $query->where('blacklisted', 1)->count(),
-                            'approved'   => $query->whereIn('accountStat', ['approved', 'active'])->count(),
+                            'approved'    => $query->whereIn('accountStat', ['Approved', 'active'])->count(),
                             default       => $query->where('accountStat', $status)->count(),
                         };
                     };
-
                     $currentCount = $getCount($currentStatus);
                 @endphp
 
@@ -53,33 +51,24 @@
                 <div class="relative w-full md:w-[200px]" id="customDropdown">
                     <button type="button" onclick="toggleDropdown()" 
                         class="w-full flex items-center justify-between bg-white border border-gray-200 text-gray-700 text-xs font-bold py-3.5 px-5 rounded-2xl hover:bg-gray-50 hover:border-gray-300 transition-all shadow-sm group">
-                        
                         <div class="flex items-center gap-2">
                             <i class="fas fa-filter text-orange-500"></i>
                             <span id="dropdownLabel" class="truncate">{{ $currentLabel }}</span>
-                            
-                            {{-- MAIN BUTTON BADGE --}}
                             <span class="flex items-center justify-center w-5 h-5 rounded-full text-[9px] bg-orange-100 text-orange-700 ml-1">
                                 {{ $currentCount }}
                             </span>
                         </div>
-                        <i class="fas fa-chevron-down text-[10px] text-gray-400 group-hover:text-gray-600 transition-transform duration-300" id="dropdownArrow"></i>
+                        <i class="fas fa-chevron-down text-[10px] text-gray-400 transition-transform duration-300" id="dropdownArrow"></i>
                     </button>
 
-                    <div id="dropdownMenu" 
-                        class="absolute top-full right-0 mt-2 w-full bg-white border border-gray-100 rounded-2xl shadow-xl overflow-hidden hidden transform origin-top transition-all duration-200 z-50">
-                        
+                    <div id="dropdownMenu" class="absolute top-full right-0 mt-2 w-full bg-white border border-gray-100 rounded-2xl shadow-xl overflow-hidden hidden z-50">
                         @foreach($statuses as $value => $label)
-                            @php $count = $getCount($value); @endphp
                             <div onclick="selectStatus('{{ $value }}')" 
                                  class="px-5 py-3 text-xs font-bold cursor-pointer transition-colors flex items-center justify-between border-b border-gray-50 last:border-0
                                  {{ $currentStatus == $value ? 'bg-orange-50 text-orange-600' : 'text-gray-600 hover:bg-gray-50' }}">
-                                
                                 <span>{{ $label }}</span>
-                                
-                                {{-- DROPDOWN LIST BADGE --}}
                                 <span class="flex items-center justify-center w-5 h-5 rounded-full text-[9px] {{ $currentStatus == $value ? 'bg-orange-200 text-orange-700' : 'bg-gray-100 text-gray-500' }}">
-                                    {{ $count }}
+                                    {{ $getCount($value) }}
                                 </span>
                             </div>
                         @endforeach
@@ -98,9 +87,30 @@
                     
                     {{-- 1. AVATAR & NAME --}}
                     <div class="flex items-center gap-4 w-full lg:w-[30%] shrink-0">
-                        <div class="w-12 h-12 rounded-full bg-gradient-to-br from-orange-100 to-orange-200 flex items-center justify-center text-orange-600 font-black text-lg shadow-inner border border-white shrink-0">
-                            {{ substr($customer->fullName, 0, 1) }}
+                        @php
+                            $firstLetter = strtoupper(substr($customer->fullName, 0, 1));
+                            
+                            // Array of available Tailwind color schemes
+                            $schemes = [
+                                'from-orange-100 to-orange-200 text-orange-600',
+                                'from-blue-100 to-blue-200 text-blue-600',
+                                'from-green-100 to-green-200 text-green-600',
+                                'from-purple-100 to-purple-200 text-purple-600',
+                                'from-rose-100 to-rose-200 text-rose-600',
+                                'from-indigo-100 to-indigo-200 text-indigo-600',
+                                'from-cyan-100 to-cyan-200 text-cyan-600',
+                                'from-amber-100 to-amber-200 text-amber-600',
+                            ];
+
+                            // Use the letter's position (A=65) to pick an index from the schemes array
+                            $index = ord($firstLetter) % count($schemes);
+                            $selectedScheme = $schemes[$index];
+                        @endphp
+
+                        <div class="w-12 h-12 rounded-full bg-gradient-to-br {{ $selectedScheme }} flex items-center justify-center font-black text-lg shadow-inner border border-white shrink-0">
+                            {{ $firstLetter }}
                         </div>
+                        
                         <div class="overflow-hidden">
                             <h4 class="text-sm font-bold text-gray-900 truncate group-hover:text-orange-600 transition-colors" title="{{ $customer->fullName }}">
                                 {{ $customer->fullName }}
@@ -140,9 +150,9 @@
                             <span class="block w-24 text-center px-0 py-1.5 rounded-full text-[10px] font-bold border uppercase tracking-wider bg-gray-900 text-white border-gray-800 shadow-sm">
                                 Blacklisted
                             </span>
-                        @elseif($customer->accountStat == 'Approved' || $customer->accountStat == 'active')
+                        @elseif($customer->accountStat == 'Approved' || $customer->accountStat == 'active' || $customer->accountStat == 'Confirmed')
                             <span class="block w-24 text-center px-0 py-1.5 rounded-full text-[10px] font-bold border uppercase tracking-wider bg-green-100 text-green-700 border-green-200">
-                                Approved
+                                Verified
                             </span>
                         @elseif($customer->accountStat == 'pending')
                             <span class="block w-24 text-center px-0 py-1.5 rounded-full text-[10px] font-bold border uppercase tracking-wider bg-orange-100 text-orange-700 border-orange-200 animate-pulse">

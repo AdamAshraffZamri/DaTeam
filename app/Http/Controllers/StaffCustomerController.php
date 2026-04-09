@@ -66,15 +66,31 @@ class StaffCustomerController extends Controller
     {
         $query = Customer::query();
 
-        // Search logic
-        if ($request->has('search')) {
-            $search = $request->get('search');
-            $query->where('fullName', 'like', "%{$search}%")
-                  ->orWhere('email', 'like', "%{$search}%")
-                  ->orWhere('stustaffID', 'like', "%{$search}%");
+        // 1. Status Filter (matches the 'name="status"' in your Blade form)
+        if ($request->filled('status') && $request->status !== 'all') {
+            if ($request->status === 'blacklisted') {
+                $query->where('blacklisted', 1);
+            } elseif ($request->status === 'approved') {
+                // Handle both 'Approved' and 'active' variations
+                $query->whereIn('accountStat', ['Approved', 'active']);
+            } else {
+                $query->where('accountStat', $request->status);
+            }
         }
 
-        $customers = $query->latest()->paginate(10);
+        // 2. Search Logic (Grouped to prevent 'orWhere' from breaking the status filter)
+        if ($request->filled('search')) {
+            $search = $request->get('search');
+            $query->where(function ($q) use ($search) {
+                $q->where('fullName', 'like', "%{$search}%")
+                ->orWhere('email', 'like', "%{$search}%")
+                ->orWhere('stustaffID', 'like', "%{$search}%");
+            });
+        }
+
+        // 3. Finalize and Paginate
+        $customers = $query->latest()->paginate(10)->appends($request->all());
+
         return view('staff.customers.index', compact('customers'));
     }
 
@@ -91,7 +107,7 @@ class StaffCustomerController extends Controller
         $customer = Customer::findOrFail($id);
         
         $customer->update([
-            'accountStat' => 'Confirmed',
+            'accountStat' => 'active', // Set to 'active' or 'Confirmed' as per your status naming
             'rejection_reason' => null // Clear any previous rejection error
         ]);
 

@@ -145,7 +145,10 @@
 
         {{-- 2. METRICS GRID --}}
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm hover:border-orange-200 transition-colors group">
+            
+            {{-- Card 1: Revenue -> Reporting --}}
+            <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm hover:border-orange-200 transition-colors group relative">
+                <a href="{{ route('staff.reports.index') }}" class="absolute inset-0 z-10"></a>
                 <div class="flex justify-between items-start">
                     <div>
                         <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Revenue</p>
@@ -160,7 +163,9 @@
                 </div>
             </div>
 
-            <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm hover:border-orange-200 transition-colors group">
+            {{-- Card 2: Active Rentals -> Bookings --}}
+            <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm hover:border-orange-200 transition-colors group relative">
+                <a href="{{ route('staff.bookings.index', ['filter' => 'active']) }}" class="absolute inset-0 z-10"></a>
                 <div class="flex justify-between items-start">
                     <div>
                         <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Active Rentals</p>
@@ -175,10 +180,12 @@
                 </div>
             </div>
 
-            <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm hover:border-orange-200 transition-colors group">
+            {{-- Card 3: Pending Booking -> Bookings (Pending Filter) --}}
+            <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm hover:border-orange-200 transition-colors group relative">
+                <a href="{{ route('staff.bookings.index', ['filter' => 'pending']) }}" class="absolute inset-0 z-10"></a>
                 <div class="flex justify-between items-start">
                     <div>
-                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Pending</p>
+                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Pending Booking</p>
                         <h3 class="text-2xl font-black text-slate-800 mt-1">{{ $pendingBookingsCount }}</h3>
                     </div>
                     <div class="p-2.5 bg-orange-100 text-orange-700 rounded-xl group-hover:bg-orange-600 group-hover:text-white transition-all shadow-sm">
@@ -188,11 +195,24 @@
                 <div class="mt-3 text-[10px] font-bold text-orange-600">Needs verification</div>
             </div>
 
-            <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm hover:border-orange-200 transition-colors group">
+            {{-- Card 4: Customers -> Customer List --}}
+            <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm hover:border-orange-200 transition-colors group relative">
+                <a href="{{ route('staff.customers.index', ['filter' => 'pending']) }}" class="absolute inset-0 z-10"></a>
                 <div class="flex justify-between items-start">
                     <div>
                         <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Customers</p>
                         <h3 class="text-2xl font-black text-slate-800 mt-1">{{ $totalCustomers }}</h3>
+                        @if($pendingCustomersCount > 0)
+                            <div class="flex items-center gap-1.5 mt-1 animate-pulse">
+                                <i class="fas fa-user-clock text-amber-500 text-[10px]"></i>
+                                <span class="text-[10px] font-bold text-amber-600">{{ $pendingCustomersCount }} pending verification</span>
+                            </div>
+                        @else
+                            <div class="flex items-center gap-1.5 mt-1">
+                                <i class="fas fa-check-circle text-green-500 text-[10px]"></i>
+                                <span class="text-[10px] font-bold text-green-600">All verified</span>
+                            </div>
+                        @endif
                     </div>
                     <div class="p-2.5 bg-purple-100 text-purple-700 rounded-xl group-hover:bg-purple-600 group-hover:text-white transition-all shadow-sm">
                         <i class="fas fa-users text-lg"></i>

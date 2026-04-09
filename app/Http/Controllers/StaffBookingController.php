@@ -95,7 +95,8 @@ class StaffBookingController extends Controller
         // Counts
         $activeRentalsCount = Booking::whereIn('bookingStatus', ['Active', 'Ongoing', 'Picked Up'])->count();
         $pendingBookingsCount = Booking::whereIn('bookingStatus', ['Pending', 'Submitted', 'Deposit Paid'])->count();
-        $totalCustomers = \App\Models\Customer::count(); 
+        $totalCustomers = \App\Models\Customer::count();
+        $pendingCustomersCount = \App\Models\Customer::where('accountStat', 'pending')->count();
 
         // 2. === CHART DATA ===
         $period = $request->input('chart_period', 'daily'); 
@@ -198,7 +199,7 @@ class StaffBookingController extends Controller
 
         return view('staff.dashboard', compact(
             'totalRevenue', 'revenueGrowth', 'activeRentalsCount', 'pendingBookingsCount',
-            'totalCustomers', 'chartLabels', 'chartRevenue', 'chartBookings',
+            'totalCustomers', 'pendingCustomersCount', 'chartLabels', 'chartRevenue', 'chartBookings',
             'pickupsToday', 'returnsToday', 'recentBookings', 
             'totalVehicles', 'utilizationRate', 'maintenanceRate', 'todayRevenue', 'overdueCount',
             'vehicleModels', 'searchResults', 'calendarEvents' 

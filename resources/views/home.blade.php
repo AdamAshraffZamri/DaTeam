@@ -246,13 +246,13 @@
                 </a>
 
                 {{-- RESTORED ANIMATED FLEET BUTTON --}}
-                <a href="#fleet-showcase" class="fleet-anim-btn">
+                <!-- <a href="#fleet-showcase" class="fleet-anim-btn">
                     <span class="btn-text">View Fleet</span>
                     <span class="fleet-spot"></span><span class="fleet-spot"></span><span class="fleet-spot"></span>
                     <span class="fleet-spot"></span><span class="fleet-spot"></span><span class="fleet-spot"></span>
                     <span class="fleet-spot"></span><span class="fleet-spot"></span><span class="fleet-spot"></span>
                     <span class="fleet-spot"></span><span class="fleet-spot"></span><span class="fleet-spot"></span>
-                </a>
+                </a> -->
             </div>
         </div>
     </div>
