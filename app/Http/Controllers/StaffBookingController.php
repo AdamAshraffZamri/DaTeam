@@ -239,6 +239,243 @@ class StaffBookingController extends Controller
         return view('staff.bookings.index', compact('bookings'));
     }
 
+    // [NEW] CREATE BOOKING (Staff Input)
+    public function store(Request $request)
+    {
+        // Validate request
+        $validated = $request->validate([
+            'booking_type'     => 'required|in:customer,external',
+            'customer_id'      => 'required_if:booking_type,customer|exists:customers,customerID',
+            'external_company' => 'required_if:booking_type,external|string',
+            'contact_person'   => 'nullable|string|max:100',
+            'company_email'    => 'nullable|email',
+            'company_phone'    => 'nullable|string|max:20',
+            'vehicle_id'       => 'required|exists:vehicles,VehicleID',
+            'pickup_date'      => 'required|date|after:today',
+            'pickup_time'      => 'required|date_format:H:i',
+            'return_date'      => 'required|date|after_or_equal:pickup_date',
+            'return_time'      => 'required|date_format:H:i',
+            'pickup_location'  => 'required|string|max:255',
+            'return_location'  => 'required|string|max:255',
+            'additional_fees'  => 'nullable|numeric|min:0',
+            'receipt_image'    => 'nullable|image|mimes:jpeg,png,jpg,gif|max:5120',
+            'agreement_image'  => 'nullable|image|mimes:jpeg,png,jpg,gif|max:5120',
+            'remarks'          => 'nullable|string|max:150'
+        ]);
+
+        try {
+            // For external bookings, create a temporary guest customer
+            if ($validated['booking_type'] === 'external') {
+                try {
+                    $customer = Customer::create([
+                        'fullName'       => $validated['contact_person'] ?? $validated['external_company'],
+                        'email'          => $validated['company_email'] ?? 'external-' . strtolower($validated['external_company']) . '-' . time() . '@company.com',
+                        'phoneNo'        => $validated['company_phone'] ?? '000-0000000',
+                        'password'       => bcrypt('temp-external-' . time()),
+                        'accountStat'    => 'Confirmed', // Auto-approve external bookings
+                        'ic_passport'    => 'External: ' . $validated['external_company'],
+                        'stustaffID'     => 'EXT-' . strtoupper($validated['external_company'][0]) . date('Ymd'),
+                        'driving_license_expiry' => date('Y-m-d', strtotime('+5 years')),
+                    ]);
+                } catch (\Exception $e) {
+                    // If customer creation fails, log but continue (e.g., Google Drive errors)
+                    Log::warning("Guest customer creation warning", ['error' => $e->getMessage()]);
+                    // Try to find existing customer with similar email
+                    $baseEmail = strtolower($validated['external_company']) . '-' . time();
+                    $customer = Customer::firstOrCreate(
+                        ['email' => 'external-' . $baseEmail . '@company.com'],
+                        [
+                            'fullName'       => $validated['contact_person'] ?? $validated['external_company'],
+                            'phoneNo'        => $validated['company_phone'] ?? '000-0000000',
+                            'password'       => bcrypt('temp-external-' . time()),
+                            'accountStat'    => 'Confirmed',
+                            'ic_passport'    => 'External: ' . $validated['external_company'],
+                            'stustaffID'     => 'EXT-' . strtoupper($validated['external_company'][0]) . date('Ymd'),
+                            'driving_license_expiry' => date('Y-m-d', strtotime('+5 years')),
+                        ]
+                    );
+                }
+            } else {
+                $customer = Customer::findOrFail($validated['customer_id']);
+            }
+
+            // Calculate booking dates
+            $pickupDateTime = $validated['pickup_date'] . ' ' . $validated['pickup_time'];
+            $returnDateTime = $validated['return_date'] . ' ' . $validated['return_time'];
+
+            // Calculate cost using tiered pricing system
+            $vehicle = Vehicle::findOrFail($validated['vehicle_id']);
+            $pickupCarbon = Carbon::parse($pickupDateTime);
+            $returnCarbon = Carbon::parse($returnDateTime);
+            
+            // Calculate hours (ceil to next full hour)
+            $hoursDiff = $pickupCarbon->floatDiffInHours($returnCarbon);
+            $totalHours = ceil(abs($hoursDiff));
+            if ($totalHours < 1) $totalHours = 1;
+            
+            // Get tiered rates from vehicle
+            $hourlyRates = $vehicle->hourly_rates ?? [
+                '1' => 10, '3' => 18, '5' => 25, '7' => 31, '9' => 36, '12' => 40, '24' => 43
+            ];
+            
+            // Calculate rental cost based on tiers
+            $rentalCost = 0;
+            $remainingHours = $totalHours;
+            
+            // Full days (24 hours)
+            if ($remainingHours >= 24) {
+                $fullDays = intdiv($remainingHours, 24);
+                $rentalCost += $fullDays * ($hourlyRates['24'] ?? 43);
+                $remainingHours = $remainingHours % 24;
+            }
+            
+            // Remaining hours tier
+            if ($remainingHours > 0) {
+                if ($remainingHours <= 1) {
+                    $rentalCost += $hourlyRates['1'] ?? 10;
+                } elseif ($remainingHours <= 3) {
+                    $rentalCost += $hourlyRates['3'] ?? 18;
+                } elseif ($remainingHours <= 5) {
+                    $rentalCost += $hourlyRates['5'] ?? 25;
+                } elseif ($remainingHours <= 7) {
+                    $rentalCost += $hourlyRates['7'] ?? 31;
+                } elseif ($remainingHours <= 9) {
+                    $rentalCost += $hourlyRates['9'] ?? 36;
+                } elseif ($remainingHours <= 12) {
+                    $rentalCost += $hourlyRates['12'] ?? 40;
+                } else {
+                    $rentalCost += $hourlyRates['24'] ?? 43;
+                }
+            }
+            
+            $additionalFees = floatval($validated['additional_fees'] ?? 0);
+            $totalCost = $rentalCost + $additionalFees;
+
+            // Log calculation details
+            Log::info("Booking Cost Calculation (Tiered)", [
+                'pickup_datetime' => $pickupDateTime,
+                'return_datetime' => $returnDateTime,
+                'hours_diff' => $hoursDiff,
+                'hours_rounded' => $totalHours,
+                'hourly_rates' => $hourlyRates,
+                'rental_cost' => $rentalCost,
+                'additional_fees' => $additionalFees,
+                'total_cost_calculated' => $totalCost,
+            ]);
+
+            // Handle file uploads
+            $receiptPath = null;
+            $agreementPath = null;
+            
+            if ($request->hasFile('receipt_image')) {
+                $receiptPath = $request->file('receipt_image')->store('bookings/receipts', 'public');
+            }
+            
+            if ($request->hasFile('agreement_image')) {
+                $agreementPath = $request->file('agreement_image')->store('bookings/agreements', 'public');
+            }
+            
+            // Create booking
+            $booking = Booking::create([
+                'customerID'      => $customer->customerID,
+                'vehicleID'       => $validated['vehicle_id'],
+                'staffID'         => Auth::id(),
+                'bookingDate'     => now()->format('Y-m-d'),
+                'originalDate'    => $validated['pickup_date'],
+                'bookingTime'     => $validated['pickup_time'],
+                'returnDate'      => $validated['return_date'],
+                'returnTime'      => $validated['return_time'],
+                'pickupLocation'  => $validated['pickup_location'],
+                'returnLocation'  => $validated['return_location'],
+                'totalCost'       => $totalCost,
+                'aggreementLink'  => $agreementPath,
+                'receipt'         => $receiptPath,
+                'bookingStatus'   => 'Confirmed', // Auto-confirm staff-created bookings
+                'remarks'         => ($validated['remarks'] ?? '') . 
+                                    ($validated['booking_type'] === 'external' 
+                                        ? "\n[EXTERNAL] Company: " . $validated['external_company'] 
+                                        : ''),
+                'external_company' => $validated['booking_type'] === 'external' ? $validated['external_company'] : null,
+            ]);
+
+            // Create payment record
+            Payment::create([
+                'bookingID'       => $booking->bookingID,
+                'amount'          => $totalCost,
+                'paymentStatus'   => 'Verified', // Auto-verified for staff-created
+                'depoStatus'      => 'Received',
+                'paymentMethod'   => 'Manual Entry',
+                'installmentDetails' => 'Staff-created booking - ' . date('Y-m-d H:i:s'),
+            ]);
+
+            // Log the action
+            Log::info("Booking created by staff", [
+                'booking_id' => $booking->bookingID,
+                'type'       => $validated['booking_type'],
+                'customer'   => $customer->fullName,
+                'vehicle'    => $vehicle->model,
+                'amount'     => $totalCost,
+                'staff_id'   => Auth::id(),
+            ]);
+
+            // Notify customer
+            $customer->notify(new BookingStatusUpdated(
+                $booking,
+                "Your new booking #{$booking->bookingID} has been created by our staff. Total cost: RM " . number_format($totalCost, 2)
+            ));
+
+            return redirect()->route('staff.bookings.show', $booking->bookingID)
+                           ->with('success', 'Booking created successfully! Total: RM ' . number_format($totalCost, 2));
+
+        } catch (\Exception $e) {
+            Log::error("Error creating booking", ['error' => $e->getMessage()]);
+            return back()->withError('Error creating booking: ' . $e->getMessage())->withInput();
+        }
+    }
+
+    // Get booked dates for a vehicle (for calendar availability)
+    public function getBookedDates($vehicleId)
+    {
+        // Get all active bookings for this vehicle
+        $bookings = Booking::where('vehicleID', $vehicleId)
+            ->whereIn('bookingStatus', ['Pending', 'Confirmed', 'Active'])
+            ->with('customer')
+            ->select('originalDate', 'returnDate', 'bookingStatus', 'customerID')
+            ->get();
+
+        // Convert to date array and build date info
+        $bookedDates = [];
+        $dateInfo = [];
+        
+        foreach ($bookings as $booking) {
+            $start = Carbon::parse($booking->originalDate);
+            $end = Carbon::parse($booking->returnDate);
+            $duration = $start->diffInDays($end);
+            $customerName = $booking->customer ? $booking->customer->fullName : 'Unknown';
+            
+            while ($start->lte($end)) {
+                $dateStr = $start->format('Y-m-d');
+                $bookedDates[] = $dateStr;
+                
+                // Store booking info for this date
+                if (!isset($dateInfo[$dateStr])) {
+                    $dateInfo[$dateStr] = [
+                        'customer' => $customerName,
+                        'duration' => $duration . ' day(s)',
+                        'status' => $booking->bookingStatus
+                    ];
+                }
+                
+                $start->addDay();
+            }
+        }
+
+        return response()->json([
+            'dates' => array_unique($bookedDates),
+            'dateInfo' => $dateInfo
+        ]);
+    }
+
     // --- 3. VERIFY PAYMENT (Handles Balance Payment too) ---
     public function verifyPayment($id)
     {

@@ -72,12 +72,12 @@
                     <div class="bg-white/10 backdrop-blur-xl border border-white/20 rounded-[2.5rem] p-8 shadow-2xl text-center space-y-6">
                         
                         <div class="bg-white rounded-2xl p-4 w-48 h-48 mx-auto shadow-lg flex items-center justify-center">
-                            <img src="{{ asset('qr.JPG') }}" alt="QR Code" class="w-full h-full object-contain">
+                            <img src="{{ asset('qr.jpeg') }}" alt="QR Code" class="w-full h-full object-contain">
                         </div>
 
                         <div>
-                            <p class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Pay To: HASTA Rental</p>
-                            <p class="text-xl font-mono font-bold text-white tracking-widest">8821 3491 0022</p>
+                            <p class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Bank Account (HASTA TRAVEL & TOURS SDN. BHD.)</p>
+                            <p class="text-xl font-mono font-bold text-white tracking-widest">551306541568(MAYBANK)</p>
                         </div>
 
                         {{-- Upload --}}
