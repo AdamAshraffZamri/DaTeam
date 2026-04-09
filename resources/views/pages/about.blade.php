@@ -89,7 +89,7 @@
                     
                     <div class="flex justify-center md:justify-start gap-8 pt-4 border-t border-gray-100 mt-6">
                         <div>
-                            <span class="block text-3xl md:text-4xl font-black text-gray-900">2024</span>
+                            <span class="block text-3xl md:text-4xl font-black text-gray-900">2020</span>
                             <span class="text-xs md:text-sm text-gray-500 uppercase font-bold tracking-wider">Founded</span>
                         </div>
                         <div>

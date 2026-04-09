@@ -7,24 +7,24 @@
     showPenaltyModal: false 
 }" class="min-h-screen bg-slate-100 rounded-2xl p-6">
 
-    <div class="max-w-6xl mx-auto">
+    <div class="max-w-7xl mx-auto">
         
         {{-- 1. HEADER --}}
-        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8 animate-fade-in">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 md:mb-8 animate-fade-in">
             <div>
-                <h1 class="text-3xl font-black text-slate-900 tracking-tight">Customer Profile</h1>
-                <p class="text-slate-500 text-sm font-medium mt-1">Viewing details for <span class="text-slate-900 font-bold">{{ $customer->fullName }}</span></p>
+                <h1 class="text-2xl md:text-3xl font-black text-slate-900 tracking-tight">Customer Profile</h1>
+                <p class="text-slate-500 text-xs md:text-sm font-medium mt-1">Viewing details for <span class="text-slate-900 font-bold">{{ $customer->fullName }}</span></p>
             </div>
 
             {{-- Status Badge --}}
-            <div class="flex items-center gap-3 px-4 py-2 bg-white rounded-xl border border-gray-100 shadow-sm">
-                <div class="flex flex-col items-end">
-                    <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Account Status</span>
+            <div class="flex items-center justify-between md:justify-end gap-3 px-4 py-2 bg-white rounded-xl border border-gray-100 shadow-sm w-full md:w-auto">
+                <div class="flex flex-col items-start md:items-end">
+                    <span class="text-[9px] md:text-[10px] font-bold text-gray-400 uppercase tracking-widest">Account Status</span>
                     
                     @if($customer->blacklisted)
                         <span class="text-xs font-black text-slate-900 uppercase">BLACKLISTED</span>
                     @elseif($customer->accountStat == 'Confirmed' || $customer->accountStat == 'active')
-                        <span class="text-xs font-black text-green-600 uppercase">Confirmed</span>
+                        <span class="text-xs font-black text-green-600 uppercase">VERIFIED</span>
                     @elseif($customer->accountStat == 'pending')
                         <span class="text-xs font-black text-orange-500 uppercase">PENDING</span>
                     @elseif($customer->accountStat == 'rejected')
@@ -34,7 +34,6 @@
                     @endif
                 </div>
                 
-                {{-- Status Indicator Dot --}}
                 @if($customer->blacklisted)
                     <div class="w-3 h-3 rounded-full bg-slate-900 shadow-[0_0_8px_rgba(15,23,42,0.4)]"></div>
                 @elseif($customer->accountStat == 'Confirmed' || $customer->accountStat == 'active')
@@ -49,72 +48,71 @@
             </div>
         </div>
 
-        {{-- 2. ALERTS (Blacklist/Reject Reasons) --}}
+        {{-- 2. ALERTS --}}
         @if($customer->blacklisted && $customer->blacklist_reason)
-            <div class="bg-slate-800 rounded-2xl p-5 mb-8 shadow-lg flex items-start gap-4 text-white animate-fade-in">
+            <div class="bg-slate-800 rounded-2xl p-4 md:p-5 mb-6 shadow-lg flex items-start gap-4 text-white animate-fade-in">
                 <div class="w-10 h-10 rounded-xl bg-slate-700 flex items-center justify-center shrink-0">
                     <i class="fas fa-ban text-red-400"></i>
                 </div>
                 <div>
-                    <h4 class="text-xs font-black text-slate-400 uppercase tracking-widest mb-1">Blacklist Reason</h4>
+                    <h4 class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Blacklist Reason</h4>
                     <p class="text-sm font-bold leading-relaxed">{{ $customer->blacklist_reason }}</p>
                 </div>
             </div>
         @endif
 
         @if(!$customer->blacklisted && $customer->accountStat == 'rejected' && $customer->rejection_reason)
-            <div class="bg-red-50 border border-red-100 rounded-2xl p-5 mb-8 flex items-start gap-4 animate-fade-in">
+            <div class="bg-red-50 border border-red-100 rounded-2xl p-4 md:p-5 mb-6 flex items-start gap-4 animate-fade-in">
                 <div class="w-10 h-10 rounded-xl bg-red-100 flex items-center justify-center shrink-0 text-red-600">
                     <i class="fas fa-exclamation-triangle"></i>
                 </div>
                 <div>
-                    <h4 class="text-xs font-black text-red-400 uppercase tracking-widest mb-1">Rejection Reason</h4>
+                    <h4 class="text-[10px] font-black text-red-400 uppercase tracking-widest mb-1">Rejection Reason</h4>
                     <p class="text-sm font-bold text-red-900 leading-relaxed">{{ $customer->rejection_reason }}</p>
                 </div>
             </div>
-            @endif
-        <div class="bg-white rounded-[1.5rem] p-6 mb-8 shadow-sm border border-gray-100 flex justify-between items-center">
-            <div>
-                <h3 class="font-bold text-lg text-gray-900">Account Actions</h3>
-                <p class="text-gray-400 text-xs mt-1">Review details and manage access.</p>
+        @endif
+
+        {{-- 3. ACTION BAR --}}
+        <div class="bg-white rounded-[1.5rem] p-4 md:p-6 mb-8 shadow-sm border border-gray-100 flex flex-col sm:flex-row justify-between items-center gap-4">
+            <div class="text-center sm:text-left">
+                <h3 class="font-bold text-base md:text-lg text-gray-900">Account Actions</h3>
+                <p class="text-gray-400 text-xs mt-0.5">Manage user access and history.</p>
             </div>
-            <div class="flex gap-3">
-                <a href="{{ route('staff.customers.penalty_history', $customer->customerID) }}" class="bg-purple-100 text-purple-600 px-6 py-3 rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-purple-200 transition border border-purple-200">
-                    <i class="fas fa-history mr-2"></i> Penalty History
+            <div class="grid grid-cols-2 sm:flex sm:flex-wrap justify-center gap-2 w-full sm:w-auto">
+                <a href="{{ route('staff.customers.penalty_history', $customer->customerID) }}" class="bg-purple-100 text-purple-600 px-4 py-3 rounded-xl font-bold text-[10px] md:text-xs uppercase text-center tracking-widest hover:bg-purple-200 transition border border-purple-200">
+                    <i class="fas fa-history sm:mr-2"></i> <span class="hidden sm:inline">Penalty History</span><span class="sm:hidden">History</span>
                 </a>
     
                 @if($customer->blacklisted)
-                    <form action="{{ route('staff.customers.blacklist', $customer->customerID) }}" method="POST" onsubmit="return confirm('Restore this user account?');">
+                    <form action="{{ route('staff.customers.blacklist', $customer->customerID) }}" method="POST" onsubmit="return confirm('Restore account?');" class="col-span-1">
                         @csrf
-                        <button type="submit" class="bg-gray-900 text-white px-6 py-3 rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-gray-800 transition shadow-lg shadow-gray-900/20">
-                            <i class="fas fa-unlock mr-2"></i> Remove Blacklist
+                        <button type="submit" class="w-full bg-gray-900 text-white px-4 py-3 rounded-xl font-bold text-[10px] md:text-xs uppercase tracking-widest hover:bg-gray-800 transition">
+                            <i class="fas fa-unlock mr-1"></i> Restore
                         </button>
                     </form>
                 @else
-                    <button @click="showPenaltyModal = true" type="button" class="bg-orange-100 text-orange-600 px-6 py-3 rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-orange-200 transition border border-orange-200">
-                        <i class="fas fa-exclamation-triangle mr-2"></i> Penalty
+                    <button @click="showPenaltyModal = true" type="button" class="bg-orange-100 text-orange-600 px-4 py-3 rounded-xl font-bold text-[10px] md:text-xs uppercase tracking-widest border border-orange-200">
+                        <i class="fas fa-exclamation-triangle sm:mr-1"></i> Penalty
                     </button>
-                    <button @click="showBlacklistModal = true" type="button" class="bg-gray-100 text-gray-600 px-6 py-3 rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-gray-200 transition">
-                        <i class="fas fa-ban mr-2"></i> Blacklist
+                    <button @click="showBlacklistModal = true" type="button" class="bg-gray-100 text-gray-600 px-4 py-3 rounded-xl font-bold text-[10px] md:text-xs uppercase tracking-widest">
+                        <i class="fas fa-ban sm:mr-1"></i> Blacklist
                     </button>
 
-                    {{-- REJECT BUTTON: Hide if Verified OR Already Rejected --}}
                     @if($customer->accountStat !== 'active' && $customer->accountStat !== 'Confirmed' && $customer->accountStat !== 'rejected')
-                        <button @click="showRejectModal = true" type="button" class="bg-red-50 text-red-600 px-6 py-3 rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-red-100 transition border border-red-100">
-                            <i class="fas fa-times mr-2"></i> Reject
+                        <button @click="showRejectModal = true" type="button" class="bg-red-50 text-red-600 px-4 py-3 rounded-xl font-bold text-[10px] md:text-xs uppercase tracking-widest border border-red-100">
+                            <i class="fas fa-times sm:mr-1"></i> Reject
                         </button>
                     @endif
 
-                    {{-- APPROVE BUTTON: Hide if already Verified (But KEEP if Rejected, so you can change your mind) --}}
                     @if($customer->accountStat !== 'active' && $customer->accountStat !== 'Confirmed')
-                        <form action="{{ route('staff.customers.approve', $customer->customerID) }}" method="POST">
+                        <form action="{{ route('staff.customers.approve', $customer->customerID) }}" method="POST" class="col-span-2 sm:col-span-1">
                             @csrf
-                            <button type="submit" onclick="return confirm('Confirm all details are correct?')" class="bg-green-500 text-white px-8 py-3 rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-green-600 transition shadow-lg shadow-green-500/30">
-                                <i class="fas fa-check mr-2"></i> Approve User
+                            <button type="submit" onclick="return confirm('Verify user?')" class="w-full bg-green-500 text-white px-6 py-3 rounded-xl font-bold text-[10px] md:text-xs uppercase tracking-widest hover:bg-green-600 shadow-lg shadow-green-500/30">
+                                <i class="fas fa-check mr-1"></i> Verify
                             </button>
                         </form>
                     @endif
-                    
                 @endif
             </div>
         </div>
@@ -224,7 +222,7 @@
                         </div>
                         
                         <div class="space-y-1">
-                            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Driving License</span>
+                            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Driving License Expired Date</span>
                             <div class="p-3 bg-slate-50 rounded-xl border border-slate-100 font-bold text-slate-900 text-sm">
                                 {{ $customer->driving_license_expiry ?? 'Not Provided' }}
                             </div>
