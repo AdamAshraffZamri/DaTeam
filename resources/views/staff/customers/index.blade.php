@@ -27,7 +27,7 @@
                     $currentStatus = request('status', 'all');
                     $statuses = [
                         'all'         => 'All Status',
-                        'approved'    => 'Approved',
+                        'approved'    => 'Verified',
                         'pending'     => 'Pending',
                         'rejected'    => 'Rejected',
                         'blacklisted' => 'Blacklisted'

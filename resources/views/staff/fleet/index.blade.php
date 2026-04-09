@@ -202,7 +202,8 @@
                             <i class="fas fa-car text-gray-300 text-2xl"></i>
                         @endif
                         
-                        @if(!$vehicle->availability && !$vehicle->isBookedToday)
+                        {{-- Updated Logic: Only show if status is strictly 'inactive' --}}
+                        @if(strtolower($vehicle->status) === 'inactive')
                             <div class="absolute inset-0 bg-gray-900/60 backdrop-blur-[1px] flex items-center justify-center">
                                 <span class="text-[10px] font-bold text-white bg-black/50 px-2 py-0.5 rounded border border-white/20">Inactive</span>
                             </div>

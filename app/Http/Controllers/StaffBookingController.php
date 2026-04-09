@@ -235,7 +235,7 @@ class StaffBookingController extends Controller
             });
         }
 
-        $bookings = $query->get();
+        $bookings = $query->latest()->get();
 
         return view('staff.bookings.index', compact('bookings'));
     }

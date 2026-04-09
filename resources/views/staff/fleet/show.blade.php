@@ -24,6 +24,20 @@
     
     .custom-scrollbar::-webkit-scrollbar { width: 4px; }
     .custom-scrollbar::-webkit-scrollbar-thumb { background: #e5e7eb; border-radius: 4px; }
+
+    @media (max-width: 768px) {
+        .fc-toolbar-title { font-size: 1.2rem !important; }
+        .fc-daygrid-day-number { font-size: 11px !important; padding: 4px !important; }
+        .fc-col-header-cell-cushion { font-size: 9px !important; }
+        .fc-day-today .fc-daygrid-day-number { width: 22px !important; height: 22px !important; }
+        .fc-event { font-size: 8px !important; padding: 1px 2px !important; }
+        
+        /* Main container padding */
+        #fleet-calendar-container { padding: 12px !important; }
+        
+        /* Document preview images */
+        .grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
+    }
 </style>
 
 {{-- MAIN CONTAINER with ID for Alpine Scope --}}
