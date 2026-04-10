@@ -285,14 +285,38 @@
                             ['label' => 'Student ID', 'file' => $customer->student_card_image],
                             ['label' => 'IC / Passport', 'file' => $customer->ic_passport_image]
                         ] as $doc)
-                            <a href="{{ $doc['file'] ? asset('storage/'.$doc['file']) : '#' }}" target="_blank" class="group relative block aspect-[4/3] rounded-xl overflow-hidden bg-slate-100 border border-slate-200">
-                                <img src="{{ $doc['file'] ? asset('storage/'.$doc['file']) : asset('images/placeholder.png') }}" class="w-full h-full object-cover transition duration-500 group-hover:scale-110 group-hover:opacity-75">
-                                <div class="absolute inset-0 flex items-end">
-                                    <div class="w-full bg-slate-900/80 backdrop-blur-sm p-2 text-center">
-                                        <span class="text-[10px] font-bold text-white uppercase tracking-wider">{{ $doc['label'] }}</span>
+                            
+                            @if($doc['file'])
+                                {{-- CASE: FILE EXISTS --}}
+                                <a href="{{ $doc['file'] }}" 
+                                target="_blank" 
+                                class="group relative block aspect-[4/3] rounded-xl overflow-hidden bg-white border border-slate-200 shadow-sm hover:border-orange-500 transition-all">
+                                    
+                                    <div class="w-full h-full flex flex-col items-center justify-center group-hover:bg-slate-50 transition-colors">
+                                        <i class="fas fa-file-alt text-3xl text-blue-500 mb-2"></i>
+                                        <span class="text-[9px] font-bold text-slate-400 uppercase">Click to View</span>
+                                    </div>
+
+                                    <div class="absolute inset-0 flex items-end">
+                                        <div class="w-full bg-slate-900/80 backdrop-blur-sm p-2 text-center">
+                                            <span class="text-[10px] font-bold text-white uppercase tracking-wider">{{ $doc['label'] }}</span>
+                                        </div>
+                                    </div>
+                                </a>
+                            @else
+                                {{-- CASE: FILE NOT FOUND --}}
+                                <div class="relative block aspect-[4/3] rounded-xl overflow-hidden bg-slate-50 border border-dashed border-slate-300 flex flex-col items-center justify-center">
+                                    <i class="fas fa-exclamation-circle text-2xl text-slate-300 mb-1"></i>
+                                    <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Not Found</span>
+                                    
+                                    <div class="absolute inset-0 flex items-end">
+                                        <div class="w-full bg-slate-200 p-2 text-center">
+                                            <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">{{ $doc['label'] }}</span>
+                                        </div>
                                     </div>
                                 </div>
-                            </a>
+                            @endif
+
                         @endforeach
                     </div>
                 </div>

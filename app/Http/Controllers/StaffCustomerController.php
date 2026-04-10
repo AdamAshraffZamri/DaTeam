@@ -282,7 +282,7 @@ class StaffCustomerController extends Controller
         // 1. Validate the input
         $request->validate([
             'name' => 'required',
-            'document' => 'required|file|mimes:pdf,jpg,png|max:2048', // Example validation
+            'document' => 'required|file|mimes:pdf,jpg,png|max:10240', // Example validation
         ]);
 
         // 2. Upload to Google Drive

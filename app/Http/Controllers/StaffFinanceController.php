@@ -79,7 +79,7 @@ class StaffFinanceController extends Controller
     public function processRefund(Request $request, $id)
     {
         $request->validate([
-            'refund_proof' => 'nullable|image|max:2048',
+            'refund_proof' => 'nullable|image|max:10240',
             'remarks' => 'nullable|string'
         ]);
 
