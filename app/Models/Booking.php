@@ -103,7 +103,7 @@ class Booking extends Model
         'returnDate', 'returnTime', 'actualReturnDate', 'actualReturnTime',
         'pickupLocation', 'returnLocation', 'totalCost',
         'aggreementDate', 'aggreementLink',
-        'bookingStatus', 'bookingType','remarks'
+        'bookingStatus', 'bookingType', 'remarks', 'external_company'
     ];
 
     // --- RELATIONSHIPS ---

@@ -1,0 +1,27 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    public function up(): void
+    {
+        Schema::table('bookings', function (Blueprint $table) {
+            // Add external_company field if it doesn't exist
+            if (!Schema::hasColumn('bookings', 'external_company')) {
+                $table->string('external_company', 100)->nullable()->after('remarks');
+            }
+        });
+    }
+
+    public function down(): void
+    {
+        Schema::table('bookings', function (Blueprint $table) {
+            if (Schema::hasColumn('bookings', 'external_company')) {
+                $table->dropColumn('external_company');
+            }
+        });
+    }
+};

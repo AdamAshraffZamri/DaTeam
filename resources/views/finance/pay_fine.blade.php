@@ -90,8 +90,8 @@
                             <img src="{{ asset('qr.JPG') }}" alt="QR Code" class="w-full h-full object-contain">
                         </div>
                         <div>
-                            <p class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Pay To: HASTA Rental</p>
-                            <p class="text-xl font-mono font-bold text-white tracking-widest">8821 3491 0022</p>
+                            <p class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Bank Account (HASTA TRAVEL & TOURS SDN. BHD.)</p>
+                            <p class="text-xl font-mono font-bold text-white tracking-widest">551306541568(MAYBANK)</p>
                         </div>
                         <label class="block w-full h-32 border-2 border-dashed border-white/20 rounded-2xl flex flex-col items-center justify-center cursor-pointer hover:border-red-500 hover:bg-white/5 transition group bg-black/20">
                             <i class="fas fa-cloud-upload-alt text-2xl text-gray-400 group-hover:text-red-500 mb-2 transition"></i>

@@ -144,6 +144,7 @@ Route::middleware('auth')->group(function () {
 
     // Booking Management
     Route::get('/bookings', [StaffBookingController::class, 'index'])->name('staff.bookings.index');
+    Route::post('/bookings', [StaffBookingController::class, 'store'])->name('staff.bookings.store');
     Route::get('/bookings/{id}', [StaffBookingController::class, 'show'])->name('staff.bookings.show');
 
     // Workflow
@@ -155,6 +156,9 @@ Route::middleware('auth')->group(function () {
     Route::post('/bookings/{id}/reject', [StaffBookingController::class, 'reject'])->name('staff.bookings.reject');
     Route::post('/bookings/{id}/update-vehicle', [StaffBookingController::class, 'updateVehicle'])->name('staff.bookings.update_vehicle');
     Route::post('/bookings/{id}/approve', [StaffBookingController::class, 'approve'])->name('staff.bookings.approve');
+
+    // API endpoint for availability calendar
+    Route::get('/api/vehicle/{vehicleId}/booked-dates', [StaffBookingController::class, 'getBookedDates']);
 
     // --- Dynamic Pricing Management ---
     Route::post('/dynamic-pricing/store', [StaffBookingController::class, 'storeDynamicPricing'])->name('staff.dynamic_pricing.store');
