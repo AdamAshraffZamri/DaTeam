@@ -83,7 +83,7 @@ class FinanceController extends Controller
     public function submitBalance(Request $request, $id)
     {
         $request->validate([
-            'payment_proof' => 'required|image|max:2048',
+            'payment_proof' => 'required|image|max:10240',
         ]);
 
         $booking = Booking::findOrFail($id);

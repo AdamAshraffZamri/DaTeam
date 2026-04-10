@@ -210,7 +210,7 @@ class StaffBookingController extends Controller
     public function index(Request $request, )
     {
         $query = Booking::with(['customer', 'vehicle', 'payment', 'payments']) 
-                           ->orderBy('created_at', 'desc');
+                           ->orderBy('bookingDate', 'desc');
         
         if ($request->filled('status') && $request->status != 'all') {
             $query->where('bookingStatus', $request->status);
@@ -473,7 +473,7 @@ class StaffBookingController extends Controller
         $request->validate([
             'type' => 'required',
             'photos' => "required|array|size:$requiredCount",
-            'photos.*' => 'image|max:4048',
+            'photos.*' => 'image|max:10240',
             'mileage' => 'required|numeric',
             'fuel_level' => 'required',
         ], [

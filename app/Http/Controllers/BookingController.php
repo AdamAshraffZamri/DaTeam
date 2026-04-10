@@ -905,7 +905,7 @@ class BookingController extends Controller
 
         $request->validate([
             'photos' => 'required',
-            'photos.*' => 'image|max:4048', // Allow multiple images
+            'photos.*' => 'image|max:10000', // Allow multiple images
             'fuel_level' => 'required',
                 'mileage' => 'required|numeric',
             ], [

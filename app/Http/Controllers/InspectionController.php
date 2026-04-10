@@ -115,7 +115,7 @@ class InspectionController extends Controller
             'fuelLevel' => 'required',
             'mileage' => 'required|numeric',
             'photos' => 'required', 
-            'photos.*' => 'image|max:4096',
+            'photos.*' => 'image|max:10240',
             'staff_agree' => 'required', // Only Staff agreement required
         ]);
 
