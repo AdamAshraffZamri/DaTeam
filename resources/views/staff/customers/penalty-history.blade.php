@@ -149,7 +149,37 @@
 
                                     {{-- RECEIPT COLUMN --}}
                                     <td class="px-6 py-4 text-center">
-                                        @if($penalty->payment_proof)
+                                        @php
+                                            // Get all payment receipts for this penalty's booking
+                                            $penaltyReceipts = $penalty->bookingID 
+                                                ? \App\Models\Payment::where('bookingID', $penalty->bookingID)
+                                                    ->where('paymentMethod', 'QR Transfer (Penalty)')
+                                                    ->where('installmentDetails', '!=', null)
+                                                    ->orderBy('transactionDate', 'desc')
+                                                    ->get()
+                                                : collect();
+                                        @endphp
+                                        
+                                        @if($penaltyReceipts->count() > 0)
+                                            <div class="flex flex-col items-center gap-1">
+                                                @foreach($penaltyReceipts as $receipt)
+                                                    @php
+                                                        $receiptUrl = str_contains($receipt->installmentDetails, 'drive.google.com') 
+                                                            ? $receipt->installmentDetails 
+                                                            : asset('storage/' . $receipt->installmentDetails);
+                                                    @endphp
+                                                    <a href="{{ $receiptUrl }}" target="_blank" 
+                                                       class="inline-flex items-center gap-1 text-blue-600 hover:text-blue-800 text-xs font-bold bg-blue-50 hover:bg-blue-100 px-2 py-1 rounded-lg transition border border-blue-100 whitespace-nowrap"
+                                                       title="{{ \Carbon\Carbon::parse($receipt->transactionDate)->format('d M Y - h:i A') }}">
+                                                        <i class="fas fa-file-invoice"></i> 
+                                                        {{ $loop->iteration }}
+                                                    </a>
+                                                @endforeach
+                                                @if($penaltyReceipts->count() > 1)
+                                                    <p class="text-[9px] text-gray-500 font-bold">{{ $penaltyReceipts->count() }} Receipts</p>
+                                                @endif
+                                            </div>
+                                        @elseif($penalty->payment_proof)
                                             <a href="{{ asset('storage/' . $penalty->payment_proof) }}" target="_blank" 
                                                class="inline-flex items-center gap-1 text-blue-600 hover:text-blue-800 text-xs font-bold bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-lg transition border border-blue-100">
                                                 <i class="fas fa-file-invoice"></i> View

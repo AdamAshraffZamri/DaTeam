@@ -225,17 +225,44 @@
                             </div>
                         </div>
                         
+                        {{-- ALL RECEIPTS SECTION --}}
+                        @php
+                            $allReceipts = $booking->payments()->where('installmentDetails', '!=', null)->orderBy('transactionDate', 'desc')->get();
+                        @endphp
+                        
+                        @if($allReceipts->count() > 0)
+                        <div class="mb-4 pb-4 border-b border-gray-100">
+                            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-3">Payment Receipts</p>
+                            <div class="space-y-2">
+                                @foreach($allReceipts as $receipt)
+                                @php
+                                    $receiptUrl = str_contains($receipt->installmentDetails, 'drive.google.com') 
+                                                ? $receipt->installmentDetails 
+                                                : asset('storage/' . $receipt->installmentDetails);
+                                @endphp
+                                <div class="flex items-center justify-between bg-blue-50 border border-blue-100 rounded-lg p-2 hover:bg-blue-100 transition">
+                                    <div class="flex items-center gap-2 flex-1 min-w-0">
+                                        <i class="fas fa-receipt text-blue-600 flex-shrink-0"></i>
+                                        <div class="min-w-0">
+                                            <p class="text-[10px] font-bold text-blue-700 truncate">{{ \Carbon\Carbon::parse($receipt->transactionDate)->format('d M Y') }}</p>
+                                            <p class="text-[9px] text-blue-600">RM {{ number_format($receipt->amount, 2) }} • {{ $receipt->paymentStatus }}</p>
+                                        </div>
+                                    </div>
+                                    <a href="{{ $receiptUrl }}" target="_blank" class="flex-shrink-0 ml-2 text-blue-700 hover:text-blue-900 transition">
+                                        <i class="fas fa-external-link-alt text-sm"></i>
+                                    </a>
+                                </div>
+                                @endforeach
+                            </div>
+                        </div>
+                        @endif
+                        
                         <div class="grid grid-cols-3 gap-2"> 
                             
-                            {{-- Receipt Link Logic --}}
-                            @if($booking->payment && $booking->payment->installmentDetails)
-                                @php
-                                    $receiptUrl = str_contains($booking->payment->installmentDetails, 'drive.google.com') 
-                                                ? $booking->payment->installmentDetails 
-                                                : asset('storage/' . $booking->payment->installmentDetails);
-                                @endphp
-                                <a href="{{ $receiptUrl }}" target="_blank" class="flex flex-col items-center justify-center bg-blue-50 border border-blue-200 text-blue-700 py-2 rounded-lg text-xs font-bold hover:bg-blue-100 transition text-center h-full">
-                                    <i class="fas fa-receipt mb-1 text-lg"></i> Receipt
+                            {{-- Receipt Summary Button --}}
+                            @if($allReceipts->count() > 0)
+                                <a href="javascript:void(0)" onclick="alert('Receipts Listed Above')" class="flex flex-col items-center justify-center bg-blue-50 border border-blue-200 text-blue-700 py-2 rounded-lg text-xs font-bold hover:bg-blue-100 transition text-center h-full">
+                                    <i class="fas fa-receipt mb-1 text-lg"></i> {{ $allReceipts->count() }} Receipt(s)
                                 </a>
                             @else
                                 <div class="flex flex-col items-center justify-center bg-gray-50 border border-gray-200 text-gray-400 py-2 rounded-lg text-xs font-bold text-center h-full opacity-60">

@@ -202,10 +202,25 @@
                     <div class="w-full lg:w-[12%] border-t lg:border-t-0 lg:border-l border-gray-100 pt-2 lg:pt-0 lg:pl-6 lg:pr-6 shrink-0">
                         <p class="text-[9px] font-bold text-gray-400 uppercase tracking-wider mb-1">Documents</p>
                         <div class="flex flex-col gap-1 items-start">
-                            @if($booking->payment && $booking->payment->installmentDetails)
-                                <a href="{{ asset('storage/' . $booking->payment->installmentDetails) }}" target="_blank" onclick="event.stopPropagation()" class="text-[10px] font-bold text-blue-600 hover:text-blue-800 bg-blue-50 px-2 py-0.5 rounded border border-blue-100 flex items-center gap-1.5 transition-colors w-full">
-                                    <i class="fas fa-receipt"></i> Receipt
-                                </a>
+                            @php
+                                $allReceipts = $booking->payments()->where('installmentDetails', '!=', null)->orderBy('transactionDate', 'desc')->get();
+                            @endphp
+                            @if($allReceipts->count() > 0)
+                                @foreach($allReceipts as $receipt)
+                                    @php
+                                        $receiptUrl = str_contains($receipt->installmentDetails, 'drive.google.com') 
+                                            ? $receipt->installmentDetails 
+                                            : asset('storage/' . $receipt->installmentDetails);
+                                    @endphp
+                                    <a href="{{ $receiptUrl }}" target="_blank" onclick="event.stopPropagation()" 
+                                       class="text-[10px] font-bold text-blue-600 hover:text-blue-800 bg-blue-50 px-2 py-0.5 rounded border border-blue-100 flex items-center gap-1.5 transition-colors"
+                                       title="{{ \Carbon\Carbon::parse($receipt->transactionDate)->format('d M Y') }}">
+                                        <i class="fas fa-receipt"></i> R{{ $loop->iteration }}
+                                    </a>
+                                @endforeach
+                                @if($allReceipts->count() > 1)
+                                    <span class="text-[9px] text-gray-400 font-bold">{{ $allReceipts->count() }} total</span>
+                                @endif
                             @else
                                 <span class="text-[10px] font-bold text-gray-300 px-2 py-0.5">-</span>
                             @endif
