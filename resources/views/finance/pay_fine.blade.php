@@ -80,6 +80,70 @@
                         @endif
                     </div>
                 </div>
+
+                {{-- PENALTY PAYMENT HISTORY --}}
+                @php
+                    $penaltyPayments = \App\Models\Payment::where('bookingID', $penalty->bookingID)
+                                                          ->where('paymentMethod', 'QR Transfer (Penalty)')
+                                                          ->get();
+                @endphp
+
+                @if($penaltyPayments && count($penaltyPayments) > 0)
+                <div class="bg-white/5 backdrop-blur-md rounded-[2.5rem] p-8 border border-white/10 shadow-2xl">
+                    <h2 class="text-xl font-bold text-white mb-6 flex items-center">
+                        <i class="fas fa-receipt text-blue-500 mr-3"></i> Payment Submissions
+                    </h2>
+
+                    <div class="space-y-4">
+                        @foreach($penaltyPayments as $payment)
+                        <div class="p-4 rounded-2xl border @if($payment->paymentStatus === 'Verified') bg-green-500/10 border-green-500/20 @elseif($payment->paymentStatus === 'Pending Verification') bg-yellow-500/10 border-yellow-500/20 @else bg-white/5 border-white/5 @endif">
+                            
+                            <div class="flex justify-between items-start mb-3">
+                                <div>
+                                    <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Submission {{ $loop->iteration }}</p>
+                                    <p class="text-white font-bold text-lg">MYR {{ number_format($payment->amount, 2) }}</p>
+                                </div>
+                                <span class="text-xs font-bold px-3 py-1 rounded-full @if($payment->paymentStatus === 'Verified') bg-green-500/20 text-green-400 @elseif($payment->paymentStatus === 'Pending Verification') bg-yellow-500/20 text-yellow-400 @else bg-gray-500/20 text-gray-400 @endif">
+                                    {{ $payment->paymentStatus ?? 'Submitted' }}
+                                </span>
+                            </div>
+
+                            <div class="text-xs text-gray-400 space-y-1 mb-3">
+                                <div><i class="fas fa-calendar-alt mr-2"></i>{{ \Carbon\Carbon::parse($payment->transactionDate)->format('d M Y, h:i A') }}</div>
+                                @if($payment->paymentStatus === 'Verified')
+                                    <div class="text-green-400"><i class="fas fa-check-circle mr-2"></i> Confirmed by staff</div>
+                                @elseif($payment->paymentStatus === 'Pending Verification')
+                                    <div class="text-yellow-400"><i class="fas fa-hourglass-half mr-2"></i> Waiting for verification</div>
+                                @endif
+                            </div>
+
+                            {{-- Receipt Preview --}}
+                            @if($payment->installmentDetails)
+                            <div class="mt-4">
+                                <p class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Receipt Preview</p>
+                                <div class="bg-black/30 rounded-xl p-3 overflow-hidden">
+                                    @php
+                                        $ext = strtolower(pathinfo($payment->installmentDetails, PATHINFO_EXTENSION));
+                                        $isImage = in_array($ext, ['jpg', 'jpeg', 'png', 'gif', 'webp']);
+                                    @endphp
+                                    @if($isImage)
+                                        <img src="{{ asset('storage/' . $payment->installmentDetails) }}" alt="Payment Receipt" class="w-full h-auto rounded-lg max-h-48 object-cover">
+                                    @else
+                                        <a href="{{ asset('storage/' . $payment->installmentDetails) }}" target="_blank" class="flex items-center justify-center p-4 text-blue-400 hover:text-blue-300">
+                                            <i class="fas fa-file-pdf text-2xl mr-2"></i> View Receipt (PDF)
+                                        </a>
+                                    @endif
+                                </div>
+                                <a href="{{ asset('storage/' . $payment->installmentDetails) }}" target="_blank" class="text-xs text-blue-400 hover:text-blue-300 mt-2 inline-flex items-center">
+                                    <i class="fas fa-external-link-alt mr-1"></i> Open Full Receipt
+                                </a>
+                            </div>
+                            @endif
+                        </div>
+                        @endforeach
+                    </div>
+                </div>
+                @endif
             </div>
 
             <div class="lg:col-span-5">

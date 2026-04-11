@@ -317,6 +317,98 @@
 
         </div>
     </div>
+
+    {{-- SECTION 3: RECEIPT & TRANSACTION HISTORY (DISABLED FOR NOW) --}}
+    {{-- Will be fixed later --}}
+<!--     
+    <div class="relative z-10 py-12">
+        <div class="container mx-auto px-4 max-w-6xl">
+            <div class="bg-black/50 backdrop-blur-md rounded-[2.5rem] p-8 border border-white/10 shadow-2xl">
+                <h2 class="text-2xl font-bold text-white mb-8 flex items-center">
+                    <i class="fas fa-history text-blue-500 mr-3"></i>
+                    Transaction & Receipt History
+                </h2>
+
+                @php
+                    // Collect all payments from user's bookings
+                    $allBookings = \App\Models\Booking::where('customerID', Auth::id())->with('payments')->get();
+                    $allPayments = collect();
+                    
+                    foreach($allBookings as $booking) {
+                        foreach($booking->payments as $payment) {
+                            $payment->booking_ref = $booking;
+                            $allPayments->push($payment);
+                        }
+                    }
+                    
+                    // Sort by most recent first
+                    $allPayments = $allPayments->sortByDesc('transactionDate');
+                @endphp
+
+                @if($allPayments->count() > 0)
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    @foreach($allPayments->take(12) as $transaction)
+                    <div class="bg-white/5 border border-white/10 rounded-2xl p-6 hover:bg-white/10 transition overflow-hidden flex flex-col">
+                        
+                        {{-- Header --}}
+                        <div class="flex justify-between items-start mb-4">
+                            <div>
+                                <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Booking #{{ $transaction->booking_ref->bookingID }}</p>
+                                <p class="text-white font-bold text-lg">MYR {{ number_format($transaction->amount, 2) }}</p>
+                            </div>
+                            <span class="text-xs font-bold px-2 py-1 rounded @if($transaction->paymentStatus === 'Verified') bg-green-500/20 text-green-400 @elseif($transaction->paymentStatus === 'Pending Verification') bg-yellow-500/20 text-yellow-400 @else bg-gray-500/20 text-gray-400 @endif">
+                                {{ $transaction->paymentStatus ?? 'Submitted' }}
+                            </span>
+                        </div>
+
+                        {{-- Details --}}
+                        <div class="text-xs text-gray-400 space-y-2 mb-4">
+                            <div><i class="fas fa-calendar mr-2"></i>{{ \Carbon\Carbon::parse($transaction->transactionDate)->format('d M Y h:i A') }}</div>
+                            <div><i class="fas fa-credit-card mr-2"></i>{{ $transaction->paymentMethod }}</div>
+                            <div><i class="fas fa-car mr-2"></i>{{ $transaction->booking_ref->vehicle->model ?? 'Unknown' }}</div>
+                        </div>
+
+                        {{-- Receipt --}}
+                        @if($transaction->installmentDetails)
+                        <div class="mb-4 flex-grow">
+                            @php
+                                $ext = strtolower(pathinfo($transaction->installmentDetails, PATHINFO_EXTENSION));
+                                $isImage = in_array($ext, ['jpg', 'jpeg', 'png', 'gif', 'webp']);
+                            @endphp
+                            
+                            <div class="bg-black/40 rounded-lg overflow-hidden aspect-square flex items-center justify-center">
+                                @if($isImage)
+                                    <img src="{{ asset('storage/' . $transaction->installmentDetails) }}" alt="Receipt" class="w-full h-full object-cover hover:scale-105 transition cursor-pointer">
+                                @else
+                                    <a href="{{ asset('storage/' . $transaction->installmentDetails) }}" target="_blank" class="flex flex-col items-center justify-center w-full h-full text-blue-400 hover:text-blue-300">
+                                        <i class="fas fa-file-pdf text-4xl mb-2"></i>
+                                        <span class="text-xs font-bold">PDF File</span>
+                                    </a>
+                                @endif
+                            </div>
+                        </div>
+                        @endif
+
+                        {{-- View Link --}}
+                        @if($transaction->installmentDetails)
+                        <a href="{{ asset('storage/' . $transaction->installmentDetails) }}" target="_blank" class="text-xs text-blue-400 hover:text-blue-300 flex items-center justify-center w-full py-2 border-t border-white/10 mt-auto">
+                            <i class="fas fa-external-link-alt mr-1"></i> View Receipt
+                        </a>
+                        @endif
+                    </div>
+                    @endforeach
+                </div>
+                @else
+                <div class="text-center py-12 opacity-50">
+                    <i class="fas fa-inbox text-5xl text-gray-600 mb-4"></i>
+                    <p class="text-gray-400 font-bold">No transaction history yet</p>
+                    <p class="text-gray-500 text-sm">Your submitted payments will appear here</p>
+                </div>
+                @endif
+            </div>
+        </div>
+    </div>
+     -->
 </div>
 
 {{-- SCROLLBAR --}}
