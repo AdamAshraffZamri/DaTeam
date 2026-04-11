@@ -131,7 +131,7 @@ class BookingController extends Controller
         // If checks pass, proceed to booking page
         $today = Carbon::today();
     
-        $vehicles = Vehicle::where('status', 'available')
+        $vehicles = Vehicle::where('availability', true)
             ->whereDoesntHave('bookings', function ($q) use ($today) {
                 // Exclude cars that have active bookings overlapping with "today"
                 $q->whereIn('bookingStatus', ['Submitted', 'Deposit Paid', 'Paid', 'Confirmed', 'Active'])
@@ -172,9 +172,10 @@ class BookingController extends Controller
         }
 
         // 3. Start Query (Eager load Bookings & Maintenances)
-        $query = Vehicle::where('status', 'available') // Only show vehicles marked as Ready/Available
-            ->where('availability', true)             // Safety manual toggle
-            ->with(['bookings', 'maintenances']);
+        $query = Vehicle::where('status', '!=', 'inactive')
+                        ->with(['bookings' => function($q) {
+                            $q->orderBy('created_at', 'desc'); 
+                        }, 'maintenances']);
 
         // 4. Apply Vehicle Category Filter (if selected)
         if ($request->filled('category')) {
@@ -214,6 +215,17 @@ class BookingController extends Controller
                 // Exclude Cancelled/Rejected. Include everything else (Submitted, Paid, Confirmed, Active)
                 if (in_array($booking->bookingStatus, ['Cancelled', 'Rejected', 'Submitted', 'Completed'])) {
                     continue;
+                }
+
+                // if booking is active or confirmed, we consider it for overlap
+                if (in_array($booking->bookingStatus, ['Active', 'Confirmed'])) {
+                    $bookStart = Carbon::parse($booking->originalDate . ' ' . $booking->bookingTime);
+                    $bookEnd   = Carbon::parse($booking->returnDate . ' ' . $booking->returnTime);
+
+                    // Check if requested time overlaps with this booking (with buffer)
+                    if ($reqStart->lt($bookEnd) && $reqEndWithBuffer->gt($bookStart)) {
+                        return false; 
+                    }
                 }
 
                 $bookStart = Carbon::parse($booking->originalDate . ' ' . $booking->bookingTime);
