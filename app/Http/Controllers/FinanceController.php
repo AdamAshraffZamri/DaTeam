@@ -120,16 +120,23 @@ class FinanceController extends Controller
         $penalty = Penalties::with(['booking.vehicle', 'customer'])->findOrFail($id);
 
         // Security check: ensure the penalty belongs to the logged-in user
+        $userID = Auth::id();
+        $authorized = false;
+
         if ($penalty->bookingID) {
-            // Booking-based penalty
-            if ($penalty->booking && $penalty->booking->customerID !== Auth::id()) {
-                abort(403, 'Unauthorized action.');
+            // Booking-based penalty - check customer via booking
+            if ($penalty->booking && isset($penalty->booking->customerID) && $penalty->booking->customerID == $userID) {
+                $authorized = true;
             }
         } else {
-            // Customer-level penalty
-            if ($penalty->customerID !== Auth::id()) {
-                abort(403, 'Unauthorized action.');
+            // Customer-level penalty - check customerID directly
+            if (isset($penalty->customerID) && $penalty->customerID == $userID) {
+                $authorized = true;
             }
+        }
+
+        if (!$authorized) {
+            abort(403, 'Unauthorized action.');
         }
 
         return view('finance.pay_fine', compact('penalty'));
@@ -144,14 +151,24 @@ class FinanceController extends Controller
         $penalty = Penalties::findOrFail($id);
         
         // Security check
+        $userID = Auth::id();
+        $authorized = false;
+
         if ($penalty->bookingID) {
-            if ($penalty->booking->customerID !== Auth::id()) {
-                abort(403, 'Unauthorized action.');
+            // Booking-based penalty
+            $penalty->load('booking');
+            if ($penalty->booking && isset($penalty->booking->customerID) && $penalty->booking->customerID == $userID) {
+                $authorized = true;
             }
         } else {
-            if ($penalty->customerID !== Auth::id()) {
-                abort(403, 'Unauthorized action.');
+            // Customer-level penalty
+            if (isset($penalty->customerID) && $penalty->customerID == $userID) {
+                $authorized = true;
             }
+        }
+
+        if (!$authorized) {
+            abort(403, 'Unauthorized action.');
         }
         
         // CALCULATE TOTAL
