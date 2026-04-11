@@ -131,7 +131,7 @@ class BookingController extends Controller
         // If checks pass, proceed to booking page
         $today = Carbon::today();
     
-        $vehicles = Vehicle::where('availability', true)
+        $vehicles = Vehicle::where('status', 'available')
             ->whereDoesntHave('bookings', function ($q) use ($today) {
                 // Exclude cars that have active bookings overlapping with "today"
                 $q->whereIn('bookingStatus', ['Submitted', 'Deposit Paid', 'Paid', 'Confirmed', 'Active'])
@@ -172,8 +172,9 @@ class BookingController extends Controller
         }
 
         // 3. Start Query (Eager load Bookings & Maintenances)
-        $query = Vehicle::where('availability', true)
-            ->with(['bookings', 'maintenances']); 
+        $query = Vehicle::where('status', 'available') // Only show vehicles marked as Ready/Available
+            ->where('availability', true)             // Safety manual toggle
+            ->with(['bookings', 'maintenances']);
 
         // 4. Apply Vehicle Category Filter (if selected)
         if ($request->filled('category')) {
@@ -205,49 +206,40 @@ class BookingController extends Controller
         // 7. Fetch & Filter in Memory
         $allAvailableVehicles = $query->get()->filter(function($vehicle) use ($reqStart, $reqEnd) {
             
-            // Define the Requested "Blocked" Block (Includes its own 3-hour cooldown tail)
-            // This represents: [Req Start] ------ [Req End] -- (3h Buffer) --|
+            // Buffer for cleaning/handover
             $reqEndWithBuffer = $reqEnd->copy()->addHours(3);
 
-            // --- A. CHECK BOOKINGS ---
+            // A. CHECK BOOKINGS (Only exclude if the timing overlaps)
             foreach ($vehicle->bookings as $booking) {
-                if (in_array($booking->bookingStatus, ['Cancelled', 'Rejected'])) {
+                // Exclude Cancelled/Rejected. Include everything else (Submitted, Paid, Confirmed, Active)
+                if (in_array($booking->bookingStatus, ['Cancelled', 'Rejected', 'Submitted', 'Completed'])) {
                     continue;
                 }
 
-                // Parse Existing Booking Times
                 $bookStart = Carbon::parse($booking->originalDate . ' ' . $booking->bookingTime);
                 $bookEnd   = Carbon::parse($booking->returnDate . ' ' . $booking->returnTime);
-                
-                // Define Existing "Blocked" Block (Includes its own 3-hour cooldown tail)
-                // This represents: [Book Start] ------ [Book End] -- (3h Buffer) --|
                 $bookEndWithBuffer = $bookEnd->copy()->addHours(3);
 
-                // --- 2-WAY COOLDOWN CHECK ---
-                // Conflict exists if the two extended periods overlap.
-                // 1. Check if New Request starts too soon after Existing Booking (Existing Cooldown violation)
-                // 2. Check if New Request ends too close to Existing Booking Start (New Request Cooldown violation)
-                
-                // Logic: (Request Start < Existing End+Buffer) AND (Request End+Buffer > Existing Start)
+                // 2-WAY OVERLAP CHECK
+                // If Request starts before an existing booking ends OR ends after an existing booking starts
                 if ($reqStart->lt($bookEndWithBuffer) && $reqEndWithBuffer->gt($bookStart)) {
-                    return false; // Unavailable
+                    return false; 
                 }
             }
 
-            // --- B. CHECK MAINTENANCE BLOCKS (Strict Start/End, usually no cooldown needed) ---
+            // B. CHECK MAINTENANCE BLOCKS
             foreach ($vehicle->maintenances as $maintenance) {
-                $maintStart = \Carbon\Carbon::parse($maintenance->start_time);
-                $maintEnd   = \Carbon\Carbon::parse($maintenance->end_time);
+                $maintStart = Carbon::parse($maintenance->start_time);
+                $maintEnd   = Carbon::parse($maintenance->end_time);
 
-                // Standard overlap check for maintenance
-                if ($maintStart->lt($reqEnd) && $maintEnd->gt($reqStart)) {
-                    return false; // Unavailable
+                if ($reqStart->lt($maintEnd) && $reqEnd->gt($maintStart)) {
+                    return false; 
                 }
             }
 
-            return true; // Available
+            return true; 
         })
-            ->unique(function ($item) {
+                ->unique(function ($item) {
                 return $item->brand . $item->model;
         });
 

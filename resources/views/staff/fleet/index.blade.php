@@ -236,8 +236,14 @@
                         @php
                             // Read directly from the new database column
                             $currentStatus = strtolower($vehicle->status ?? 'available'); 
-                            
-                            if($vehicle->isBookedToday) {
+
+                            $isCurrentlyRented = $vehicle->bookings()
+                            ->where('bookingStatus', 'Active')
+                            ->whereDate('originalDate', '<=', now())
+                            ->whereDate('returnDate', '>=', now())
+                            ->exists();
+
+                            if($isCurrentlyRented) {
                                 $currentStatus = 'rented';
                             }
 
