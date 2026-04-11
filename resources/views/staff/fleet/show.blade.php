@@ -61,17 +61,28 @@
                 {{-- 1. NEW STATUS DROPDOWN --}}
                 <div class="relative">
                     @php
-                    // Map the vehicle's current status to UI colors
-                    // Note: Change '$vehicle->status' if your database uses a different column name
-                    $currentStatus = strtolower($vehicle->status ?? 'available'); 
-                    
-                    $statusConfig = match($currentStatus) {
-                        'rented' => ['text' => 'Rented', 'bg' => 'bg-orange-50', 'border' => 'border-orange-200', 'text_color' => 'text-orange-600', 'dot' => 'bg-orange-500'],
-                        'maintenance' => ['text' => 'Maintenance', 'bg' => 'bg-blue-50', 'border' => 'border-blue-200', 'text_color' => 'text-blue-600', 'dot' => 'bg-blue-500'],
-                        'inactive' => ['text' => 'Inactive', 'bg' => 'bg-gray-50', 'border' => 'border-gray-200', 'text_color' => 'text-gray-600', 'dot' => 'bg-gray-400'],
-                        default => ['text' => 'Available', 'bg' => 'bg-green-50', 'border' => 'border-green-200', 'text_color' => 'text-green-700', 'dot' => 'bg-green-500'],
-                    };
-                @endphp
+                        // 1. Determine if vehicle is currently on an active trip
+                        $isCurrentlyRented = $vehicle->bookings()
+                            ->where('bookingStatus', 'Active')
+                            ->whereDate('originalDate', '<=', now())
+                            ->whereDate('returnDate', '>=', now())
+                            ->exists();
+
+                        // 2. Set the display status (Override DB status if rented)
+                        $displayStatus = $isCurrentlyRented ? 'rented' : strtolower($vehicle->status ?? 'available'); 
+                        if ($isCurrentlyRented) {
+                            $vehicle->status = 'rented';
+                            $vehicle->availability = false;
+                        }
+                        
+                        // 3. Map to UI Colors
+                        $statusConfig = match($displayStatus) {
+                            'rented' => ['text' => 'Rented', 'bg' => 'bg-orange-50', 'border' => 'border-orange-200', 'text_color' => 'text-orange-600', 'dot' => 'bg-orange-500'],
+                            'maintenance' => ['text' => 'Maintenance', 'bg' => 'bg-blue-50', 'border' => 'border-blue-200', 'text_color' => 'text-blue-600', 'dot' => 'bg-blue-500'],
+                            'inactive' => ['text' => 'Inactive', 'bg' => 'bg-gray-50', 'border' => 'border-gray-200', 'text_color' => 'text-gray-600', 'dot' => 'bg-gray-400'],
+                            default => ['text' => 'Available', 'bg' => 'bg-green-50', 'border' => 'border-green-200', 'text_color' => 'text-green-700', 'dot' => 'bg-green-500'],
+                        };
+                    @endphp
 
                 <button type="button" onclick="toggleStatusUpdateDropdown()" 
                     class="{{ $statusConfig['bg'] }} {{ $statusConfig['border'] }} {{ $statusConfig['text_color'] }} border px-5 py-2.5 rounded-xl font-bold text-sm shadow-sm hover:opacity-80 transition-all flex items-center gap-2">
@@ -91,9 +102,9 @@
                                 <span class="w-1.5 h-1.5 rounded-full bg-green-500"></span> Available
                             </button>
                             
-                            <button type="submit" name="status" value="rented" class="w-full text-left px-5 py-3 text-xs font-bold text-orange-600 hover:bg-orange-50 border-b border-gray-50 transition-colors flex items-center gap-2">
+                            <!-- <button type="submit" name="status" value="rented" class="w-full text-left px-5 py-3 text-xs font-bold text-orange-600 hover:bg-orange-50 border-b border-gray-50 transition-colors flex items-center gap-2">
                                 <span class="w-1.5 h-1.5 rounded-full bg-orange-500"></span> Rented
-                            </button>
+                            </button> -->
 
                             <button type="submit" name="status" value="maintenance" class="w-full text-left px-5 py-3 text-xs font-bold text-blue-600 hover:bg-blue-50 border-b border-gray-50 transition-colors flex items-center gap-2">
                                 <span class="w-1.5 h-1.5 rounded-full bg-blue-500"></span> Maintenance

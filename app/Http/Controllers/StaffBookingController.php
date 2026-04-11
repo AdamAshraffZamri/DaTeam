@@ -590,8 +590,17 @@ class StaffBookingController extends Controller
     public function pickup(Request $request, $id) {
         $booking = Booking::findOrFail($id);
         $booking->update(['bookingStatus' => 'Active']);
-        return back()->with('success', 'Vehicle collected.');
+
+        // Sync Vehicle Status to Database
+        $vehicle = $booking->vehicle;
+        $vehicle->update([
+            'status' => 'rented',
+            'availability' => false
+        ]);
+
+        return back()->with('success', 'Handover complete. Vehicle status updated to Rented.');
     }
+
     public function processReturn(Request $request, $id) {
         $booking = Booking::findOrFail($id);
         
@@ -654,6 +663,12 @@ class StaffBookingController extends Controller
                 $booking->invoiceLink = $invoiceLink;
                 $booking->save();
             }
+
+            $vehicle = $booking->vehicle;
+            $vehicle->update([
+                'status' => 'available',
+                'availability' => true
+            ]);
             
         } catch (\Exception $e) {
             // Log error but allow the return process to finish
