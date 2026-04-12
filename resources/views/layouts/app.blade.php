@@ -194,40 +194,40 @@
                    <span>Home</span>
                 </a>
                 
-                {{-- About Us --}}
-                <a href="{{ route('pages.about') }}" 
+                {{-- Drive to Singapore --}}
+                <a href="{{ route('pages.singapore') }}" 
                    class="flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all duration-300 active:scale-95 group
-                   {{ request()->routeIs('pages.about') 
+                   {{ request()->routeIs('pages.singapore') 
                        ? 'bg-orange-50 text-orange-600 shadow-sm border border-orange-100 translate-x-2' 
                        : 'text-gray-100 hover:bg-gray-50 hover:text-orange-500' }}">
                    <div class="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center group-hover:bg-orange-200 transition-colors">
                        <i class="fas fa-info-circle text-orange-500"></i>
                    </div>
-                   <span>About Us</span>
+                   <span>Drive to Singapore</span>
                 </a>
                 
-                {{-- FAQ --}}
-                <a href="{{ route('pages.faq') }}" 
+                {{-- Travel --}}
+                <a href="{{ route('pages.travel') }}" 
                    class="flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all duration-300 active:scale-95 group
-                   {{ request()->routeIs('pages.faq') 
+                   {{ request()->routeIs('pages.travel') 
                        ? 'bg-orange-50 text-orange-600 shadow-sm border border-orange-100 translate-x-2' 
                        : 'text-gray-100 hover:bg-gray-50 hover:text-orange-500' }}">
                    <div class="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center group-hover:bg-orange-200 transition-colors">
                        <i class="fas fa-question-circle text-orange-500"></i>
                    </div>
-                   <span>FAQ</span>
+                   <span>Travel</span>
                 </a>
                 
-                {{-- Contact Us --}}
-                <a href="{{ route('pages.contact') }}" 
+                {{-- Ticket Flight --}}
+                <a href="{{ route('pages.flight') }}" 
                    class="flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all duration-300 active:scale-95 group
-                   {{ request()->routeIs('pages.contact') 
+                   {{ request()->routeIs('pages.flight') 
                        ? 'bg-orange-50 text-orange-600 shadow-sm border border-orange-100 translate-x-2' 
                        : 'text-gray-100 hover:bg-gray-50 hover:text-orange-500' }}">
                    <div class="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center group-hover:bg-orange-200 transition-colors">
                        <i class="fas fa-envelope text-orange-500"></i>
                    </div>
-                   <span>Contact Us</span>
+                   <span>Ticket Flight</span>
                 </a>
             </div>
         </div>

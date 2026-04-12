@@ -367,4 +367,55 @@ class StaffCustomerController extends Controller
             return back()->with('error', 'Upload Failed: ' . $e->getMessage());
         }
     }
+
+    public function viewDocument($id, $type)
+    {
+        $customer = Customer::findOrFail($id);
+        
+        $columnMap = [
+            'license' => 'driving_license_image',
+            'student_card' => 'student_card_image',
+            'ic' => 'ic_passport_image'
+        ];
+
+        $dbValue = $customer->{$columnMap[$type]};
+
+        if (!$dbValue) {
+            return back()->with('error', 'No document recorded in the database.');
+        }
+
+        try {
+            $client = new \Google\Client();
+            $client->setClientId(env('GOOGLE_DRIVE_CLIENT_ID'));
+            $client->setClientSecret(env('GOOGLE_DRIVE_CLIENT_SECRET'));
+            $client->refreshToken(env('GOOGLE_DRIVE_REFRESH_TOKEN'));
+            $service = new \Google\Service\Drive($client);
+
+            // --- THE FIX ---
+            // Extract ONLY the file name from the database value
+            // "Folder Name/123.jpg" becomes "123.jpg"
+            $fileNameOnly = basename($dbValue);
+
+            // Search Google Drive using ONLY the file name
+            $fileQuery = "name = '" . str_replace("'", "\'", $fileNameOnly) . "' and trashed = false";
+            
+            $results = $service->files->listFiles([
+                'q' => $fileQuery,
+                'fields' => 'files(id, name, webViewLink)',
+                'pageSize' => 1
+            ]);
+
+            if (count($results->getFiles()) > 0) {
+                $file = $results->getFiles()[0];
+                // Successfully found it! Redirect to Google Drive preview.
+                return redirect($file->getWebViewLink());
+            }
+
+            // If it still fails, gracefully show an error on the page
+            return back()->with('error', "File '{$fileNameOnly}' not found on Google Drive.");
+
+        } catch (\Exception $e) {
+            return back()->with('error', 'Google Drive Error: ' . $e->getMessage());
+        }
+    }
 }

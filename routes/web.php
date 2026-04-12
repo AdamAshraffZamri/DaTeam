@@ -202,6 +202,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/customers/{id}/blacklist', [App\Http\Controllers\StaffCustomerController::class, 'toggleBlacklist'])->name('staff.customers.blacklist');
     Route::post('/customers/{id}/penalty', [App\Http\Controllers\StaffCustomerController::class, 'imposePenalty'])->name('staff.customers.penalty');
     Route::post('/penalty/{id}/verify', [App\Http\Controllers\StaffCustomerController::class, 'verifyPenalty'])->name('staff.penalty.verify');
+    Route::get('/customers/view-document/{customerId}/{type}', [StaffCustomerController::class, 'viewDocument'])->name('staff.customers.view_document');
 
     // --- SEPARATE INSPECTION MODE (If needed for dedicated page) ---
     // Renamed to avoid conflict with 'storeInspection' above

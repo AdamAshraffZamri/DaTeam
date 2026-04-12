@@ -281,15 +281,14 @@
 
                     <div class="grid grid-cols-2 lg:grid-cols-3 gap-4">
                         @foreach([
-                            ['label' => 'Driving License', 'file' => $customer->driving_license_image],
-                            ['label' => 'Student ID', 'file' => $customer->student_card_image],
-                            ['label' => 'IC / Passport', 'file' => $customer->ic_passport_image]
+                            ['label' => 'Driving License', 'file' => $customer->driving_license_image, 'type' => 'license'],
+                            ['label' => 'Student ID', 'file' => $customer->student_card_image, 'type' => 'student_card'],
+                            ['label' => 'IC / Passport', 'file' => $customer->ic_passport_image, 'type' => 'ic']
                         ] as $doc)
                             
                             @if($doc['file'])
-                                {{-- CASE: FILE EXISTS --}}
-                                <a href="{{ $doc['file'] }}" 
-                                target="_blank" 
+                                <a href="{{ route('staff.customers.view_document', ['customerId' => $customer->customerID, 'type' => $doc['type']]) }}" 
+                                target="_blank"
                                 class="group relative block aspect-[4/3] rounded-xl overflow-hidden bg-white border border-slate-200 shadow-sm hover:border-orange-500 transition-all">
                                     
                                     <div class="w-full h-full flex flex-col items-center justify-center group-hover:bg-slate-50 transition-colors">

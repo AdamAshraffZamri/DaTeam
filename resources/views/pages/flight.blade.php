@@ -127,8 +127,8 @@
     document.getElementById('flightEnquiryForm').addEventListener('submit', function(e) {
         e.preventDefault();
 
-        const adminPhone = "60137104487"; // Update to your admin number
-
+        const adminPhone = "601110999100"; // Update to your admin number
+        
         const name = document.getElementById('name').value;
         const contact = document.getElementById('contact').value;
         const depLoc = document.getElementById('departure_loc').value;
