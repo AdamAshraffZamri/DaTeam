@@ -575,6 +575,66 @@ class StaffBookingController extends Controller
     return true;
 }
 
+// [NEW] EDIT BOOKING - Pickup and Return Information
+    public function edit($id)
+    {
+        $booking = Booking::with(['customer', 'vehicle'])
+                          ->findOrFail($id);
+
+        return view('staff.bookings.edit', compact('booking'));
+    }
+
+    // [NEW] UPDATE BOOKING - Pickup and Return Information
+    public function update(Request $request, $id)
+    {
+        $booking = Booking::findOrFail($id);
+
+        // Validate the input
+        $validated = $request->validate([
+            'originalDate' => 'required|date',
+            'bookingTime' => 'required|date_format:H:i',
+            'returnDate' => 'required|date|after_or_equal:originalDate',
+            'returnTime' => 'required|date_format:H:i',
+            'pickupLocation' => 'required|string|max:255',
+            'returnLocation' => 'required|string|max:255',
+        ]);
+
+        // Additional validation: Check time interval logic
+        $pickupDateTime = \Carbon\Carbon::createFromFormat('Y-m-d H:i', $validated['originalDate'] . ' ' . $validated['bookingTime']);
+        $returnDateTime = \Carbon\Carbon::createFromFormat('Y-m-d H:i', $validated['returnDate'] . ' ' . $validated['returnTime']);
+
+        // Return must be after or equal to pickup
+        if ($returnDateTime->lte($pickupDateTime)) {
+            return back()->withInput()
+                        ->withErrors(['returnTime' => 'Return date/time must be after pickup date/time. Please ensure return is at least 1 hour after pickup.']);
+        }
+
+        // Ensure minimum booking duration (at least 1 hour)
+        $minutes = $pickupDateTime->diffInMinutes($returnDateTime);
+        if ($minutes < 60) {
+            return back()->withInput()
+                        ->withErrors(['returnTime' => 'Minimum booking duration is 1 hour. Current duration is only ' . $minutes . ' minutes.']);
+        }
+
+        try {
+            // Update the booking with new pickup and return information
+            $booking->update([
+                'originalDate' => $validated['originalDate'],
+                'bookingTime' => $validated['bookingTime'],
+                'returnDate' => $validated['returnDate'],
+                'returnTime' => $validated['returnTime'],
+                'pickupLocation' => $validated['pickupLocation'],
+                'returnLocation' => $validated['returnLocation'],
+            ]);
+
+            return redirect()->route('staff.bookings.show', $booking->bookingID)
+                           ->with('success', 'Booking updated successfully! Pickup and return information has been modified.');
+        } catch (\Exception $e) {
+            return back()->withInput()
+                        ->with('error', 'Failed to update booking. Please try again.');
+        }
+    }
+
 // [NEW] APPROVE
     public function approve($id)
     {
@@ -960,5 +1020,91 @@ class StaffBookingController extends Controller
         // but typically invoice is for completed/paid jobs.
         $pdf = Pdf::loadView('pdf.invoice', compact('booking'));
         return $pdf->stream('Invoice-' . $booking->bookingID . '.pdf');
+    }
+
+    /**
+     * DELETE BOOKING
+     * 
+     * Deletes a booking (marks as Deleted status).
+     * Only allows deletion of bookings in specific statuses:
+     * - Pending, Submitted, Rejected
+     * 
+     * Additional logic:
+     * - Void any associated deposits/payments
+     * - Add deletion note to remarks
+     * - Notify customer about deletion
+     * - Return success message
+     * 
+     * @param int $id Booking ID
+     * @param Request $request Request object (contains optional deletion reason)
+     * @return \Illuminate\Http\RedirectResponse
+     * @throws \Illuminate\Database\Eloquent\ModelNotFoundException
+     */
+    public function destroy(Request $request, $id)
+    {
+        // Validate deletion reason
+        $request->validate([
+            'deletion_reason' => 'nullable|string|max:150',
+        ]);
+
+        // Find booking with related data
+        $booking = Booking::with(['payment', 'customer', 'vehicle'])->findOrFail($id);
+
+        // Check if booking can be deleted (only certain statuses allowed)
+        $deletableStatuses = ['Pending', 'Submitted', 'Confirmed', 'Rejected', 'Cancelled'];
+        if (!in_array($booking->bookingStatus, $deletableStatuses)) {
+            return back()->with('error', "Cannot delete booking with status '{$booking->bookingStatus}'. Only Pending, Submitted, Rejected, or Cancelled bookings can be deleted.");
+        }
+
+        try {
+            // 1. Prepare deletion note
+            $oldRemarks = $booking->remarks ? $booking->remarks . "\n\n" : "";
+            $deletionReason = $request->deletion_reason ?? "No reason provided";
+            $deletionNote = "[DELETED on " . now()->format('d-m-Y H:i:s') . "]: " . $deletionReason;
+            $finalRemarks = $oldRemarks . $deletionNote;
+
+            // 2. Update booking status to Deleted
+            $booking->update([
+                'bookingStatus' => 'Deleted',
+                'remarks' => $finalRemarks,
+            ]);
+
+            // 3. Handle associated payment
+            $payment = $booking->payment;
+            if ($payment) {
+                $payment->update([
+                    'paymentStatus' => 'Void',
+                    'depoStatus' => 'Void',
+                ]);
+            }
+
+            // 4. Log the deletion
+            Log::info("Booking deleted", [
+                'bookingID' => $booking->bookingID,
+                'customerID' => $booking->customerID,
+                'vehicleID' => $booking->vehicleID,
+                'previousStatus' => $booking->bookingStatus,
+                'deletedAt' => now(),
+            ]);
+
+            // 5. Notify customer about deletion
+            try {
+                $booking->customer->notify(new BookingStatusUpdated(
+                    $booking,
+                    "Your booking #{$booking->bookingID} has been deleted. Reason: " . $deletionReason
+                ));
+            } catch (\Exception $e) {
+                Log::error("Deletion Notification Failed: " . $e->getMessage());
+            }
+
+            return back()->with('success', "Booking #{$booking->bookingID} has been successfully deleted.");
+
+        } catch (\Exception $e) {
+            Log::error("Error deleting booking", [
+                'bookingID' => $id,
+                'error' => $e->getMessage(),
+            ]);
+            return back()->with('error', "An error occurred while deleting the booking. " . $e->getMessage());
+        }
     }
 }

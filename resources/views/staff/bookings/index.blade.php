@@ -283,6 +283,14 @@
                             <a href="{{ route('staff.bookings.show', $booking->bookingID) }}" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg text-xs font-bold transition flex items-center gap-2 w-24 justify-center shadow-sm">
                                 <i class="fas fa-info-circle"></i> <span>Details</span>
                             </a>
+                        @elseif(in_array($booking->bookingStatus, ['Pending', 'Submitted', 'Rejected', 'Cancelled']))
+                            <form action="{{ route('staff.bookings.destroy', $booking->bookingID) }}" method="POST" onsubmit="return confirm('Delete this booking? This action cannot be undone.');">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" class="bg-gray-100 hover:bg-red-100 text-gray-700 hover:text-red-700 px-4 py-2 rounded-lg text-xs font-bold transition flex items-center gap-2 w-24 justify-center shadow-sm">
+                                    <i class="fas fa-trash"></i> <span>Delete</span>
+                                </button>
+                            </form>
                         @else
                             <div class="w-24"></div>
                         @endif

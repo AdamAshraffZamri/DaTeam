@@ -57,7 +57,9 @@ class StaffManagementController extends Controller
      */
     public function create()
     {
-        return view('staff.management.create');
+        return view('staff.management.create', [
+            'user' => auth('staff')->user(),
+        ]);
     }
 
     /**
