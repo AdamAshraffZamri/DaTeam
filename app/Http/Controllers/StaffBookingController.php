@@ -613,7 +613,7 @@ class StaffBookingController extends Controller
 
         // 2. Refund Deposit & Complete Payment
         if ($booking->payment) {
-            $booking->payment->update(['depoStatus' => 'Refunded', 'paymentStatus' => 'Completed']);
+            $booking->payment->update(['depoStatus' => 'Pending', 'paymentStatus' => 'Completed']);
         }
 
         // 3. Trigger Loyalty Points
@@ -639,7 +639,7 @@ class StaffBookingController extends Controller
             // This triggers the BookingStatusUpdated notification email
             $booking->customer->notify(new BookingStatusUpdated(
                 $booking, 
-                "Your vehicle return is verified. Booking #{$booking->bookingID} is COMPLETED and your deposit has been REFUNDED."
+                "Your vehicle return is verified. Booking #{$booking->bookingID} is COMPLETED and your deposit is being processed."
             ));
 
             // C. Upload to Google Drive & Save Link (NEW)
