@@ -252,12 +252,13 @@ class StaffBookingController extends Controller
             'company_email'    => 'nullable|email',
             'company_phone'    => 'nullable|string|max:20',
             'vehicle_id'       => 'required|exists:vehicles,VehicleID',
-            'pickup_date'      => 'required|date|after:today',
+            'pickup_date'      => 'required|date',
             'pickup_time'      => 'required|date_format:H:i',
             'return_date'      => 'required|date|after_or_equal:pickup_date',
             'return_time'      => 'required|date_format:H:i',
-            'pickup_location'  => 'required|string|max:255',
-            'return_location'  => 'required|string|max:255',
+            'pickup_location'  => 'nullable|string|max:255',
+            'return_location'  => 'nullable|string|max:255',
+            'total_amount'     => 'required_if:booking_type,external|numeric|min:0',
             'additional_fees'  => 'nullable|numeric|min:0',
             'receipt_image'    => 'nullable|image|mimes:jpeg,png,jpg,gif|max:5120',
             'agreement_image'  => 'nullable|image|mimes:jpeg,png,jpg,gif|max:5120',
@@ -349,20 +350,29 @@ class StaffBookingController extends Controller
                 }
             }
             
-            $additionalFees = floatval($validated['additional_fees'] ?? 0);
-            $totalCost = $rentalCost + $additionalFees;
-
-            // Log calculation details
-            Log::info("Booking Cost Calculation (Tiered)", [
-                'pickup_datetime' => $pickupDateTime,
-                'return_datetime' => $returnDateTime,
-                'hours_diff' => $hoursDiff,
-                'hours_rounded' => $totalHours,
-                'hourly_rates' => $hourlyRates,
-                'rental_cost' => $rentalCost,
-                'additional_fees' => $additionalFees,
-                'total_cost_calculated' => $totalCost,
-            ]);
+            // For external bookings, use the manually entered total amount
+            // For customer bookings, calculate the cost
+            if ($validated['booking_type'] === 'external') {
+                $totalCost = floatval($validated['total_amount'] ?? 0);
+                Log::info("External Booking Cost (Manual Entry)", [
+                    'booking_type' => 'external',
+                    'total_amount_entered' => $totalCost,
+                    'company' => $validated['external_company'],
+                ]);
+            } else {
+                $additionalFees = floatval($validated['additional_fees'] ?? 0);
+                $totalCost = $rentalCost + $additionalFees;
+                Log::info("Booking Cost Calculation (Tiered)", [
+                    'pickup_datetime' => $pickupDateTime,
+                    'return_datetime' => $returnDateTime,
+                    'hours_diff' => $hoursDiff,
+                    'hours_rounded' => $totalHours,
+                    'hourly_rates' => $hourlyRates,
+                    'rental_cost' => $rentalCost,
+                    'additional_fees' => $additionalFees,
+                    'total_cost_calculated' => $totalCost,
+                ]);
+            }
 
             // Handle file uploads
             $receiptPath = null;
@@ -403,6 +413,8 @@ class StaffBookingController extends Controller
             Payment::create([
                 'bookingID'       => $booking->bookingID,
                 'amount'          => $totalCost,
+                'depoAmount'      => $totalCost, // Full amount as deposit for staff-created bookings
+                'transactionDate' => now()->format('Y-m-d'),
                 'paymentStatus'   => 'Verified', // Auto-verified for staff-created
                 'depoStatus'      => 'Received',
                 'paymentMethod'   => 'Manual Entry',
@@ -425,11 +437,35 @@ class StaffBookingController extends Controller
                 "Your new booking #{$booking->bookingID} has been created by our staff. Total cost: RM " . number_format($totalCost, 2)
             ));
 
+            // Return JSON for AJAX requests, redirect for normal requests
+            if ($request->expectsJson() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Booking created successfully!',
+                    'booking_id' => $booking->bookingID,
+                    'total' => 'RM ' . number_format($totalCost, 2)
+                ]);
+            }
+
             return redirect()->route('staff.bookings.show', $booking->bookingID)
                            ->with('success', 'Booking created successfully! Total: RM ' . number_format($totalCost, 2));
 
         } catch (\Exception $e) {
-            Log::error("Error creating booking", ['error' => $e->getMessage()]);
+            Log::error("Error creating booking", [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'request_data' => $request->except(['agreement_image', 'receipt_image'])
+            ]);
+            
+            // Return JSON for AJAX requests, redirect for normal requests
+            if ($request->expectsJson() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Error creating booking: ' . $e->getMessage(),
+                    'error' => $e->getMessage()
+                ], 500);
+            }
+            
             return back()->withError('Error creating booking: ' . $e->getMessage())->withInput();
         }
     }
