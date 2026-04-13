@@ -548,7 +548,7 @@
 
                         {{-- STEP 3: ACTIVE --}}
                         @elseif($booking->bookingStatus == 'Active')
-                            <form action="{{ route('staff.bookings.return', $booking->bookingID) }}" method="POST" onsubmit="return confirm('Complete rental & release deposit?');">@csrf
+                            <form action="{{ route('staff.bookings.return', $booking->bookingID) }}" method="POST" onsubmit="return confirm('Complete rental? Deposit will be processed.');">@csrf
                                 <button class="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-xl font-bold transition shadow-lg shadow-blue-500/20">
                                     4. Process Return (Complete)
                                 </button>
