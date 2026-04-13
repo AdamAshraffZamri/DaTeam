@@ -92,10 +92,10 @@ class BookingController extends Controller
 
         if ($user instanceof \App\Models\Customer && $user->unpaidPenalties()) {
         
-        // 2. Kalau ada saman, PAKSA dia pergi ke page Finance (Payment Tab)
-        return redirect()->route('finance.index')
-            ->with('error', '⛔ ACTION BLOCKED: You have unpaid penalties. Please settle them before making a new booking.');
-    }
+            // 2. Kalau ada saman, PAKSA dia pergi ke page Finance (Payment Tab)
+            return redirect()->route('finance.index')
+                ->with('error', '⛔ ACTION BLOCKED: You have unpaid penalties. Please settle them before making a new booking.');
+        }
 
         // 1. BLACKLIST CHECK (NEW)
         // If the user is blacklisted, block them immediately.
@@ -127,6 +127,11 @@ class BookingController extends Controller
             return redirect()->route('profile.edit')
                 ->with('error', '⚠️ Action Required: You must complete ALL profile details (including Bank Info, Addresses, and IDs) before you can book a car.');
         }
+
+        // 3. VERIFICATION CHECK (NEW)
+        if ($user->accountStat !== 'active') {
+            session()->now('warning', 'ℹ️ Your account is currently pending verification. You can explore vehicles and check prices, but you will not be able to proceed to booking until a staff member verifies your profile.');
+        }
         
         // If checks pass, proceed to booking page
         $today = Carbon::today();
@@ -150,6 +155,13 @@ class BookingController extends Controller
     // --- 3. SEARCH RESULTS (UPDATED WITH 2-WAY 3-HOUR BUFFER) ---
     public function search(Request $request)
     {
+        $user = auth()->user();
+
+        // VERIFICATION CHECK (NEW)
+        if ($user->accountStat !== 'active') {
+            session()->now('warning', 'ℹ️ Your account is currently pending verification. You can explore vehicles and check prices, but you will not be able to proceed to booking until a staff member verifies your profile.');
+        }
+
         // 1. Validate Date AND Time
         $request->validate([
             'pickup_date' => 'required|date|after_or_equal:today',
@@ -344,6 +356,14 @@ class BookingController extends Controller
 
     public function payment(Request $request, $id)
     {
+        $user = auth()->user();
+
+        // BLOCK PROGRESS IF NOT VERIFIED
+        if ($user->accountStat !== 'active') {
+            return redirect()->route('profile.edit')
+                ->with('error', '⛔ Access Denied: Your account must be verified by our staff before you can proceed with a booking. Please contact support if your verification is taking longer than expected.');
+        }
+
         $vehicle = Vehicle::findOrFail($id);
         
         $start = Carbon::parse($request->pickup_date . ' ' . $request->pickup_time);
