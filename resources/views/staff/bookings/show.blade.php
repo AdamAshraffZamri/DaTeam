@@ -84,9 +84,14 @@
 
                 {{-- 2. RENTAL INFORMATION --}}
                 <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-                    <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4 border-b border-gray-100 pb-2">
-                        Rental Information
-                    </h3>
+                    <div class="flex justify-between items-center mb-4 border-b border-gray-100 pb-2">
+                        <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider">
+                            Rental Information
+                        </h3>
+                        <a href="{{ route('staff.bookings.edit', $booking->bookingID) }}" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1 rounded-lg text-xs font-bold transition flex items-center gap-1">
+                            <i class="fas fa-edit"></i> Edit
+                        </a>
+                    </div>
                     
                     <div class="relative pl-4 border-l-2 border-dashed border-gray-200 space-y-8">
                         
@@ -555,6 +560,13 @@
                                 <i class="fas fa-hand-holding-usd mr-2"></i> Process Refund
                             </button>
                         @endif
+
+                        {{-- DELETE BUTTON (Available for Pending, Submitted, Rejected, Cancelled) --}}
+                        @if(in_array($booking->bookingStatus, ['Pending', 'Submitted', 'Confirmed', 'Rejected', 'Cancelled']))
+                            <button onclick="document.getElementById('delete-modal').classList.remove('hidden')" type="button" class="ml-auto bg-gray-600 hover:bg-gray-700 text-white px-6 py-3 rounded-xl font-bold transition shadow-lg shadow-gray-500/20 flex items-center">
+                                <i class="fas fa-trash mr-2"></i> Delete Booking
+                            </button>
+                        @endif
                     </div>
                 </div>
 
@@ -706,6 +718,46 @@
             <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl shadow-lg transition flex items-center justify-center gap-2">
                 <i class="fas fa-check-circle"></i> Confirm Refund
             </button>
+        </form>
+    </div>
+</div>
+
+{{-- DELETE BOOKING MODAL --}}
+<div id="delete-modal" class="fixed inset-0 z-50 hidden bg-black/80 flex items-center justify-center p-4 backdrop-blur-sm">
+    <div class="bg-white rounded-2xl w-full max-w-md p-6 shadow-2xl border-2 border-gray-200">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="font-bold text-gray-900 text-lg flex items-center">
+                <i class="fas fa-trash text-gray-600 mr-2"></i> Delete Booking
+            </h3>
+            <button onclick="document.getElementById('delete-modal').classList.add('hidden')" class="text-gray-400 hover:text-gray-900"><i class="fas fa-times"></i></button>
+        </div>
+        
+        <div class="bg-yellow-50 border border-yellow-200 rounded-xl p-4 mb-4">
+            <p class="text-xs text-yellow-800 font-bold mb-1">
+                <i class="fas fa-warning mr-1"></i> Warning
+            </p>
+            <p class="text-xs text-yellow-700 leading-relaxed">
+                This action will mark the booking as deleted and void any associated payments. The booking cannot be recovered.
+            </p>
+        </div>
+
+        <form action="{{ route('staff.bookings.destroy', $booking->bookingID) }}" method="POST" onsubmit="return confirm('Are you sure? This action cannot be undone.');">
+            @csrf
+            @method('DELETE')
+            
+            <div class="mb-6">
+                <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Deletion Reason (Optional)</label>
+                <textarea name="deletion_reason" rows="3" class="w-full border border-gray-300 rounded-lg p-3 text-sm focus:border-gray-500 focus:ring-1 focus:ring-gray-500 outline-none" placeholder="e.g., Customer requested cancellation OR Duplicate booking OR System error..."></textarea>
+            </div>
+
+            <div class="flex gap-3">
+                <button type="button" onclick="document.getElementById('delete-modal').classList.add('hidden')" class="w-full bg-gray-200 hover:bg-gray-300 text-gray-900 font-bold py-3 rounded-xl transition">
+                    Cancel
+                </button>
+                <button type="submit" class="w-full bg-gray-600 hover:bg-gray-700 text-white font-bold py-3 rounded-xl shadow-lg transition flex items-center justify-center gap-2">
+                    <i class="fas fa-check-circle"></i> Delete Booking
+                </button>
+            </div>
         </form>
     </div>
 </div>

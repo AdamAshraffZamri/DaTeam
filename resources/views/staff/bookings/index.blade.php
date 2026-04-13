@@ -283,6 +283,14 @@
                             <a href="{{ route('staff.bookings.show', $booking->bookingID) }}" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg text-xs font-bold transition flex items-center gap-2 w-24 justify-center shadow-sm">
                                 <i class="fas fa-info-circle"></i> <span>Details</span>
                             </a>
+                        @elseif(in_array($booking->bookingStatus, ['Pending', 'Submitted', 'Rejected', 'Cancelled']))
+                            <form action="{{ route('staff.bookings.destroy', $booking->bookingID) }}" method="POST" onsubmit="return confirm('Delete this booking? This action cannot be undone.');">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" class="bg-gray-100 hover:bg-red-100 text-gray-700 hover:text-red-700 px-4 py-2 rounded-lg text-xs font-bold transition flex items-center gap-2 w-24 justify-center shadow-sm">
+                                    <i class="fas fa-trash"></i> <span>Delete</span>
+                                </button>
+                            </form>
                         @else
                             <div class="w-24"></div>
                         @endif
@@ -370,9 +378,9 @@
                 {{-- Vehicle Selection --}}
                 <div>
                     <label class="block text-sm font-bold text-gray-700 mb-2">Select Vehicle <span class="text-red-500">*</span></label>
-                    <select name="vehicle_id" id="vehicle_select" class="w-full border border-gray-300 rounded-xl p-3 font-semibold text-gray-700 focus:ring-2 focus:ring-orange-500 focus:border-transparent" required onchange="calculateTotalCost(); initializeCalendars()">
+                    <select name="vehicle_id" id="vehicle_select" class="w-full border border-gray-300 rounded-xl p-3 font-semibold text-gray-700 focus:ring-2 focus:ring-orange-500 focus:border-transparent" required onchange="initializeCalendars()">
                         <option value="">-- Select Vehicle --</option>
-                        @foreach(\App\Models\Vehicle::where('availability', true)->get() as $vehicle)
+                        @foreach(\App\Models\Vehicle::get() as $vehicle)
                             <option value="{{ $vehicle->VehicleID }}" data-price="{{ $vehicle->priceHour }}" data-rates="{{ json_encode($vehicle->hourly_rates ?? ['1'=>10,'3'=>18,'5'=>25,'7'=>31,'9'=>36,'12'=>40,'24'=>43]) }}">{{ $vehicle->model }} - {{ $vehicle->plateNo }}</option>
                         @endforeach
                     </select>
@@ -461,15 +469,9 @@
                     </div>
                 </div>
 
-                {{-- Additional Fees --}}
-                <div>
-                    <label class="block text-sm font-bold text-gray-700 mb-2">Additional Fees (Optional)</label>
-                    <input type="number" name="additional_fees" id="additional_fees" min="0" step="0.01" value="0" placeholder="e.g. 50.00" class="w-full border border-gray-300 rounded-xl p-3 text-gray-700 focus:ring-2 focus:ring-orange-500 focus:border-transparent" onchange="calculateTotalCost()" oninput="calculateTotalCost()">
-                </div>
-
                 {{-- Cost Display --}}
                 <div class="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-xl border-2 border-blue-200">
-                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div class="grid grid-cols-2 md:grid-cols-2 gap-4">
                         <div>
                             <p class="text-xs font-bold text-gray-700">Duration</p>
                             <p class="text-lg font-bold text-blue-600" id="duration_display">-- hours</p>
@@ -478,42 +480,18 @@
                             <p class="text-xs font-bold text-gray-700">Rental Cost</p>
                             <p class="text-lg font-bold text-blue-600" id="cost_display">RM 0.00</p>
                         </div>
-                        <div>
-                            <p class="text-xs font-bold text-gray-700">Additional</p>
-                            <p class="text-lg font-bold text-orange-600" id="additional_display">RM 0.00</p>
-                        </div>
-                        <div>
-                            <p class="text-xs font-bold text-gray-700">Total Amount</p>
-                            <p class="text-2xl font-bold text-green-600" id="total_amount_display">RM 0.00</p>
-                        </div>
                     </div>
                 </div>
 
-                {{-- Locations --}}
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-sm font-bold text-gray-700 mb-2">Pickup Location <span class="text-red-500">*</span></label>
-                        <input type="text" name="pickup_location" placeholder="e.g. UTM Campus Gate" class="w-full border border-gray-300 rounded-xl p-3 text-gray-700 focus:ring-2 focus:ring-orange-500 focus:border-transparent" required>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-bold text-gray-700 mb-2">Return Location <span class="text-red-500">*</span></label>
-                        <input type="text" name="return_location" placeholder="e.g. UTM Campus Gate" class="w-full border border-gray-300 rounded-xl p-3 text-gray-700 focus:ring-2 focus:ring-orange-500 focus:border-transparent" required>
-                    </div>
+                {{-- Total Amount (Manual Entry) --}}
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-2">Total Amount <span class="text-red-500">*</span></label>
+                    <input type="number" name="total_amount" id="total_amount" min="0" step="0.01" placeholder="Enter total amount" class="w-full border border-gray-300 rounded-xl p-3 text-gray-700 focus:ring-2 focus:ring-orange-500 focus:border-transparent" required>
                 </div>
 
-                {{-- File Uploads --}}
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-sm font-bold text-gray-700 mb-2">Receipt Image (Optional)</label>
-                        <input type="file" name="receipt_image" id="receipt_image" accept="image/jpeg,image/png,image/jpg,image/gif" class="w-full border border-gray-300 rounded-xl p-3 text-gray-700 focus:ring-2 focus:ring-orange-500 focus:border-transparent cursor-pointer">
-                        <p class="text-xs text-gray-500 mt-2">Accepted: JPG, PNG, GIF (Max 5MB)</p>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-bold text-gray-700 mb-2">Agreement Image (Optional)</label>
-                        <input type="file" name="agreement_image" id="agreement_image" accept="image/jpeg,image/png,image/jpg,image/gif" class="w-full border border-gray-300 rounded-xl p-3 text-gray-700 focus:ring-2 focus:ring-orange-500 focus:border-transparent cursor-pointer">
-                        <p class="text-xs text-gray-500 mt-2">Accepted: JPG, PNG, GIF (Max 5MB)</p>
-                    </div>
-                </div>
+                {{-- Hidden location fields (default to Student Mall for external bookings) --}}
+                <input type="hidden" name="pickup_location" value="Student Mall">
+                <input type="hidden" name="return_location" value="Student Mall">
 
                 {{-- Remarks --}}
                 <div>
@@ -757,15 +735,8 @@
         const pickupTime = document.getElementById('pickup_time')?.value || '';
         const returnDate = document.getElementById('return_date_value')?.value || '';
         const returnTime = document.getElementById('return_time')?.value || '';
-        const additionalFees = parseFloat(document.getElementById('additional_fees')?.value) || 0;
         
-        console.log('📋 Inputs:', { pickupDate, pickupTime, returnDate, returnTime, additionalFees });
-        
-        // Always update additional fees display
-        const additionalDisplay = document.getElementById('additional_display');
-        if (additionalDisplay) {
-            additionalDisplay.innerText = 'RM ' + additionalFees.toFixed(2);
-        }
+        console.log('📋 Inputs:', { pickupDate, pickupTime, returnDate, returnTime });
         
         // If no vehicle selected
         if (!selectedOption || !selectedOption.value) {
@@ -809,11 +780,9 @@
             console.warn('⚠️ Return must be after pickup');
             const durationDisplay = document.getElementById('duration_display');
             const costDisplay = document.getElementById('cost_display');
-            const totalDisplay = document.getElementById('total_amount_display');
             
             if (durationDisplay) durationDisplay.innerText = '-- hours';
             if (costDisplay) costDisplay.innerText = 'Invalid dates';
-            if (totalDisplay) totalDisplay.innerText = 'RM ' + additionalFees.toFixed(2);
             return;
         }
         
@@ -857,18 +826,14 @@
             console.log(`⏱️ ${remainingHours} remaining hour(s): RM ${tierCost}`);
         }
         
-        const totalAmount = rentalCost + additionalFees;
-        
         // Display results
         const durationDisplay = document.getElementById('duration_display');
         const costDisplay = document.getElementById('cost_display');
-        const totalDisplay = document.getElementById('total_amount_display');
         
         if (durationDisplay) durationDisplay.innerText = totalHours + ' hour(s)';
         if (costDisplay) costDisplay.innerText = 'RM ' + rentalCost.toFixed(2);
-        if (totalDisplay) totalDisplay.innerText = 'RM ' + totalAmount.toFixed(2);
         
-        console.log('✅ FINAL RESULT: Hours:', totalHours, 'Rental:', rentalCost, 'Additional:', additionalFees, 'Total:', totalAmount);
+        console.log('✅ FINAL RESULT: Hours:', totalHours, 'Rental Cost:', rentalCost);
     }
 
     function openCreateBookingModal() {
@@ -889,9 +854,7 @@
         // Reset cost display
         document.getElementById('duration_display').innerText = '-- hours';
         document.getElementById('cost_display').innerText = 'RM 0.00';
-        document.getElementById('additional_display').innerText = 'RM 0.00';
-        document.getElementById('total_amount_display').innerText = 'RM 0.00';
-        document.getElementById('additional_fees').value = '0';
+        document.getElementById('total_amount').value = '';
         
         // Check if calendar divs exist
         const pickupCal = document.getElementById('pickup-calendar');
@@ -972,29 +935,20 @@
             return false;
         }
 
-        // Validate locations
-        const pickupLocInput = document.querySelector('input[name="pickup_location"]');
-        const returnLocInput = document.querySelector('input[name="return_location"]');
-        
-        if (!pickupLocInput || !pickupLocInput.value.trim()) {
-            alert('Please fill in pickup location');
-            return false;
-        }
-
-        if (!returnLocInput || !returnLocInput.value.trim()) {
-            alert('Please fill in return location');
-            return false;
-        }
-        
-        const pickupLoc = pickupLocInput.value;
-        const returnLoc = returnLocInput.value;
-
-        // Check dates logic
+        // Create datetime objects for validation
         const pickupDateTime = new Date(pickupDate + 'T' + pickupTime);
         const returnDateTime = new Date(returnDate + 'T' + returnTime);
 
+        // Validate dates logic
         if (pickupDateTime >= returnDateTime) {
             alert('Return date/time must be after pickup date/time');
+            return false;
+        }
+
+        // Validate total amount
+        const totalAmountInput = document.querySelector('input[name="total_amount"]');
+        if (!totalAmountInput || !totalAmountInput.value.trim()) {
+            alert('Please enter total amount');
             return false;
         }
 
@@ -1021,41 +975,64 @@
             body: formData,
             headers: {
                 'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json',
             }
         })
         .then(response => {
             console.log('Response status:', response.status);
             console.log('Response ok:', response.ok);
-            return response.text().then(text => {
-                console.log('Response text:', text);
-                return { status: response.status, ok: response.ok, text: text };
-            });
-        })
-        .then(data => {
-            if (data.ok) {
-                alert('Booking created successfully!');
-                document.getElementById('create-booking-modal').classList.add('hidden');
-                // Reload the page or refresh the bookings list
-                setTimeout(() => location.reload(), 1000);
-            } else if (data.status === 422) {
-                // Validation error
-                try {
-                    const errors = JSON.parse(data.text);
-                    console.log('Validation errors:', errors);
-                    let errorMsg = 'Validation errors:\n';
-                    for (let field in errors.errors) {
-                        errorMsg += `${field}: ${errors.errors[field].join(', ')}\n`;
+            
+            if (response.status === 422 || response.status === 500) {
+                // Error response - try to parse as JSON
+                return response.json().then(data => {
+                    console.log('Error response data:', data);
+                    if (data.errors) {
+                        // Validation error
+                        let errorMsg = 'Validation errors:\n';
+                        for (let field in data.errors) {
+                            errorMsg += `${field}: ${data.errors[field].join(', ')}\n`;
+                        }
+                        alert(errorMsg);
+                    } else {
+                        // Server error
+                        alert('Error: ' + (data.message || data.error || 'Unknown error'));
                     }
-                    alert(errorMsg);
-                } catch (e) {
-                    alert('Validation error: ' + data.text);
-                }
+                    return false;
+                }).catch(e => {
+                    console.log('Failed to parse error as JSON:', e);
+                    return response.text().then(text => {
+                        alert('Error (could not parse): ' + text.substring(0, 300));
+                        return false;
+                    });
+                });
+            } else if (response.ok) {
+                return response.json().then(data => {
+                    console.log('Success response:', data);
+                    if (data.success) {
+                        alert('Booking created successfully!');
+                        document.getElementById('create-booking-modal').classList.add('hidden');
+                        setTimeout(() => location.reload(), 1000);
+                    } else {
+                        alert('Error: ' + (data.message || 'Unknown error'));
+                    }
+                    return data.success;
+                }).catch(e => {
+                    console.log('Failed to parse success as JSON:', e);
+                    alert('Booking may have been created but response parsing failed');
+                    setTimeout(() => location.reload(), 1000);
+                    return true;
+                });
             } else {
-                alert('Error creating booking: ' + (data.text || 'Unknown error'));
+                // Other status codes
+                return response.text().then(text => {
+                    console.log('Unexpected response:', text.substring(0, 300));
+                    alert('Server error (Status ' + response.status + '): ' + text.substring(0, 200));
+                    return false;
+                });
             }
         })
         .catch(error => {
-            console.error('Error:', error);
+            console.error('Fetch error:', error);
             alert('Error submitting form: ' + error.message);
         });
     }

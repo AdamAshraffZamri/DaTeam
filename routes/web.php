@@ -144,6 +144,9 @@ Route::middleware('auth')->group(function () {
     Route::get('/bookings', [StaffBookingController::class, 'index'])->name('staff.bookings.index');
     Route::post('/bookings', [StaffBookingController::class, 'store'])->name('staff.bookings.store');
     Route::get('/bookings/{id}', [StaffBookingController::class, 'show'])->name('staff.bookings.show');
+    Route::get('/bookings/{id}/edit', [StaffBookingController::class, 'edit'])->name('staff.bookings.edit');
+    Route::put('/bookings/{id}', [StaffBookingController::class, 'update'])->name('staff.bookings.update');
+    Route::delete('/bookings/{id}', [StaffBookingController::class, 'destroy'])->name('staff.bookings.destroy');
 
     // Workflow
     Route::post('/bookings/{id}/verify-payment', [StaffBookingController::class, 'verifyPayment'])->name('staff.bookings.verify_payment');

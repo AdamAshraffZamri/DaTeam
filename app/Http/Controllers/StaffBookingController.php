@@ -252,12 +252,13 @@ class StaffBookingController extends Controller
             'company_email'    => 'nullable|email',
             'company_phone'    => 'nullable|string|max:20',
             'vehicle_id'       => 'required|exists:vehicles,VehicleID',
-            'pickup_date'      => 'required|date|after:today',
+            'pickup_date'      => 'required|date',
             'pickup_time'      => 'required|date_format:H:i',
             'return_date'      => 'required|date|after_or_equal:pickup_date',
             'return_time'      => 'required|date_format:H:i',
-            'pickup_location'  => 'required|string|max:255',
-            'return_location'  => 'required|string|max:255',
+            'pickup_location'  => 'nullable|string|max:255',
+            'return_location'  => 'nullable|string|max:255',
+            'total_amount'     => 'required_if:booking_type,external|numeric|min:0',
             'additional_fees'  => 'nullable|numeric|min:0',
             'receipt_image'    => 'nullable|image|mimes:jpeg,png,jpg,gif|max:5120',
             'agreement_image'  => 'nullable|image|mimes:jpeg,png,jpg,gif|max:5120',
@@ -349,20 +350,29 @@ class StaffBookingController extends Controller
                 }
             }
             
-            $additionalFees = floatval($validated['additional_fees'] ?? 0);
-            $totalCost = $rentalCost + $additionalFees;
-
-            // Log calculation details
-            Log::info("Booking Cost Calculation (Tiered)", [
-                'pickup_datetime' => $pickupDateTime,
-                'return_datetime' => $returnDateTime,
-                'hours_diff' => $hoursDiff,
-                'hours_rounded' => $totalHours,
-                'hourly_rates' => $hourlyRates,
-                'rental_cost' => $rentalCost,
-                'additional_fees' => $additionalFees,
-                'total_cost_calculated' => $totalCost,
-            ]);
+            // For external bookings, use the manually entered total amount
+            // For customer bookings, calculate the cost
+            if ($validated['booking_type'] === 'external') {
+                $totalCost = floatval($validated['total_amount'] ?? 0);
+                Log::info("External Booking Cost (Manual Entry)", [
+                    'booking_type' => 'external',
+                    'total_amount_entered' => $totalCost,
+                    'company' => $validated['external_company'],
+                ]);
+            } else {
+                $additionalFees = floatval($validated['additional_fees'] ?? 0);
+                $totalCost = $rentalCost + $additionalFees;
+                Log::info("Booking Cost Calculation (Tiered)", [
+                    'pickup_datetime' => $pickupDateTime,
+                    'return_datetime' => $returnDateTime,
+                    'hours_diff' => $hoursDiff,
+                    'hours_rounded' => $totalHours,
+                    'hourly_rates' => $hourlyRates,
+                    'rental_cost' => $rentalCost,
+                    'additional_fees' => $additionalFees,
+                    'total_cost_calculated' => $totalCost,
+                ]);
+            }
 
             // Handle file uploads
             $receiptPath = null;
@@ -403,6 +413,8 @@ class StaffBookingController extends Controller
             Payment::create([
                 'bookingID'       => $booking->bookingID,
                 'amount'          => $totalCost,
+                'depoAmount'      => $totalCost, // Full amount as deposit for staff-created bookings
+                'transactionDate' => now()->format('Y-m-d'),
                 'paymentStatus'   => 'Verified', // Auto-verified for staff-created
                 'depoStatus'      => 'Received',
                 'paymentMethod'   => 'Manual Entry',
@@ -425,11 +437,35 @@ class StaffBookingController extends Controller
                 "Your new booking #{$booking->bookingID} has been created by our staff. Total cost: RM " . number_format($totalCost, 2)
             ));
 
+            // Return JSON for AJAX requests, redirect for normal requests
+            if ($request->expectsJson() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Booking created successfully!',
+                    'booking_id' => $booking->bookingID,
+                    'total' => 'RM ' . number_format($totalCost, 2)
+                ]);
+            }
+
             return redirect()->route('staff.bookings.show', $booking->bookingID)
                            ->with('success', 'Booking created successfully! Total: RM ' . number_format($totalCost, 2));
 
         } catch (\Exception $e) {
-            Log::error("Error creating booking", ['error' => $e->getMessage()]);
+            Log::error("Error creating booking", [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'request_data' => $request->except(['agreement_image', 'receipt_image'])
+            ]);
+            
+            // Return JSON for AJAX requests, redirect for normal requests
+            if ($request->expectsJson() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Error creating booking: ' . $e->getMessage(),
+                    'error' => $e->getMessage()
+                ], 500);
+            }
+            
             return back()->withError('Error creating booking: ' . $e->getMessage())->withInput();
         }
     }
@@ -574,6 +610,66 @@ class StaffBookingController extends Controller
     }
     return true;
 }
+
+// [NEW] EDIT BOOKING - Pickup and Return Information
+    public function edit($id)
+    {
+        $booking = Booking::with(['customer', 'vehicle'])
+                          ->findOrFail($id);
+
+        return view('staff.bookings.edit', compact('booking'));
+    }
+
+    // [NEW] UPDATE BOOKING - Pickup and Return Information
+    public function update(Request $request, $id)
+    {
+        $booking = Booking::findOrFail($id);
+
+        // Validate the input
+        $validated = $request->validate([
+            'originalDate' => 'required|date',
+            'bookingTime' => 'required|date_format:H:i',
+            'returnDate' => 'required|date|after_or_equal:originalDate',
+            'returnTime' => 'required|date_format:H:i',
+            'pickupLocation' => 'required|string|max:255',
+            'returnLocation' => 'required|string|max:255',
+        ]);
+
+        // Additional validation: Check time interval logic
+        $pickupDateTime = \Carbon\Carbon::createFromFormat('Y-m-d H:i', $validated['originalDate'] . ' ' . $validated['bookingTime']);
+        $returnDateTime = \Carbon\Carbon::createFromFormat('Y-m-d H:i', $validated['returnDate'] . ' ' . $validated['returnTime']);
+
+        // Return must be after or equal to pickup
+        if ($returnDateTime->lte($pickupDateTime)) {
+            return back()->withInput()
+                        ->withErrors(['returnTime' => 'Return date/time must be after pickup date/time. Please ensure return is at least 1 hour after pickup.']);
+        }
+
+        // Ensure minimum booking duration (at least 1 hour)
+        $minutes = $pickupDateTime->diffInMinutes($returnDateTime);
+        if ($minutes < 60) {
+            return back()->withInput()
+                        ->withErrors(['returnTime' => 'Minimum booking duration is 1 hour. Current duration is only ' . $minutes . ' minutes.']);
+        }
+
+        try {
+            // Update the booking with new pickup and return information
+            $booking->update([
+                'originalDate' => $validated['originalDate'],
+                'bookingTime' => $validated['bookingTime'],
+                'returnDate' => $validated['returnDate'],
+                'returnTime' => $validated['returnTime'],
+                'pickupLocation' => $validated['pickupLocation'],
+                'returnLocation' => $validated['returnLocation'],
+            ]);
+
+            return redirect()->route('staff.bookings.show', $booking->bookingID)
+                           ->with('success', 'Booking updated successfully! Pickup and return information has been modified.');
+        } catch (\Exception $e) {
+            return back()->withInput()
+                        ->with('error', 'Failed to update booking. Please try again.');
+        }
+    }
 
 // [NEW] APPROVE
     public function approve($id)
@@ -960,5 +1056,91 @@ class StaffBookingController extends Controller
         // but typically invoice is for completed/paid jobs.
         $pdf = Pdf::loadView('pdf.invoice', compact('booking'));
         return $pdf->stream('Invoice-' . $booking->bookingID . '.pdf');
+    }
+
+    /**
+     * DELETE BOOKING
+     * 
+     * Deletes a booking (marks as Deleted status).
+     * Only allows deletion of bookings in specific statuses:
+     * - Pending, Submitted, Rejected
+     * 
+     * Additional logic:
+     * - Void any associated deposits/payments
+     * - Add deletion note to remarks
+     * - Notify customer about deletion
+     * - Return success message
+     * 
+     * @param int $id Booking ID
+     * @param Request $request Request object (contains optional deletion reason)
+     * @return \Illuminate\Http\RedirectResponse
+     * @throws \Illuminate\Database\Eloquent\ModelNotFoundException
+     */
+    public function destroy(Request $request, $id)
+    {
+        // Validate deletion reason
+        $request->validate([
+            'deletion_reason' => 'nullable|string|max:150',
+        ]);
+
+        // Find booking with related data
+        $booking = Booking::with(['payment', 'customer', 'vehicle'])->findOrFail($id);
+
+        // Check if booking can be deleted (only certain statuses allowed)
+        $deletableStatuses = ['Pending', 'Submitted', 'Confirmed', 'Rejected', 'Cancelled'];
+        if (!in_array($booking->bookingStatus, $deletableStatuses)) {
+            return back()->with('error', "Cannot delete booking with status '{$booking->bookingStatus}'. Only Pending, Submitted, Rejected, or Cancelled bookings can be deleted.");
+        }
+
+        try {
+            // 1. Prepare deletion note
+            $oldRemarks = $booking->remarks ? $booking->remarks . "\n\n" : "";
+            $deletionReason = $request->deletion_reason ?? "No reason provided";
+            $deletionNote = "[DELETED on " . now()->format('d-m-Y H:i:s') . "]: " . $deletionReason;
+            $finalRemarks = $oldRemarks . $deletionNote;
+
+            // 2. Update booking status to Deleted
+            $booking->update([
+                'bookingStatus' => 'Deleted',
+                'remarks' => $finalRemarks,
+            ]);
+
+            // 3. Handle associated payment
+            $payment = $booking->payment;
+            if ($payment) {
+                $payment->update([
+                    'paymentStatus' => 'Void',
+                    'depoStatus' => 'Void',
+                ]);
+            }
+
+            // 4. Log the deletion
+            Log::info("Booking deleted", [
+                'bookingID' => $booking->bookingID,
+                'customerID' => $booking->customerID,
+                'vehicleID' => $booking->vehicleID,
+                'previousStatus' => $booking->bookingStatus,
+                'deletedAt' => now(),
+            ]);
+
+            // 5. Notify customer about deletion
+            try {
+                $booking->customer->notify(new BookingStatusUpdated(
+                    $booking,
+                    "Your booking #{$booking->bookingID} has been deleted. Reason: " . $deletionReason
+                ));
+            } catch (\Exception $e) {
+                Log::error("Deletion Notification Failed: " . $e->getMessage());
+            }
+
+            return back()->with('success', "Booking #{$booking->bookingID} has been successfully deleted.");
+
+        } catch (\Exception $e) {
+            Log::error("Error deleting booking", [
+                'bookingID' => $id,
+                'error' => $e->getMessage(),
+            ]);
+            return back()->with('error', "An error occurred while deleting the booking. " . $e->getMessage());
+        }
     }
 }
