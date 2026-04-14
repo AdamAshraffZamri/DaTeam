@@ -212,8 +212,8 @@ class BookingController extends Controller
 
             // A. CHECK BOOKINGS (Only exclude if the timing overlaps)
             foreach ($vehicle->bookings as $booking) {
-                // Exclude Cancelled/Rejected. Include everything else (Submitted, Paid, Confirmed, Active)
-                if (in_array($booking->bookingStatus, ['Cancelled', 'Rejected', 'Submitted', 'Completed'])) {
+                // Exclude Cancelled/Rejected/Deleted. Include everything else (Submitted, Paid, Confirmed, Active)
+                if (in_array($booking->bookingStatus, ['Cancelled', 'Rejected', 'Deleted', 'Submitted', 'Completed'])) {
                     continue;
                 }
 
