@@ -80,7 +80,7 @@ class BookingController extends Controller
             $query->whereMonth('bookingDate', Carbon::parse($request->date)->month);
         }
 
-        $bookings = $query->orderByRaw("FIELD(bookingStatus, 'Submitted', 'Deposit Paid', 'Paid', 'Confirmed', 'Active', 'Completed', 'Cancelled', 'Rejected')")
+        $bookings = $query->orderByRaw("FIELD(bookingStatus, 'Submitted', 'Deposit Paid', 'Paid', 'Confirmed', 'Active', 'Completed', 'Cancelled', 'Rejected', 'Deleted')")
                   ->orderBy('originalDate', 'desc')
                   ->get();
 

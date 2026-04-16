@@ -278,9 +278,15 @@ class StaffBookingController extends Controller
                 return $aPrio <=> $bPrio;
             }
 
-            // If statuses are the same, sort by date (Newest first)
-            return Carbon::parse($b->originalDate . ' ' . $b->bookingTime) <=> 
+            // if status is Completed, sort by returnDate + returnTime
+            if ($aStatus === 'Completed' && $bStatus === 'Completed') {
+                return Carbon::parse($b->originalDate . ' ' . $b->bookingTime) <=> 
                 Carbon::parse($a->originalDate . ' ' . $a->bookingTime);
+            }
+
+            // If statuses are the same, sort by originalDate + bookingTime
+            return Carbon::parse($a->originalDate . ' ' . $a->bookingTime) <=> 
+                Carbon::parse($b->originalDate . ' ' . $b->bookingTime);
         });
 
         $pendingActivations = Booking::where('bookingStatus', 'Confirmed')
