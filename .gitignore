@@ -21,7 +21,6 @@
 Homestead.json
 Homestead.yaml
 Thumbs.db
-/public/storage
 # 1. Ignore everything in these public subfolders by default
 /public/storage/agreements/*
 
