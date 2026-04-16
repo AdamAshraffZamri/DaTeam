@@ -153,8 +153,8 @@
                     
                     {{-- 1. NO & Customer --}}
                     <div class="flex items-center gap-4 w-full lg:w-[18%] shrink-0">
-                        <div class="w-10 h-10 rounded-lg bg-gray-50 flex flex-col items-center justify-center border border-gray-200 shrink-0">
-                            <span class="text-sm font-black text-gray-400 group-hover:text-gray-900 transition-colors">{{ $loop->iteration }}</span>
+                        <div class="w-10 h-10 rounded-lg bg-orange-50 flex flex-col items-center justify-center border border-orange-200 shrink-0">
+                            <span class="text-xs font-black text-gray-500 group-hover:text-orange-600 transition-colors">#{{ $booking->bookingID }}</span>
                         </div>
                         <div class="overflow-hidden">
                             <h4 class="text-sm font-bold text-gray-900 truncate" title="{{ $booking->customer->fullName ?? 'Guest' }}">
@@ -238,6 +238,8 @@
                                 'Completed' => 'bg-green-100 text-green-700 border-green-200',
                                 'Cancelled' => 'bg-red-300 text-red-700 border-red-200',
                                 'Rejected'  => 'bg-red-100 text-red-700 border-red-200',
+                                'Paid'      => 'bg-orange-50 text-red-700 border-orange-200',
+                                'Deposit Paid' => 'bg-orange-50 text-orange-700 border-orange-200',
                                 default     => 'bg-gray-50 text-gray-700 border-gray-100'
                             };
                         @endphp
@@ -246,11 +248,15 @@
                         </span>
 
                         {{-- [ADDED] REFUND STATUS INDICATOR --}}
-                        @if($booking->payment && ($booking->payment->depoStatus == 'Refunded' || $booking->payment->depoStatus == 'Requested'))
+                        @php
+                            // This picks the first one from the already-sorted collection
+                            $depositAvailable = $booking->payments->where('depoAmount', '>', 0)->first();
+                        @endphp
+                        @if($booking->payment && ($depositAvailable->depoStatus == 'Refunded' || $depositAvailable->depoStatus == 'Requested'))
                             <div class="mt-1.5 w-28 flex justify-center">
                                 <span class="text-[9px] font-bold px-2 py-0.5 rounded border flex items-center gap-1 uppercase tracking-wide
-                                    {{ $booking->payment->depoStatus == 'Refunded' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-red-50 text-red-600 border-red-100 animate-pulse' }}">
-                                    <i class="fas fa-hand-holding-usd"></i> {{ $booking->payment->depoStatus }}
+                                    {{ $depositAvailable->depoStatus == 'Refunded' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-red-50 text-red-600 border-red-100 animate-pulse' }}">
+                                    <i class="fas fa-hand-holding-usd"></i> {{ $depositAvailable->depoStatus }}
                                 </span>
                             </div>
                         @endif
@@ -259,7 +265,7 @@
 
                     {{-- 7. ACTION --}}
                     <div class="w-full lg:flex-1 flex justify-end items-center gap-2 pt-2 lg:pt-0 border-t lg:border-t-0 border-gray-100 lg:pl-6" onclick="event.stopPropagation()">
-                         @if($booking->bookingStatus == 'Submitted')
+                         @if($booking->bookingStatus == 'Submitted' || $booking->bookingStatus == 'Paid')
                             @if(!$booking->payment || $booking->payment->paymentStatus !== 'Verified')
                                 <form action="{{ route('staff.bookings.verify_payment', $booking->bookingID) }}" method="POST">
                                     @csrf
@@ -279,7 +285,7 @@
                             <a href="{{ route('staff.bookings.show', $booking->bookingID) }}" class="bg-blue-100 hover:bg-blue-200 text-blue-700 px-4 py-2 rounded-lg text-xs font-bold transition flex items-center gap-2 w-24 justify-center shadow-sm">
                                 <i class="fas fa-key"></i> <span>Handover</span>
                             </a>
-                        @elseif($booking->bookingStatus == 'Active')
+                        @elseif($booking->bookingStatus == 'Active' || $booking->bookingStatus == 'Completed')
                             <a href="{{ route('staff.bookings.show', $booking->bookingID) }}" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg text-xs font-bold transition flex items-center gap-2 w-24 justify-center shadow-sm">
                                 <i class="fas fa-info-circle"></i> <span>Details</span>
                             </a>

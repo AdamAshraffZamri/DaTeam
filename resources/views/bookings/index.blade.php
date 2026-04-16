@@ -131,13 +131,33 @@
                                 {{-- PLATE DISPLAY --}}
                                 @if($booking->bookingStatus == 'Confirmed' || $booking->bookingStatus == 'Active' || $booking->bookingStatus == 'Completed')
                                     <p class="text-xs text-orange-400 font-bold mt-1 tracking-wide truncate">
-                                        PLATE: {{ $booking->vehicle->plateNo }}
+                                        PLATE NO: {{ $booking->vehicle->plateNo }}
                                     </p>
                                 @else
                                     <p class="text-xs text-gray-500 font-medium mt-1 italic truncate">
                                         <i class="fas fa-spinner fa-spin mr-1"></i> Plate No. pending
                                     </p>
                                 @endif
+
+                                <div class="mt-3 flex flex-wrap gap-2">
+                                    @php
+                                        $payment = $booking->payments->where('depoAmount', '>', 0)->first();
+                                    @endphp
+
+                                    @if($booking->bookingStatus == 'Completed')
+                                        @if($payment && $payment->depoStatus == 'Refunded')
+                                            <div class="px-2 py-1 bg-green-500/20 border border-green-500/40 rounded-lg flex items-center gap-2">
+                                                <i class="fas fa-check-double text-[10px] text-green-400"></i>
+                                                <span class="text-[10px] text-green-300 font-bold uppercase tracking-wider">Deposit Refunded</span>
+                                            </div>
+                                        @else
+                                            <div class="px-2 py-1 bg-orange-500/20 border border-orange-500/40 rounded-lg flex items-center gap-2 animate-pulse">
+                                                <i class="fas fa-clock text-[10px] text-orange-400"></i>
+                                                <span class="text-[10px] text-orange-300 font-bold uppercase tracking-wider">Refund Pending</span>
+                                            </div>
+                                        @endif
+                                    @endif
+                                </div>
                             </div>
                         </div>
 
@@ -529,6 +549,45 @@
                                     </div>
                                     @endforeach
                                 </div>
+                                @endif
+
+                                @php
+                                    // Specifically find the payment record that carries the security deposit
+                                    $depositRecord = $booking->payments->where('depoAmount', '>', 0)->first();
+                                    $currentDepoStatus = $depositRecord ? $depositRecord->depoStatus : null;
+                                @endphp
+
+                                {{-- 1. ONLY SHOW IF DEPOSIT WAS ACTUALLY REFUNDED --}}
+                                @if($currentDepoStatus == 'Refunded')
+                                    <div class="p-3 bg-green-500/10 border border-green-500/20 rounded-xl">
+                                        <div class="flex items-center justify-between mb-2">
+                                            <span class="text-[10px] text-green-400 font-black uppercase tracking-widest">Status: Refunded</span>
+                                            <i class="fas fa-check-circle text-green-500"></i>
+                                        </div>
+                                        
+                                        @if($depositRecord->refund_proof_link) 
+                                            <a href="{{ $depositRecord->refund_proof_link }}" target="_blank" 
+                                            class="w-full flex items-center justify-center gap-2 py-2 bg-green-600 hover:bg-green-500 text-white text-[11px] font-black rounded-lg transition-all shadow-lg shadow-green-900/20">
+                                                <i class="fas fa-receipt"></i> VIEW REFUND RECEIPT
+                                            </a>
+                                        @endif
+                                    </div>
+
+                                {{-- 2. SHOW PENDING IF THE BOOKING IS DONE BUT STATUS IS NOT 'REFUNDED' OR 'SETTLED' --}}
+                                @elseif($booking->bookingStatus == 'Completed' && in_array($currentDepoStatus, ['Requested', 'Claimable', 'Holding', 'Pending']))
+                                    <div class="p-3 bg-orange-500/10 border border-orange-500/20 rounded-xl">
+                                        <p class="text-[10px] text-orange-400 font-black uppercase flex items-center gap-2">
+                                            <i class="fas fa-hourglass-half animate-spin"></i> Refund Processing
+                                        </p>
+                                        <p class="text-[9px] text-gray-400 mt-1">Status: {{ $currentDepoStatus }}. We are processing your deposit return.</p>
+                                    </div>
+
+                                {{-- 3. FOR EXTERNAL BOOKINGS (NO REFUND) --}}
+                                @elseif($booking->bookingStatus == 'Completed' && $currentDepoStatus == 'Settled')
+                                    <div class="p-3 bg-blue-500/10 border border-blue-500/20 rounded-xl">
+                                        <p class="text-[10px] text-blue-400 font-black uppercase">Flow Completed</p>
+                                        <p class="text-[9px] text-gray-400 mt-1">No security deposit refund required for this booking type.</p>
+                                    </div>
                                 @endif
                             </div>
 

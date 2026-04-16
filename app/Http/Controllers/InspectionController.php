@@ -228,7 +228,7 @@ class InspectionController extends Controller
                 // CASE B: No Damage -> Auto-Refund Deposit
                 if ($booking->payment) {
                     $booking->payment->update([
-                        'depoStatus' => 'Refunded', 
+                        'depoStatus' => 'Pending', 
                         'paymentStatus' => 'Completed'
                     ]);
                 }

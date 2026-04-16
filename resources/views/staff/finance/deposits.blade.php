@@ -5,6 +5,19 @@
     <div class="max-w-7xl mx-auto">
 
         {{-- HEADER & ACTIONS --}}
+        @if(session('success'))
+            <div class="mb-6 p-4 bg-green-50 border border-green-200 text-green-700 rounded-2xl flex items-center gap-3 animate-fade-in">
+                <i class="fas fa-check-circle"></i>
+                <span class="text-sm font-bold">{{ session('success') }}</span>
+            </div>
+        @endif
+
+        @if(session('error'))
+            <div class="mb-6 p-4 bg-red-50 border border-red-200 text-red-700 rounded-2xl flex items-center gap-3 animate-fade-in">
+                <i class="fas fa-exclamation-circle"></i>
+                <span class="text-sm font-bold">{{ session('error') }}</span>
+            </div>
+        @endif
         <div class="flex flex-col md:flex-row justify-between items-end mb-8 gap-4">
             <div>
                 <h1 class="text-3xl font-black text-gray-900">Deposit Management</h1>
@@ -79,14 +92,18 @@
         {{-- DEPOSIT LIST (CARD STYLE) --}}
         <div class="space-y-3">
             @forelse($bookings as $booking)
-            <div class="animate-fade-in block bg-white rounded-xl p-2 pr-4 border border-gray-100 shadow-sm hover:shadow-md transition-all group cursor-pointer hover:border-orange-200"
+            <div class="animate-fade-in block bg-white rounded-xl p-4 pr-4 border border-gray-100 shadow-sm hover:shadow-md transition-all group cursor-pointer hover:border-orange-200"
                  onclick="window.location='{{ route('staff.bookings.show', $booking->bookingID) }}'">
                 
                 <div class="flex flex-col lg:flex-row items-center gap-4 lg:gap-0">
                     
                     {{-- 1. BOOKING INFO --}}
                     <div class="flex items-center gap-4 w-full lg:w-[30%] p-2 lg:p-0">
-                        <div class="w-12 h-12 rounded-xl bg-orange-50 text-orange-600 border border-orange-100 flex items-center justify-center font-black text-xs shrink-0">
+                        @php
+                            $colors = ['bg-orange-50 text-orange-600 border-orange-100', 'bg-blue-50 text-blue-600 border-blue-100', 'bg-purple-50 text-purple-600 border-purple-100', 'bg-pink-50 text-pink-600 border-pink-100', 'bg-emerald-50 text-emerald-600 border-emerald-100'];
+                            $randomColor = $colors[array_rand($colors)];
+                        @endphp
+                        <div class="w-12 h-12 rounded-xl {{ $randomColor }} flex items-center justify-center font-black text-xs shrink-0 shadow-sm">
                             #{{ $booking->bookingID }}
                         </div>
                         <div>
@@ -112,7 +129,7 @@
                     {{-- 3. FINANCIALS --}}
                     <div class="w-full lg:w-[20%] border-t lg:border-t-0 lg:border-l border-gray-100 pt-2 lg:pt-0 lg:pl-6 shrink-0">
                         <p class="text-[9px] font-bold text-gray-400 uppercase tracking-wider mb-1">Refund Amount</p>
-                        @php
+                        <!-- @php
                             $depositAmount = $booking->payments->sum('depoAmount');
                             $totalPaid = $booking->payments->whereNotIn('paymentStatus', ['Void', 'Rejected'])->sum('amount');
                             $isFullRefund = in_array($booking->bookingStatus, ['Cancelled', 'Rejected']);
@@ -120,6 +137,19 @@
                             $label = $isFullRefund ? 'Full Refund' : 'Deposit Only';
                             
                             $depositPayment = $booking->payments->where('depoAmount', '>', 0)->first();
+                            $currentDepoStatus = $depositPayment ? $depositPayment->depoStatus : 'Unknown';
+                        @endphp -->
+                        @php
+                            $depositPayment = $booking->payments->where('depoAmount', '>', 0)->first();
+                            $isFullRefund = in_array($booking->bookingStatus, ['Cancelled', 'Rejected']);
+                            
+                            if ($isFullRefund) {
+                                $finalAmount = $booking->payments->whereNotIn('paymentStatus', ['Void', 'Rejected'])->sum('amount');
+                                $label = 'Full Refund';
+                            } else {
+                                $finalAmount = $depositPayment ? $depositPayment->depoAmount : 0;
+                                $label = 'Deposit Only';
+                            }
                             $currentDepoStatus = $depositPayment ? $depositPayment->depoStatus : 'Unknown';
                         @endphp
                         <div class="flex flex-col">
@@ -147,14 +177,22 @@
 
                     {{-- 5. ACTION --}}
                     <div class="w-full lg:flex-1 flex justify-end items-center gap-2 pt-2 lg:pt-0 border-t lg:border-t-0 border-gray-100 lg:pl-4">
-                        @if($status === 'requested')
+
+                        @if($currentStatus === 'requested')
+                            {{-- GPS TRACKING BUTTON --}}
+                            <a href="https://www.tracksolidpro.com/" target="_blank" 
+                            onclick="event.stopPropagation();"
+                            class="w-10 h-10 rounded-xl bg-slate-100 text-slate-500 hover:bg-slate-200 flex items-center justify-center transition-all group/gps" 
+                            title="Track Vehicle">
+                                <i class="fas fa-location-arrow group-hover/gps:text-blue-600"></i>
+                            </a>
                             <button type="button"
                                 onclick="event.stopPropagation(); openRefundModal('{{ route('staff.finance.refund', $booking->bookingID) }}', '{{ number_format($finalAmount, 2) }}')"
-                                class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wide transition shadow-lg shadow-green-500/20 flex items-center gap-2 transform hover:-translate-y-0.5">
+                                class="bg-green-500 hover:bg-green-600 text-white px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wide transition shadow-lg shadow-green-500/20 flex items-center gap-2 transform hover:-translate-y-0.5">
                                 <i class="fas fa-check-circle"></i> Approve
                             </button>
                         @else
-                            <div class="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center text-slate-300 border border-slate-200">
+                            <div class="w-10 h-10 rounded-full bg-green-50 flex items-center justify-center text-green-500 border border-green-100">
                                 <i class="fas fa-check"></i>
                             </div>
                         @endif
@@ -199,6 +237,18 @@
             <div class="bg-green-50 border border-green-100 rounded-2xl p-6 mb-6 flex flex-col items-center text-center">
                 <p class="text-[10px] text-green-600 font-bold uppercase tracking-widest mb-1">Total Refund Amount</p>
                 <p class="text-3xl font-black text-green-700 tracking-tight" id="refund-modal-amount">RM 0.00</p>
+            </div>
+
+            <div class="mb-6">
+                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Upload Refund Receipt (Proof)</label>
+                <div class="relative">
+                    <input type="file" name="refund_proof" id="refund_proof" required
+                        class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10">
+                    <div class="w-full bg-slate-50 border-2 border-dashed border-slate-200 rounded-2xl py-6 flex flex-col items-center justify-center transition-all group-hover:border-green-400">
+                        <i class="fas fa-cloud-upload-alt text-2xl text-slate-300 mb-2" id="upload-icon"></i>
+                        <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest" id="file-name-label">Select Receipt Image</span>
+                    </div>
+                </div>
             </div>
 
             <div class="mb-6">
@@ -253,6 +303,16 @@
         
         modal.classList.remove('hidden');
     }
+
+    document.getElementById('refund_proof').onchange = function() {
+        const label = document.getElementById('file-name-label');
+        const icon = document.getElementById('upload-icon');
+        if(this.files[0]) {
+            label.innerText = this.files[0].name;
+            label.classList.replace('text-slate-400', 'text-green-600');
+            icon.classList.replace('text-slate-300', 'text-green-500');
+        }
+    };
 
     function closeRefundModal() {
         document.getElementById('refund-modal').classList.add('hidden');

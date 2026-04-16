@@ -123,14 +123,30 @@
             <div class="lg:col-span-1 space-y-6">
                 
                 {{-- Profile Card --}}
-                <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden relative">
-                    <div class="h-24 bg-gradient-to-r from-slate-800 to-slate-900"></div>
+                <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden relative animate-fade-in-down">
+                    <div class="h-24 bg-gradient-to-r from-slate-800 to-slate-900 relative">
+                        {{-- Optional: Add a subtle pattern overlay --}}
+                        <div class="absolute inset-0 opacity-10" style="background-image: url('{{ asset('pattern.svg') }}'); background-size: cover;"></div>
+                    </div>
                     <div class="px-6 pb-6 text-center">
-                        <div class="relative -mt-10 mb-4">
-                            <div class="w-20 h-20 mx-auto bg-white rounded-2xl p-1 shadow-md rotate-3">
-                                <div class="w-full h-full rounded-xl bg-slate-100 flex items-center justify-center text-2xl font-black text-slate-300 uppercase">
-                                    {{ substr($customer->fullName, 0, 1) }}
-                                </div>
+                        <div class="relative -mt-10 mb-4 z-10">
+                            {{-- Maintain the original rotated border design --}}
+                            <div class="w-20 h-20 mx-auto bg-white rounded-2xl p-1 shadow-md rotate-3 overflow-hidden">
+                                @if($customer->avatar && !empty($customer->avatar))
+                                    {{-- SHOW AVATAR IMAGE --}}
+                                    <!-- <img src="{{ asset('storage/' . $customer->avatar) }}" 
+                                        alt="{{ $customer->fullName }}" 
+                                        class="w-full h-full rounded-xl object-cover -rotate-3 group-hover:scale-110 transition-transform duration-300"> -->
+                                    <img src="{{ asset($customer->avatar) }}" 
+                                        alt="" 
+                                        class="w-full h-full rounded-xl object-cover -rotate-3 group-hover:scale-110 transition-transform duration-300"
+                                        onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                                @else
+                                    {{-- FALLBACK TO LETTER (Old Design) --}}
+                                    <div class="w-full h-full rounded-xl bg-slate-100 flex items-center justify-center text-2xl font-black text-slate-300 uppercase -rotate-3">
+                                        {{ substr($customer->fullName, 0, 1) }}
+                                    </div>
+                                @endif
                             </div>
                         </div>
                         <h2 class="text-lg font-black text-slate-900 leading-tight">{{ $customer->fullName }}</h2>
@@ -138,7 +154,7 @@
                         
                         <div class="mt-6 pt-6 border-t border-gray-50 flex justify-center">
                             <span class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-orange-50 border border-orange-100 text-[10px] font-bold text-orange-700 uppercase tracking-wide">
-                                <i class="far fa-calendar-alt"></i> Joined {{ $customer->created_at->format('M Y') }}
+                                <i class="far fa-calendar-alt"></i> Joined {{ $customer->created_at->format('d M Y') }}
                             </span>
                         </div>
                     </div>

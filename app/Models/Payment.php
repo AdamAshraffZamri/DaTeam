@@ -97,6 +97,7 @@ class Payment extends Model
         'depoRequestDate', 
         'depoRefundedDate',
         'installmentDetails', // This stores your proof image path
+        'refund_proof_link',
         'isInstallment'
     ];
     public function booking()

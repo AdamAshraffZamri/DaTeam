@@ -23,12 +23,38 @@
                     </div>
                     
                     {{-- COMPACT VIEW (Always Visible) --}}
-                    <div class="flex items-center gap-4">
+                    <div onclick="window.location='{{ route('staff.customers.show', $booking->customer->customerID) }}'" class="flex items-center gap-4">
                         <div class="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 text-xl font-bold shrink-0">
-                            {{ substr($booking->customer->fullName ?? 'G', 0, 1) }}
+                            @if($booking->customer->avatar && !empty($booking->customer->avatar))
+                                {{-- SHOW AVATAR IMAGE --}}
+                                <img src="{{ asset($booking->customer->avatar) }}" 
+                                    alt="" 
+                                    class="w-full h-full rounded-xl object-cover -rotate-3 group-hover:scale-110 transition-transform duration-300"
+                                    onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                            @else
+                                {{-- FALLBACK TO LETTER (Old Design) --}}
+                                <!-- <div class="w-full h-full rounded-xl bg-slate-100 flex items-center justify-center text-2xl font-black text-slate-300 uppercase -rotate-3">
+                                    {{ substr($booking->customer->fullName ?? 'G', 0, 1) }}
+                                </div> -->
+                                <span class="text-gray-500 text-xl font-bold">
+                                    {{ substr($booking->customer->fullName ?? 'G', 0, 1) }}
+                                </span>
+                            @endif
                         </div>
                         <div class="overflow-hidden">
-                            <h4 class="font-bold text-gray-900 truncate">{{ $booking->customer->fullName ?? 'Guest User' }}</h4>
+                            {{-- CUSTOMER VERIFICATION STATUS BADGE --}}
+                            @php
+                                $isVerified = ($booking->customer->accountStat == 'Verified' || $booking->customer->accountStat == 'Confirmed' || $booking->customer->accountStat == 'active'); // Adjust column name if different
+                            @endphp
+                            <!-- <span class="px-1.5 py-0.5 rounded text-[8px] font-black uppercase tracking-tighter {{ $isVerified ? 'bg-green-100 text-green-700 border border-green-200' : 'bg-amber-100 text-amber-700 border border-amber-200' }}">
+                                <i class="fas {{ $isVerified ? 'fa-check-circle' : 'fa-clock' }}"></i> 
+                                {{ $isVerified ? 'Verified' : 'Unverified' }}
+                            </span> -->
+                            <h4 class="font-bold text-gray-900 truncate">
+                                <span class=" {{ $isVerified ? 'text-green-700' : 'text-amber-700' }}">
+                                <i class="fas {{ $isVerified ? 'fa-check-circle' : 'fa-clock' }}"></i> 
+                            </span>
+                              {{ $booking->customer->fullName ?? 'Guest User' }}</h4>
                             <a href="tel:{{ $booking->customer->phoneNo }}" class="text-xs text-gray-500 mt-1 flex items-center gap-1 hover:text-indigo-600 transition">
                                 <i class="fas fa-phone-alt text-gray-400 text-[10px]"></i> 
                                 {{ $booking->customer->phoneNo }}
@@ -72,7 +98,7 @@
                         <i class="fas fa-comment-dots text-6xl text-yellow-600"></i>
                     </div>
                     <h3 class="text-xs font-bold text-yellow-700 uppercase tracking-wider mb-3 flex items-center relative z-10">
-                        <i class="fas fa-bullhorn mr-2"></i> Customer Request
+                        <i class="fas fa-bullhorn mr-2"></i> Remarks
                     </h3>
                     <div class="bg-white/50 rounded-xl p-3 border border-yellow-100 relative z-10">
                         <p class="text-sm text-gray-800 font-medium italic leading-relaxed">
@@ -129,7 +155,7 @@
                 </div>
 
                 {{-- 3. VEHICLE DETAILS --}}
-                <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                <div onclick="window.location='{{ route('staff.fleet.show', $booking->vehicle->VehicleID) }}'" class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
                     <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4 border-b border-gray-100 pb-2">
                         Vehicle Details
                     </h3>
@@ -548,7 +574,7 @@
 
                         {{-- STEP 3: ACTIVE --}}
                         @elseif($booking->bookingStatus == 'Active')
-                            <form action="{{ route('staff.bookings.return', $booking->bookingID) }}" method="POST" onsubmit="return confirm('Complete rental? Deposit will be processed.');">@csrf
+                            <form action="{{ route('staff.bookings.return', $booking->bookingID) }}" method="POST" onsubmit="return confirm('Complete rental? Deposit will be processed if any.');">@csrf
                                 <button class="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-xl font-bold transition shadow-lg shadow-blue-500/20">
                                     4. Process Return (Complete)
                                 </button>

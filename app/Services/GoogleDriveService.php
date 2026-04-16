@@ -163,6 +163,19 @@ class GoogleDriveService
                 'fields' => 'id, webViewLink'
             ]);
 
+            if ($uploadedFile && isset($uploadedFile->id)) {
+                try {
+                    $permission = new \Google\Service\Drive\Permission([
+                        'role' => 'reader',
+                        'type' => 'anyone'
+                    ]);
+                    // Ensure you use the correct variable name for your drive service here
+                    $this->service->permissions->create($uploadedFile->id, $permission);
+                } catch (\Exception $e) {
+                    \Log::warning("Permission failed, but file was uploaded: " . $e->getMessage());
+                }
+            }
+
             return $uploadedFile->webViewLink;
 
         } catch (\Exception $e) {

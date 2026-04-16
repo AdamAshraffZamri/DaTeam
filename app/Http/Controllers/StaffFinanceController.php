@@ -7,9 +7,18 @@ use App\Models\Booking;
 use App\Models\Payment;
 use Illuminate\Support\Facades\Auth;
 use App\Notifications\BookingStatusUpdated;
+use App\Services\GoogleDriveService;
 
 class StaffFinanceController extends Controller
 {
+    protected $driveService;
+
+    // 3. Inject the service via the Constructor
+    public function __construct(GoogleDriveService $driveService)
+    {
+        $this->driveService = $driveService;
+    }
+
     // --- 1. LIST ALL DEPOSITS ---
     public function index(Request $request)
     {
@@ -20,6 +29,15 @@ class StaffFinanceController extends Controller
                             $q->where('depoAmount', '>', 0);
                         })
                         ->with(['customer', 'vehicle', 'payments']);
+
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('bookingID', 'like', "%{$search}%")
+                ->orWhereHas('customer', fn($c) => $c->where('fullName', 'like', "%{$search}%"))
+                ->orWhereHas('vehicle', fn($v) => $v->where('plateNo', 'like', "%{$search}%"));
+            });
+        }
 
         // --- FILTER LOGIC ---
         if ($status === 'requested') {
@@ -36,7 +54,8 @@ class StaffFinanceController extends Controller
                     $subQ->whereIn('bookingStatus', ['Completed', 'Cancelled', 'Rejected'])
                          ->whereHas('payments', function($p) {
                              $p->where('depoAmount', '>', 0)
-                               ->where('depoStatus', 'Pending');
+                               ->where('depoStatus', 'Pending')
+                               ->orWhere('depoStatus', 'Holding');
                          });
                 });
             });
@@ -76,48 +95,72 @@ class StaffFinanceController extends Controller
     }
 
     // --- 2. PROCESS REFUND ---
-    public function processRefund(Request $request, $id)
+    public function processRefund(Request $request, $bookingID)
     {
+        // 1. Check if the file exists in the request at all
+        if (!$request->hasFile('refund_proof')) {
+            return back()->with('error', 'Please upload a refund receipt image.');
+        }
+
         $request->validate([
-            'refund_proof' => 'nullable|image|max:10240',
+            'refund_proof' => 'required|image|max:10240',
             'remarks' => 'nullable|string'
         ]);
+        
+        $booking = Booking::with('payments', 'customer')->findOrFail($bookingID);
+        $payment = $booking->payments()->where('depoAmount', '>', 0)->orderBy('paymentID', 'asc')->first();
 
-        $booking = Booking::with('payments')->findOrFail($id);
-        // Find the payment with deposit
-        $payment = $booking->payments->where('depoAmount', '>', 0)->first();
         if (!$payment) {
             return back()->with('error', 'No payment record found.');
         }
 
-        // 1. Handle Remarks
+        $fileName = "[Refund - #{$bookingID}] - {$booking->customer->fullName}";
+
+        try {
+            // Use config() instead of env() to avoid cPanel cache issues
+            $folderId = config('services.google_refunds') ?? env('GOOGLE_DRIVE_REFUNDS_FOLDER');
+
+            $receiptLink = $this->driveService->uploadFile(
+                $request->file('refund_proof'), 
+                $folderId, 
+                $fileName
+            );
+
+            if (!$receiptLink) {
+                throw new \Exception("Google Drive Service returned an empty link.");
+            }
+
+        } catch (\Exception $e) {
+            \Log::error("Refund Drive Upload Failed: " . $e->getMessage());
+            return back()->with('error', 'Google Drive Error: ' . $e->getMessage());
+        }
+
+        // UPDATE BOOKING REMARKS
         if ($request->filled('remarks')) {
             $oldRemarks = $booking->remarks ? $booking->remarks . "\n\n" : "";
             $refundNote = "[REFUND " . now()->format('d/m/y H:i') . "]: " . $request->remarks;
             $booking->update(['remarks' => $oldRemarks . $refundNote]);
         }
 
-        // 2. Handle Proof Image (Optional)
-        // If you want to store a refund receipt, you might need a new column or reuse installmentDetails
-        // For now, we'll just update the status.
-
-        // 3. Update Status
+        // UPDATE PAYMENT
         $payment->update([
             'depoStatus' => 'Refunded',
-            'paymentStatus' => 'Refund Completed', // Or keep 'Paid' if you want to separate rental fee status
+            'refund_proof_link' => $receiptLink,
+            'paymentStatus' => 'Refund Completed',
             'depoRefundedDate' => now()
         ]);
 
-        // 4. Notify Customer
+        // NOTIFY CUSTOMER
         try {
             $booking->customer->notify(new BookingStatusUpdated(
                 $booking, 
                 "Your deposit for booking #{$booking->bookingID} has been REFUNDED successfully."
             ));
         } catch (\Exception $e) {
-            \Log::error("Finance Refund Email Failed: " . $e->getMessage());
+            \Log::error("Finance Refund Notification Failed: " . $e->getMessage());
         }
-        return back()->with('success', 'Deposit marked as Refunded.');
+
+        return back()->with('success', "Deposit for booking #{$booking->bookingID} marked as Refunded and Receipt uploaded.");
     }
 
     // --- 3. FORFEIT DEPOSIT (Optional) ---

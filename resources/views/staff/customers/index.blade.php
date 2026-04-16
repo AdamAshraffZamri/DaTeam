@@ -107,8 +107,25 @@
                             $selectedScheme = $schemes[$index];
                         @endphp
 
-                        <div class="w-12 h-12 rounded-full bg-gradient-to-br {{ $selectedScheme }} flex items-center justify-center font-black text-lg shadow-inner border border-white shrink-0">
+                        <!-- <div class="w-12 h-12 rounded-full bg-gradient-to-br {{ $selectedScheme }} flex items-center justify-center font-black text-lg shadow-inner border border-white shrink-0">
                             {{ $firstLetter }}
+                        </div> -->
+                        <div class="w-12 h-12 rounded-full overflow-hidden flex items-center justify-center shrink-0 border border-white shadow-inner relative bg-gray-100">
+                            @if($customer->avatar && !empty($customer->avatar))
+                                <img src="{{ asset($customer->avatar) }}" 
+                                    alt="" 
+                                    class="w-full h-full object-cover"
+                                    onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                                    
+                                {{-- Hidden fallback inside the same container --}}
+                                <div class="hidden w-full h-full bg-gradient-to-br {{ $selectedScheme }} items-center justify-center font-black text-lg">
+                                    {{ $firstLetter }}
+                                </div>
+                            @else
+                                <div class="w-full h-full bg-gradient-to-br {{ $selectedScheme }} flex items-center justify-center font-black text-lg">
+                                    {{ $firstLetter }}
+                                </div>
+                            @endif
                         </div>
                         
                         <div class="overflow-hidden">

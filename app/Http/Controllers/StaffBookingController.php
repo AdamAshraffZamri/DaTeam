@@ -235,7 +235,20 @@ class StaffBookingController extends Controller
             });
         }
 
-        $bookings = $query->latest()->get();
+        // 2. FILTER BY BOOKING TYPE
+        if ($request->filled('type') && $request->type !== 'all') {
+            if ($request->type === 'external') {
+                // Adjust this condition based on how you identify external bookings
+                $query->whereNotNull('external_company'); 
+            } elseif ($request->type === 'customer') {
+                $query->whereNull('external_company');
+            }
+        }
+
+        // $bookings = $query->latest()->get();
+        $bookings = $query->orderByRaw("FIELD(bookingStatus, 'Submitted', 'Deposit Paid', 'Paid', 'Confirmed', 'Active', 'Completed', 'Cancelled', 'Rejected')")
+                  ->latest()
+                  ->get();
 
         return view('staff.bookings.index', compact('bookings'));
     }
@@ -700,16 +713,26 @@ class StaffBookingController extends Controller
     public function processReturn(Request $request, $id) {
         $booking = Booking::findOrFail($id);
         
+        $isExternal = !empty($booking->external_company);
+
         // 1. Update Status to Completed
         $booking->update([
             'bookingStatus' => 'Completed',
             'actualReturnDate' => now()->toDateString(),
             'actualReturnTime' => now()->toTimeString(),
+            'remarks' => $booking->remarks . ($isExternal ? " --- External Booking Completed - No Refund " : "")
         ]);
 
         // 2. Refund Deposit & Complete Payment
         if ($booking->payment) {
-            $booking->payment->update(['depoStatus' => 'Pending', 'paymentStatus' => 'Completed']);
+            if ($isExternal) {
+                $booking->payment->update([
+                    'depoStatus' => 'Completed', 
+                    'paymentStatus' => 'Completed',
+                ]);
+            } else {
+                $booking->payment->update(['depoStatus' => 'Pending', 'paymentStatus' => 'Completed']);
+            }
         }
 
         // 3. Trigger Loyalty Points
@@ -771,8 +794,11 @@ class StaffBookingController extends Controller
             \Log::error("Invoice Generation/Upload Failed: " . $e->getMessage());
         }
 
-        return back()->with('success', 'Vehicle returned, Loyalty Points Awarded & Invoice Sent.');
+        return back()->with('success', $isExternal 
+            ? 'Vehicle returned. External booking completed (No refund required).' 
+            : 'Vehicle returned. Loyalty Points Awarded & Invoice Sent.');
     }
+
     public function processRefund(Request $request, $id) {
         $booking = Booking::findOrFail($id);
         
