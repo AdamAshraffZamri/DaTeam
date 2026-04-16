@@ -176,7 +176,7 @@
 
                     {{-- ACTIONS: INSPECTION & FEEDBACK --}}
                     
-                    {{-- 1. INSPECTION BUTTON --}}
+                    <!-- {{-- 1. INSPECTION BUTTON --}}
                     @php
                         $isReturn = ($booking->bookingStatus == 'Active');
                         $typeCheck = $isReturn ? 'Return' : 'Pickup';
@@ -202,7 +202,71 @@
                                 {{ $typeCheck }} Inspection Submitted
                             </div>
                         </div>
-                    @endif
+                    @endif -->
+
+                    {{-- ACTIONS: INSPECTION & FEEDBACK --}}
+                    @php
+                        // 1. Check database for existing records
+                        $pickupInspection = $booking->inspections->where('inspectionType', 'Pickup')->first();
+                        $returnInspection = $booking->inspections->where('inspectionType', 'Return')->first();
+
+                        $pickupDone = !empty($pickupInspection);
+                        $returnDone = !empty($returnInspection);
+
+                        // 2. Determine Action State
+                        $showPickup = false;
+                        $showReturn = false;
+
+                        // IF Pickup is not done, ALWAYS show Pickup button first (even if Active)
+                        if (!$pickupDone && in_array($booking->bookingStatus, ['Confirmed', 'Active'])) {
+                            $showPickup = true;
+                        } 
+                        // IF Pickup is done, but Return is not, and it's Active, show Return
+                        elseif ($pickupDone && !$returnDone && $booking->bookingStatus == 'Active') {
+                            $showReturn = true;
+                        }
+                    @endphp
+
+                    <div class="border-t border-white/10 pt-4 mt-2">
+                        {{-- CASE 1: Pickup is missing (Priority #1) --}}
+                        @if($showPickup)
+                            <button onclick="document.getElementById('inspection-modal-{{ $booking->bookingID }}').classList.remove('hidden')" 
+                                    class="w-full bg-[#ea580c] hover:bg-orange-600 text-white py-3 rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 shadow-lg">
+                                <i class="fas fa-camera"></i> 
+                                Upload Pickup Photos
+                            </button>
+                            @if($booking->bookingStatus == 'Active')
+                                <p class="text-[9px] text-red-400 text-center mt-2 uppercase font-bold tracking-widest animate-pulse">
+                                    * Required: Pickup photos missing for Active rental
+                                </p>
+                            @endif
+
+                        {{-- CASE 2: Pickup is done, now we need Return --}}
+                        @elseif($showReturn)
+                            <button onclick="document.getElementById('inspection-modal-{{ $booking->bookingID }}').classList.remove('hidden')" 
+                                    class="w-full bg-[#ea580c] hover:bg-orange-600 text-white py-3 rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 shadow-lg">
+                                <i class="fas fa-camera"></i> 
+                                Upload Return Photos
+                            </button>
+
+                        {{-- CASE 3: Status is Confirmed but Pickup is already done --}}
+                        @elseif($pickupDone && $booking->bookingStatus == 'Confirmed')
+                            <div class="w-full bg-green-500/20 text-green-400 py-3 rounded-xl text-xs font-bold flex items-center justify-center gap-2 border border-green-500/30">
+                                <i class="fas fa-check-circle"></i> 
+                                Pickup Inspection Verified
+                            </div>
+
+                        {{-- CASE 4: Complete --}}
+                        @elseif($returnDone && $booking->bookingStatus == 'Active')
+                            <div class="w-full bg-blue-500/20 text-blue-400 py-3 rounded-xl text-xs font-bold flex items-center justify-center gap-2 border border-blue-500/30">
+                                <i class="fas fa-clipboard-check"></i> 
+                                All Inspections Completed
+                            </div>
+                            <p class="text-[9px] text-blue-400 text-center mt-2 uppercase font-bold tracking-widest animate-pulse">
+                                    * Waiting for staff verification and final processing for complete rental
+                                </p>
+                        @endif
+                    </div>
 
                     {{-- 2. FEEDBACK BUTTON --}}
                     @if($booking->bookingStatus == 'Completed' && !$booking->feedback)
@@ -257,7 +321,15 @@
     @if($booking->bookingStatus == 'Confirmed' || $booking->bookingStatus == 'Active')
     
     @php
-        $requiredCount = ($booking->bookingStatus == 'Confirmed') ? 5 : 6;
+        // Check if Pickup is already done to determine the current mode
+        $pickupDone = $booking->inspections->where('inspectionType', 'Pickup')->isNotEmpty();
+        
+        // If pickup isn't done, force "Pickup" mode (5 photos) regardless of status
+        // Otherwise, use "Return" mode (6 photos)
+        $isReturnMode = ($pickupDone && $booking->bookingStatus == 'Active');
+        $requiredCount = $isReturnMode ? 6 : 5;
+        $typeLabel = $isReturnMode ? 'Return' : 'Pickup';
+        $titleLabel = $isReturnMode ? 'Post-Rental' : 'Pre-Rental';
     @endphp
 
     <div id="inspection-modal-{{ $booking->bookingID }}" class="fixed inset-0 z-[10000] hidden bg-black/70 backdrop-blur-md flex items-center justify-center p-4">
@@ -271,7 +343,7 @@
             {{-- Modal Header --}}
             <div class="p-6 pb-2 shrink-0">
                 <h3 class="text-xl font-bold text-white mb-2">
-                    {{ $booking->bookingStatus == 'Confirmed' ? 'Pre-Rental Inspection' : 'Post-Rental Inspection' }}
+                    {{ $titleLabel }} Inspection
                 </h3>
             </div>
 
@@ -282,7 +354,7 @@
                     <ul class="text-[11px] text-gray-300 space-y-1">
                         <li class="flex items-center gap-2"><i class="fas fa-check-circle text-[8px]"></i> 4 External Views (Front, Back, Left, Right)</li>
                         <li class="flex items-center gap-2"><i class="fas fa-check-circle text-[8px]"></i> 1 Dashboard View (Mileage & Fuel)</li>
-                        @if($booking->bookingStatus == 'Active')
+                        @if($isReturnMode)
                             <li class="flex items-center gap-2 text-orange-400"><i class="fas fa-key text-[8px]"></i> 1 Car Key Location (Required for Return)</li>
                         @endif
                     </ul>
@@ -290,7 +362,7 @@
 
                 <form action="{{ route('book.inspection.upload', $booking->bookingID) }}" method="POST" enctype="multipart/form-data">
                     @csrf
-                    
+                    <input type="hidden" name="type" value="{{ $typeLabel }}">
                     <label class="block w-full h-32 border-2 border-dashed border-white/20 rounded-xl flex flex-col items-center justify-center cursor-pointer hover:border-orange-500 hover:bg-white/5 transition mb-4 group relative">
                         <i class="fas fa-images text-2xl text-gray-500 group-hover:text-orange-500 mb-2 transition"></i>
                         <span id="file-text-{{ $booking->bookingID }}" class="text-sm text-gray-300 group-hover:text-white font-medium transition-colors text-center px-2">
@@ -330,7 +402,7 @@
                             id="submit-btn-{{ $booking->bookingID }}"
                             class="w-full bg-[#ea580c] hover:bg-orange-600 text-white font-bold py-3.5 rounded-xl shadow-lg transition transform hover:scale-[1.02] opacity-50 cursor-not-allowed text-xs sm:text-sm"
                             disabled>
-                        Submit {{ $booking->bookingStatus == 'Confirmed' ? 'Pickup' : 'Return' }} Inspection
+                        Submit {{ $typeLabel }} Inspection
                     </button>
                 </form>
             </div>
