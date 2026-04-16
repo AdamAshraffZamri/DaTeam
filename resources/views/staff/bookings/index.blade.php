@@ -249,14 +249,14 @@
 
                         {{-- [ADDED] REFUND STATUS INDICATOR --}}
                         @php
-                            // This picks the first one from the already-sorted collection
-                            $depositAvailable = $booking->payments->where('depoAmount', '>', 0)->first();
+                            $depositPayment = $booking->payments->where('depoAmount', '>', 0)->first();
                         @endphp
-                        @if($booking->payment && ($depositAvailable->depoStatus == 'Refunded' || $depositAvailable->depoStatus == 'Requested'))
+
+                        @if($depositPayment && in_array($depositPayment->depoStatus, ['Refunded', 'Requested']))
                             <div class="mt-1.5 w-28 flex justify-center">
                                 <span class="text-[9px] font-bold px-2 py-0.5 rounded border flex items-center gap-1 uppercase tracking-wide
-                                    {{ $depositAvailable->depoStatus == 'Refunded' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-red-50 text-red-600 border-red-100 animate-pulse' }}">
-                                    <i class="fas fa-hand-holding-usd"></i> {{ $depositAvailable->depoStatus }}
+                                    {{ $depositPayment->depoStatus == 'Refunded' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-red-50 text-red-600 border-red-100 animate-pulse' }}">
+                                    <i class="fas fa-hand-holding-usd"></i> {{ $depositPayment->depoStatus }}
                                 </span>
                             </div>
                         @endif
@@ -281,10 +281,50 @@
                                     </button>
                                 </form>
                             @endif
+                            
                         @elseif($booking->bookingStatus == 'Confirmed')
-                            <a href="{{ route('staff.bookings.show', $booking->bookingID) }}" class="bg-blue-100 hover:bg-blue-200 text-blue-700 px-4 py-2 rounded-lg text-xs font-bold transition flex items-center gap-2 w-24 justify-center shadow-sm">
-                                <i class="fas fa-key"></i> <span>Handover</span>
-                            </a>
+                        @php
+                            $pickupTime = \Carbon\Carbon::parse($booking->originalDate . ' ' . $booking->bookingTime);
+                            $now = \Carbon\Carbon::now();
+                            $isTimeReached = $now->greaterThanOrEqualTo($pickupTime);
+                        @endphp
+
+                        <div class="bg-blue-50 border border-blue-100 text-blue-700 px-4 py-2 rounded-lg text-xs font-bold flex flex-col items-center gap-0.5 w-24 justify-center shadow-sm" 
+                            title="Auto-activates at {{ $pickupTime->format('h:i A') }}">
+                            
+                            @if(!$isTimeReached)
+                                <span class="text-[8px] uppercase tracking-tighter opacity-70">Pickup In</span>
+                                <span class="font-black leading-none" id="timer-{{ $booking->bookingID }}">
+                                    {{ $now->diff($pickupTime)->format('%H:%I:%S') }}
+                                </span>
+
+                                <script>
+                                    (function() {
+                                        const target = new Date("{{ $pickupTime->toIso8601String() }}").getTime();
+                                        const timerEl = document.getElementById("timer-{{ $booking->bookingID }}");
+                                        
+                                        const interval = setInterval(() => {
+                                            const now = new Date().getTime();
+                                            const diff = target - now;
+
+                                            if (diff <= 0) {
+                                                clearInterval(interval);
+                                                window.location.reload(); 
+                                            } else {
+                                                const h = Math.floor((diff / (1000 * 60 * 60)));
+                                                const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                                                const s = Math.floor((diff % (1000 * 60)) / 1000);
+                                                timerEl.innerHTML = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+                                            }
+                                        }, 1000);
+                                    })();
+                                </script>
+                            @else
+                                <i class="fas fa-sync fa-spin text-[10px]"></i>
+                                <span class="text-[9px] uppercase">Activating</span>
+                            @endif
+                        </div>
+                        
                         @elseif($booking->bookingStatus == 'Active' || $booking->bookingStatus == 'Completed')
                             <a href="{{ route('staff.bookings.show', $booking->bookingID) }}" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg text-xs font-bold transition flex items-center gap-2 w-24 justify-center shadow-sm">
                                 <i class="fas fa-info-circle"></i> <span>Details</span>

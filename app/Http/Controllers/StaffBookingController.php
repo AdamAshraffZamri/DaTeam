@@ -210,7 +210,8 @@ class StaffBookingController extends Controller
     public function index(Request $request, )
     {
         $query = Booking::with(['customer', 'vehicle', 'payment', 'payments']) 
-                           ->orderBy('bookingDate', 'desc');
+                           ->orderBy('bookingDate', 'desc')
+                           ->where('bookingStatus', '!=', 'Deleted');
         
         if ($request->filled('status') && $request->status != 'all') {
             $query->where('bookingStatus', $request->status);
@@ -246,9 +247,65 @@ class StaffBookingController extends Controller
         }
 
         // $bookings = $query->latest()->get();
-        $bookings = $query->orderByRaw("FIELD(bookingStatus, 'Submitted', 'Deposit Paid', 'Paid', 'Confirmed', 'Active', 'Completed', 'Cancelled', 'Rejected')")
-                  ->latest()
-                  ->get();
+        // $bookings = $query->orderByRaw("FIELD(bookingStatus, 'Submitted', 'Paid', 'Deposit Paid', 'Confirmed', 'Active', 'Completed', 'Cancelled', 'Rejected') ASC")
+        //           ->orderBy('originalDate', 'desc') 
+        //           ->get();
+        // 1. Get the data from SQL without sorting first
+        $bookings = $query->get();
+
+        // 2. Define your custom order priority
+        $priority = [
+            'Submitted'    => 1,
+            'Paid'         => 2,
+            'Deposit Paid' => 3,
+            'Confirmed'    => 4,
+            'Active'       => 5,
+            'Completed'    => 6,
+            'Cancelled'    => 7,
+            'Rejected'     => 8,
+        ];
+
+        // 3. Sort the collection manually
+        $bookings = $bookings->sort(function ($a, $b) use ($priority) {
+            $aStatus = trim($a->bookingStatus);
+            $bStatus = trim($b->bookingStatus);
+
+            $aPrio = $priority[$aStatus] ?? 9;
+            $bPrio = $priority[$bStatus] ?? 9;
+
+            // If statuses are different, sort by priority
+            if ($aPrio !== $bPrio) {
+                return $aPrio <=> $bPrio;
+            }
+
+            // If statuses are the same, sort by date (Newest first)
+            return Carbon::parse($b->originalDate . ' ' . $b->bookingTime) <=> 
+                Carbon::parse($a->originalDate . ' ' . $a->bookingTime);
+        });
+
+        $pendingActivations = Booking::where('bookingStatus', 'Confirmed')
+            ->where('originalDate', '<=', now()->toDateString())
+            ->get();
+
+        foreach ($pendingActivations as $booking) {
+            // Combine Date and Time for a precise comparison
+            $pickupDateTime = \Carbon\Carbon::parse($booking->originalDate . ' ' . $booking->bookingTime);
+
+            // CRITICAL: Only update if the current time is >= the scheduled pickup time
+            if (now()->greaterThanOrEqualTo($pickupDateTime)) {
+                $booking->update(['bookingStatus' => 'Active']);
+
+                // Sync Vehicle to 'Rented'
+                if ($booking->vehicle) {
+                    $booking->vehicle->update([
+                        'status' => 'rented',
+                        'availability' => false
+                    ]);
+                }
+                
+                \Log::info("Booking #{$booking->bookingID} automatically shifted to Active.");
+            }
+        }
 
         return view('staff.bookings.index', compact('bookings'));
     }

@@ -566,11 +566,51 @@
 
                         {{-- STEP 2: CONFIRMED --}}
                         @elseif($booking->bookingStatus == 'Confirmed')
-                            <form action="{{ route('staff.bookings.pickup', $booking->bookingID) }}" method="POST">@csrf
-                                <button class="bg-purple-500 hover:bg-purple-600 text-white px-6 py-3 rounded-xl font-bold transition shadow-lg shadow-purple-500/20">
-                                    3. Vehicle Pickup (Handover)
-                                </button>
-                            </form>
+                            @php
+                                $bookingTime = \Carbon\Carbon::parse($booking->originalDate . ' ' . $booking->bookingTime);
+                                $now = \Carbon\Carbon::now();
+                                $isTimeReached = $now->greaterThanOrEqualTo($bookingTime);
+                            @endphp
+
+                            <div class="flex flex-col items-center px-4 py-3 bg-slate-100 border border-slate-200 rounded-2xl">
+                                @if(!$isTimeReached)
+                                    <div class="flex items-center gap-3 text-amber-600 mb-2">
+                                        <i class="fas fa-hourglass-half animate-pulse"></i>
+                                        <span class="text-xs font-black uppercase tracking-wider">Customer Pickup In</span>
+                                    </div>
+                                    
+                                    {{-- Countdown Display --}}
+                                    <div class="text-xl font-black text-slate-800 tracking-tighter" id="countdown-timer">
+                                        {{ $now->diff($bookingTime)->format('%d Days %h:%i:%s') }}
+                                    </div>
+
+                                    <script>
+                                        // Quick JS to update the countdown every second without refresh
+                                        setInterval(() => {
+                                            const pickupDate = new Date("{{ $bookingTime->toIso8601String() }}").getTime();
+                                            const now = new Date().getTime();
+                                            const diff = pickupDate - now;
+
+                                            if (diff <= 0) {
+                                                window.location.reload(); // Refresh to show Step 3 (Active)
+                                            } else {
+                                                const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+                                                const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                                                const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                                                const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+                                                document.getElementById('countdown-timer').innerHTML = `${days}D ${hours}H ${minutes}M ${seconds}S`;
+                                            }
+                                        }, 1000);
+                                    </script>
+                                @else
+                                    {{-- This shows if staff views a booking that should have started already --}}
+                                    <div class="text-center">
+                                        <i class="fas fa-check-circle text-green-500 text-3xl mb-2"></i>
+                                        <h4 class="text-sm font-black text-slate-800 uppercase">Rental Period Started</h4>
+                                        <p class="text-[10px] text-slate-500">Status will update on next system sync or manual refresh.</p>
+                                    </div>
+                                @endif
+                            </div>
 
                         {{-- STEP 3: ACTIVE --}}
                         @elseif($booking->bookingStatus == 'Active')
