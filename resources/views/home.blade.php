@@ -123,19 +123,20 @@
         transition: transform 0.4s ease;
         z-index: 10;
     }
-    .fleet-anim-btn:hover .btn-text { transform: translateX(5px); }
+    .fleet-anim-btn:hover {
+    background: white;
+    color: #111;
+    }
 
     .fleet-spot {
         position: absolute;
-        top: 50%;
-        left: 50%;
         width: 4px;
         height: 4px;
         border-radius: 50%;
         background-color: white;
         opacity: 0;
         pointer-events: none;
-        z-index: 0;
+        z-index: -1; 
     }
 
     .fleet-anim-btn:hover .fleet-spot:nth-child(odd) { background-color: #00C4FF; }
@@ -245,14 +246,15 @@
                     Book a Vehicle <i class="fas fa-arrow-right ml-3"></i>
                 </a>
 
-                {{-- RESTORED ANIMATED FLEET BUTTON --}}
-                <!-- <a href="#fleet-showcase" class="fleet-anim-btn">
-                    <span class="btn-text">View Fleet</span>
-                    <span class="fleet-spot"></span><span class="fleet-spot"></span><span class="fleet-spot"></span>
-                    <span class="fleet-spot"></span><span class="fleet-spot"></span><span class="fleet-spot"></span>
-                    <span class="fleet-spot"></span><span class="fleet-spot"></span><span class="fleet-spot"></span>
-                    <span class="fleet-spot"></span><span class="fleet-spot"></span><span class="fleet-spot"></span>
-                </a> -->
+                <a href="{{ route('fleet.index') }}" class="fleet-anim-btn">
+                    <span class="relative z-10">View Fleet</span>
+                    {{-- Particle Container --}}
+                    <div class="absolute inset-0 overflow-hidden pointer-events-none">
+                        @for ($i = 0; $i < 10; $i++)
+                            <span class="fleet-spot"></span>
+                        @endfor
+                    </div>
+                </a>
             </div>
         </div>
     </div>
