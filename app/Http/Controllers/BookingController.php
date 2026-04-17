@@ -908,7 +908,9 @@ class BookingController extends Controller
 
         // 1. Determine Inspection Type EARLY
         // If status is Active or Completed, it's a "Return" inspection. Otherwise "Pickup".
-        $type = $request->input('type');
+        $type = ($booking->bookingStatus == 'Active' || $booking->bookingStatus == 'Completed') 
+                ? 'Return' 
+                : 'Pickup';
 
         // 2. [NEW] STRICT CHECK: Stop if inspection already exists
         // We check for an inspection of this Booking ID, this Type, and where staffID is null (Customer)

@@ -177,7 +177,7 @@
                                 ? 'bg-purple-50 text-purple-700 border-purple-200' 
                                 : 'bg-blue-50 text-blue-700 border-blue-200' }}">
                             <i class="fas {{ $isExternal ? 'fa-building' : 'fa-user' }} text-[10px]"></i>
-                            {{ $isExternal ? 'External' : 'Direct' }}
+                            {{ $isExternal ? $companyName : 'Direct' }}
                         </span>
                     </div>
 
@@ -324,58 +324,8 @@
                                 <span class="text-[9px] uppercase">Activating</span>
                             @endif
                         </div>
-
-                        @elseif($booking->bookingStatus == 'Active')
-                            @php
-                                $returnTime = \Carbon\Carbon::parse($booking->returnDate . ' ' . $booking->returnTime);
-                                $now = \Carbon\Carbon::now();
-                                $isTimeReached = $now->greaterThanOrEqualTo($returnTime);
-                            @endphp
-
-                            <div class="w-24 flex flex-col items-center justify-center transition-all duration-300 {{ !$isTimeReached ? 'bg-purple-50 border border-purple-100 text-purple-700 text-xs font-bold gap-0.5 px-4 py-2 rounded-lg shadow-sm' : '' }}" 
-                                title="Scheduled return: {{ $returnTime->format('d M h:i A') }}">
-                                
-                                @if(!$isTimeReached)
-                                    {{-- COUNTDOWN VIEW --}}
-                                    <span class="text-[8px] uppercase tracking-tighter opacity-70">Return In</span>
-                                    <span class="font-black leading-none text-purple-700" id="timer-{{ $booking->bookingID }}">
-                                        {{ $now->diff($returnTime)->format('%H:%I:%S') }}
-                                    </span>
-
-                                    <script>
-                                        (function() {
-                                            const target = new Date("{{ $returnTime->toIso8601String() }}").getTime();
-                                            const timerEl = document.getElementById("timer-{{ $booking->bookingID }}");
-                                            
-                                            const interval = setInterval(() => {
-                                                const now = new Date().getTime();
-                                                const diff = target - now;
-
-                                                if (diff <= 0) {
-                                                    clearInterval(interval);
-                                                    window.location.reload(); 
-                                                } else {
-                                                    const h = Math.floor((diff / (1000 * 60 * 60)));
-                                                    const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-                                                    const s = Math.floor((diff % (1000 * 60)) / 1000);
-                                                    timerEl.innerHTML = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
-                                                }
-                                            }, 1000);
-                                        })();
-                                    </script>
-                                @else
-                                    {{-- COMPLETE BUTTON VIEW --}}
-                                    <form action="{{ route('staff.bookings.return', $booking->bookingID) }}" method="POST" class="w-full">
-                                        @csrf
-                                        <button type="submit" class="w-full bg-purple-100 hover:bg-purple-200 text-purple-700 py-2.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 justify-center">
-                                            <i class="fas fa-pen-alt text-xs"></i>
-                                            <span>Complete</span>
-                                        </button>
-                                    </form>
-                                @endif
-                            </div>
                         
-                        @elseif($booking->bookingStatus == 'Completed')
+                        @elseif($booking->bookingStatus == 'Active' || $booking->bookingStatus == 'Completed')
                             <a href="{{ route('staff.bookings.show', $booking->bookingID) }}" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg text-xs font-bold transition flex items-center gap-2 w-24 justify-center shadow-sm">
                                 <i class="fas fa-info-circle"></i> <span>Details</span>
                             </a>

@@ -284,11 +284,6 @@ class StaffBookingController extends Controller
                 Carbon::parse($a->originalDate . ' ' . $a->bookingTime);
             }
 
-            if ($aStatus === 'Active' && $bStatus === 'Active') {
-                return Carbon::parse($a->returnDate . ' ' . $a->returnTime) <=> 
-                Carbon::parse($b->returnDate . ' ' . $b->returnTime);
-            }
-
             // If statuses are the same, sort by originalDate + bookingTime
             return Carbon::parse($a->originalDate . ' ' . $a->bookingTime) <=> 
                 Carbon::parse($b->originalDate . ' ' . $b->bookingTime);
