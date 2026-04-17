@@ -558,4 +558,14 @@ class FleetController extends Controller
         return redirect()->route('staff.fleet.index')
             ->with('success', 'Vehicle availability status updated.');
     }
+
+    public function publicIndex()
+    {
+        // Fetch vehicles for the public gallery
+        $vehicles = Vehicle::where('status', '!=', 'inactive')
+                        ->orderBy('brand', 'asc')
+                        ->get();
+
+        return view('fleet.gallery', compact('vehicles'));
+    }
 }
