@@ -30,8 +30,6 @@ Route::post('/chatbot/ask', [ChatbotController::class, 'ask'])
     ->name('chatbot.ask');
 // --- Public / Guest Routes ---
 Route::get('/', [HomeController::class, 'index'])->name('home');
-// Public Fleet Gallery Route
-Route::get('/fleet', [FleetController::class, 'publicIndex'])->name('fleet.index');
 
 // Login & Register
 Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
