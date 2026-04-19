@@ -186,7 +186,9 @@ class StaffBookingController extends Controller
                 // This part stays the same: it fetches the clashing bookings for the timeline
                 $q->whereNotIn('bookingStatus', ['Cancelled', 'Rejected', 'Deleted'])
                     ->where(function($query) use ($pDate, $rDate) {
-                        $query->whereBetween('originalDate', [$pDate, $rDate])
+                        $query->whereRaw("CONCAT(originalDate, ' ', bookingTime) < ?", [$rDate])
+                                ->whereRaw("CONCAT(returnDate, ' ', returnTime) > ?", [$pDate])
+                                ->whereBetween('originalDate', [$pDate, $rDate])
                                 ->orWhereBetween('returnDate', [$pDate, $rDate])
                                 ->orWhere(function($sub) use ($pDate, $rDate) {
                                     $sub->where('originalDate', '>=', $pDate)
