@@ -186,15 +186,15 @@ class StaffBookingController extends Controller
                 // This part stays the same: it fetches the clashing bookings for the timeline
                 $q->whereNotIn('bookingStatus', ['Cancelled', 'Rejected', 'Deleted'])
                     ->where(function($query) use ($pDate, $rDate) {
-                        $query->whereBetween("CONCAT(originalDate, ' ', bookingTime)", [$pDate, $rDate])
-                                ->orWhereBetween("CONCAT(returnDate, ' ', returnTime)", [$pDate, $rDate])
+                        $query->whereBetween('originalDate', [$pDate, $rDate])
+                                ->orWhereBetween('returnDate', [$pDate, $rDate])
                                 ->orWhere(function($sub) use ($pDate, $rDate) {
-                                    $sub->where("CONCAT(originalDate, ' ', bookingTime)", '>=', $pDate)
-                                        ->where("CONCAT(returnDate, ' ', returnTime)", '<=', $rDate);
+                                    $sub->where('originalDate', '>=', $pDate)
+                                        ->where('returnDate', '<=', $rDate);
                                 })
                                 ->orWhere(function($sub) use ($pDate, $rDate) {
-                                    $sub->where("CONCAT(originalDate, ' ', bookingTime)", '<=', $pDate)
-                                        ->where("CONCAT(returnDate, ' ', returnTime)", '>=', $rDate);
+                                    $sub->where('originalDate', '<=', $pDate)
+                                        ->where('returnDate', '>=', $rDate);
                                 });
                 })
                 ->orderBy('originalDate', 'asc')
@@ -204,8 +204,8 @@ class StaffBookingController extends Controller
             // [NEW LOGIC] Exclude vehicles that are booked for the ENTIRE duration
             ->whereDoesntHave('bookings', function($q) use ($pDate, $rDate) {
                 $q->whereNotIn('bookingStatus', ['Cancelled', 'Rejected', 'Deleted'])
-                ->where("CONCAT(originalDate, ' ', bookingTime)", '<=', $pDate)
-                ->where("CONCAT(returnDate, ' ', returnTime)", '>=', $rDate);
+                ->where('originalDate', '<=', $pDate)
+                ->where('returnDate', '>=', $rDate);
             })
             ->when($reqModel && $reqModel != 'all', function($q) use ($reqModel) {
                 return $q->where('model', $reqModel);
