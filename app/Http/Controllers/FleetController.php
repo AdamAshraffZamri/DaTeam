@@ -249,7 +249,7 @@ class FleetController extends Controller
         $currentMileage = $vehicle->mileage;
 
         // Financials
-        $validBookings = $vehicle->bookings->whereNotIn('bookingStatus', ['Cancelled', 'Rejected']);
+        $validBookings = $vehicle->bookings->whereNotIn('bookingStatus', ['Cancelled', 'Rejected', 'Deleted']);
         $totalEarnings = $validBookings->sum('totalCost');
         $totalMaintenanceCost = $vehicle->maintenances->sum('cost');
         $netProfit = $totalEarnings - $totalMaintenanceCost;
@@ -258,7 +258,7 @@ class FleetController extends Controller
 
         // --- 1. CUSTOMER BOOKINGS ---
         foreach($vehicle->bookings as $booking) {
-            if(in_array($booking->bookingStatus, ['Cancelled', 'Rejected'])) continue;
+            if(in_array($booking->bookingStatus, ['Cancelled', 'Rejected', 'Deleted'])) continue;
 
             $startDate = \Carbon\Carbon::parse($booking->originalDate)->format('Y-m-d');
             $startTime = \Carbon\Carbon::parse($booking->bookingTime)->format('H:i:s');

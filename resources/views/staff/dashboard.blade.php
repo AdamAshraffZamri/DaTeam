@@ -592,7 +592,7 @@
             <div class="flex-1 overflow-y-auto p-6 space-y-4 bg-white custom-scrollbar">
                 @if(isset($searchResults) && $searchResults->isNotEmpty())
                     @foreach($searchResults as $vehicle)
-                        <div class="bg-white rounded-2xl border border-gray-100 p-4 shadow-sm hover:shadow-md hover:border-orange-200 transition-all group flex flex-col sm:flex-row gap-5 items-center">
+                        <div class="bg-slate-100 rounded-2xl border border-gray-100 p-4 shadow-sm hover:shadow-md hover:border-orange-200 transition-all group flex flex-col sm:flex-row gap-5 items-center">
                             
                             {{-- Image --}}
                             <div class="w-full sm:w-28 h-20 bg-gray-50 rounded-xl overflow-hidden flex items-center justify-center border border-gray-100 shrink-0">
@@ -609,15 +609,38 @@
                                     <h4 class="text-base font-black text-gray-900">{{ $vehicle->brand }} {{ $vehicle->model }}</h4>
                                     <span class="px-2 py-0.5 rounded-md bg-gray-100 text-gray-600 text-[10px] font-bold font-mono border border-gray-200">{{ $vehicle->plateNo }}</span>
                                 </div>
-                                <p class="text-xs text-gray-500 font-medium">{{ $vehicle->type }} • {{ $vehicle->fuelType }} • {{ $vehicle->year }}</p>
+                                <p class="text-xs text-gray-500 font-medium mb-2">{{ $vehicle->type }} • {{ $vehicle->fuelType }} • {{ $vehicle->year }}</p>
+
+                                {{-- [ADDED] CONFLICT TIMELINE SECTION --}}
+                                @if($vehicle->bookings->isNotEmpty())
+                                    <div class="inline-block w-full max-w-xs bg-red-50 border border-red-100 rounded-lg p-2 mt-1">
+                                        <p class="text-[9px] font-black text-red-600 uppercase tracking-widest mb-1 flex items-center gap-1">
+                                            <i class="fas fa-calendar-times animate-pulse"></i> Busy During Selected Time:
+                                        </p>
+                                        <div class="space-y-1">
+                                            @foreach($vehicle->bookings as $conflict)
+                                                <div class="flex justify-between text-[9px] font-bold text-slate-700 bg-white/50 px-2 py-1 rounded">
+                                                    <span>{{ \Carbon\Carbon::parse($conflict->originalDate)->format('d M') }}, {{ \Carbon\Carbon::parse($conflict->bookingTime)->format('H:i') }}</span>
+                                                    <span class="text-gray-400 mx-1">→</span>
+                                                    <span>{{ \Carbon\Carbon::parse($conflict->returnDate)->format('d M') }}, {{ \Carbon\Carbon::parse($conflict->returnTime)->format('H:i') }}</span>
+                                                </div>
+                                            @endforeach
+                                        </div>
+                                    </div>
+                                @endif
                             </div>
 
-                            {{-- Financial/Action (Styled like reference financial box but lighter) --}}
-                            <div class="w-full sm:w-auto bg-gray-50 rounded-xl p-3 border border-gray-100 text-right min-w-[140px]">
+                            {{-- Financial/Action --}}
+                            <div class="w-full sm:w-auto bg-white rounded-xl p-3 border border-gray-100 text-right min-w-[140px]">
                                 <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Rate</p>
                                 <p class="text-lg font-black text-gray-900 mb-2">RM {{ number_format($vehicle->priceHour) }}</p>
-                                <a href="{{ route('staff.fleet.show', $vehicle->VehicleID) }}" class="block w-full text-center bg-gray-700 hover:bg-orange-600 text-white text-[10px] font-bold py-2 rounded-lg transition-colors">
-                                    View Vehicle
+                                
+                                {{-- Update the class to show red/disabled if busy --}}
+                                @php $isBusy = $vehicle->bookings->isNotEmpty(); @endphp
+                                
+                                <a href="{{ route('staff.fleet.show', $vehicle->VehicleID) }}" 
+                                class="block w-full text-center {{ 'bg-gray-700 hover:bg-orange-600 text-white' }} text-[10px] font-bold py-2 rounded-lg transition-colors">
+                                      {{ 'View Vehicle' }}
                                 </a>
                             </div>
                         </div>

@@ -171,30 +171,40 @@ class StaffBookingController extends Controller
         }
 
         // 6. === SEARCH AVAILABILITY ===
-        $searchResults = null;
+        $searchResults = collect();
         $vehicleModels = Vehicle::select('model')->distinct()->pluck('model');
 
         if ($request->has('pickup_date') && $request->has('return_date')) {
+            // 1. Prepare requested Date + Time strings from request
             $pDate = $request->pickup_date . ' ' . ($request->pickup_time ?? '09:00:00');
             $rDate = $request->return_date . ' ' . ($request->return_time ?? '09:00:00');
+            
             $reqModel = $request->model;
 
-            // Note: 'originalDate' is used for pickup in your DB schema
-            $searchResults = Vehicle::where('availability', 1) // Assuming 1 = available
-                ->whereDoesntHave('bookings', function($q) use ($pDate, $rDate) {
-                    $q->where(function($query) use ($pDate, $rDate) {
-                        $query->whereBetween('originalDate', [$pDate, $rDate])
-                              ->orWhereBetween('returnDate', [$pDate, $rDate])
-                              ->orWhere(function($sub) use ($pDate, $rDate) {
-                                  $sub->where('originalDate', '<', $pDate)
-                                      ->where('returnDate', '>', $rDate);
-                              });
-                    })->where('bookingStatus', '!=', 'Cancelled'); // FIX
-                })
-                ->when($reqModel && $reqModel != 'all', function($q) use ($reqModel) {
-                    return $q->where('model', $reqModel);
-                })
-                ->get();
+            // 2. Query Vehicles 
+            $searchResults = Vehicle::with(['bookings' => function($q) use ($pDate, $rDate) {
+                // This part stays the same: it fetches the clashing bookings for the timeline
+                $q->whereNotIn('bookingStatus', ['Cancelled', 'Rejected', 'Deleted'])
+                ->where(function($query) use ($pDate, $rDate) {
+                    $query->whereBetween('originalDate', [$pDate, $rDate])
+                            ->orWhereBetween('returnDate', [$pDate, $rDate])
+                            ->orWhere(function($sub) use ($pDate, $rDate) {
+                                $sub->where('originalDate', '<=', $pDate)
+                                    ->where('returnDate', '>=', $rDate);
+                            });
+                });
+            }])
+            ->where('status', '!=', 'inactive')
+            // [NEW LOGIC] Exclude vehicles that are booked for the ENTIRE duration
+            ->whereDoesntHave('bookings', function($q) use ($pDate, $rDate) {
+                $q->whereNotIn('bookingStatus', ['Cancelled', 'Rejected', 'Deleted'])
+                ->where('originalDate', '<=', $pDate)
+                ->where('returnDate', '>=', $rDate);
+            })
+            ->when($reqModel && $reqModel != 'all', function($q) use ($reqModel) {
+                return $q->where('model', $reqModel);
+            })
+            ->get();
         }
 
         return view('staff.dashboard', compact(
