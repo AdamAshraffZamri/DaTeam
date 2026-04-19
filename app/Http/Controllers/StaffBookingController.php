@@ -189,6 +189,10 @@ class StaffBookingController extends Controller
                     $query->whereBetween('originalDate', [$pDate, $rDate])
                             ->orWhereBetween('returnDate', [$pDate, $rDate])
                             ->orWhere(function($sub) use ($pDate, $rDate) {
+                                $sub->where('originalDate', '>=', $pDate)
+                                    ->where('returnDate', '<=', $rDate);
+                            })
+                            ->orWhere(function($sub) use ($pDate, $rDate) {
                                 $sub->where('originalDate', '<=', $pDate)
                                     ->where('returnDate', '>=', $rDate);
                             });
