@@ -329,12 +329,13 @@
             {{-- GLOBAL BACK BUTTON (Pill Style) --}}
             @if(!request()->routeIs('staff.dashboard'))
                 <div class="max-w-auto mx-auto mb-4 px-2 pt-1">
-                    <a href="{{ url()->previous() }}" 
-                    onclick="event.preventDefault(); history.back();"
-                    class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-orange-200 text-orange-600 hover:bg-orange-50 hover:border-orange-300 transition-all group">
+                    <button id="backButton"
+                    onclick="handleBackButton()"
+                    class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-orange-200 text-orange-600 hover:bg-orange-50 hover:border-orange-300 transition-all group disabled:opacity-50 disabled:cursor-not-allowed"
+                    title="Go back to previous page">
                         <i class="fas fa-chevron-left text-[10px] transform group-hover:-translate-x-0.5 transition-transform"></i>
                         <span class="text-xs font-bold uppercase tracking-wide">Back</span>
-                    </a>
+                    </button>
                 </div>
             @endif
 
@@ -385,6 +386,7 @@
 <script>
     document.addEventListener('DOMContentLoaded', () => {
         const loader = document.getElementById('staff-loader');
+        const backButton = document.getElementById('backButton');
 
         document.querySelectorAll('form').forEach(form => {
             form.addEventListener('submit', function(e) {
@@ -399,7 +401,44 @@
         window.addEventListener('pageshow', (event) => {
             if (event.persisted) loader.classList.add('hidden');
         });
+
+        // Check if back button can go back
+        if (backButton) {
+            // Check history length on page load
+            checkBackButtonState();
+            
+            // Also check when user navigates
+            window.addEventListener('popstate', checkBackButtonState);
+        }
     });
+
+    // Function to handle back button click
+    function handleBackButton() {
+        const backButton = document.getElementById('backButton');
+        
+        // Check if we can go back in history
+        if (window.history.length > 1) {
+            window.history.back();
+        } else {
+            // Fallback to dashboard if no history
+            window.location.href = '/staff/dashboard';
+        }
+    }
+
+    // Function to check if back button should be enabled
+    function checkBackButtonState() {
+        const backButton = document.getElementById('backButton');
+        if (!backButton) return;
+        
+        // Enable back button only if there's history to go back to
+        if (window.history.length > 1) {
+            backButton.disabled = false;
+            backButton.classList.remove('opacity-50', 'cursor-not-allowed');
+        } else {
+            backButton.disabled = true;
+            backButton.classList.add('opacity-50', 'cursor-not-allowed');
+        }
+    }
 </script>
 
 </body>
