@@ -186,13 +186,12 @@
                                 <input type="text" name="student_staff_id" value="{{ old('student_staff_id', $user->stustaffID) }}" 
                                     class="w-full bg-white/5 border border-white/10 rounded-l-xl p-3 text-white focus:border-orange-500 uppercase">
                                 
-                                {{-- The button contains the icon with a unique ID --}}
                                 <button type="button" onclick="document.getElementById('student_file').click()" 
                                         class="bg-white/10 px-4 rounded-r-xl border border-l-0 border-white/10 text-gray-400 hover:text-white transition">
+                                    {{-- ID is used by JS to change the icon --}}
                                     <i id="icon-student_card_image" class="fas fa-camera"></i>
                                 </button>
                                 
-                                {{-- Added 'onchange' to trigger the icon change --}}
                                 <input type="file" name="student_card_image" id="student_file" class="hidden" accept="image/*" 
                                     onchange="showTick(this, 'icon-student_card_image')">
                             </div>
@@ -209,7 +208,7 @@
                     {{-- IC/PASSPORT --}}
                     <div>
                         <label class="block text-gray-400 mb-2 font-bold text-xs uppercase tracking-wider">
-                            IC/Passport 
+                            IC/Passport
                             @if(!$user->ic_passport_image) <span class="text-red-500">*</span> @endif
                         </label>
                         <div class="flex gap-2">
@@ -217,13 +216,12 @@
                                 <input type="text" name="ic_passport" value="{{ old('ic_passport', $user->ic_passport) }}" 
                                     class="w-full bg-white/5 border border-white/10 rounded-l-xl p-3 text-white focus:border-orange-500 uppercase">
                                 
-                                {{-- The button contains the icon with a unique ID --}}
                                 <button type="button" onclick="document.getElementById('ic_passport_file').click()" 
                                         class="bg-white/10 px-4 rounded-r-xl border border-l-0 border-white/10 text-gray-400 hover:text-white transition">
+                                    {{-- ID is used by JS to change the icon --}}
                                     <i id="icon-ic_passport_image" class="fas fa-camera"></i>
                                 </button>
                                 
-                                {{-- Added 'onchange' to trigger the icon change --}}
                                 <input type="file" name="ic_passport_image" id="ic_passport_file" class="hidden" accept="image/*" 
                                     onchange="showTick(this, 'icon-ic_passport_image')">
                             </div>
@@ -240,7 +238,7 @@
                     {{-- LICENSE --}}
                     <div>
                         <label class="block text-gray-400 mb-2 font-bold text-xs uppercase tracking-wider">
-                            Driving License Expired Date 
+                            Driving License Expired Date
                             @if(!$user->driving_license_image) <span class="text-red-500">*</span> @endif
                         </label>
                         <div class="flex gap-2">
@@ -248,13 +246,12 @@
                                 <input type="date" name="driving_license_expiry" value="{{ old('driving_license_expiry', $user->driving_license_expiry) }}" 
                                     class="w-full bg-white/5 border border-white/10 rounded-l-xl p-3 text-white focus:border-orange-500 uppercase">
                                 
-                                {{-- The button contains the icon with a unique ID --}}
                                 <button type="button" onclick="document.getElementById('driving_license_file').click()" 
                                         class="bg-white/10 px-4 rounded-r-xl border border-l-0 border-white/10 text-gray-400 hover:text-white transition">
+                                    {{-- ID is used by JS to change the icon --}}
                                     <i id="icon-driving_license_image" class="fas fa-camera"></i>
                                 </button>
                                 
-                                {{-- Added 'onchange' to trigger the icon change --}}
                                 <input type="file" name="driving_license_image" id="driving_license_file" class="hidden" accept="image/*" 
                                     onchange="showTick(this, 'icon-driving_license_image')">
                             </div>
@@ -267,7 +264,6 @@
                             @endif
                         </div>
                     </div>
-
                     {{-- ADDRESS --}}
                     <div>
                         <label class="block text-gray-400 mb-2 font-bold text-xs uppercase tracking-wider">Home Address <span class="text-red-500">*</span></label>
