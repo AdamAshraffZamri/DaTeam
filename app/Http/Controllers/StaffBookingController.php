@@ -17,6 +17,7 @@ use Illuminate\Support\Facades\Cache;
 use Carbon\Carbon;
 use App\Services\GoogleDriveService;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
 
 /**
  * StaffBookingController
@@ -176,49 +177,48 @@ class StaffBookingController extends Controller
         }
 
         if ($request->ajax()) {
-    $pDate = $request->pickup_date . ' ' . ($request->pickup_time ?? '09:00:00');
-    $rDate = $request->return_date . ' ' . ($request->return_time ?? '09:00:00');
+            $pDate = $request->pickup_date . ' ' . ($request->pickup_time ?? '09:00:00');
+            $rDate = $request->return_date . ' ' . ($request->return_time ?? '09:00:00');
 
-    // 1. Fetch ALL vehicles
-    $vehicles = Vehicle::where('status', '!=', 'inactive')
-        ->with(['bookings' => function($q) use ($pDate, $rDate) {
-            $q->whereNotIn('bookingStatus', ['Cancelled', 'Rejected', 'Deleted'])
-              ->where(function($query) use ($pDate, $rDate) {
-                  // A booking clashes if:
-                  // 1. It starts before your return AND ends after your pickup
-                  $query->where('originalDate', '<', $rDate)
-                        ->where('returnDate', '>', $pDate);
-              });
-        }])->get();
+            // 1. Fetch ALL vehicles
+            $vehicles = Vehicle::where('status', '!=', 'inactive')
+                ->with(['bookings' => function($q) use ($pDate, $rDate) {
+                    $q->whereNotIn('bookingStatus', ['Cancelled', 'Rejected', 'Deleted'])
+                    ->where(function($query) use ($pDate, $rDate) {
+                        // Merge Date and Time columns into one for an accurate comparison
+                        $query->where(DB::raw("CONCAT(originalDate, ' ', bookingTime)"), '<', $rDate)
+                                ->where(DB::raw("CONCAT(returnDate, ' ', returnTime)"), '>', $pDate);
+                    });
+                }])->get();
 
-    // 2. Map results (Fixing the variable name to $searchResults)
-    $searchResults = $vehicles->map(function($v) {
-        $clash = $v->bookings->first();
-        $busyTime = null;
+            // 2. Map results (Fixing the variable name to $searchResults)
+            $searchResults = $vehicles->map(function($v) {
+                $clash = $v->bookings->first();
+                $busyTime = null;
 
-        if ($clash) {
-            // Force string conversion to prevent Carbon formatting errors
-            $sD = is_object($clash->originalDate) ? $clash->originalDate->format('Y-m-d') : substr($clash->originalDate, 0, 10);
-            $eD = is_object($clash->returnDate) ? $clash->returnDate->format('Y-m-d') : substr($clash->returnDate, 0, 10);
-            
-            $start = \Carbon\Carbon::parse($sD . ' ' . $clash->bookingTime)->format('d/m h:i a');
-            $end = \Carbon\Carbon::parse($eD . ' ' . $clash->returnTime)->format('d/m h:i a');
-            $busyTime = $start . ' - ' . $end;
+                if ($clash) {
+                    // Force string conversion to prevent Carbon formatting errors
+                    $sD = is_object($clash->originalDate) ? $clash->originalDate->format('Y-m-d') : substr($clash->originalDate, 0, 10);
+                    $eD = is_object($clash->returnDate) ? $clash->returnDate->format('Y-m-d') : substr($clash->returnDate, 0, 10);
+                    
+                    $start = \Carbon\Carbon::parse($sD . ' ' . $clash->bookingTime)->format('d/m h:i a');
+                    $end = \Carbon\Carbon::parse($eD . ' ' . $clash->returnTime)->format('d/m h:i a');
+                    $busyTime = $start . ' - ' . $end;
+                }
+
+                return [
+                    'plateNo' => $v->plateNo,
+                    'model' => $v->model,
+                    'is_available' => $v->bookings->isEmpty(),
+                    'busy_time' => $busyTime
+                ];
+            })->sortByDesc('is_available')->values();
+
+            // 3. RETURN the correct variable
+            return response()->json([
+                'searchResults' => $searchResults
+            ]);
         }
-
-        return [
-            'plateNo' => $v->plateNo,
-            'model' => $v->model,
-            'is_available' => $v->bookings->isEmpty(),
-            'busy_time' => $busyTime
-        ];
-    })->sortByDesc('is_available')->values();
-
-    // 3. RETURN the correct variable
-    return response()->json([
-        'searchResults' => $searchResults
-    ]);
-}
 
         return view('staff.dashboard', compact(
             'totalRevenue', 'revenueGrowth', 'activeRentalsCount', 'pendingBookingsCount', 'fullyPaidCount', 'depositPaidCount',
