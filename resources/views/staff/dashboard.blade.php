@@ -765,7 +765,7 @@
         // --- FIX: Filter out invalid bookings by status ---
         const timelineEvents = rawEvents.filter(ev => {
             const status = ev.extendedProps?.status?.toLowerCase();
-            return status !== 'cancelled' && status !== 'invalid' && status !== 'rejected';
+            return status !== 'cancelled' && status !== 'invalid' && status !== 'rejected' && status !== 'deleted';
         });
 
         const container = document.getElementById('timelineGrid');
@@ -843,36 +843,34 @@
             // FIX: Track visual right-edge pixels instead of time to prevent overlap
             let rowEndPixels = []; 
             
-            // Stacking Logic (Collision Detection based on VISUAL pixels)
             v.events.forEach(ev => {
                 const safeStart = typeof ev.start === 'string' ? ev.start.replace(' ', 'T') : ev.start;
                 const safeEnd = typeof ev.end === 'string' ? ev.end.replace(' ', 'T') : ev.end;
                 const eStart = new Date(safeStart);
-                const eEnd = ev.end ? new Date(safeEnd) : new Date(eStart.getTime() + 2 * 60 * 60 * 1000); 
+                const eEnd = ev.end ? new Date(safeEnd) : new Date(eStart.getTime() + 2 * 60 * 60 * 1000);
 
-                // --- FIX: Accurate pixel calculation relative to the START of the current month ---
-                const startDiffDays = (eStart.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24);
-                const durationDays = (eEnd.getTime() - eStart.getTime()) / (1000 * 60 * 60 * 24);
+                // --- FIX: SNAP TO WHOLE DAYS FOR PIXELS ---
+                const visualStart = new Date(eStart);
+                visualStart.setHours(0, 0, 0, 0); // Snap left to start of day
+                
+                const visualEnd = new Date(eEnd);
+                visualEnd.setHours(23, 59, 59, 999); // Snap width to end of day
 
-                // Skip if the booking ends before this month starts or starts after this month ends
+                // Calculate visual positions relative to the month view
+                const startDiffDays = Math.floor((visualStart.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
+                const durationDays = Math.ceil((visualEnd.getTime() - visualStart.getTime()) / (1000 * 60 * 60 * 24));
+
                 if (eEnd < startDate || eStart > endDate) return;
 
+                // Visual X Coordinates
                 const left = Math.max(0, startDiffDays * CELL_WIDTH);
-                
-                // Adjust width if the booking started in the previous month
-                let adjustedDuration = durationDays;
-                if (startDiffDays < 0) {
-                    adjustedDuration = (eEnd.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24);
-                }
-                
-                const actualWidth = Math.max(adjustedDuration * CELL_WIDTH, CELL_WIDTH * 0.9);
+                const actualWidth = durationDays * CELL_WIDTH;
                 const rightPixel = left + actualWidth;
 
-                // Determine row based on pixel availability
+                // Determine row based on pixel availability (Collision Detection)
                 let assignedRow = -1;
                 for(let i=0; i < rowEndPixels.length; i++) {
-                    // Check if the left edge is past the previous event's right edge + 4px gap
-                    if (left >= rowEndPixels[i] + 4) { 
+                    if (left >= rowEndPixels[i]) { 
                         assignedRow = i; break;
                     }
                 }
@@ -884,11 +882,12 @@
                     rowEndPixels[assignedRow] = rightPixel;
                 }
                 
+                // Store exact times for the label display
                 ev._rowIndex = assignedRow;
-                ev._eStart = eStart;
-                ev._eEnd = eEnd;
+                ev._eStart = eStart; // Keeping exact time for label
+                ev._eEnd = eEnd;     // Keeping exact time for label
                 ev._left = left;
-                ev._width = Math.min(actualWidth, (TOTAL_DAYS * CELL_WIDTH) - left); // Prevent cutoff
+                ev._width = Math.min(actualWidth, (TOTAL_DAYS * CELL_WIDTH) - left);
             });
 
             const rowCount = Math.max(1, rowEndPixels.length);
@@ -909,10 +908,11 @@
                 html += `<div class="timeline-cell border-r border-orange-100/60 ${isToday ? 'bg-orange-50/60' : 'bg-transparent'}"></div>`;
             });
 
-            // Place Events (Now using pre-calculated visual positions)
+            // Place Events (HTML Generation)
             v.events.forEach(ev => {
-                if (!ev._eStart) return; // Skip if invalid
+                if (!ev._eStart) return;
                 
+                // Exact times for the label
                 const startTimeStr = ev._eStart.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
                 const endTimeStr = ev._eEnd.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
                 
@@ -921,7 +921,6 @@
                 
                 const topOffset = EVENT_GAP + (ev._rowIndex * (EVENT_HEIGHT + EVENT_GAP));
                 const eventData = encodeURIComponent(JSON.stringify(ev));
-
                 const isExternal = ev.extendedProps?.type === 'External' || ev.extendedProps?.source === 'External';
                 const bgClass = isExternal ? 'bg-purple-50' : 'bg-[#eff6ff]';
                 
