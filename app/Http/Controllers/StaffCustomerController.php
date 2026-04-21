@@ -379,45 +379,17 @@ class StaffCustomerController extends Controller
             'ic' => 'ic_passport_image'
         ];
 
-        $dbValue = $customer->{$columnMap[$type]};
+        $fileName = basename($customer->{$columnMap[$type]});
+        $publicPath = 'storage/documents/' . $fileName;
 
-        if (!$dbValue) {
-            return back()->with('error', 'No document recorded in the database.');
+        // Check if the file actually exists in your local folder
+        if (!file_exists(public_path($publicPath))) {
+            return back()->with('error', "Local file not found at: " . $publicPath);
         }
 
-        try {
-            $client = new \Google\Client();
-            $client->setClientId(env('GOOGLE_DRIVE_CLIENT_ID'));
-            $client->setClientSecret(env('GOOGLE_DRIVE_CLIENT_SECRET'));
-            $client->refreshToken(env('GOOGLE_DRIVE_REFRESH_TOKEN'));
-            $service = new \Google\Service\Drive($client);
-
-            // --- THE FIX ---
-            // Extract ONLY the file name from the database value
-            // "Folder Name/123.jpg" becomes "123.jpg"
-            $fileNameOnly = basename($dbValue);
-
-            // Search Google Drive using ONLY the file name
-            $fileQuery = "name = '" . str_replace("'", "\'", $fileNameOnly) . "' and trashed = false";
-            
-            $results = $service->files->listFiles([
-                'q' => $fileQuery,
-                'fields' => 'files(id, name, webViewLink)',
-                'pageSize' => 1
-            ]);
-
-            if (count($results->getFiles()) > 0) {
-                $file = $results->getFiles()[0];
-                // Successfully found it! Redirect to Google Drive preview.
-                return redirect($file->getWebViewLink());
-            }
-
-            // If it still fails, gracefully show an error on the page
-            return back()->with('error', "File '{$fileNameOnly}' not found on Google Drive.");
-
-        } catch (\Exception $e) {
-            return back()->with('error', 'Google Drive Error: ' . $e->getMessage());
-        }
+        // Pass the local URL to the view
+        $viewLink = asset($publicPath);
+        return view('staff.customers.view_document', compact('customer', 'viewLink', 'type'));
     }
 
     public function viewPenaltyReceipt($id)

@@ -107,9 +107,6 @@
                             $selectedScheme = $schemes[$index];
                         @endphp
 
-                        <!-- <div class="w-12 h-12 rounded-full bg-gradient-to-br {{ $selectedScheme }} flex items-center justify-center font-black text-lg shadow-inner border border-white shrink-0">
-                            {{ $firstLetter }}
-                        </div> -->
                         <div class="w-12 h-12 rounded-full overflow-hidden flex items-center justify-center shrink-0 border border-white shadow-inner relative bg-gray-100">
                             @if($customer->avatar && !empty($customer->avatar))
                                 <img src="{{ asset($customer->avatar) }}" 
@@ -117,7 +114,6 @@
                                     class="w-full h-full object-cover"
                                     onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
                                     
-                                {{-- Hidden fallback inside the same container --}}
                                 <div class="hidden w-full h-full bg-gradient-to-br {{ $selectedScheme }} items-center justify-center font-black text-lg">
                                     {{ $firstLetter }}
                                 </div>
@@ -132,9 +128,17 @@
                             <h4 class="text-sm font-bold text-gray-900 truncate group-hover:text-orange-600 transition-colors" title="{{ $customer->fullName }}">
                                 {{ $customer->fullName }}
                             </h4>
-                            <p class="text-[10px] font-bold text-gray-400 mt-0.5 uppercase tracking-wider">
-                                ID: {{ $customer->stustaffID ?? 'N/A' }}
-                            </p>
+                            <div class="flex flex-col gap-0.5">
+                                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                                    ID: {{ $customer->stustaffID ?? 'N/A' }}
+                                </p>
+                                
+                                {{-- LATEST UPDATE TIMESTAMP --}}
+                                <p class="text-[9px] font-medium {{ $customer->accountStat == 'pending' ? 'text-orange-600' : 'text-gray-400' }}">
+                                    <i class="fas fa-clock mr-1 text-[8px]"></i>
+                                    Updated: {{ $customer->updated_at->format('d M Y, h:i A') }}
+                                </p>
+                            </div>
                         </div>
                     </div>
 

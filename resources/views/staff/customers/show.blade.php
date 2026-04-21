@@ -220,7 +220,7 @@
                 {{-- Action Bar --}}
                 
 
-                {{-- Identity Verification --}}
+                {{-- Identity Verification with Local Previews --}}
                 <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-8">
                     <div class="flex items-center gap-2 mb-6 border-b border-gray-50 pb-2">
                         <div class="w-8 h-8 rounded-lg bg-orange-50 text-orange-600 flex items-center justify-center">
@@ -229,34 +229,64 @@
                         <h3 class="text-sm font-black text-slate-800 uppercase tracking-wider">Identity Verification</h3>
                     </div>
 
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div class="space-y-1">
-                            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">IC / Passport No</span>
-                            <div class="p-3 bg-slate-50 rounded-xl border border-slate-100 font-bold text-slate-900 text-sm">
-                                {{ $customer->ic_passport ?? 'Not Provided' }}
-                            </div>
-                        </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
                         
-                        <div class="space-y-1">
-                            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Driving License Expired Date</span>
-                            <div class="p-3 bg-slate-50 rounded-xl border border-slate-100 font-bold text-slate-900 text-sm">
-                                {{ $customer->driving_license_expiry ?? 'Not Provided' }}
-                            </div>
-                        </div>
+                        @php
+                            $docs = [
+                                ['label' => 'IC / Passport No', 'val' => $customer->ic_passport, 'file' => $customer->ic_passport_image, 'type' => 'ic'],
+                                ['label' => 'License Expiry', 'val' => $customer->driving_license_expiry, 'file' => $customer->driving_license_image, 'type' => 'license'],
+                                ['label' => 'Student ID No', 'val' => $customer->stustaffID, 'file' => $customer->student_card_image, 'type' => 'student_card'],
+                                ['label' => 'Date of Birth', 'val' => $customer->dob ? \Carbon\Carbon::parse($customer->dob)->format('d M Y') : 'N/A', 'file' => null]
+                            ];
+                        @endphp
 
-                        <div class="space-y-1">
-                            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Student ID</span>
-                            <div class="p-3 bg-slate-50 rounded-xl border border-slate-100 font-bold text-slate-900 text-sm">
-                                {{ $customer->stustaffID ?? 'N/A' }}
+                        @foreach($docs as $doc)
+                        <div class="space-y-3">
+                            <div>
+                                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{{ $doc['label'] }}</span>
+                                <div class="p-3 bg-slate-50 rounded-xl border border-slate-100 font-bold text-slate-900 text-sm">
+                                    {{ $doc['val'] ?? 'Not Provided' }}
+                                </div>
                             </div>
-                        </div>
+                            
+                            @if($doc['label'] != 'Date of Birth')
+                            <div class="w-full">
+                                <span class="text-[9px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-1 block">Document Preview</span>
+                                
+                                @if($doc['file'])
+                                    @php 
+                                        $filePath = 'storage/documents/' . basename($doc['file']);
+                                        $isImage = in_array(pathinfo($doc['file'], PATHINFO_EXTENSION), ['jpg', 'jpeg', 'png', 'gif', 'webp']);
+                                    @endphp
 
-                        <div class="space-y-1">
-                            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Date of Birth</span>
-                            <div class="p-3 bg-slate-50 rounded-xl border border-slate-100 font-bold text-slate-900 text-sm">
-                                {{ $customer->dob ? \Carbon\Carbon::parse($customer->dob)->format('d M Y') : 'N/A' }}
+                                    <a href="{{ asset($filePath) }}" target="_blank" 
+                                    class="block w-full aspect-video rounded-xl border border-slate-200 overflow-hidden bg-slate-100 hover:border-orange-500 transition-all group relative">
+                                        
+                                        @if($isImage)
+                                            {{-- DIRECT IMAGE PREVIEW --}}
+                                            <img src="{{ asset($filePath) }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
+                                            <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                                                <i class="fas fa-search-plus text-white text-xl"></i>
+                                            </div>
+                                        @else
+                                            {{-- PDF/OTHER FILE PREVIEW --}}
+                                            <div class="absolute inset-0 flex flex-col items-center justify-center bg-slate-50 group-hover:bg-white transition-colors">
+                                                <i class="fas fa-file-pdf text-2xl text-red-500 mb-1"></i>
+                                                <span class="text-[9px] font-black text-slate-400 uppercase">View PDF Document</span>
+                                            </div>
+                                        @endif
+                                    </a>
+                                @else
+                                    <div class="w-full aspect-video rounded-xl border border-dashed border-slate-200 bg-slate-50 flex flex-col items-center justify-center">
+                                        <i class="fas fa-times-circle text-slate-300 mb-1"></i>
+                                        <span class="text-[9px] font-bold text-slate-400 uppercase">No File Uploaded</span>
+                                    </div>
+                                @endif
                             </div>
+                            @endif
                         </div>
+                        @endforeach
+
                     </div>
                 </div>
 
@@ -285,57 +315,6 @@
                         </div>
                     </div>
                 </div>
-
-                {{-- Documents Grid --}}
-                <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-8">
-                    <div class="flex items-center gap-2 mb-6 border-b border-gray-50 pb-2">
-                        <div class="w-8 h-8 rounded-lg bg-slate-100 text-slate-600 flex items-center justify-center">
-                            <i class="fas fa-file-image text-xs"></i>
-                        </div>
-                        <h3 class="text-sm font-black text-slate-800 uppercase tracking-wider">Uploaded Documents</h3>
-                    </div>
-
-                    <div class="grid grid-cols-2 lg:grid-cols-3 gap-4">
-                        @foreach([
-                            ['label' => 'Driving License', 'file' => $customer->driving_license_image, 'type' => 'license'],
-                            ['label' => 'Student ID', 'file' => $customer->student_card_image, 'type' => 'student_card'],
-                            ['label' => 'IC / Passport', 'file' => $customer->ic_passport_image, 'type' => 'ic']
-                        ] as $doc)
-                            
-                            @if($doc['file'])
-                                <a href="{{ route('staff.customers.view_document', ['customerId' => $customer->customerID, 'type' => $doc['type']]) }}" 
-                                target="_blank"
-                                class="group relative block aspect-[4/3] rounded-xl overflow-hidden bg-white border border-slate-200 shadow-sm hover:border-orange-500 transition-all">
-                                    
-                                    <div class="w-full h-full flex flex-col items-center justify-center group-hover:bg-slate-50 transition-colors">
-                                        <i class="fas fa-file-alt text-3xl text-blue-500 mb-2"></i>
-                                        <span class="text-[9px] font-bold text-slate-400 uppercase">Click to View</span>
-                                    </div>
-
-                                    <div class="absolute inset-0 flex items-end">
-                                        <div class="w-full bg-slate-900/80 backdrop-blur-sm p-2 text-center">
-                                            <span class="text-[10px] font-bold text-white uppercase tracking-wider">{{ $doc['label'] }}</span>
-                                        </div>
-                                    </div>
-                                </a>
-                            @else
-                                {{-- CASE: FILE NOT FOUND --}}
-                                <div class="relative block aspect-[4/3] rounded-xl overflow-hidden bg-slate-50 border border-dashed border-slate-300 flex flex-col items-center justify-center">
-                                    <i class="fas fa-exclamation-circle text-2xl text-slate-300 mb-1"></i>
-                                    <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Not Found</span>
-                                    
-                                    <div class="absolute inset-0 flex items-end">
-                                        <div class="w-full bg-slate-200 p-2 text-center">
-                                            <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">{{ $doc['label'] }}</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            @endif
-
-                        @endforeach
-                    </div>
-                </div>
-
             </div>
         </div>
     </div>
