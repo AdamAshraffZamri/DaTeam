@@ -140,6 +140,19 @@
                         @endforeach
                     </div>
                 </div>
+
+                {{-- PICKUP DATE FILTER --}}
+                <div class="relative group w-full md:w-[180px]">
+                    <input type="date" name="pickup_date" value="{{ request('pickup_date') }}" 
+                           title="Filter bookings by pickup date"
+                           class="w-full px-5 py-3.5 rounded-2xl border border-gray-200 bg-white text-sm font-bold text-gray-700 focus:ring-2 focus:ring-gray-900 focus:border-transparent transition-all shadow-sm hover:border-gray-300"
+                           onchange="document.getElementById('filterForm').submit()">
+                    {{-- Tooltip --}}
+                    <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-1.5 bg-gray-900 text-white text-xs font-bold rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50">
+                        Filter by Pickup Date
+                        <div class="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-900"></div>
+                    </div>
+                </div>
             </form>
         </div>
 
@@ -161,7 +174,7 @@
                                 {{ $booking->customer->fullName ?? 'Guest' }}
                             </h4>
                             <p class="text-xs text-gray-400 truncate">{{ $booking->customer->email ?? 'No email' }}</p>
-                            <div class="text-[10px] text-slate-600 font-medium uppercase tracking-wider mt-0.5">{{ \Carbon\Carbon::parse($booking->bookingDate)->format('d M Y') }}</div>
+                            <!-- <div class="text-[10px] text-slate-600 font-medium uppercase tracking-wider mt-0.5">{{ \Carbon\Carbon::parse($booking->bookingDate)->format('d M Y') }}</div> -->
                         </div>
                     </div>
 
@@ -198,32 +211,24 @@
                         <p class="text-sm font-black text-gray-900">RM {{ number_format($booking->totalCost, 2) }}</p>
                     </div>
 
-                    {{-- 5. Docs --}}
-                    <div class="w-full lg:w-[12%] border-t lg:border-t-0 lg:border-l border-gray-100 pt-2 lg:pt-0 lg:pl-6 lg:pr-6 shrink-0">
-                        <p class="text-[9px] font-bold text-gray-400 uppercase tracking-wider mb-1">Documents</p>
-                        <div class="flex flex-col gap-1 items-start">
-                            @php
-                                $allReceipts = $booking->payments()->where('installmentDetails', '!=', null)->orderBy('transactionDate', 'desc')->get();
-                            @endphp
-                            @if($allReceipts->count() > 0)
-                                @foreach($allReceipts as $receipt)
-                                    @php
-                                        $receiptUrl = str_contains($receipt->installmentDetails, 'drive.google.com') 
-                                            ? $receipt->installmentDetails 
-                                            : asset('storage/' . $receipt->installmentDetails);
-                                    @endphp
-                                    <a href="{{ $receiptUrl }}" target="_blank" onclick="event.stopPropagation()" 
-                                       class="text-[10px] font-bold text-blue-600 hover:text-blue-800 bg-blue-50 px-2 py-0.5 rounded border border-blue-100 flex items-center gap-1.5 transition-colors"
-                                       title="{{ \Carbon\Carbon::parse($receipt->transactionDate)->format('d M Y') }}">
-                                        <i class="fas fa-receipt"></i> R{{ $loop->iteration }}
-                                    </a>
-                                @endforeach
-                                @if($allReceipts->count() > 1)
-                                    <span class="text-[9px] text-gray-400 font-bold">{{ $allReceipts->count() }} total</span>
-                                @endif
-                            @else
-                                <span class="text-[10px] font-bold text-gray-300 px-2 py-0.5">-</span>
-                            @endif
+                    {{-- 5. Pickup & Return DateTime --}}
+                    <div class="w-full lg:w-[16%] border-t lg:border-t-0 lg:border-l border-gray-100 pt-2 lg:pt-0 lg:pl-6 lg:pr-6 shrink-0">
+                        <p class="text-[9px] font-bold text-gray-400 uppercase tracking-wider mb-2">Pickup & Return</p>
+                        <div class="flex flex-col gap-2 items-start text-xs">
+                            <div class="flex items-start gap-2">
+                                <i class="fas fa-sign-out-alt text-green-600 mt-0.5 text-[10px] flex-shrink-0"></i>
+                                <div>
+                                    <p class="font-bold text-gray-900">{{ \Carbon\Carbon::parse($booking->originalDate)->format('d M Y') }}</p>
+                                    <p class="text-[10px] text-gray-500">{{ \Carbon\Carbon::createFromFormat('H:i:s', $booking->bookingTime)->format('h:i A') }}</p>
+                                </div>
+                            </div>
+                            <div class="flex items-start gap-2">
+                                <i class="fas fa-sign-in-alt text-red-600 mt-0.5 text-[10px] flex-shrink-0"></i>
+                                <div>
+                                    <p class="font-bold text-gray-900">{{ \Carbon\Carbon::parse($booking->returnDate)->format('d M Y') }}</p>
+                                    <p class="text-[10px] text-gray-500">{{ \Carbon\Carbon::createFromFormat('H:i:s', $booking->returnTime)->format('h:i A') }}</p>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
