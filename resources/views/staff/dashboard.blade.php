@@ -334,69 +334,41 @@
             {{-- 4. RIGHT COLUMN: SIDEBAR --}}
             <div class="xl:col-span-1 space-y-6">
                 
-                {{-- 1. AVAILABILITY CHECKER (Top) --}}
-                <div class="bg-white rounded-xl p-6 text-slate-900 shadow-lg relative overflow-hidden">
-                                        
-                    <div class="flex justify-between items-start relative z-10 mb-4">
-                        <div>
-                            <h2 class="text-lg font-bold text-slate-800 truncate">Check Vehicle Availability</h2>
-                            <p class="text-slate-500 text-xs font-medium">Instant fleet search.</p>
-                        </div>
-                        <button @click="setToday()" type="button" class="bg-slate-100 hover:bg-slate-200 text-slate-700 text-[10px] font-bold px-3 py-1.5 rounded-lg transition-all flex items-center gap-1 cursor-pointer hover:shadow-md active:scale-95 transform">
-                            <i class="fas fa-calendar-day text-orange-500"></i> Today
-                        </button>
+                {{-- 1. AVAILABILITY CHECKER --}}
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                    {{-- Header: Consistent with Performance/Calendar Style --}}
+                    <div class="p-5 border-b border-gray-100">
+                        <h2 class="text-lg font-bold text-slate-800 truncate">Vehicle Availability</h2>
                     </div>
 
-                    <form action="{{ route('staff.dashboard') }}" method="GET" class="space-y-4 relative z-10">
-                        <div>
-                            <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest block mb-1.5">Date & Time Range</label>
-                            <div class="grid grid-cols-2 gap-2">
-                                {{-- Pickup --}}
-                                <div>
-                                    <span class="text-[9px] text-slate-500 block mb-1">Pickup</span>
-                                    <input type="date" name="pickup_date" x-model="pDate" class="w-full bg-white border border-slate-200 text-slate-800 text-xs font-bold rounded-lg px-3 py-2 focus:border-orange-500 focus:ring-0 outline-none transition-colors cursor-pointer" required>
-                                    <div class="relative mt-1">
-                                        <select name="pickup_time" x-model="pTime" class="w-full bg-white border border-slate-200 text-slate-800 text-xs font-bold rounded-lg px-3 py-2 focus:border-orange-500 focus:ring-0 outline-none appearance-none cursor-pointer">
-                                            @for($i = 0; $i < 24; $i++)
-                                                <option value="{{ sprintf('%02d:00', $i) }}">{{ sprintf('%02d:00', $i) }}</option>
-                                            @endfor
+                    <div class="p-5">
+                        <form id="availabilityForm" class="space-y-5">
+                            {{-- Input Container: Colored Background --}}
+                            <div class="bg-slate-50 border border-slate-100 rounded-2xl p-4 space-y-4">
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 block">Pickup Range</label>
+                                        <input type="date" name="pickup_date" class="w-full bg-white border border-slate-200 text-sm font-bold rounded-xl px-3 py-2 focus:border-orange-500 outline-none shadow-sm" required>
+                                        <select name="pickup_time" class="w-full mt-2 bg-white border border-slate-200 text-sm font-bold rounded-xl px-3 py-2 shadow-sm">
+                                            @for($i = 0; $i < 24; $i++) <option value="{{ sprintf('%02d:00', $i) }}">{{ sprintf('%02d:00', $i) }}</option> @endfor
                                         </select>
-                                        <i class="fas fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-[9px] text-slate-400 pointer-events-none"></i>
                                     </div>
-                                </div>
-                                {{-- Return --}}
-                                <div>
-                                    <span class="text-[9px] text-slate-500 block mb-1">Return</span>
-                                    <input type="date" name="return_date" x-model="rDate" class="w-full bg-white border border-slate-200 text-slate-800 text-xs font-bold rounded-lg px-3 py-2 focus:border-orange-500 focus:ring-0 outline-none transition-colors cursor-pointer" required>
-                                    <div class="relative mt-1">
-                                        <select name="return_time" x-model="rTime" class="w-full bg-white border border-slate-200 text-slate-800 text-xs font-bold rounded-lg px-3 py-2 focus:border-orange-500 focus:ring-0 outline-none appearance-none cursor-pointer">
-                                            @for($i = 0; $i < 24; $i++)
-                                                <option value="{{ sprintf('%02d:00', $i) }}">{{ sprintf('%02d:00', $i) }}</option>
-                                            @endfor
+                                    <div>
+                                        <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 block">Return Range</label>
+                                        <input type="date" name="return_date" class="w-full bg-white border border-slate-200 text-sm font-bold rounded-xl px-3 py-2 focus:border-orange-500 outline-none shadow-sm" required>
+                                        <select name="return_time" class="w-full mt-2 bg-white border border-slate-200 text-sm font-bold rounded-xl px-3 py-2 shadow-sm">
+                                            @for($i = 0; $i < 24; $i++) <option value="{{ sprintf('%02d:00', $i) }}">{{ sprintf('%02d:00', $i) }}</option> @endfor
                                         </select>
-                                        <i class="fas fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-[9px] text-slate-400 pointer-events-none"></i>
                                     </div>
                                 </div>
                             </div>
-                        </div>
 
-                        <div>
-                            <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest block mb-1.5">Vehicle Model</label>
-                            <div class="relative">
-                                <select name="model" class="w-full bg-white border border-slate-200 text-slate-800 text-xs font-bold rounded-lg px-3 py-2.5 focus:border-orange-500 outline-none appearance-none cursor-pointer">
-                                    <option value="all">Any Model</option>
-                                    @foreach($vehicleModels as $model)
-                                        <option value="{{ $model }}" {{ request('model') == $model ? 'selected' : '' }}>{{ $model }}</option>
-                                    @endforeach
-                                </select>
-                                <i class="fas fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-slate-400 pointer-events-none"></i>
+                            {{-- Results List --}}
+                            <div id="availabilityResults" class="space-y-2 max-h-[400px] overflow-y-auto pr-1">
+                                {{-- Results injected here --}}
                             </div>
-                        </div>
-
-                        <button type="submit" class="w-full bg-orange-600 hover:bg-orange-500 text-white py-3 rounded-lg font-bold text-xs uppercase tracking-widest shadow-lg shadow-orange-200 transition-all flex items-center justify-center gap-2 transform active:scale-[0.98]">
-                            <i class="fas fa-search"></i> View Vehicles
-                        </button>
-                    </form>
+                        </form>
+                    </div>
                 </div>
 
                 {{-- 2. DAILY OPERATIONS (Card with Scrollable Content) --}}
@@ -596,137 +568,62 @@
             </div>
         </div>
     </div>
-    
-    {{-- === PROFESSIONAL SEARCH RESULT MODAL === --}}
-    <div x-show="showResultsModal" 
-         class="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm px-4 transition-opacity duration-300"
-         x-transition:enter="ease-out duration-300"
-         x-transition:enter-start="opacity-0"
-         x-transition:enter-end="opacity-100"
-         x-transition:leave="ease-in duration-200"
-         x-transition:leave-start="opacity-100"
-         x-transition:leave-end="opacity-0"
-         x-cloak>
-
-        <div class="bg-white rounded-[2rem] shadow-2xl w-full max-w-2xl flex flex-col overflow-hidden transform transition-all duration-300 scale-100 h-[80vh]"
-             @click.away="window.location.href = '{{ route('staff.dashboard') }}'">
-            
-            {{-- Header & Timeline Context --}}
-            <div class="px-8 py-6 border-b border-gray-100 bg-white z-10">
-                <div class="flex justify-between items-start mb-6">
-                    <h3 class="text-2xl font-black text-gray-900 tracking-tight">Available Vehicles</h3>
-                    <button onclick="window.location.href='{{ route('staff.dashboard') }}'" class="w-8 h-8 rounded-full bg-gray-50 text-gray-400 hover:bg-gray-100 hover:text-gray-600 flex items-center justify-center transition-colors">
-                        <i class="fas fa-times"></i>
-                    </button>
-                </div>
-
-                {{-- Timeline Search Summary (Styled like reference) --}}
-                <div class="bg-gray-50 rounded-2xl p-5 border border-gray-100 relative">
-                    {{-- Vertical Dotted Line --}}
-                    <div class="absolute left-[29px] top-7 bottom-7 w-0.5 border-l-2 border-dashed border-gray-300"></div>
-
-                    <div class="flex flex-col gap-4">
-                        {{-- Pickup --}}
-                        <div class="flex items-start gap-4 relative z-10">
-                            <div class="w-2.5 h-2.5 rounded-full bg-orange-500 mt-1.5 ring-4 ring-white"></div>
-                            <div>
-                                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Pickup</p>
-                                <p class="text-sm font-bold text-gray-900">
-                                    {{ \Carbon\Carbon::parse(request('pickup_date'))->format('d M Y') }} 
-                                    <span class="text-gray-500 font-medium ml-1">{{ request('pickup_time') }}</span>
-                                </p>
-                            </div>
-                        </div>
-
-                        {{-- Return --}}
-                        <div class="flex items-start gap-4 relative z-10">
-                            <div class="w-2.5 h-2.5 rounded-full bg-blue-500 mt-1.5 ring-4 ring-white"></div>
-                            <div>
-                                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Return</p>
-                                <p class="text-sm font-bold text-gray-900">
-                                    {{ \Carbon\Carbon::parse(request('return_date'))->format('d M Y') }} 
-                                    <span class="text-gray-500 font-medium ml-1">{{ request('return_time') }}</span>
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            {{-- Vehicle List --}}
-            <div class="flex-1 overflow-y-auto p-6 space-y-4 bg-white custom-scrollbar">
-                @if(isset($searchResults) && $searchResults->isNotEmpty())
-                    @foreach($searchResults as $vehicle)
-                        <div class="bg-slate-100 rounded-2xl border border-gray-100 p-4 shadow-sm hover:shadow-md hover:border-orange-200 transition-all group flex flex-col sm:flex-row gap-5 items-center">
-                            
-                            {{-- Image --}}
-                            <div class="w-full sm:w-28 h-20 bg-gray-50 rounded-xl overflow-hidden flex items-center justify-center border border-gray-100 shrink-0">
-                                @if($vehicle->image)
-                                    <img src="{{ asset('storage/'.$vehicle->image) }}" class="w-full h-full object-cover">
-                                @else
-                                    <i class="fas fa-car text-gray-300 text-2xl"></i>
-                                @endif
-                            </div>
-
-                            {{-- Details --}}
-                            <div class="flex-1 text-center sm:text-left">
-                                <div class="flex items-center justify-center sm:justify-start gap-2 mb-1">
-                                    <h4 class="text-base font-black text-gray-900">{{ $vehicle->brand }} {{ $vehicle->model }}</h4>
-                                    <span class="px-2 py-0.5 rounded-md bg-gray-100 text-gray-600 text-[10px] font-bold font-mono border border-gray-200">{{ $vehicle->plateNo }}</span>
-                                </div>
-                                <p class="text-xs text-gray-500 font-medium mb-2">{{ $vehicle->type }} • {{ $vehicle->fuelType }} • {{ $vehicle->year }}</p>
-
-                                {{-- [ADDED] CONFLICT TIMELINE SECTION --}}
-                                @if($vehicle->bookings->isNotEmpty())
-                                    <div class="inline-block w-full max-w-xs bg-red-50 border border-red-100 rounded-lg p-2 mt-1">
-                                        <p class="text-[9px] font-black text-red-600 uppercase tracking-widest mb-1 flex items-center gap-1">
-                                            <i class="fas fa-calendar-times animate-pulse"></i> Busy During Selected Time:
-                                        </p>
-                                        <div class="space-y-1">
-                                            @foreach($vehicle->bookings as $conflict)
-                                                <div class="flex justify-between text-[9px] font-bold text-slate-700 bg-white/50 px-2 py-1 rounded">
-                                                    <span>{{ \Carbon\Carbon::parse($conflict->originalDate)->format('d M') }}, {{ \Carbon\Carbon::parse($conflict->bookingTime)->format('H:i') }}</span>
-                                                    <span class="text-gray-400 mx-1">→</span>
-                                                    <span>{{ \Carbon\Carbon::parse($conflict->returnDate)->format('d M') }}, {{ \Carbon\Carbon::parse($conflict->returnTime)->format('H:i') }}</span>
-                                                </div>
-                                            @endforeach
-                                        </div>
-                                    </div>
-                                @endif
-                            </div>
-
-                            {{-- Financial/Action --}}
-                            <div class="w-full sm:w-auto bg-white rounded-xl p-3 border border-gray-100 text-right min-w-[140px]">
-                                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Rate</p>
-                                <p class="text-lg font-black text-gray-900 mb-2">RM {{ number_format($vehicle->priceHour) }}</p>
-                                
-                                {{-- Update the class to show red/disabled if busy --}}
-                                @php $isBusy = $vehicle->bookings->isNotEmpty(); @endphp
-                                
-                                <a href="{{ route('staff.fleet.show', $vehicle->VehicleID) }}" 
-                                class="block w-full text-center {{ 'bg-gray-700 hover:bg-orange-600 text-white' }} text-[10px] font-bold py-2 rounded-lg transition-colors">
-                                      {{ 'View Vehicle' }}
-                                </a>
-                            </div>
-                        </div>
-                    @endforeach
-                @elseif(isset($searchResults))
-                    <div class="flex flex-col items-center justify-center h-full text-gray-400 pb-10">
-                        <div class="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mb-4">
-                            <i class="fas fa-search text-3xl text-gray-300"></i>
-                        </div>
-                        <h4 class="text-lg font-bold text-gray-600">No vehicles available</h4>
-                        <p class="text-sm font-medium mt-1">Try adjusting your dates.</p>
-                    </div>
-                @endif
-            </div>
-        </div>
-    </div>
-
 </div>
 
 {{-- SCRIPT: CHART & CALENDAR --}}
 <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.getElementById('availabilityForm');
+        const resultsContainer = document.getElementById('availabilityResults');
+
+        // Trigger search whenever any input changes
+        form.addEventListener('input', function() {
+    const pD = form.querySelector('[name="pickup_date"]').value;
+    const pT = form.querySelector('[name="pickup_time"]').value;
+    const rD = form.querySelector('[name="return_date"]').value;
+    const rT = form.querySelector('[name="return_time"]').value;
+
+    if (!pD || !rD) return;
+
+    // Construct full Date objects for comparison
+    const pickupTotal = new Date(`${pD}T${pT}`);
+    const returnTotal = new Date(`${rD}T${rT}`);
+    const oneHourInMs = 60 * 60 * 1000;
+
+    // VALIDATION: Ensure return is at least 1 hour after pickup
+    if (returnTotal - pickupTotal < oneHourInMs) {
+        resultsContainer.innerHTML = '<div class="p-3 text-[10px] font-bold text-red-500 bg-red-50 rounded-xl border border-red-100">Return must be at least 1 hour after pickup.</div>';
+        return;
+    }
+
+    const formData = new URLSearchParams(new FormData(form)).toString();
+    fetch(`{{ route('staff.dashboard') }}?${formData}`, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+    .then(r => r.json())
+    .then(data => {
+        resultsContainer.innerHTML = '';
+        data.searchResults.forEach(v => {
+            const div = document.createElement('div');
+            div.className = `p-3 rounded-xl border flex justify-between items-center transition-all ${v.is_available ? 'bg-green-50 border-green-100' : 'bg-slate-50 border-slate-200 opacity-70'}`;
+            
+            div.innerHTML = `
+                <div>
+                    <div class="text-sm font-black ${v.is_available ? 'text-green-800' : 'text-slate-600'}">${v.plateNo}</div>
+                    <div class="text-[10px] font-bold text-slate-400 uppercase">${v.model}</div>
+                </div>
+                <div class="text-right">
+                    ${v.is_available 
+                        ? '<span class="text-[10px] font-black text-green-600 uppercase tracking-widest">Available</span>' 
+                        : `<span class="text-[9px] font-black text-red-500 block leading-none mb-1 uppercase">Booked:</span>
+                           <span class="text-[9px] font-bold text-slate-500 leading-tight block">${v.busy_time}</span>`
+                    }
+                </div>
+            `;
+            resultsContainer.appendChild(div);
+        });
+    });
+});
+    });
+
     document.addEventListener('DOMContentLoaded', function() {
         // 1. Chart Logic
         const ctx = document.getElementById('dashboardChart').getContext('2d');
@@ -799,6 +696,7 @@
             if (!vehicles[vId]) {
                 vehicles[vId] = {
                     id: props.vID,
+                    model: props.model || 'Unknown Model',
                     plate: props.plate || 'Pending',
                     events: []
                 };
@@ -895,10 +793,13 @@
 
             html += `<div class="flex relative border-b border-orange-100 bg-white hover:bg-orange-50/40 transition-colors group" style="height: ${containerHeight}px">
                 
-                <div class="vehicle-col flex flex-col justify-center items-center bg-slate-100 group-hover:bg-orange-50 transition-colors border-r border-orange-200 z-20">
-                    <a href="/staff/fleet/${v.id}" class="plate-badge border-orange-200 text-orange-900 shadow-sm bg-white hover:bg-orange-500 hover:text-white hover:border-orange-600 transition-all cursor-pointer decoration-none">
+                <div class="vehicle-col flex flex-col justify-center items-center bg-slate-50 group-hover:bg-orange-50 transition-colors border-r border-orange-200 z-20 py-2">
+                    <a href="/staff/fleet/${v.id}" class="plate-badge border-orange-200 text-orange-900 shadow-sm bg-white hover:bg-orange-500 hover:text-white hover:border-orange-600 transition-all cursor-pointer decoration-none mb-1">
                         <span class="text-xs font-black tracking-wider">${v.plate}</span>
                     </a>
+                    <div class="text-[9px] font-bold text-slate-400 uppercase tracking-tighter text-center px-1">
+                        ${v.model || 'Unknown Model'}
+                    </div>
                 </div>
                 
                 <div class="flex relative min-w-max z-10">`;

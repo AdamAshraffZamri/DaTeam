@@ -166,6 +166,7 @@ class StaffBookingController extends Controller
                 'extendedProps' => [
                     'vID' => $b->vehicleID,
                     'type' => 'booking',
+                    'model' => $b->vehicle->model ?? 'Unknown Model',
                     'plate' => $b->vehicle->plateNo ?? 'Unknown',
                     'status' => $b->bookingStatus,
                     'source' => $b->external_company ? 'External' : 'Customer',
@@ -174,55 +175,59 @@ class StaffBookingController extends Controller
             ];
         }
 
-        // 6. === SEARCH AVAILABILITY ===
-        $searchResults = collect();
-        $vehicleModels = Vehicle::select('model')->distinct()->pluck('model');
+        if ($request->ajax()) {
+    $pDate = $request->pickup_date . ' ' . ($request->pickup_time ?? '09:00:00');
+    $rDate = $request->return_date . ' ' . ($request->return_time ?? '09:00:00');
 
-        if ($request->has('pickup_date') && $request->has('return_date')) {
-            // 1. Prepare requested Date + Time strings from request
-            $pDate = $request->pickup_date . ' ' . ($request->pickup_time ?? '09:00:00');
-            $rDate = $request->return_date . ' ' . ($request->return_time ?? '09:00:00');
+    // 1. Fetch ALL vehicles
+    $vehicles = Vehicle::where('status', '!=', 'inactive')
+        ->with(['bookings' => function($q) use ($pDate, $rDate) {
+            $q->whereNotIn('bookingStatus', ['Cancelled', 'Rejected', 'Deleted'])
+              ->where(function($query) use ($pDate, $rDate) {
+                  $query->whereBetween('originalDate', [$pDate, $rDate])
+                        ->orWhereBetween('returnDate', [$pDate, $rDate])
+                        ->orWhere(function($sub) use ($pDate, $rDate) {
+                            $sub->where('originalDate', '<=', $pDate)
+                                ->where('returnDate', '>=', $rDate);
+                        });
+              });
+        }])->get();
+
+    // 2. Map results (Fixing the variable name to $searchResults)
+    $searchResults = $vehicles->map(function($v) {
+        $clash = $v->bookings->first();
+        $busyTime = null;
+
+        if ($clash) {
+            // Force string conversion to prevent Carbon formatting errors
+            $sD = is_object($clash->originalDate) ? $clash->originalDate->format('Y-m-d') : substr($clash->originalDate, 0, 10);
+            $eD = is_object($clash->returnDate) ? $clash->returnDate->format('Y-m-d') : substr($clash->returnDate, 0, 10);
             
-            $reqModel = $request->model;
-
-            // 2. Query Vehicles 
-            $searchResults = Vehicle::with(['bookings' => function($q) use ($pDate, $rDate) {
-                // This part stays the same: it fetches the clashing bookings for the timeline
-                $q->whereNotIn('bookingStatus', ['Cancelled', 'Rejected', 'Deleted'])
-                    ->where(function($query) use ($pDate, $rDate) {
-                        $query->whereBetween('originalDate', [$pDate, $rDate])
-                                ->orWhereBetween('returnDate', [$pDate, $rDate])
-                                ->orWhere(function($sub) use ($pDate, $rDate) {
-                                    $sub->where('originalDate', '>=', $pDate)
-                                        ->where('returnDate', '<=', $rDate);
-                                })
-                                ->orWhere(function($sub) use ($pDate, $rDate) {
-                                    $sub->where('originalDate', '<=', $pDate)
-                                        ->where('returnDate', '>=', $rDate);
-                                });
-                })
-                ->orderBy('originalDate', 'asc')
-                ->orderBy('bookingTime', 'asc');
-            }])
-            ->where('status', '!=', 'inactive')
-            // [NEW LOGIC] Exclude vehicles that are booked for the ENTIRE duration
-            ->whereDoesntHave('bookings', function($q) use ($pDate, $rDate) {
-                $q->whereNotIn('bookingStatus', ['Cancelled', 'Rejected', 'Deleted'])
-                ->where('originalDate', '<=', $pDate)
-                ->where('returnDate', '>=', $rDate);
-            })
-            ->when($reqModel && $reqModel != 'all', function($q) use ($reqModel) {
-                return $q->where('model', $reqModel);
-            })
-            ->get();
+            $start = \Carbon\Carbon::parse($sD . ' ' . $clash->bookingTime)->format('d/m h:i a');
+            $end = \Carbon\Carbon::parse($eD . ' ' . $clash->returnTime)->format('d/m h:i a');
+            $busyTime = $start . ' - ' . $end;
         }
+
+        return [
+            'plateNo' => $v->plateNo,
+            'model' => $v->model,
+            'is_available' => $v->bookings->isEmpty(),
+            'busy_time' => $busyTime
+        ];
+    })->sortByDesc('is_available')->values();
+
+    // 3. RETURN the correct variable
+    return response()->json([
+        'searchResults' => $searchResults
+    ]);
+}
 
         return view('staff.dashboard', compact(
             'totalRevenue', 'revenueGrowth', 'activeRentalsCount', 'pendingBookingsCount', 'fullyPaidCount', 'depositPaidCount',
             'totalCustomers', 'pendingCustomersCount', 'chartLabels', 'chartRevenue', 'chartBookings',
             'pickupsToday', 'returnsToday', 'recentBookings', 
             'totalVehicles', 'utilizationRate', 'maintenanceRate', 'todayRevenue', 'overdueCount',
-            'vehicleModels', 'searchResults', 'calendarEvents' 
+            'calendarEvents' 
         ));
     }
 
