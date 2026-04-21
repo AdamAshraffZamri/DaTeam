@@ -197,7 +197,7 @@
                             </div>
 
                             @if($user->student_card_image)
-                                <a href="{{ route('profile.preview', ['type' => 'student_card']) }}" target="_blank" 
+                                <a href="{{ asset($user->student_card_image) }}" target="_blank" 
                                 class="bg-orange-500/20 border border-orange-500/50 text-orange-400 px-4 rounded-xl flex items-center hover:bg-orange-500/40 transition">
                                     <i class="fas fa-eye"></i>
                                 </a>
@@ -227,7 +227,7 @@
                             </div>
 
                             @if($user->ic_passport_image)
-                                <a href="{{ route('profile.preview', ['type' => 'ic_passport']) }}" target="_blank" 
+                                <a href="{{ asset($user->ic_passport_image) }}" target="_blank" 
                                 class="bg-orange-500/20 border border-orange-500/50 text-orange-400 px-4 rounded-xl flex items-center hover:bg-orange-500/40 transition">
                                     <i class="fas fa-eye"></i>
                                 </a>
@@ -257,7 +257,7 @@
                             </div>
 
                             @if($user->driving_license_image)
-                                <a href="{{ route('profile.preview', ['type' => 'driving_license']) }}" target="_blank" 
+                                <a href="{{ asset($user->driving_license_image) }}" target="_blank" 
                                 class="bg-orange-500/20 border border-orange-500/50 text-orange-400 px-4 rounded-xl flex items-center hover:bg-orange-500/40 transition">
                                     <i class="fas fa-eye"></i>
                                 </a>
