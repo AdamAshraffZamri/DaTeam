@@ -97,6 +97,8 @@ class StaffBookingController extends Controller
         $pendingBookingsCount = Booking::whereIn('bookingStatus', ['Pending', 'Submitted', 'Deposit Paid'])->count();
         $totalCustomers = \App\Models\Customer::count();
         $pendingCustomersCount = \App\Models\Customer::where('accountStat', 'pending')->count();
+        $fullyPaidCount = Booking::where('bookingStatus', 'Confirmed')->count();
+        $depositPaidCount = Booking::where('bookingStatus', 'Deposit Paid')->count();
 
         // 2. === CHART DATA ===
         $period = $request->input('chart_period', 'daily'); 
@@ -162,9 +164,11 @@ class StaffBookingController extends Controller
                 'start' => $b->originalDate . 'T' . $b->bookingTime,
                 'end' => $b->returnDate . 'T' . $b->returnTime,
                 'extendedProps' => [
+                    'vID' => $b->vehicleID,
                     'type' => 'booking',
                     'plate' => $b->vehicle->plateNo ?? 'Unknown',
                     'status' => $b->bookingStatus,
+                    'source' => $b->external_company ? 'External' : 'Customer',
                     'customer_name' => $b->customer->fullName ?? 'Guest' // Store Name Here for Popup
                 ]
             ];
@@ -214,7 +218,7 @@ class StaffBookingController extends Controller
         }
 
         return view('staff.dashboard', compact(
-            'totalRevenue', 'revenueGrowth', 'activeRentalsCount', 'pendingBookingsCount',
+            'totalRevenue', 'revenueGrowth', 'activeRentalsCount', 'pendingBookingsCount', 'fullyPaidCount', 'depositPaidCount',
             'totalCustomers', 'pendingCustomersCount', 'chartLabels', 'chartRevenue', 'chartBookings',
             'pickupsToday', 'returnsToday', 'recentBookings', 
             'totalVehicles', 'utilizationRate', 'maintenanceRate', 'todayRevenue', 'overdueCount',
