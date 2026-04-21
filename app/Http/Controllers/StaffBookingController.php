@@ -184,12 +184,10 @@ class StaffBookingController extends Controller
         ->with(['bookings' => function($q) use ($pDate, $rDate) {
             $q->whereNotIn('bookingStatus', ['Cancelled', 'Rejected', 'Deleted'])
               ->where(function($query) use ($pDate, $rDate) {
-                  $query->whereBetween('originalDate', [$pDate, $rDate])
-                        ->orWhereBetween('returnDate', [$pDate, $rDate])
-                        ->orWhere(function($sub) use ($pDate, $rDate) {
-                            $sub->where('originalDate', '<=', $pDate)
-                                ->where('returnDate', '>=', $rDate);
-                        });
+                  // A booking clashes if:
+                  // 1. It starts before your return AND ends after your pickup
+                  $query->where('originalDate', '<', $rDate)
+                        ->where('returnDate', '>', $pDate);
               });
         }])->get();
 
