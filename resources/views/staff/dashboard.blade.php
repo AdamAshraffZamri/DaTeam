@@ -7,6 +7,52 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <style>
+    /* --- Custom Timeline Styling --- */
+    .timeline-wrapper { position: relative; width: 100%; overflow-x: auto; overflow-y: auto; max-height: 600px; }
+    .timeline-cell { width: 90px; min-width: 90px; flex-shrink: 0; }    
+    
+    /* Sticky Elements & Colors */
+    .header-row { position: sticky; top: 0; z-index: 30; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
+    .vehicle-col { 
+        width: 120px; 
+        min-width: 120px; 
+        position: sticky; 
+        left: 0; /* Makes it stick to the left */
+        z-index: 20; 
+        border-right: 2px solid #fed7aa; /* orange-200 border */
+    }
+    .header-col-sticky { z-index: 40; }
+    
+    /* Consistent Plate Box */
+    .plate-badge {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 86px;
+        height: 32px;
+        background: white;
+        border: 2px solid #e2e8f0;
+        border-radius: 6px;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    }
+
+    /* Event Blocks - Taller & Stackable */
+    .timeline-event { 
+        position: absolute; 
+        border-radius: 6px; 
+        cursor: pointer; 
+        transition: filter 0.1s, transform 0.1s;
+        z-index: 10;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        padding: 4px 8px;
+        border: 1px solid rgba(0,0,0,0.1);
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .timeline-event:hover { filter: brightness(1.1); transform: translateY(-1px); z-index: 50; }
+
     /* --- Calendar Styling --- */
     .fc-theme-standard td, .fc-theme-standard th { border-color: #f1f5f9; }
     .fc-col-header-cell-cushion { text-transform: uppercase; font-size: 10px; font-weight: 800; color: #94a3b8; padding: 12px 0; letter-spacing: 0.05em; }
@@ -146,41 +192,7 @@
         {{-- 2. METRICS GRID --}}
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             
-            {{-- Card 1: Revenue -> Reporting --}}
-            <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm hover:border-orange-200 transition-colors group relative">
-                <a href="{{ route('staff.reports.index') }}" class="absolute inset-0 z-10"></a>
-                <div class="flex justify-between items-start">
-                    <div>
-                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Revenue</p>
-                        <h3 class="text-2xl font-black text-slate-800 mt-1">RM {{ number_format($totalRevenue) }}</h3>
-                    </div>
-                    <div class="p-2.5 bg-green-100 text-green-700 rounded-xl group-hover:bg-green-600 group-hover:text-white transition-all shadow-sm">
-                        <i class="fas fa-wallet text-lg"></i>
-                    </div>
-                </div>
-                <div class="mt-3 text-[10px] font-bold text-green-600 flex items-center gap-1">
-                    <i class="fas fa-arrow-up"></i> {{ $revenueGrowth }}% vs last month
-                </div>
-            </div>
-
-            {{-- Card 2: Active Rentals -> Bookings --}}
-            <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm hover:border-orange-200 transition-colors group relative">
-                <a href="{{ route('staff.bookings.index', ['search' => '', 'status' => 'Active']) }}" class="absolute inset-0 z-10"></a>
-                <div class="flex justify-between items-start">
-                    <div>
-                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Active Rentals</p>
-                        <h3 class="text-2xl font-black text-slate-800 mt-1">{{ $activeRentalsCount }}</h3>
-                    </div>
-                    <div class="p-2.5 bg-blue-100 text-blue-700 rounded-xl group-hover:bg-blue-600 group-hover:text-white transition-all shadow-sm">
-                        <i class="fas fa-car-side text-lg"></i>
-                    </div>
-                </div>
-                <div class="mt-3 w-full bg-gray-100 rounded-full h-1.5 overflow-hidden">
-                    <div class="bg-blue-600 h-1.5 rounded-full" style="width: {{ $utilizationRate }}%"></div>
-                </div>
-            </div>
-
-            {{-- Card 3: Pending Booking -> Bookings (Pending Filter) --}}
+            {{-- Card 1: Submitted Booking --}}
             <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm hover:border-orange-200 transition-colors group relative">
                 <a href="{{ route('staff.bookings.index', ['search' => '', 'status' => 'Submitted']) }}" class="absolute inset-0 z-10"></a>
                 <div class="flex justify-between items-start">
@@ -192,34 +204,54 @@
                         <i class="fas fa-hourglass-half text-lg"></i>
                     </div>
                 </div>
-                <div class="mt-3 text-[10px] font-bold text-orange-600">Needs verification</div>
+                <div class="mt-3 text-sm font-bold text-orange-600">Needs verification</div>
             </div>
 
-            {{-- Card 4: Customers -> Customer List --}}
-            <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm hover:border-orange-200 transition-colors group relative">
+            {{-- Card 2: Deposit Paid Bookings --}}
+            <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm hover:border-blue-200 transition-colors group relative">
+                <a href="{{ route('staff.bookings.index', ['search' => '', 'status' => 'Deposit Paid']) }}" class="absolute inset-0 z-10"></a>
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Deposit Paid</p>
+                        <h3 class="text-2xl font-black text-slate-800 mt-1">{{ $depositPaidCount ?? 0 }}</h3>
+                    </div>
+                    <div class="p-2.5 bg-blue-100 text-blue-700 rounded-xl group-hover:bg-blue-600 group-hover:text-white transition-all shadow-sm">
+                        <i class="fas fa-file-invoice-dollar text-lg"></i>
+                    </div>
+                </div>
+                <div class="mt-3 text-sm font-bold text-blue-600">Awaiting full payment</div>
+            </div>
+
+            {{-- Card 3: Fully Paid Bookings --}}
+            <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm hover:border-green-200 transition-colors group relative">
+                <a href="{{ route('staff.bookings.index', ['search' => '', 'status' => 'Fully Paid']) }}" class="absolute inset-0 z-10"></a>
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Fully Paid</p>
+                        <h3 class="text-2xl font-black text-slate-800 mt-1">{{ $fullyPaidCount ?? 0 }}</h3>
+                    </div>
+                    <div class="p-2.5 bg-green-100 text-green-700 rounded-xl group-hover:bg-green-600 group-hover:text-white transition-all shadow-sm">
+                        <i class="fas fa-check-double text-lg"></i>
+                    </div>
+                </div>
+                <div class="mt-3 text-sm font-bold text-green-600">Ready for pickup</div>
+            </div>
+
+            {{-- Card 4: Pending Customers ONLY --}}
+            <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm hover:border-purple-200 transition-colors group relative">
                 <a href="{{ route('staff.customers.index', ['search' => '', 'status' => 'pending']) }}" class="absolute inset-0 z-10"></a>
                 <div class="flex justify-between items-start">
                     <div>
-                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Customers</p>
-                        <h3 class="text-2xl font-black text-slate-800 mt-1">{{ $totalCustomers }}</h3>
-                        @if($pendingCustomersCount > 0)
-                            <div class="flex items-center gap-1.5 mt-1 animate-pulse">
-                                <i class="fas fa-user-clock text-amber-500 text-[10px]"></i>
-                                <span class="text-[10px] font-bold text-amber-600">{{ $pendingCustomersCount }} pending verification</span>
-                            </div>
-                        @else
-                            <div class="flex items-center gap-1.5 mt-1">
-                                <i class="fas fa-check-circle text-green-500 text-[10px]"></i>
-                                <span class="text-[10px] font-bold text-green-600">All verified</span>
-                            </div>
-                        @endif
+                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Pending Customers</p>
+                        <h3 class="text-2xl font-black text-slate-800 mt-1">{{ $pendingCustomersCount }}</h3>
                     </div>
                     <div class="p-2.5 bg-purple-100 text-purple-700 rounded-xl group-hover:bg-purple-600 group-hover:text-white transition-all shadow-sm">
-                        <i class="fas fa-users text-lg"></i>
+                        <i class="fas fa-user-clock text-lg"></i>
                     </div>
                 </div>
-                <div class="mt-3 text-[10px] font-bold text-slate-400">Total registered users</div>
+                <div class="mt-3 text-sm font-bold text-red-600 animate-pulse">Needs verification</div>
             </div>
+            
         </div>
 
         <div class="grid grid-cols-1 xl:grid-cols-3 gap-6 items-start">
@@ -250,19 +282,52 @@
                     </div>
                 </div>
 
-                {{-- CALENDAR SECTION --}}
-                <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
-                    <div class="flex justify-between items-center mb-6">
+                {{-- NEW TIMELINE SECTION --}}
+                <div class="bg-white rounded-xl border border-gray-200 shadow-sm flex flex-col">
+                    
+                    <!-- {{-- Card Header --}}
+                    <div class="p-6 border-b border-gray-100 flex justify-between items-center shrink-0 z-50">
                         <div>
-                            <h2 class="text-lg font-bold text-slate-800">Booking Calendar</h2>
-                            <p class="text-xs text-slate-500 font-medium" id="calendarTitle"></p>
+                            <h2 class="text-lg font-bold text-slate-800 truncate">Booking Calendar</h2>
                         </div>
-                        <div class="flex items-center gap-1 bg-gray-50 p-1 rounded-lg border border-gray-100">
-                            <button id="prevBtn" class="w-7 h-7 rounded hover:bg-white flex items-center justify-center text-gray-500 shadow-sm transition"><i class="fas fa-chevron-left text-xs"></i></button>
-                            <button id="nextBtn" class="w-7 h-7 rounded hover:bg-white flex items-center justify-center text-gray-500 shadow-sm transition"><i class="fas fa-chevron-right text-xs"></i></button>
+                        
+                        {{-- Month Filter --}}
+                        <form action="{{ route('staff.dashboard') }}" method="GET" class="flex items-center gap-3">
+                            <label class="text-sm font-bold text-slate-500">Month:</label>
+                            <input type="month" name="calendar_month" 
+                                   value="{{ request('calendar_month', date('Y-m')) }}" 
+                                   onchange="this.form.submit()"
+                                   class="bg-slate-50 border border-slate-200 text-slate-700 text-sm font-bold rounded-2xl px-3 py-1.5 focus:border-slate-400 outline-none cursor-pointer shadow-sm transition-colors hover:bg-slate-100 min-w-[140px]">
+                        </form>
+                    </div> -->
+                    
+                    {{-- Card Header --}}
+                    <div class="p-5 md:p-6 border-b border-gray-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 shrink-0 z-50">
+                        <div>
+                            <h2 class="text-lg font-bold text-slate-800 truncate">Booking Calendar</h2>
+                        </div>
+                        
+                        {{-- Month Filter --}}
+                        <form action="{{ route('staff.dashboard') }}" method="GET" class="flex items-center gap-3">
+                            <label class="text-sm font-bold text-slate-500">Month:</label>
+                            <input type="month" name="calendar_month" 
+                                   value="{{ request('calendar_month', date('Y-m')) }}" 
+                                   onchange="this.form.submit()"
+                                   class="bg-slate-50 border border-slate-200 text-slate-700 text-sm font-bold rounded-2xl px-3 py-1.5 focus:border-slate-400 outline-none cursor-pointer shadow-sm transition-colors hover:bg-slate-100 min-w-[140px]">
+                        </form>
+                    </div>
+
+                    {{-- Inner Padded Timeline Area --}}
+                    <div class="p-5"> 
+                        {{-- Rectangular shape with curved border --}}
+                        <div class="border border-slate-200 rounded-lg overflow-hidden shadow-sm bg-slate-50">
+                            <div class="timeline-wrapper custom-scrollbar" id="timelineScroll">
+                                <div id="timelineGrid" class="min-w-max relative flex flex-col">
+                                    </div>
+                            </div>
                         </div>
                     </div>
-                    <div id="dashboardCalendar" class="apple-calendar text-xs"></div>
+
                 </div>
             </div>
 
@@ -694,91 +759,251 @@
             }
         });
 
-        // 2. Calendar Logic
-        var calendarEl = document.getElementById('dashboardCalendar');
-        var events = @json($calendarEvents); 
+        // 2. TIMELINE LOGIC
+        const timelineEvents = @json($calendarEvents);
+        const container = document.getElementById('timelineGrid');
+        const scrollContainer = document.getElementById('timelineScroll');
 
-        var calendar = new FullCalendar.Calendar(calendarEl, {
-            initialView: 'dayGridMonth',
-            headerToolbar: false,
-            height: 'auto',
-            dayMaxEvents: 2,
-            events: events,
+        // Configuration
+        const CELL_WIDTH = 90; // Matches new CSS
+        
+        // Month Setup based on filter
+        const selectedMonthStr = '{{ request("calendar_month", date("Y-m")) }}';
+        const [year, month] = selectedMonthStr.split('-');
+        const startDate = new Date(year, month - 1, 1);
+        const endDate = new Date(year, month, 0); // Gets last day of the month
+        const TOTAL_DAYS = endDate.getDate();
+
+        const dates = [];
+        for(let i=0; i < TOTAL_DAYS; i++) {
+            let d = new Date(startDate);
+            d.setDate(1 + i);
+            dates.push(d);
+        }
+
+        // Group Events by Vehicle
+        const vehicles = {};
+        timelineEvents.forEach(ev => {
+            const props = ev.extendedProps || {};
+            const vId = props.vID || ev.title || 'unknown'; 
             
-            // --- FIX: HIDE TIME FROM LABEL ---
-            displayEventTime: false, 
-            // ---------------------------------
+            if (!vehicles[vId]) {
+                vehicles[vId] = {
+                    id: props.vID,
+                    plate: props.plate || 'Pending',
+                    events: []
+                };
+            }
+            vehicles[vId].events.push(ev);
+        });
 
-            eventDidMount: function(info) {
-                // Style: Blue light background, Dark Text
-                info.el.style.backgroundColor = '#eff6ff'; 
-                info.el.style.borderLeft = '3px solid #3b82f6'; 
-                info.el.style.color = '#475569'; // Slate-600
-                info.el.style.fontSize = '10px';
-                info.el.style.fontWeight = '700';
+        // Build Header (Orange Theme & Fixed Sticky)
+        let html = `<div class="flex header-row bg-orange-50 rounded-t-lg">
+            <div class="vehicle-col p-4 flex items-center justify-center header-col-sticky bg-orange-500 border-r border-orange-700">
+                <span class="text-[11px] font-black text-white uppercase tracking-widest">Plate No.</span>
+            </div>
+            <div class="flex border-b border-orange-200">`;
+
+        dates.forEach((d, index) => {
+            const isToday = d.getTime() === new Date().setHours(0,0,0,0);
+            const dayNum = d.getDate();
+            const dayName = d.toLocaleDateString('en-US', {weekday: 'short'});
+            
+            // Orange theme: Bright orange for today, light orange for normal days
+            const bgClass = isToday ? 'bg-orange-500' : 'bg-orange-50';
+            const borderClass = isToday ? 'border-orange-600' : 'border-orange-200';
+            const textClassDay = isToday ? 'text-orange-100' : 'text-orange-400';
+            const textClassNum = isToday ? 'text-white' : 'text-orange-900';
+
+            html += `
+                <div class="timeline-cell flex flex-col items-center justify-center border-r ${borderClass} ${bgClass} py-2">
+                    <span class="text-[9px] font-bold ${textClassDay} uppercase tracking-wider">${dayName}</span>
+                    <span class="text-sm font-black ${textClassNum} mt-0.5">${dayNum}</span>
+                </div>`;
+        });
+        html += `</div></div>`;
+
+        // Build Vehicle Rows
+        Object.values(vehicles).forEach(v => {
+            // Sort events by start date to handle overlapping correctly
+            v.events.sort((a,b) => new Date(a.start) - new Date(b.start));
+            
+            const EVENT_HEIGHT = 48; 
+            const EVENT_GAP = 8;
+            
+            // FIX: Track visual right-edge pixels instead of time to prevent overlap
+            let rowEndPixels = []; 
+            
+            // Stacking Logic (Collision Detection based on VISUAL pixels)
+            v.events.forEach(ev => {
+                const safeStart = typeof ev.start === 'string' ? ev.start.replace(' ', 'T') : ev.start;
+                const safeEnd = typeof ev.end === 'string' ? ev.end.replace(' ', 'T') : ev.end;
+                const eStart = new Date(safeStart);
+                const eEnd = ev.end ? new Date(safeEnd) : new Date(eStart.getTime() + 2 * 60 * 60 * 1000); 
+
+                const startDiffDays = (eStart - startDate) / (1000 * 60 * 60 * 24);
+                const durationDays = (eEnd - eStart) / (1000 * 60 * 60 * 24);
+
+                // Calculate visual left position
+                const left = Math.max(0, startDiffDays * CELL_WIDTH);
                 
-                // Ensure internal elements inherit color
-                const content = info.el.querySelector('.fc-event-main-frame') || info.el;
-                if(content) content.style.color = '#475569';
-            },
-            eventClick: function(info) {
-                // (Keep existing popup logic...)
-                var props = info.event.extendedProps;
-                let start = info.event.start.toLocaleString([], {month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'});
-                let end = info.event.end ? info.event.end.toLocaleString([], {month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'}) : '-';
+                // Calculate visual width (enforcing the minimum 90% cell width)
+                let rawWidth = durationDays * CELL_WIDTH;
+                if (startDiffDays < 0) rawWidth += (startDiffDays * CELL_WIDTH); 
+                const actualWidth = Math.max(rawWidth, CELL_WIDTH * 0.9);
+                const rightPixel = left + actualWidth;
 
-                Swal.fire({
-                    title: `<div class="flex items-center gap-3">
-                                <div class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600"><i class="fas fa-calendar-check"></i></div>
-                                <div class="text-left">
-                                    <h3 class="text-lg font-bold text-slate-900 leading-tight">Booking #${info.event.id}</h3>
-                                    <p class="text-xs font-medium text-slate-400 uppercase tracking-wider">${info.event.title}</p>
-                                </div>
-                            </div>`,
-                    html: `
-                        <div class="text-left font-sans mt-4 space-y-3">
-                            <div class="bg-slate-50 p-3 rounded-xl border border-slate-100">
-                                <p class="text-xs font-bold text-slate-500 uppercase mb-1">Customer</p>
-                                <p class="text-sm font-bold text-slate-900">${props.customer_name}</p>
-                            </div>
-                            <div class="grid grid-cols-2 gap-3">
-                                <div class="bg-slate-50 p-3 rounded-xl border border-slate-100">
-                                    <p class="text-xs font-bold text-slate-500 uppercase mb-1">Start</p>
-                                    <p class="text-xs font-bold text-slate-800">${start}</p>
-                                </div>
-                                <div class="bg-slate-50 p-3 rounded-xl border border-slate-100">
-                                    <p class="text-xs font-bold text-slate-500 uppercase mb-1">End</p>
-                                    <p class="text-xs font-bold text-slate-800">${end}</p>
-                                </div>
-                            </div>
-                            <div class="flex justify-between items-center pt-2">
-                                <span class="text-xs font-bold text-slate-500 uppercase">Status</span>
-                                <span class="text-xs font-bold px-2 py-1 rounded bg-blue-100 text-blue-700">${props.status}</span>
-                            </div>
-                        </div>`,
-                    showCancelButton: true,
-                    confirmButtonText: 'View Details',
-                    cancelButtonText: 'Close',
-                    customClass: {
-                        popup: 'rounded-3xl p-0 w-full max-w-sm overflow-hidden',
-                        actions: 'bg-slate-50 px-6 py-4 border-t border-slate-100 w-full flex flex-row-reverse gap-3 m-0',
-                        confirmButton: 'bg-blue-600 hover:bg-blue-700 text-white rounded-xl px-5 py-2.5 text-sm font-bold shadow-lg shadow-blue-200 transition-all w-full',
-                        cancelButton: 'bg-white hover:bg-slate-50 text-slate-500 hover:text-slate-700 border border-slate-200 rounded-xl px-5 py-2.5 text-sm font-bold transition-all w-full'
+                // Determine row based on pixel availability
+                let assignedRow = -1;
+                for(let i=0; i < rowEndPixels.length; i++) {
+                    // Check if the left edge is past the previous event's right edge + 4px gap
+                    if (left >= rowEndPixels[i] + 4) { 
+                        assignedRow = i; break;
                     }
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        window.location.href = `/staff/bookings/${info.event.id}`;
-                    }
-                });
+                }
+                
+                if (assignedRow === -1) {
+                    assignedRow = rowEndPixels.length;
+                    rowEndPixels.push(rightPixel);
+                } else {
+                    rowEndPixels[assignedRow] = rightPixel;
+                }
+                
+                ev._rowIndex = assignedRow;
+                ev._eStart = eStart;
+                ev._eEnd = eEnd;
+                ev._left = left;
+                ev._width = Math.min(actualWidth, (TOTAL_DAYS * CELL_WIDTH) - left); // Prevent cutoff
+            });
+
+            const rowCount = Math.max(1, rowEndPixels.length);
+            const containerHeight = (rowCount * (EVENT_HEIGHT + EVENT_GAP)) + EVENT_GAP;
+
+            html += `<div class="flex relative border-b border-orange-100 bg-white hover:bg-orange-50/40 transition-colors group" style="height: ${containerHeight}px">
+                
+                <div class="vehicle-col flex flex-col justify-center items-center bg-slate-100 group-hover:bg-orange-50 transition-colors border-r border-orange-200 z-20">
+                    <a href="/staff/fleet/${v.id}" class="plate-badge border-orange-200 text-orange-900 shadow-sm bg-white hover:bg-orange-500 hover:text-white hover:border-orange-600 transition-all cursor-pointer decoration-none">
+                        <span class="text-xs font-black tracking-wider">${v.plate}</span>
+                    </a>
+                </div>
+                
+                <div class="flex relative min-w-max z-10">`;
+
+            dates.forEach((d) => {
+                const isToday = d.getTime() === new Date().setHours(0,0,0,0);
+                html += `<div class="timeline-cell border-r border-orange-100/60 ${isToday ? 'bg-orange-50/60' : 'bg-transparent'}"></div>`;
+            });
+
+            // Place Events (Now using pre-calculated visual positions)
+            v.events.forEach(ev => {
+                if (!ev._eStart) return; // Skip if invalid
+                
+                const startTimeStr = ev._eStart.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                const endTimeStr = ev._eEnd.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                
+                const rawCustomerName = ev.extendedProps?.customer_name || 'Customer';
+                const customer = rawCustomerName.split(' ').slice(0, 2).join(' ');
+                
+                const topOffset = EVENT_GAP + (ev._rowIndex * (EVENT_HEIGHT + EVENT_GAP));
+                const eventData = encodeURIComponent(JSON.stringify(ev));
+
+                const isExternal = ev.extendedProps?.type === 'External' || ev.extendedProps?.source === 'External';
+                const bgClass = isExternal ? 'bg-purple-50' : 'bg-[#eff6ff]';
+                
+                html += `
+                    <div class="timeline-event ${bgClass} shadow-sm border border-slate-200"
+                         style="left: ${ev._left}px; width: ${ev._width}px; top: ${topOffset}px; height: ${EVENT_HEIGHT}px; border-left: 3px solid; border-left-color: ${isExternal ? '#a855f7' : '#3b82f6'}; align-items: flex-start; padding-top: 6px;"
+                         onclick="openEventPopup('${eventData}')">
+                        
+                        <span class="text-[11px] font-black text-slate-700 w-full truncate leading-none mb-0.5">
+                            ${customer}
+                        </span>
+                        
+                        <span class="text-[8.5px] font-bold text-slate-500 whitespace-normal leading-tight">
+                            ${startTimeStr} - <br> ${endTimeStr}
+                        </span>
+                    </div>
+                `;
+            });
+
+            html += `</div></div>`;
+        });
+
+        container.innerHTML = html;
+
+        // Auto-scroll logic
+        window.alignCalendarView = function() {
+            const realToday = new Date();
+            // Format today's date as YYYY-MM to compare with the filter
+            const currentMonthStr = realToday.getFullYear() + '-' + String(realToday.getMonth() + 1).padStart(2, '0');
+            
+            if (selectedMonthStr === currentMonthStr) {
+                // If viewing the current month, scroll to today (minus 1 cell for visual padding)
+                const targetX = Math.max(0, (realToday.getDate() - 2) * CELL_WIDTH);
+                scrollContainer.scrollTo({ left: targetX, behavior: 'smooth' });
+            } else {
+                // If viewing any other month, snap to the 1st day
+                scrollContainer.scrollTo({ left: 0, behavior: 'smooth' });
+            }
+        };
+
+        // Trigger scroll immediately after the calendar renders
+        setTimeout(window.alignCalendarView, 100);
+    });
+
+    // Extract your existing SweetAlert popup logic to a global function
+    window.openEventPopup = function(encodedData) {
+        const ev = JSON.parse(decodeURIComponent(encodedData));
+        const props = ev.extendedProps || {};
+        
+        // Formatting dates for the popup
+        const start = new Date(ev.start).toLocaleString([], {month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'});
+        const end = ev.end ? new Date(ev.end).toLocaleString([], {month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'}) : '-';
+
+        // Your exact SweetAlert layout
+        Swal.fire({
+            title: `<div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600"><i class="fas fa-calendar-check"></i></div>
+                        <div class="text-left">
+                            <h3 class="text-lg font-bold text-slate-900 leading-tight">Booking #${ev.id || 'N/A'}</h3>
+                            <p class="text-xs font-medium text-slate-400 uppercase tracking-wider">${ev.title || 'Booking'}</p>
+                        </div>
+                    </div>`,
+            html: `
+                <div class="text-left font-sans mt-4 space-y-3">
+                    <div class="bg-slate-50 p-3 rounded-xl border border-slate-100">
+                        <p class="text-xs font-bold text-slate-500 uppercase mb-1">Customer</p>
+                        <p class="text-sm font-bold text-slate-900">${props.customer_name || 'Not specified'}</p>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="bg-slate-50 p-3 rounded-xl border border-slate-100">
+                            <p class="text-xs font-bold text-slate-500 uppercase mb-1">Start</p>
+                            <p class="text-xs font-bold text-slate-800">${start}</p>
+                        </div>
+                        <div class="bg-slate-50 p-3 rounded-xl border border-slate-100">
+                            <p class="text-xs font-bold text-slate-500 uppercase mb-1">End</p>
+                            <p class="text-xs font-bold text-slate-800">${end}</p>
+                        </div>
+                    </div>
+                    <div class="flex justify-between items-center pt-2">
+                        <span class="text-xs font-bold text-slate-500 uppercase">Status</span>
+                        <span class="text-xs font-bold px-2 py-1 rounded bg-blue-100 text-blue-700">${props.status || 'Active'}</span>
+                    </div>
+                </div>`,
+            showCancelButton: true,
+            confirmButtonText: 'View Details',
+            cancelButtonText: 'Close',
+            customClass: {
+                popup: 'rounded-3xl p-0 w-full max-w-sm overflow-hidden',
+                actions: 'bg-slate-50 px-6 py-4 border-t border-slate-100 w-full flex flex-row-reverse gap-3 m-0',
+                confirmButton: 'bg-blue-600 hover:bg-blue-700 text-white rounded-xl px-5 py-2.5 text-sm font-bold shadow-lg shadow-blue-200 transition-all w-full',
+                cancelButton: 'bg-white hover:bg-slate-50 text-slate-500 hover:text-slate-700 border border-slate-200 rounded-xl px-5 py-2.5 text-sm font-bold transition-all w-full'
+            }
+        }).then((result) => {
+            if (result.isConfirmed && ev.id) {
+                window.location.href = `/staff/bookings/${ev.id}`;
             }
         });
-        
-        calendar.render();
-        
-        // Sync Title & Custom Buttons
-        document.getElementById('calendarTitle').innerText = calendar.view.title;
-        document.getElementById('prevBtn').addEventListener('click', function() { calendar.prev(); document.getElementById('calendarTitle').innerText = calendar.view.title; });
-        document.getElementById('nextBtn').addEventListener('click', function() { calendar.next(); document.getElementById('calendarTitle').innerText = calendar.view.title; });
-    });
+    };
 </script>
 @endsection
