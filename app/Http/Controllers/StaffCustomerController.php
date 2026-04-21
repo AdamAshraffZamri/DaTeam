@@ -8,6 +8,7 @@ use App\Models\Penalties;
 use Illuminate\Http\Request;
 use App\Services\GoogleDriveService;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
 
 /**
@@ -417,5 +418,23 @@ class StaffCustomerController extends Controller
         } catch (\Exception $e) {
             return back()->with('error', 'Google Drive Error: ' . $e->getMessage());
         }
+    }
+
+    public function viewPenaltyReceipt($id)
+    {
+        $penalty = Penalties::findOrFail($id);
+        
+        if (!$penalty->payment_proof) {
+            abort(404, 'Receipt not found.');
+        }
+
+        // Build the file path
+        $filePath = storage_path('app/public/' . $penalty->payment_proof);
+        
+        if (!file_exists($filePath)) {
+            abort(404, 'File not found.');
+        }
+
+        return response()->file($filePath);
     }
 }

@@ -103,6 +103,7 @@ Route::middleware('auth')->group(function () {
     
     Route::get('/finance/pay-fine/{id}', [FinanceController::class, 'payFine'])->name('finance.pay_fine');
     Route::post('/finance/pay-fine/{id}', [FinanceController::class, 'submitFine'])->name('finance.submit_fine');
+    Route::get('/finance/penalty-receipt/{id}', [FinanceController::class, 'viewPenaltyReceipt'])->name('finance.penalty_receipt');
 
     // 5. Loyalty & Vouchers (FIXED SECTION)
     Route::get('/loyalty', [LoyaltyController::class, 'index'])->name('loyalty.index');
@@ -207,6 +208,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/customers/{id}/blacklist', [App\Http\Controllers\StaffCustomerController::class, 'toggleBlacklist'])->name('staff.customers.blacklist');
     Route::post('/customers/{id}/penalty', [App\Http\Controllers\StaffCustomerController::class, 'imposePenalty'])->name('staff.customers.penalty');
     Route::post('/penalty/{id}/verify', [App\Http\Controllers\StaffCustomerController::class, 'verifyPenalty'])->name('staff.penalty.verify');
+    Route::get('/penalty-receipt/{id}', [App\Http\Controllers\StaffCustomerController::class, 'viewPenaltyReceipt'])->name('staff.penalty_receipt');
     Route::get('/customers/view-document/{customerId}/{type}', [StaffCustomerController::class, 'viewDocument'])->name('staff.customers.view_document');
 
     // --- SEPARATE INSPECTION MODE (If needed for dedicated page) ---

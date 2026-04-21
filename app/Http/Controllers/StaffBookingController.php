@@ -262,6 +262,12 @@ class StaffBookingController extends Controller
             }
         }
 
+        // 3. FILTER BY PICKUP DATE
+        if ($request->filled('pickup_date')) {
+            $pickupDate = $request->pickup_date;
+            $query->whereDate('originalDate', $pickupDate);
+        }
+
         // $bookings = $query->latest()->get();
         // $bookings = $query->orderByRaw("FIELD(bookingStatus, 'Submitted', 'Paid', 'Deposit Paid', 'Confirmed', 'Active', 'Completed', 'Cancelled', 'Rejected') ASC")
         //           ->orderBy('originalDate', 'desc') 

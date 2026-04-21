@@ -29,6 +29,16 @@
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         .custom-scrollbar::-webkit-scrollbar { width: 5px; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 5px; }
+        
+        /* Blinking Animation for Pending Works */
+        @keyframes blink {
+            0%, 49%, 100% { opacity: 1; }
+            50%, 99% { opacity: 0.3; }
+        }
+        
+        .icon-blink {
+            animation: blink 1.5s ease-in-out infinite;
+        }
     </style>
 </head>
 
@@ -107,7 +117,12 @@
                    :class="sidebarOpen ? '' : 'justify-center'">
                     @if(request()->routeIs('staff.bookings.*')) <div class="absolute inset-0 bg-gradient-to-br from-orange-500 to-orange-600 z-0"></div> @endif
                     <div class="relative z-10 flex items-center w-full" :class="sidebarOpen ? '' : 'justify-center'">
-                        <i class="fas fa-file-invoice w-6 text-center text-lg {{ request()->routeIs('staff.bookings.*') ? $iconActive : $iconInactive }}" :class="sidebarOpen ? 'mr-3' : ''"></i> 
+                        <div class="relative">
+                            <i class="fas fa-file-invoice w-6 text-center text-lg {{ request()->routeIs('staff.bookings.*') ? $iconActive : $iconInactive }}" :class="[sidebarOpen ? 'mr-3' : '', {{ $pendingBookingsCount ?? 0 }} > 0 ? 'icon-blink' : '']"></i>
+                            @if(($pendingBookingsCount ?? 0) > 0)
+                                <span class="absolute -top-1 -right-2 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full w-5 h-5 flex items-center justify-center animate-pulse">{{ $pendingBookingsCount }}</span>
+                            @endif
+                        </div>
                         <span x-show="sidebarOpen">Manage Bookings</span>
                     </div>
                     <div x-show="!sidebarOpen" class="hidden md:block absolute left-16 bg-slate-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 pointer-events-none z-50 ml-1 shadow-lg transition-opacity duration-200">Bookings</div>
@@ -119,7 +134,12 @@
                    :class="sidebarOpen ? '' : 'justify-center'">
                     @if(request()->routeIs('staff.finance.*')) <div class="absolute inset-0 bg-gradient-to-br from-orange-500 to-orange-600 z-0"></div> @endif
                     <div class="relative z-10 flex items-center w-full" :class="sidebarOpen ? '' : 'justify-center'">
-                        <i class="fas fa-wallet w-6 text-center text-lg {{ request()->routeIs('staff.finance.*') ? $iconActive : $iconInactive }}" :class="sidebarOpen ? 'mr-3' : ''"></i> 
+                        <div class="relative">
+                            <i class="fas fa-wallet w-6 text-center text-lg {{ request()->routeIs('staff.finance.*') ? $iconActive : $iconInactive }}" :class="[sidebarOpen ? 'mr-3' : '', {{ $pendingDepositsCount ?? 0 }} > 0 ? 'icon-blink' : '']"></i>
+                            @if(($pendingDepositsCount ?? 0) > 0)
+                                <span class="absolute -top-1 -right-2 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full w-5 h-5 flex items-center justify-center animate-pulse">{{ $pendingDepositsCount }}</span>
+                            @endif
+                        </div>
                         <span x-show="sidebarOpen">Deposit Management</span>
                     </div>
                     <div x-show="!sidebarOpen" class="hidden md:block absolute left-16 bg-slate-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 pointer-events-none z-50 ml-1 shadow-lg transition-opacity duration-200">Deposits</div>
@@ -131,7 +151,12 @@
                    :class="sidebarOpen ? '' : 'justify-center'">
                     @if(request()->routeIs('staff.fleet.*')) <div class="absolute inset-0 bg-gradient-to-br from-orange-500 to-orange-600 z-0"></div> @endif
                     <div class="relative z-10 flex items-center w-full" :class="sidebarOpen ? '' : 'justify-center'">
-                        <i class="fas fa-car w-6 text-center text-lg {{ request()->routeIs('staff.fleet.*') ? $iconActive : $iconInactive }}" :class="sidebarOpen ? 'mr-3' : ''"></i> 
+                        <div class="relative">
+                            <i class="fas fa-car w-6 text-center text-lg {{ request()->routeIs('staff.fleet.*') ? $iconActive : $iconInactive }}" :class="[sidebarOpen ? 'mr-3' : '', {{ $pendingFleetCount ?? 0 }} > 0 ? 'icon-blink' : '']"></i>
+                            @if(($pendingFleetCount ?? 0) > 0)
+                                <span class="absolute -top-1 -right-2 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full w-5 h-5 flex items-center justify-center animate-pulse">{{ $pendingFleetCount }}</span>
+                            @endif
+                        </div>
                         <span x-show="sidebarOpen">Fleet Management</span>
                     </div>
                     <div x-show="!sidebarOpen" class="hidden md:block absolute left-16 bg-slate-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 pointer-events-none z-50 ml-1 shadow-lg transition-opacity duration-200">Fleet</div>
@@ -143,7 +168,12 @@
                    :class="sidebarOpen ? '' : 'justify-center'">
                     @if(request()->routeIs('staff.customers.*')) <div class="absolute inset-0 bg-gradient-to-br from-orange-500 to-orange-600 z-0"></div> @endif
                     <div class="relative z-10 flex items-center w-full" :class="sidebarOpen ? '' : 'justify-center'">
-                        <i class="fas fa-user w-6 text-center text-lg {{ request()->routeIs('staff.customers.*') ? $iconActive : $iconInactive }}" :class="sidebarOpen ? 'mr-3' : ''"></i> 
+                        <div class="relative">
+                            <i class="fas fa-user w-6 text-center text-lg {{ request()->routeIs('staff.customers.*') ? $iconActive : $iconInactive }}" :class="[sidebarOpen ? 'mr-3' : '', {{ $pendingCustomersCount ?? 0 }} > 0 ? 'icon-blink' : '']"></i>
+                            @if(($pendingCustomersCount ?? 0) > 0)
+                                <span class="absolute -top-1 -right-2 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full w-5 h-5 flex items-center justify-center animate-pulse">{{ $pendingCustomersCount }}</span>
+                            @endif
+                        </div>
                         <span x-show="sidebarOpen">Customer Management</span>
                     </div>
                     <div x-show="!sidebarOpen" class="hidden md:block absolute left-16 bg-slate-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 pointer-events-none z-50 ml-1 shadow-lg transition-opacity duration-200">Customers</div>
@@ -299,12 +329,13 @@
             {{-- GLOBAL BACK BUTTON (Pill Style) --}}
             @if(!request()->routeIs('staff.dashboard'))
                 <div class="max-w-auto mx-auto mb-4 px-2 pt-1">
-                    <a href="{{ url()->previous() }}" 
-                    onclick="event.preventDefault(); history.back();"
-                    class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-orange-200 text-orange-600 hover:bg-orange-50 hover:border-orange-300 transition-all group">
+                    <button id="backButton"
+                    onclick="handleBackButton()"
+                    class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-orange-200 text-orange-600 hover:bg-orange-50 hover:border-orange-300 transition-all group disabled:opacity-50 disabled:cursor-not-allowed"
+                    title="Go back to previous page">
                         <i class="fas fa-chevron-left text-[10px] transform group-hover:-translate-x-0.5 transition-transform"></i>
                         <span class="text-xs font-bold uppercase tracking-wide">Back</span>
-                    </a>
+                    </button>
                 </div>
             @endif
 
@@ -355,6 +386,7 @@
 <script>
     document.addEventListener('DOMContentLoaded', () => {
         const loader = document.getElementById('staff-loader');
+        const backButton = document.getElementById('backButton');
 
         document.querySelectorAll('form').forEach(form => {
             form.addEventListener('submit', function(e) {
@@ -369,7 +401,44 @@
         window.addEventListener('pageshow', (event) => {
             if (event.persisted) loader.classList.add('hidden');
         });
+
+        // Check if back button can go back
+        if (backButton) {
+            // Check history length on page load
+            checkBackButtonState();
+            
+            // Also check when user navigates
+            window.addEventListener('popstate', checkBackButtonState);
+        }
     });
+
+    // Function to handle back button click
+    function handleBackButton() {
+        const backButton = document.getElementById('backButton');
+        
+        // Check if we can go back in history
+        if (window.history.length > 1) {
+            window.history.back();
+        } else {
+            // Fallback to dashboard if no history
+            window.location.href = '/staff/dashboard';
+        }
+    }
+
+    // Function to check if back button should be enabled
+    function checkBackButtonState() {
+        const backButton = document.getElementById('backButton');
+        if (!backButton) return;
+        
+        // Enable back button only if there's history to go back to
+        if (window.history.length > 1) {
+            backButton.disabled = false;
+            backButton.classList.remove('opacity-50', 'cursor-not-allowed');
+        } else {
+            backButton.disabled = true;
+            backButton.classList.add('opacity-50', 'cursor-not-allowed');
+        }
+    }
 </script>
 
 </body>

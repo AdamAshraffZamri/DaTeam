@@ -198,4 +198,42 @@ class FinanceController extends Controller
 
         return redirect()->route('finance.index')->with('success', 'Payment proof submitted! Waiting for staff verification.');
     }
+
+    public function viewPenaltyReceipt($id)
+    {
+        $penalty = Penalties::findOrFail($id);
+        
+        // Security check: ensure the penalty belongs to the logged-in user
+        $userID = Auth::id();
+        $authorized = false;
+
+        if ($penalty->bookingID) {
+            // Booking-based penalty - check customer via booking
+            if ($penalty->booking && isset($penalty->booking->customerID) && $penalty->booking->customerID == $userID) {
+                $authorized = true;
+            }
+        } else {
+            // Customer-level penalty - check customerID directly
+            if (isset($penalty->customerID) && $penalty->customerID == $userID) {
+                $authorized = true;
+            }
+        }
+
+        if (!$authorized) {
+            abort(403, 'Unauthorized action.');
+        }
+
+        if (!$penalty->payment_proof) {
+            abort(404, 'Receipt not found.');
+        }
+
+        // Build the file path
+        $filePath = storage_path('app/public/' . $penalty->payment_proof);
+        
+        if (!file_exists($filePath)) {
+            abort(404, 'File not found.');
+        }
+
+        return response()->file($filePath);
+    }
 }

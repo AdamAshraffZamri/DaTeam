@@ -4,11 +4,18 @@ namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\View;
+use Illuminate\Support\Facades\Auth;
 use Google\Client;
 use Google\Service\Drive;
 use Masbug\Flysystem\GoogleDriveAdapter; // FIXED: Correct Namespace
 use League\Flysystem\Filesystem;
 use Illuminate\Filesystem\FilesystemAdapter;
+use App\Models\Booking;
+use App\Models\Payment;
+use App\Models\Customer;
+use App\Models\Maintenance;
+use App\Models\Vehicle;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -19,6 +26,46 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        // Share pending counts with all staff views
+        View::composer(['layouts.staff', 'layouts.customer'], function ($view) {
+            if (Auth::guard('staff')->check()) {
+                // 1. PENDING BOOKINGS - Bookings awaiting staff action
+                $pendingBookingsCount = Booking::whereIn('bookingStatus', ['Pending', 'Submitted', 'Deposit Paid'])->count();
+                
+                // 2. PENDING DEPOSITS - Refunds awaiting processing
+                $pendingDepositsCount = Booking::whereHas('payments', function($q) {
+                    $q->where('depoAmount', '>', 0);
+                })
+                ->where(function($mainQ) {
+                    $mainQ->whereHas('payments', function($q) {
+                        $q->where('depoStatus', 'Requested');
+                    })
+                    ->orWhere(function($subQ) {
+                        $subQ->whereIn('bookingStatus', ['Completed', 'Cancelled', 'Rejected'])
+                             ->whereHas('payments', function($p) {
+                                 $p->where('depoAmount', '>', 0)
+                                   ->whereIn('depoStatus', ['Pending', 'Holding']);
+                             });
+                    });
+                })->count();
+                
+                // 3. PENDING FLEET/MAINTENANCE - Vehicles with ongoing/incomplete maintenance
+                $pendingFleetCount = Maintenance::whereNotNull('start_time')
+                    ->whereNull('end_time')
+                    ->count();
+                
+                // 4. PENDING CUSTOMERS - Customers pending verification
+                $pendingCustomersCount = Customer::where('accountStat', 'unverified')->count();
+                
+                $view->with([
+                    'pendingBookingsCount' => $pendingBookingsCount,
+                    'pendingDepositsCount' => $pendingDepositsCount,
+                    'pendingFleetCount' => $pendingFleetCount,
+                    'pendingCustomersCount' => $pendingCustomersCount,
+                ]);
+            }
+        });
+
         try {
             Storage::extend('google', function($app, $config) {
                 $client = new Client();
