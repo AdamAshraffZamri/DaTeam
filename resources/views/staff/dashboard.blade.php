@@ -224,10 +224,10 @@
 
             {{-- Card 3: Fully Paid Bookings --}}
             <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm hover:border-green-200 transition-colors group relative">
-                <a href="{{ route('staff.bookings.index', ['search' => '', 'status' => 'Fully Paid']) }}" class="absolute inset-0 z-10"></a>
+                <a href="{{ route('staff.bookings.index', ['search' => '', 'status' => 'Confirmed']) }}" class="absolute inset-0 z-10"></a>
                 <div class="flex justify-between items-start">
                     <div>
-                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Fully Paid</p>
+                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Confirmed Booking</p>
                         <h3 class="text-2xl font-black text-slate-800 mt-1">{{ $fullyPaidCount ?? 0 }}</h3>
                     </div>
                     <div class="p-2.5 bg-green-100 text-green-700 rounded-xl group-hover:bg-green-600 group-hover:text-white transition-all shadow-sm">
@@ -760,19 +760,28 @@
         });
 
         // 2. TIMELINE LOGIC
-        const timelineEvents = @json($calendarEvents);
+        const rawEvents = @json($calendarEvents);
+        
+        // --- FIX: Filter out invalid bookings by status ---
+        const timelineEvents = rawEvents.filter(ev => {
+            const status = ev.extendedProps?.status?.toLowerCase();
+            return status !== 'cancelled' && status !== 'invalid' && status !== 'rejected';
+        });
+
         const container = document.getElementById('timelineGrid');
         const scrollContainer = document.getElementById('timelineScroll');
 
         // Configuration
-        const CELL_WIDTH = 90; // Matches new CSS
+        const CELL_WIDTH = 90; 
         
         // Month Setup based on filter
         const selectedMonthStr = '{{ request("calendar_month", date("Y-m")) }}';
         const [year, month] = selectedMonthStr.split('-');
+        
+        // --- FIX: Ensure we only show days for the specific month ---
         const startDate = new Date(year, month - 1, 1);
-        const endDate = new Date(year, month, 0); // Gets last day of the month
-        const TOTAL_DAYS = endDate.getDate();
+        const endDate = new Date(year, month, 0); // Day 0 of next month is the last day of this month
+        const TOTAL_DAYS = endDate.getDate(); 
 
         const dates = [];
         for(let i=0; i < TOTAL_DAYS; i++) {
@@ -841,16 +850,22 @@
                 const eStart = new Date(safeStart);
                 const eEnd = ev.end ? new Date(safeEnd) : new Date(eStart.getTime() + 2 * 60 * 60 * 1000); 
 
-                const startDiffDays = (eStart - startDate) / (1000 * 60 * 60 * 24);
-                const durationDays = (eEnd - eStart) / (1000 * 60 * 60 * 24);
+                // --- FIX: Accurate pixel calculation relative to the START of the current month ---
+                const startDiffDays = (eStart.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24);
+                const durationDays = (eEnd.getTime() - eStart.getTime()) / (1000 * 60 * 60 * 24);
 
-                // Calculate visual left position
+                // Skip if the booking ends before this month starts or starts after this month ends
+                if (eEnd < startDate || eStart > endDate) return;
+
                 const left = Math.max(0, startDiffDays * CELL_WIDTH);
                 
-                // Calculate visual width (enforcing the minimum 90% cell width)
-                let rawWidth = durationDays * CELL_WIDTH;
-                if (startDiffDays < 0) rawWidth += (startDiffDays * CELL_WIDTH); 
-                const actualWidth = Math.max(rawWidth, CELL_WIDTH * 0.9);
+                // Adjust width if the booking started in the previous month
+                let adjustedDuration = durationDays;
+                if (startDiffDays < 0) {
+                    adjustedDuration = (eEnd.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24);
+                }
+                
+                const actualWidth = Math.max(adjustedDuration * CELL_WIDTH, CELL_WIDTH * 0.9);
                 const rightPixel = left + actualWidth;
 
                 // Determine row based on pixel availability
