@@ -116,16 +116,15 @@
                         <input type="email" name="email" value="{{ old('email', $user->email) }}" class="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white focus:outline-none focus:border-orange-500 focus:bg-white/10 transition placeholder-gray-500" required>
                     </div>
 
-                    {{-- PHONE (UPDATED FORMAT: 000-0000000) --}}
+                    {{-- Phone No. --}}
                     <div>
                         <label class="block text-gray-400 mb-2 font-bold text-xs uppercase tracking-wider">Phone No. <span class="text-red-500">*</span></label>
                         <input type="tel" name="phone" value="{{ old('phone', $user->phoneNo) }}" 
-                               class="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white focus:outline-none focus:border-orange-500 focus:bg-white/10 transition placeholder-gray-500"
-                               required 
-                               placeholder="012-3456789"
-                               pattern="\d{3}-\d{7,8}" 
-                               title="Format: 012-3456789 (Use hyphens)"
-                               oninput="formatPhone(this)">
+                            class="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white focus:outline-none focus:border-orange-500 focus:bg-white/10 transition placeholder-gray-500"
+                            required 
+                            placeholder="0123456789"
+                            pattern="[0-9]+" 
+                            title="Numbers only, no hyphens or spaces">
                     </div>
 
                     {{-- DOB --}}
@@ -160,12 +159,11 @@
                             <div>
                                 <label class="block text-gray-400 mb-2 font-bold text-xs uppercase tracking-wider">Phone No. <span class="text-red-500">*</span></label>
                                 <input type="tel" name="emergency_contact_no" value="{{ old('emergency_contact_no', $user->emergency_contact_no) }}" 
-                                       class="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white focus:outline-none focus:border-orange-500 focus:bg-white/10 transition placeholder-gray-500"
-                                       required 
-                                       placeholder="012-3456789"
-                                       pattern="\d{3}-\d{7,8}" 
-                                       title="Format: 012-3456789"
-                                       oninput="formatPhone(this)">
+                                    class="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white focus:outline-none focus:border-orange-500 focus:bg-white/10 transition placeholder-gray-500"
+                                    required 
+                                    placeholder="0123456789"
+                                    pattern="[0-9]+" 
+                                    title="Numbers only">
                             </div>
                         </div>
                     </div>
@@ -177,44 +175,96 @@
                         <i class="fas fa-folder-open"></i> Documents & Address
                     </h3>
 
-                    {{-- STUDENT ID --}}
+                    {{-- Student/Staff ID Card --}}
                     <div>
-                        <label class="block text-gray-400 mb-2 font-bold text-xs uppercase tracking-wider">Student/Staff ID <span class="text-red-500">*</span>make sure to upload a clear image of your student/staff ID</label>
-                        <div class="flex">
-                            <input type="text" name="student_staff_id" value="{{ old('student_staff_id', $user->stustaffID) }}" 
-                                   class="w-full bg-white/5 border border-white/10 rounded-l-xl p-3 text-white focus:outline-none focus:border-orange-500 focus:bg-white/10 transition placeholder-gray-500 uppercase"
-                                   required oninput="this.value = this.value.toUpperCase()">
-                            <button type="button" onclick="document.getElementById('student_file').click()" class="bg-white/10 px-4 rounded-r-xl border border-l-0 border-white/10 text-gray-400 hover:bg-white/20 hover:text-white transition" id="btn_student">
-                                <i class="fas fa-camera" id="icon_student"></i>
-                            </button>
-                            <input type="file" name="student_card_image" id="student_file" class="hidden" accept="image/*" onchange="fileSelected('student')"required>
+                        <label class="block text-gray-400 mb-2 font-bold text-xs uppercase tracking-wider">
+                            Student/Staff ID Card 
+                            @if(!$user->student_card_image) <span class="text-red-500">*</span> @endif
+                        </label>
+                        <div class="flex gap-2">
+                            <div class="flex-1 flex">
+                                <input type="text" name="student_staff_id" value="{{ old('student_staff_id', $user->stustaffID) }}" 
+                                    class="w-full bg-white/5 border border-white/10 rounded-l-xl p-3 text-white focus:border-orange-500 uppercase">
+                                
+                                {{-- The button contains the icon with a unique ID --}}
+                                <button type="button" onclick="document.getElementById('student_file').click()" 
+                                        class="bg-white/10 px-4 rounded-r-xl border border-l-0 border-white/10 text-gray-400 hover:text-white transition">
+                                    <i id="icon-student_card_image" class="fas fa-camera"></i>
+                                </button>
+                                
+                                {{-- Added 'onchange' to trigger the icon change --}}
+                                <input type="file" name="student_card_image" id="student_file" class="hidden" accept="image/*" 
+                                    onchange="showTick(this, 'icon-student_card_image')">
+                            </div>
+
+                            @if($user->student_card_image)
+                                <a href="{{ route('profile.preview', ['type' => 'student_card']) }}" target="_blank" 
+                                class="bg-orange-500/20 border border-orange-500/50 text-orange-400 px-4 rounded-xl flex items-center hover:bg-orange-500/40 transition">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                            @endif
                         </div>
                     </div>
 
                     {{-- IC/PASSPORT --}}
                     <div>
-                        <label class="block text-gray-400 mb-2 font-bold text-xs uppercase tracking-wider">IC / Passport No. <span class="text-red-500">*</span>make sure to upload a clear image of your IC/Passport</label>
-                        <div class="flex">
-                            <input type="text" name="ic_passport" value="{{ old('ic_passport', $user->ic_passport) }}" 
-                                   class="w-full bg-white/5 border border-white/10 rounded-l-xl p-3 text-white focus:outline-none focus:border-orange-500 focus:bg-white/10 transition placeholder-gray-500 uppercase"
-                                   required oninput="this.value = this.value.toUpperCase()">
-                            <button type="button" onclick="document.getElementById('ic_file').click()" class="bg-white/10 px-4 rounded-r-xl border border-l-0 border-white/10 text-gray-400 hover:bg-white/20 hover:text-white transition" id="btn_ic">
-                                <i class="fas fa-camera" id="icon_ic"></i>
-                            </button>
-                            <input type="file" name="ic_passport_image" id="ic_file" class="hidden" accept="image/*" onchange="fileSelected('ic')"required>
+                        <label class="block text-gray-400 mb-2 font-bold text-xs uppercase tracking-wider">
+                            IC/Passport 
+                            @if(!$user->ic_passport_image) <span class="text-red-500">*</span> @endif
+                        </label>
+                        <div class="flex gap-2">
+                            <div class="flex-1 flex">
+                                <input type="text" name="ic_passport" value="{{ old('ic_passport', $user->ic_passport) }}" 
+                                    class="w-full bg-white/5 border border-white/10 rounded-l-xl p-3 text-white focus:border-orange-500 uppercase">
+                                
+                                {{-- The button contains the icon with a unique ID --}}
+                                <button type="button" onclick="document.getElementById('ic_passport_file').click()" 
+                                        class="bg-white/10 px-4 rounded-r-xl border border-l-0 border-white/10 text-gray-400 hover:text-white transition">
+                                    <i id="icon-ic_passport_image" class="fas fa-camera"></i>
+                                </button>
+                                
+                                {{-- Added 'onchange' to trigger the icon change --}}
+                                <input type="file" name="ic_passport_image" id="ic_passport_file" class="hidden" accept="image/*" 
+                                    onchange="showTick(this, 'icon-ic_passport_image')">
+                            </div>
+
+                            @if($user->ic_passport_image)
+                                <a href="{{ route('profile.preview', ['type' => 'ic_passport']) }}" target="_blank" 
+                                class="bg-orange-500/20 border border-orange-500/50 text-orange-400 px-4 rounded-xl flex items-center hover:bg-orange-500/40 transition">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                            @endif
                         </div>
                     </div>
 
                     {{-- LICENSE --}}
                     <div>
-                        <label class="block text-gray-400 mb-2 font-bold text-xs uppercase tracking-wider">Driving License Expired Date <span class="text-red-500">*</span>make sure to upload a clear image of your driving license</label>
-                        <div class="flex">
-                            <input type="date" name="driving_license_expiry" value="{{ old('driving_license_expiry', $user->driving_license_expiry) }}" 
-                                   class="w-full bg-white/5 border border-white/10 rounded-l-xl p-3 text-white focus:outline-none focus:border-orange-500 focus:bg-white/10 transition [color-scheme:dark]" required>
-                             <button type="button" onclick="document.getElementById('license_file').click()" class="bg-white/10 px-4 rounded-r-xl border border-l-0 border-white/10 text-gray-400 hover:bg-white/20 hover:text-white transition" id="btn_license">
-                                <i class="fas fa-camera" id="icon_license"></i>
-                            </button>
-                            <input type="file" name="driving_license_image" id="license_file" class="hidden" accept="image/*" onchange="fileSelected('license')"required>
+                        <label class="block text-gray-400 mb-2 font-bold text-xs uppercase tracking-wider">
+                            Driving License Expired Date 
+                            @if(!$user->driving_license_image) <span class="text-red-500">*</span> @endif
+                        </label>
+                        <div class="flex gap-2">
+                            <div class="flex-1 flex">
+                                <input type="date" name="driving_license_expiry" value="{{ old('driving_license_expiry', $user->driving_license_expiry) }}" 
+                                    class="w-full bg-white/5 border border-white/10 rounded-l-xl p-3 text-white focus:border-orange-500 uppercase">
+                                
+                                {{-- The button contains the icon with a unique ID --}}
+                                <button type="button" onclick="document.getElementById('driving_license_file').click()" 
+                                        class="bg-white/10 px-4 rounded-r-xl border border-l-0 border-white/10 text-gray-400 hover:text-white transition">
+                                    <i id="icon-driving_license_image" class="fas fa-camera"></i>
+                                </button>
+                                
+                                {{-- Added 'onchange' to trigger the icon change --}}
+                                <input type="file" name="driving_license_image" id="driving_license_file" class="hidden" accept="image/*" 
+                                    onchange="showTick(this, 'icon-driving_license_image')">
+                            </div>
+
+                            @if($user->driving_license_image)
+                                <a href="{{ route('profile.preview', ['type' => 'driving_license']) }}" target="_blank" 
+                                class="bg-orange-500/20 border border-orange-500/50 text-orange-400 px-4 rounded-xl flex items-center hover:bg-orange-500/40 transition">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                            @endif
                         </div>
                     </div>
 
@@ -350,19 +400,7 @@
 </div>
 
 <script>
-    // 1. Phone Formatter Logic
-    function formatPhone(input) {
-        let numbers = input.value.replace(/\D/g, ''); // Strip non-numeric
-        if (numbers.length > 11) numbers = numbers.substring(0, 11); // Max 11 digits
-        
-        if (numbers.length > 3) {
-            input.value = numbers.substring(0, 3) + '-' + numbers.substring(3);
-        } else {
-            input.value = numbers;
-        }
-    }
-
-    // 2. File Upload Logic
+    // 1. File Upload Logic
     function fileSelected(type) {
         const input = document.getElementById(type + '_file');
         const icon = document.getElementById('icon_' + type);
@@ -378,7 +416,7 @@
         }
     }
 
-    // 3. Password Toggle Logic
+    // 2. Password Toggle Logic
     function togglePassword(inputId, iconId) {
         const input = document.getElementById(inputId);
         const icon = document.getElementById(iconId);
@@ -394,7 +432,7 @@
         }
     }
 
-    // 4. Bank Validation Logic
+    // 3. Bank Validation Logic
     const bankRules = {
         'Maybank': 12, 'CIMB Bank': 10, 'Public Bank': 10, 'RHB Bank': 10, 'Hong Leong Bank': 10,
         'AmBank': 13, 'UOB Malaysia': 10, 'Bank Rakyat': 10, 'OCBC Bank': 10, 'HSBC Bank': 12,
@@ -451,6 +489,19 @@
             }
         }
         return true;
+    }
+
+    function showTick(input, iconId) {
+        const icon = document.getElementById(iconId);
+        if (input.files && input.files[0]) {
+            // Change icon to a green checkmark
+            icon.classList.remove('fa-camera', 'text-gray-400');
+            icon.classList.add('fa-check', 'text-green-500');
+        } else {
+            // Revert to camera if selection is cleared
+            icon.classList.remove('fa-check', 'text-green-500');
+            icon.classList.add('fa-camera', 'text-gray-400');
+        }
     }
 </script>
 

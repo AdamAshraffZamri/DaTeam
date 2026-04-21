@@ -295,9 +295,18 @@ class ProfileController extends Controller
             'bank_account_no' => ['required', 'string', 'max:50'],
             
             // Files (optional on updates)
-            'student_card_image' => ['nullable', 'file', 'mimes:jpeg,png,jpg', 'max:5120'],
-            'ic_passport_image' => ['nullable', 'file', 'mimes:jpeg,png,jpg', 'max:5120'],
-            'driving_license_image' => ['nullable', 'file', 'mimes:jpeg,png,jpg', 'max:5120'],
+            'student_card_image' => [
+                $user->student_card_image ? 'nullable' : 'required', 
+                'file', 'mimes:jpeg,png,jpg', 'max:5120'
+            ],
+            'ic_passport_image' => [
+                $user->ic_passport_image ? 'nullable' : 'required', 
+                'file', 'mimes:jpeg,png,jpg', 'max:5120'
+            ],
+            'driving_license_image' => [
+                $user->driving_license_image ? 'nullable' : 'required', 
+                'file', 'mimes:jpeg,png,jpg', 'max:5120'
+            ],
         ], [
             'name.regex' => 'Full name can only contain letters and spaces.',
             'phone.regex' => 'Phone number can only contain numbers, hyphens, and plus signs.',
@@ -307,13 +316,34 @@ class ProfileController extends Controller
 
         // 2. GOOGLE DRIVE DOCUMENT UPLOADS
         $documents = [
-            'student_card_image'    => 'Student Card',
-            'ic_passport_image'     => 'IC Passport',
-            'driving_license_image' => 'Driving License'
+            'student_card_image'    => 'Student_Card',
+            'ic_passport_image'     => 'IC_Passport',
+            'driving_license_image' => 'Driving_License'
         ];
 
         foreach ($documents as $inputKey => $fileLabel) {
             if ($request->hasFile($inputKey)) {
+                $file = $request->file($inputKey);
+                $filename = $fileLabel . '_' . $user->id . '_' . time() . '.' . $file->getClientOriginalExtension();
+                
+                // Step A: Save Locally for Preview
+                $destinationPath = public_path('storage/documents');
+                if (!File::exists($destinationPath)) {
+                    File::makeDirectory($destinationPath, 0755, true);
+                }
+
+                // Cleanup old local file if it exists
+                if ($user->$inputKey && File::exists(public_path($user->$inputKey))) {
+                    File::delete(public_path($user->$inputKey));
+                }
+
+                $file->move($destinationPath, $filename);
+                $localPath = 'storage/documents/' . $filename;
+                
+                // Save the local path to the database
+                $user->$inputKey = $localPath;
+
+                // ========== STEP B: GOOGLE DRIVE BACKUP (Existing Logic) ==========
                 try {
                     // Initialize Google Drive client
                     $client = new Client();
@@ -343,20 +373,20 @@ class ProfileController extends Controller
 
                     // Upload File
                     $file = $request->file($inputKey);
-                    $fileName = Carbon::now()->format('Y-m-d') . " - $fileLabel." . $file->getClientOriginalExtension();
+                    $driveFileName = Carbon::now()->format('Y-m-d') . " - $fileLabel." . $file->getClientOriginalExtension();
+                    $fileMeta = new DriveFile(['name' => $driveFileName, 'parents' => [$userFolderId]]);
                     
-                    $fileMeta = new DriveFile(['name' => $fileName, 'parents' => [$userFolderId]]);
+                    // Use the local path we just saved to ensure the path is never empty
+                    $content = file_get_contents(public_path($localPath));
+                    
                     $service->files->create($fileMeta, [
-                        'data' => file_get_contents($file->getRealPath()),
-                        'mimeType' => $file->getMimeType(),
+                        'data' => $content,
+                        'mimeType' => $file->getClientMimeType(),
                         'uploadType' => 'multipart'
                     ]);
-
-                    $user->$inputKey = $folderName . '/' . $fileName;
-
                 } catch (\Exception $e) {
                     // Log error but don't fail the main process
-                    \Log::warning("Google Drive upload failed for $fileLabel: " . $e->getMessage());
+                    \Log::warning("Drive upload failed for $fileLabel: " . $e->getMessage());
                 }
             }
         }
@@ -388,7 +418,6 @@ class ProfileController extends Controller
 
         // Save all changes to database
         $user->save();
-
         return redirect()->route('profile.edit')->with('status', 'Profile updated successfully!');
     }
 
@@ -437,5 +466,33 @@ class ProfileController extends Controller
         $user->save();
 
         return redirect()->route('profile.edit')->with('status', 'Password updated successfully!');
+    }
+
+    public function previewDocument($type)
+    {
+        $user = auth()->user();
+        $path = $user->{$type . '_image'}; // e.g., student_card_image
+
+        // 1. Check Local Storage first
+        if ($path && File::exists(public_path($path))) {
+            return response()->file(public_path($path));
+        }
+
+        // 2. FALLBACK: Redirect to Google Drive
+        // Note: This requires you to store the Drive File ID in your DB, 
+        // or search for the file by name using your existing Drive logic.
+        try {
+            // Logic to get the 'webViewLink' from Google Drive API for this file
+            // For now, we can redirect to a search or a stored Drive URL
+            $driveLink = $user->{$type . '_drive_link'}; 
+            
+            if ($driveLink) {
+                return redirect()->away($driveLink);
+            }
+        } catch (\Exception $e) {
+            return back()->with('error', 'Document could not be retrieved from local or cloud storage.');
+        }
+
+        abort(404, 'File not found locally or on Drive.');
     }
 }

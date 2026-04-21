@@ -166,19 +166,21 @@
             <div class="page-break p-8 space-y-6 font-serif">
                 <div class="text-center border-b-2 border-black pb-2">
                     <h3 class="text-lg font-bold uppercase underline">Rental Agreement Terms & Conditions</h3>
-                    <p class="text-xs font-bold">HASTA TRAVEL & TOURS SDN. BHD. (1359376T) | KPK/LN 10181</p>
+                    <p class="text-xs font-bold uppercase">HASTA TRAVEL & TOURS SDN. BHD. (1359376T) | KPK/LN 10181</p>
                 </div>
 
                 {{-- Tables Grid --}}
-                <div class="grid grid-cols-2 gap-6">
+                <div class="grid grid-cols-2 gap-4">
                     <div>
-                        <p class="text-xs font-bold text-center mb-1">Table 1: Overtime Rates (RM)</p>
-                        <table class="w-full text-[10px] border-collapse border border-black text-center">
+                        <p class="text-[10px] font-bold text-center mb-1 uppercase">Table 1: Price List Hasta (RM)</p>
+                        <table class="w-full text-[9px] border-collapse border border-black text-center">
                             <tr class="bg-gray-200">
                                 <th class="border border-black p-1">HOUR</th>
                                 <th class="border border-black p-1">1</th>
                                 <th class="border border-black p-1">3</th>
                                 <th class="border border-black p-1">5</th>
+                                <th class="border border-black p-1">7</th>
+                                <th class="border border-black p-1">9</th>
                                 <th class="border border-black p-1">12</th>
                                 <th class="border border-black p-1">24</th>
                             </tr>
@@ -187,14 +189,18 @@
                                 <td class="border border-black p-1">30</td>
                                 <td class="border border-black p-1">50</td>
                                 <td class="border border-black p-1">60</td>
+                                <td class="border border-black p-1">65</td>
+                                <td class="border border-black p-1">70</td>
                                 <td class="border border-black p-1">80</td>
                                 <td class="border border-black p-1">110</td>
                             </tr>
                             <tr>
-                                <td class="border border-black p-1 font-bold">SEDAN</td>
+                                <td class="border border-black p-1 font-bold">MYVI / BEZZA / SAGA</td>
                                 <td class="border border-black p-1">35</td>
                                 <td class="border border-black p-1">55</td>
                                 <td class="border border-black p-1">65</td>
+                                <td class="border border-black p-1">70</td>
+                                <td class="border border-black p-1">75</td>
                                 <td class="border border-black p-1">85</td>
                                 <td class="border border-black p-1">130</td>
                             </tr>
@@ -202,76 +208,114 @@
                     </div>
 
                     <div>
-                        <p class="text-xs font-bold text-center mb-1">Table 2: Excess Fee Liability</p>
-                        <table class="w-full text-[10px] border-collapse border border-black">
+                        <p class="text-[10px] font-bold text-center mb-1 uppercase">Table 2: Excess Fee Liability</p>
+                        <table class="w-full text-[9px] border-collapse border border-black">
                             <tr class="bg-gray-200">
-                                <th class="border border-black p-1 text-left">VEHICLE TYPE</th>
-                                <th class="border border-black p-1 text-right">FEE (RM)</th>
+                                <th class="border border-black p-1 text-left uppercase">Vehicle Type</th>
+                                <th class="border border-black p-1 text-right uppercase">Excess Fee (RM)</th>
                             </tr>
                             <tr>
-                                <td class="border border-black p-1">AXIA</td>
-                                <td class="border border-black p-1 text-right">2,000.00</td>
+                                <td class="border border-black p-1 uppercase">Perodua Axia</td>
+                                <td class="border border-black p-1 text-right">2,000</td>
                             </tr>
                             <tr>
-                                <td class="border border-black p-1">MYVI / BEZZA / SAGA</td>
-                                <td class="border border-black p-1 text-right">2,500.00</td>
+                                <td class="border border-black p-1 uppercase">Perodua Myvi / Bezza / Proton Saga</td>
+                                <td class="border border-black p-1 text-right">2,500</td>
                             </tr>
                         </table>
                     </div>
                 </div>
 
-                {{-- Terms Text --}}
-                <div class="text-[10px] leading-relaxed text-justify grid grid-cols-1 gap-4 font-serif border-t border-black pt-4">
-                    <div class="grid grid-cols-2 gap-x-8 gap-y-3">
-                        <div>
-                            <strong class="uppercase">1. Rates:</strong>
-                            Minimum 1-hour rental is RM30. Rentals exceeding 12 hours are charged as a full day. Rates include a 300km/day limit.
-                        </div>
-                        <div>
-                            <strong class="uppercase">2. Requirements:</strong>
-                            Drivers must be aged 19-55. A valid national or international license is required; Probational (P) licenses are not accepted.
-                        </div>
-                        <div>
-                            <strong class="uppercase">3. Payment & Deposit:</strong>
-                            Refundable deposit: RM50 (up to 5 days) or RM150 (weekly). Refunds are subject to vehicle condition, fuel levels, and summons check.
-                        </div>
-                        <div>
-                            <strong class="uppercase">4. Cancellation:</strong>
-                            Rental payments and deposits are non-refundable once confirmed.
-                        </div>
-                        <div class="col-span-2">
-                            <strong class="uppercase">5. Excess Fee & Liability:</strong>
-                            The renter is responsible for the Excess Fee (Table 2) in the event of damage or accidents. Renter is fully liable for negligence, including damage to tyres, battery, or interior. Accidents must be reported to the company immediately and a police report filed within 24 hours.
-                        </div>
-                        <div>
-                            <strong class="uppercase">6. Fuel Policy:</strong>
-                            Vehicle must be returned with the same fuel level as provided. A charge of RM10 per fuel bar applies for missing fuel.
-                        </div>
-                        <div>
-                            <strong class="uppercase">7. Restrictions:</strong>
-                            Smoking and strong odours (e.g., Durian, Salted Fish) are prohibited. Vehicles are not permitted to exit Malaysia (Singapore/Thailand) or use sea transport.
-                        </div>
+                {{-- Detailed Terms from PDF --}}
+                <div class="text-[9px] leading-[1.3] text-justify grid grid-cols-2 gap-x-6 gap-y-3 font-serif border-t border-black pt-4">
+                    <div>
+                        <strong class="uppercase">1. Rates:</strong>
+                        Minimum 1-hour rental is RM30. Rental with more than 12 hours will be considered as 1-day rental. Extend hours will be calculated at fix rate based on Table 1. Rates include maximum mileage of 300 km per day and replace car breakdown (for maintenance issues only).
+                    </div>
+                    <div>
+                        <strong class="uppercase">2. Driver Requirements:</strong>
+                        The driver must be between 19 to 55 years old and in possession of a valid national or International Driving License. Probational (P) license holders will not be accepted.
+                    </div>
+                    <div>
+                        <strong class="uppercase">3. Payment & Deposit:</strong>
+                        Compulsory deposit: RM50.00 (up to 5 days) or RM150 (weekly). Refunds depend on return car condition (fuel, late return, extend and accident). Only online payment is accepted for deposits and rental.
+                    </div>
+                    <div>
+                        <strong class="uppercase">4. Cancellation:</strong>
+                        All paid rental and deposit cannot be cancelled, and payments made are non-refundable.
+                    </div>
+                    <div>
+                        <strong class="uppercase">5. Excess Fee:</strong>
+                        The renter shall be held responsible for accidental damage to third
+                        party property and bodily injuries. However, the renter is always
+                        responsible for an amount equivalent to the excess fee based on Table
+                        2. A full responsible will be on the renter for damage as a result of
+                        illegal, negligence, careless actions, tyre punctures, bust tyre,
+                        scratches and dent, lack of battery power because of forgotten turned
+                        off car electrical devices, loss or damage to the vehicle and vehicle
+                        accessories and damages of windows, mirror and undercarriage. In the
+                        event of any accident, the renter must agree to accept the Excess Fee
+                        and inform our company first before taking any action and make a
+                        police report within 24 hours from the time of the accident or theft.
+                        Our company shall be entitled to charge the renter an excess fee which
+                        is in accordance with the following Table 2. Upon the renter's
+                        acceptance and subject to the terms and conditions stipulated in the
+                        Rental Agreement, the renter's liability is limited to the Excess Fee.
+                        Excess Fee is used to cover loss of company sales for that particular
+                        car while repairing. Any extra charge of the repairing cost will be
+                        added if needed by the company. Receipt of any additional cost will be
+                        given to the customer.
+                    </div>
+                    <div>
+                        <strong class="uppercase">6. Traffic Fines:</strong>
+                        The renter is liable for all parking and traffic fines incurred for the
+                        duration of the rental. An additional RM20 administration fee will be
+                        charged to the renter over and above any fine and penalty cost for any
+                        violation arising from the renter's use of vehicle. Our company retains
+                        the right to charge against the renter's charge if and when payment is
+                        due for traffic fines committed by the renter, upon receiving
+                        notification from the government authorities.
+                        
+                    </div>
+                    <div>
+                        <strong class="uppercase">7. Fuel:</strong>
+                        Vehicle must be returned with the same fuel level. Missing fuel will be charged based on 1 bar = RM10.
+                    </div>
+                    <div>
+                        <strong class="uppercase">8. Vehicle Condition:</strong>
+                        Car must be returned in the same condition. Renter is liable for restoration costs and loss of company sales.
+                    </div>
+                    <div>
+                        <strong class="uppercase">9. Surcharge:</strong>
+                        A fee of RM10 applies for meetings/reservations after operating hours.
+                    </div>
+                    <div>
+                        <strong class="uppercase">10. Restricted Entry:</strong>
+                        Vehicles cannot be driven into Singapore, Thailand, Brunei, or Indonesia. Prohibited from being loaded onto sea, river, or air transportation (Islands).
+                    </div>
+                    <div>
+                        <strong class="uppercase">11. Prohibited Odours:</strong>
+                        Strong odours (Durians, salted fish, etc.) are strictly forbidden. Renter is liable for air-con servicing costs and loss of rental days. Smoking is prohibited.
+                    </div>
+                    <div>
+                        <strong class="uppercase">12. Destination Limits:</strong>
+                        Johor state only for 1-day rental. Minimum 2 days for travel outside Johor. Failure to comply results in 1-day rental penalty and burnt deposit.
                     </div>
                 </div>
 
                 {{-- Signatures --}}
-                <div class="mt-12 pt-6 border-t-2 border-black grid grid-cols-2 gap-12">
+                <div class="mt-8 pt-4 border-t-2 border-black grid grid-cols-2 gap-12">
                     <div>
-                        <p class="mb-8 font-bold text-sm uppercase">Signed by Lessor:</p>
-                        <div class="h-12 flex items-end"><p class="font-bold text-lg">HASTA MANAGER</p></div>
-                        <div class="border-t border-black pt-1"><p class="text-xs text-gray-500">Authorized Signature</p></div>
+                        <p class="mb-4 font-bold text-xs uppercase">Signed by Lessor:</p>
+                        <div class="h-10 flex items-end"><p class="font-bold text-sm">HASTA MANAGER</p></div>
+                        <div class="border-t border-black pt-1"><p class="text-[9px] text-gray-500 uppercase tracking-widest">Authorized Signature</p></div>
                     </div>
                     <div>
-                        <p class="mb-8 font-bold text-sm uppercase">I agree to the terms above (Lessee):</p>
-                        @if($booking->bookingID == 'PENDING')
-                            <div class="h-20 border-b border-dashed border-gray-400"></div>
-                            <p class="text-[8px] text-gray-400 text-center">(Sign Here)</p>
-                        @else
-                            <div class="h-12 flex items-end"></div>
-                        @endif
+                        <p class="mb-4 font-bold text-xs uppercase">Lessee Acknowledgement:</p>
+                        <div class="h-10 flex items-end"></div>
                         <div class="border-t border-black pt-1">
                             <p class="text-xs font-bold uppercase">{{ $booking->customer->fullName }}</p>
-                            <p class="text-xs">Date: {{ now()->format('d M Y') }}</p>
+                            <p class="text-[9px]">Date: {{ now()->format('d M Y') }}</p>
                         </div>
                     </div>
                 </div>
