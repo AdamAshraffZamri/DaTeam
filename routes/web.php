@@ -270,4 +270,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/finance/deposits', [App\Http\Controllers\StaffFinanceController::class, 'index'])->name('staff.finance.deposits');
     Route::post('/finance/deposits/{id}/refund', [App\Http\Controllers\StaffFinanceController::class, 'processRefund'])->name('staff.finance.refund');
     Route::post('/finance/deposits/{id}/forfeit', [App\Http\Controllers\StaffFinanceController::class, 'forfeit'])->name('staff.finance.forfeit');
+    Route::patch('/finance/deposits/{id}/update', [App\Http\Controllers\StaffFinanceController::class, 'updateDeposit'])->name('staff.finance.update_deposit');
+    Route::post('/finance/deposits/delete-evidence', [App\Http\Controllers\StaffFinanceController::class, 'deleteEvidence'])->name('staff.finance.delete_evidence');
+
 });

@@ -125,16 +125,16 @@
                                 @endif
                             </div>
 
-                            <div class="min-w-0">
+                            <div class="min-w-0 w-full">
                                 <h3 class="text-lg md:text-xl font-black text-white leading-tight truncate">{{ $booking->vehicle->model }}</h3>
                                 
                                 {{-- PLATE DISPLAY --}}
                                 @if($booking->bookingStatus == 'Confirmed' || $booking->bookingStatus == 'Active' || $booking->bookingStatus == 'Completed')
-                                    <p class="text-xs text-orange-400 font-bold mt-1 tracking-wide truncate">
+                                    <p class="text-xs text-orange-400 font-bold mt-1 tracking-wide">
                                         PLATE NO: {{ $booking->vehicle->plateNo }}
                                     </p>
                                 @else
-                                    <p class="text-xs text-gray-500 font-medium mt-1 italic truncate">
+                                    <p class="text-xs text-gray-500 font-medium mt-1 italic">
                                         <i class="fas fa-spinner fa-spin mr-1"></i> Plate No. pending
                                     </p>
                                 @endif
@@ -145,20 +145,85 @@
                                     @endphp
 
                                     @if($booking->bookingStatus == 'Completed')
-                                        @if($payment && $payment->depoStatus == 'Refunded')
+                                        @if($payment && $payment->depoStatus == 'Processed')
                                             <div class="px-2 py-1 bg-green-500/20 border border-green-500/40 rounded-lg flex items-center gap-2">
                                                 <i class="fas fa-check-double text-[10px] text-green-400"></i>
-                                                <span class="text-[10px] text-green-300 font-bold uppercase tracking-wider">Deposit Refunded</span>
+                                                <span class="text-[10px] text-green-300 font-bold uppercase tracking-wider">Deposit Updated</span>
                                             </div>
                                         @else
                                             <div class="px-2 py-1 bg-orange-500/20 border border-orange-500/40 rounded-lg flex items-center gap-2 animate-pulse">
                                                 <i class="fas fa-clock text-[10px] text-orange-400"></i>
-                                                <span class="text-[10px] text-orange-300 font-bold uppercase tracking-wider">Refund Pending</span>
+                                                <span class="text-[10px] text-orange-300 font-bold uppercase tracking-wider">Deposit Update Pending</span>
                                             </div>
                                         @endif
                                     @endif
                                 </div>
                             </div>
+                            {{-- CUSTOMER COUNTDOWN --}}
+                            @if(in_array($booking->bookingStatus, ['Confirmed', 'Active']))
+                                @php
+                                    $isConfirmed = $booking->bookingStatus == 'Confirmed';
+                                    $targetTime = $isConfirmed
+                                        ? \Carbon\Carbon::parse($booking->originalDate . ' ' . $booking->bookingTime)
+                                        : \Carbon\Carbon::parse($booking->returnDate . ' ' . $booking->returnTime);
+                                    $now = \Carbon\Carbon::now();
+                                    $isTimeReached = $now->greaterThanOrEqualTo($targetTime);
+                                    $timerId = "timer-" . ($isConfirmed ? 'pickup-' : 'return-') . $booking->bookingID;
+                                @endphp
+
+                                <div class="flex flex-col items-end shrink-0">
+                                    <p class="text-[9px] text-gray-400 font-bold uppercase tracking-widest mb-1">
+                                        {{ $isConfirmed ? 'Pickup In' : 'Return In' }}
+                                    </p>
+                                    
+                                    <div class="flex items-center gap-2 bg-white/5 border border-white/10 px-3 py-1.5 rounded-xl shadow-inner">
+                                        @if(!$isTimeReached)
+                                            {{-- Pulsing Status Dot --}}
+                                            <span class="relative flex h-1.5 w-1.5">
+                                                <span class="animate-ping absolute inline-flex h-full w-full rounded-full {{ $isConfirmed ? 'bg-blue-400' : 'bg-purple-400' }} opacity-75"></span>
+                                                <span class="relative inline-flex rounded-full h-1.5 w-1.5 {{ $isConfirmed ? 'bg-blue-500' : 'bg-purple-500' }}"></span>
+                                            </span>
+                                            
+                                            <span class="{{ $isConfirmed ? 'text-blue-300' : 'text-purple-300' }} font-mono font-medium text-xs md:text-sm tabular-nums tracking-tighter" id="{{ $timerId }}">
+                                                00:00:00
+                                            </span>
+
+                                            <script>
+                                                (function() {
+                                                    const target = new Date("{{ $targetTime->toIso8601String() }}").getTime();
+                                                    const timerEl = document.getElementById("{{ $timerId }}");
+                                                    
+                                                    const interval = setInterval(() => {
+                                                        const now = new Date().getTime();
+                                                        const diff = target - now;
+
+                                                        if (diff <= 0) {
+                                                            clearInterval(interval);
+                                                            window.location.reload(); 
+                                                        } else {
+                                                            const d = Math.floor(diff / (1000 * 60 * 60 * 24));
+                                                            const h = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                                                            const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                                                            const s = Math.floor((diff % (1000 * 60)) / 1000);
+                                                            
+                                                            let timeStr = "";
+                                                            if(d > 0) timeStr += d + "d ";
+                                                            timeStr += `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+                                                            
+                                                            timerEl.innerHTML = timeStr;
+                                                        }
+                                                    }, 1000);
+                                                })();
+                                            </script>
+                                        @else
+                                            <div class="flex items-center gap-1.5">
+                                                <i class="fas fa-sync fa-spin text-[10px] {{ $isConfirmed ? 'text-blue-400' : 'text-purple-400' }}"></i>
+                                                <span class="text-[10px] font-bold text-gray-400 italic">Processing...</span>
+                                            </div>
+                                        @endif
+                                    </div>
+                                </div>
+                            @endif
                         </div>
 
                         {{-- AGENT INFO --}}
@@ -505,6 +570,30 @@
                     </button>
                 </div>
 
+                @if(in_array($booking->bookingStatus, ['Confirmed', 'Active', 'Completed']))
+                <div class="p-6 border-b border-white/15 flex items-center gap-4 shrink-0">
+                    <div class="w-16 h-16 rounded-lg bg-white/10 border border-white/20 flex items-center justify-center text-gray-500 text-xl">
+                        @if($booking->vehicle->image)
+                            <img src="{{ asset('storage/' . $booking->vehicle->image) }}" 
+                                 alt="{{ $booking->vehicle->model }}" 
+                                 class="w-full h-full object-cover rounded-lg">
+                        @else    
+                            <i class="fas fa-car"></i>
+                        @endif
+                    </div>
+                    <div class="min-w-0">
+                        <h4 class="text-white font-bold text-lg leading-tight">{{ $booking->vehicle->model }}</h4>
+                        <p class="text-sm text-gray-300 mt-1">
+                            @if($booking->bookingStatus == 'Confirmed' || $booking->bookingStatus == 'Active' || $booking->bookingStatus == 'Completed')
+                                Plate No: <span class="text-orange-400 font-bold">{{ $booking->vehicle->plateNo }}</span>
+                            @else
+                                <span class="text-gray-500 italic">Plate No. pending</span>
+                            @endif
+                        </p>
+                    </div>
+                </div> 
+                @endif
+
                 {{-- Body (Scrollable) --}}
                 <div class="p-6 sm:p-8 space-y-7 overflow-y-auto custom-scrollbar">
                 @if($booking->bookingStatus == 'Rejected' && $booking->remarks)
@@ -629,20 +718,40 @@
                                     $currentDepoStatus = $depositRecord ? $depositRecord->depoStatus : null;
                                 @endphp
 
-                                {{-- 1. ONLY SHOW IF DEPOSIT WAS ACTUALLY REFUNDED --}}
-                                @if($currentDepoStatus == 'Refunded')
-                                    <div class="p-3 bg-green-500/10 border border-green-500/20 rounded-xl">
-                                        <div class="flex items-center justify-between mb-2">
-                                            <span class="text-[10px] text-green-400 font-black uppercase tracking-widest">Status: Refunded</span>
+                                {{-- 1. ONLY SHOW IF DEPOSIT WAS UPDATED/PROCESSED --}}
+                                @if($currentDepoStatus == 'Processed')
+                                    <div class="p-4 bg-green-500/10 border border-green-500/20 rounded-xl">
+                                        <div class="flex items-center justify-between mb-3">
+                                            <span class="text-[10px] text-green-400 font-black uppercase tracking-widest">Deposit Status: Updated</span>
                                             <i class="fas fa-check-circle text-green-500"></i>
                                         </div>
                                         
-                                        @if($depositRecord->refund_proof_link) 
-                                            <a href="{{ $depositRecord->refund_proof_link }}" target="_blank" 
-                                            class="w-full flex items-center justify-center gap-2 py-2 bg-green-600 hover:bg-green-500 text-white text-[11px] font-black rounded-lg transition-all shadow-lg shadow-green-900/20">
-                                                <i class="fas fa-receipt"></i> VIEW REFUND RECEIPT
-                                            </a>
+                                        {{-- STAFF REMARKS --}}
+                                        @if($depositRecord->remarks)
+                                            <div class="mb-4">
+                                                <p class="text-[9px] text-gray-400 uppercase font-bold mb-1">Staff Remarks:</p>
+                                                <p class="text-xs text-gray-200 leading-relaxed italic">"{{ $depositRecord->remarks }}"</p>
+                                            </div>
                                         @endif
+
+                                        {{-- LIST DOCUMENTS --}}
+                                        <div>
+                                            <p class="text-[9px] text-gray-400 uppercase font-bold mb-2">Attached Documents:</p>
+                                            @php $evidence = $depositRecord->depo_evidence; @endphp
+                                            
+                                            @if(!empty($evidence) && is_array($evidence))
+                                                <div class="flex flex-wrap gap-2">
+                                                    @foreach($evidence as $index => $path)
+                                                        <a href="{{ asset('storage/' . $path) }}" target="_blank" 
+                                                        class="flex items-center gap-2 px-3 py-2 bg-green-600 hover:bg-green-500 text-white text-[10px] font-bold rounded-lg transition-all shadow-sm">
+                                                            <i class="fas fa-file-alt"></i> DOC #{{ $index + 1 }}
+                                                        </a>
+                                                    @endforeach
+                                                </div>
+                                            @else
+                                                <p class="text-[10px] text-gray-500 italic">No documents attached.</p>
+                                            @endif
+                                        </div>
                                     </div>
 
                                 {{-- 2. SHOW PENDING IF THE BOOKING IS DONE BUT STATUS IS NOT 'REFUNDED' OR 'SETTLED' --}}
@@ -651,7 +760,7 @@
                                         <p class="text-[10px] text-orange-400 font-black uppercase flex items-center gap-2">
                                             <i class="fas fa-hourglass-half animate-spin"></i> Refund Processing
                                         </p>
-                                        <p class="text-[9px] text-gray-400 mt-1">Status: {{ $currentDepoStatus }}. We are processing your deposit return.</p>
+                                        <p class="text-[9px] text-gray-400 mt-1">Status: {{ $currentDepoStatus }}. We are processing your deposit update.</p>
                                     </div>
 
                                 {{-- 3. FOR EXTERNAL BOOKINGS (NO REFUND) --}}
