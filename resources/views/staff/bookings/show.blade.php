@@ -3,6 +3,9 @@
 @section('content')
 <div class="min-h-screen bg-slate-100 rounded-2xl p-6">
     <div class="max-w-6xl mx-auto">
+        <div class="mb-6 flex items-center gap-4">
+            <h1 class="text-3xl font-black text-gray-900"> Booking #{{ $booking->bookingID }}</h1>
+        </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
             
@@ -155,11 +158,11 @@
                 </div>
 
                 {{-- 3. VEHICLE DETAILS --}}
-                <div onclick="window.location='{{ route('staff.fleet.show', $booking->vehicle->VehicleID) }}'" class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
                     <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4 border-b border-gray-100 pb-2">
                         Vehicle Details
                     </h3>
-                    <img src="{{ asset('storage/' . $booking->vehicle->image) }}" alt="Car" class="w-full h-32 object-cover rounded-xl mb-4 bg-gray-50">
+                    <img src="{{ asset('storage/' . $booking->vehicle->image) }}" alt="Car" onclick="window.location='{{ route('staff.fleet.show', $booking->vehicle->VehicleID) }}'" class="w-full h-32 object-cover rounded-xl mb-4 bg-gray-50">
                     
                     {{-- MODIFY VEHICLE FORM --}}
                     @if($booking->bookingStatus == 'Submitted' || $booking->bookingStatus == 'Deposit Paid')

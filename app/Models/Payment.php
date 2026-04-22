@@ -96,10 +96,16 @@ class Payment extends Model
         'depoStatus',
         'depoRequestDate', 
         'depoRefundedDate',
+        'depo_evidence',
         'installmentDetails', // This stores your proof image path
         'refund_proof_link',
         'isInstallment'
     ];
+
+    protected $casts = [
+        'depo_evidence' => 'array', // Automatically handles json_encode/decode
+    ];
+
     public function booking()
     {
         return $this->belongsTo(Booking::class, 'bookingID', 'bookingID');

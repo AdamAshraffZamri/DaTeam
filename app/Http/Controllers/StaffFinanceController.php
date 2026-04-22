@@ -22,16 +22,24 @@ class StaffFinanceController extends Controller
     // --- 1. LIST ALL DEPOSITS ---
     public function index(Request $request)
     {
-        $status = $request->get('status', 'requested');
+        $status = $request->get('status', 'not_updated'); // Default to Not Updated
+        $search = $request->get('search');
+        $date = $request->get('date');
 
-        // Base Query: Get bookings that HAVE a deposit paid
-        $query = Booking::whereHas('payments', function($q) {
-                            $q->where('depoAmount', '>', 0);
-                        })
-                        ->with(['customer', 'vehicle', 'payments']);
+        // 1. Updated Status Labels
+        $statuses = [
+            'not_updated' => 'Not Updated Yet',
+            'updated'     => 'Updated'
+        ];
 
+        // 1. Base Query: Only bookings with a deposit amount
+        $query = Booking::with(['customer', 'vehicle', 'payments'])
+            ->whereHas('payments', function($q) {
+                $q->where('depoAmount', '>', 0);
+            });
+
+        // 2. Search Logic
         if ($request->filled('search')) {
-            $search = $request->search;
             $query->where(function($q) use ($search) {
                 $q->where('bookingID', 'like', "%{$search}%")
                 ->orWhereHas('customer', fn($c) => $c->where('fullName', 'like', "%{$search}%"))
@@ -39,59 +47,120 @@ class StaffFinanceController extends Controller
             });
         }
 
-        // --- FILTER LOGIC ---
-        if ($status === 'requested') {
-            // SHOW: 
-            // 1. Explicit 'Requested' status
-            // 2. OR 'Completed/Cancelled/Rejected' bookings where deposit is still 'Pending' (Needs action)
-            $query->where(function($mainQ) {
-                // Condition A: Customer requested it
-                $mainQ->whereHas('payments', function($q) {
-                    $q->where('depoStatus', 'Requested');
-                })
-                // Condition B: Booking ended but deposit not yet processed
-                ->orWhere(function($subQ) {
-                    $subQ->whereIn('bookingStatus', ['Completed', 'Cancelled', 'Rejected'])
-                         ->whereHas('payments', function($p) {
-                             $p->where('depoAmount', '>', 0)
-                               ->where('depoStatus', 'Pending')
-                               ->orWhere('depoStatus', 'Holding');
-                         });
-                });
-            });
-
-        } elseif ($status === 'refunded') {
-            $query->whereHas('payments', function($q) {
-                $q->where('depoStatus', 'Refunded');
-            });
+        // 2. NEW: Date Filter Logic (Filtering by Pickup Date)
+        if ($request->filled('date')) {
+            $query->whereDate('originalDate', $request->date);
         }
 
-        $bookings = $query->orderBy('updated_at', 'desc')->paginate(10);
+        // 2. Updated Filter Logic
+        if ($status === 'updated') {
+            // Show only what has been updated (Processed)
+            $query->whereHas('payments', fn($q) => $q->where('depoStatus', 'Processed'));
+        } else {
+            // Show everything else that needs an update (Requested, Pending, Holding)
+            $query->whereHas('payments', function($q) {
+                $q->whereIn('depoStatus', ['Requested', 'Pending', 'Holding']);
+            });
+        }
+        
+        // 3. Status Filter Logic
+        if ($status === 'requested') {
+            $query->where(function($mainQ) {
+                // A: Explicitly Requested
+                $mainQ->whereHas('payments', fn($q) => $q->where('depoStatus', 'Requested'))
+                // B: OR Finished bookings that are still "Pending" or "Holding"
+                ->orWhere(function($subQ) {
+                    $subQ->whereIn('bookingStatus', ['Completed', 'Cancelled', 'Rejected'])
+                        ->whereHas('payments', function($p) {
+                            $p->where('depoAmount', '>', 0)
+                            ->whereIn('depoStatus', ['Pending', 'Holding', 'Processed']);
+                        });
+                });
+            });
+        } elseif ($status === 'refunded') {
+            $query->whereHas('payments', fn($q) => $q->where('depoStatus', 'Refunded'));
+        }
 
-        // --- COUNTS ---
-        // We need to replicate the complex "Requested + Pending Completed" logic for the count
-        $requestedCount = Booking::whereHas('payments', function($q) {
-                            $q->where('depoAmount', '>', 0);
-                        })
-                        ->where(function($mainQ) {
-                            $mainQ->whereHas('payments', function($q) {
-                                $q->where('depoStatus', 'Requested');
-                            })
-                            ->orWhere(function($subQ) {
-                                $subQ->whereIn('bookingStatus', ['Completed', 'Cancelled', 'Rejected'])
-                                     ->whereHas('payments', function($p) {
-                                         $p->where('depoAmount', '>', 0)
-                                           ->where('depoStatus', 'Pending');
-                                     });
-                            });
-                        })->count();
+        // 4. Sort by Pickup Date & List All (Removed pagination)
+        $bookings = $query->orderBy('originalDate', 'asc')->get();
 
+        // 3. Updated Count Badges
         $counts = [
-            'requested' => $requestedCount,
-            'refunded'  => Payment::where('depoStatus', 'Refunded')->count(),
+            'not_updated' => Booking::whereHas('payments', fn($q) => $q->whereIn('depoStatus', ['Requested', 'Pending', 'Holding']))->count(),
+            'updated'     => Booking::whereHas('payments', fn($q) => $q->where('depoStatus', 'Processed'))->count(),
         ];
 
         return view('staff.finance.deposits', compact('bookings', 'status', 'counts'));
+    }
+
+    public function updateDeposit(Request $request, $id)
+    {
+        $request->validate([
+            'adjusted_amount' => 'required|numeric|min:0',
+            'remarks' => 'required|string',
+            'attachments.*'   => 'nullable|file|mimes:jpeg,png,jpg,pdf,doc,docx,xls,xlsx,zip|max:5120', // Up to 5MB
+        ]);
+
+        $booking = Booking::findOrFail($id);
+        $payment = $booking->payments->where('depoAmount', '>', 0)->first();
+
+        if (!$payment) {
+            return back()->with('error', 'Deposit payment record not found.');
+        }
+
+        if ($payment) {
+            // 1. Update Amount and Remarks
+            $payment->depoAmount = $request->adjusted_amount;
+            $payment->depoStatus = 'Processed'; // Status updates after action
+            $payment->remarks = $request->remarks;
+
+            if ($request->hasFile('attachments')) {
+                $files = $payment->depo_evidence ?? [];
+                
+                foreach ($request->file('attachments') as $index => $file) {
+                    // RENAME LOGIC: depo_UTM3057_1713852000_0.pdf
+                    $extension = $file->getClientOriginalExtension();
+                    $filename = 'depo_' . $id . '_' . time() . '_' . $index . '.' . $extension;
+                    
+                    // Store with the new name
+                    $path = $file->storeAs('deposits', $filename, 'public');
+                    $files[] = $path;
+                }
+                $payment->depo_evidence = $files;
+            }
+
+            $payment->save();
+
+            return back()->with('success', 'Deposit updated successfully. Customer can now view the updates.');
+        }
+
+        return back()->with('error', 'Deposit record not found.');
+    }
+
+    public function deleteEvidence(Request $request)
+    {
+        // Find the payment that contains this specific file path in its evidence array
+        $payment = \App\Models\Payment::where('depo_evidence', 'like', '%' . $request->path . '%')->first();
+
+        if ($payment) {
+            $currentFiles = $payment->depo_evidence;
+
+            // Remove the file path from the array
+            $updatedFiles = array_filter($currentFiles, function($file) use ($request) {
+                return $file !== $request->path;
+            });
+
+            // Delete the physical file from storage
+            \Illuminate\Support\Facades\Storage::disk('public')->delete($request->path);
+
+            // Save the updated array (array_values resets the keys)
+            $payment->depo_evidence = array_values($updatedFiles);
+            $payment->save();
+
+            return response()->json(['success' => true]);
+        }
+
+        return response()->json(['success' => false, 'message' => 'File not found.'], 404);
     }
 
     // --- 2. PROCESS REFUND ---
