@@ -89,8 +89,21 @@ class StaffCustomerController extends Controller
             });
         }
 
-        // 3. Finalize and Paginate
-        $customers = $query->latest()->paginate(10)->appends($request->all());
+        // 3. Custom Sorting (Priority: Pending -> Unverified -> Verified)
+        $query->orderByRaw("
+            CASE 
+                WHEN accountStat = 'pending' THEN 1 
+                WHEN accountStat = 'unverified' THEN 2 
+                WHEN accountStat = 'verified' THEN 3 
+                ELSE 4 
+            END ASC
+        ");
+
+        // 4. Secondary Sort: Earliest updated at the top
+        $query->orderBy('updated_at', 'asc');
+
+        // 5. Fetch all records (Removed pagination)
+        $customers = $query->paginate(500)->appends($request->all());
 
         return view('staff.customers.index', compact('customers'));
     }

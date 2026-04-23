@@ -190,21 +190,30 @@
         </div>
 
         {{-- 2. METRICS GRID --}}
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
             
             {{-- Card 1: Submitted Booking --}}
             <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm hover:border-orange-200 transition-colors group relative">
                 <a href="{{ route('staff.bookings.index', ['search' => '', 'status' => 'Submitted']) }}" class="absolute inset-0 z-10"></a>
+                
+                {{-- Notification Trigger --}}
+                @if($pendingBookingsCount > 0)
+                    <span class="absolute top-3 right-3 flex h-2 w-2">
+                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-orange-400 opacity-75"></span>
+                        <span class="relative inline-flex rounded-full h-2 w-2 bg-orange-500"></span>
+                    </span>
+                @endif
+
                 <div class="flex justify-between items-start">
                     <div>
                         <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Submitted Booking</p>
-                        <h3 class="text-2xl font-black text-slate-800 mt-1">{{ $pendingBookingsCount }}</h3>
+                        <h3 class="text-2xl font-black {{ $pendingBookingsCount > 0 ? 'text-orange-600' : 'text-slate-800' }} mt-1">{{ $pendingBookingsCount }}</h3>
                     </div>
                     <div class="p-2.5 bg-orange-100 text-orange-700 rounded-xl group-hover:bg-orange-600 group-hover:text-white transition-all shadow-sm">
                         <i class="fas fa-hourglass-half text-lg"></i>
                     </div>
                 </div>
-                <div class="mt-3 text-sm font-bold text-orange-600">Needs verification</div>
+                <div class="mt-3 text-sm font-bold {{ $pendingBookingsCount > 0 ? 'text-orange-600 animate-pulse' : 'text-slate-400' }}">Needs verification</div>
             </div>
 
             {{-- Card 2: Deposit Paid Bookings --}}
@@ -237,19 +246,52 @@
                 <div class="mt-3 text-sm font-bold text-green-600">Ready for pickup</div>
             </div>
 
-            {{-- Card 4: Pending Customers ONLY --}}
+            {{-- NEW CARD: Deposit Not Updated --}}
+            <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm hover:border-indigo-200 transition-colors group relative">
+                <a href="{{ route('staff.finance.deposits', ['status' => 'not_updated']) }}" class="absolute inset-0 z-10"></a>
+                
+                {{-- Notification Trigger --}}
+                @if($counts['not_updated'] > 0)
+                    <span class="absolute top-3 right-3 flex h-2 w-2">
+                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
+                        <span class="relative inline-flex rounded-full h-2 w-2 bg-indigo-500"></span>
+                    </span>
+                @endif
+
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Deposit Update</p>
+                        <h3 class="text-2xl font-black {{ $counts['not_updated'] > 0 ? 'text-indigo-600' : 'text-slate-800' }} mt-1">{{ $counts['not_updated'] ?? 0 }}</h3>
+                    </div>
+                    <div class="p-2.5 bg-indigo-100 text-indigo-700 rounded-xl group-hover:bg-indigo-600 group-hover:text-white transition-all shadow-sm">
+                        <i class="fas fa-hand-holding-usd text-lg"></i>
+                    </div>
+                </div>
+                <div class="mt-3 text-sm font-bold {{ $counts['not_updated'] > 0 ? 'text-indigo-600 animate-pulse' : 'text-slate-400' }}">Pending update</div>
+            </div>
+
+            {{-- Card 4: Pending Customers --}}
             <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm hover:border-purple-200 transition-colors group relative">
                 <a href="{{ route('staff.customers.index', ['search' => '', 'status' => 'pending']) }}" class="absolute inset-0 z-10"></a>
+                
+                {{-- Notification Trigger --}}
+                @if($pendingCustomersCount > 0)
+                    <span class="absolute top-3 right-3 flex h-2 w-2">
+                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                        <span class="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
+                    </span>
+                @endif
+
                 <div class="flex justify-between items-start">
                     <div>
                         <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Pending Customers</p>
-                        <h3 class="text-2xl font-black text-slate-800 mt-1">{{ $pendingCustomersCount }}</h3>
+                        <h3 class="text-2xl font-black {{ $pendingCustomersCount > 0 ? 'text-red-600' : 'text-slate-800' }} mt-1">{{ $pendingCustomersCount }}</h3>
                     </div>
                     <div class="p-2.5 bg-purple-100 text-purple-700 rounded-xl group-hover:bg-purple-600 group-hover:text-white transition-all shadow-sm">
                         <i class="fas fa-user-clock text-lg"></i>
                     </div>
                 </div>
-                <div class="mt-3 text-sm font-bold text-red-600 animate-pulse">Needs verification</div>
+                <div class="mt-3 text-sm font-bold {{ $pendingCustomersCount > 0 ? 'text-red-600 animate-pulse' : 'text-slate-400' }}">Needs verification</div>
             </div>
             
         </div>
@@ -259,47 +301,43 @@
             {{-- 3. LEFT COLUMN: CHARTS & CALENDAR --}}
             <div class="xl:col-span-2 space-y-6">
                 
-                {{-- Chart Section --}}
-                <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm">
-                    <div class="flex justify-between items-center mb-4">
-                        <div class="flex items-center gap-3">
+               {{-- Chart Section --}}
+                <div class="bg-white p-4 sm:p-5 rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+                        {{-- Left: Title & Filter --}}
+                        <div class="flex items-center gap-3 w-full sm:w-auto">
                             <h2 class="text-lg font-bold text-slate-800 truncate">Performance</h2>
                             <form action="{{ route('staff.dashboard') }}" method="GET">
-                                <select name="chart_period" onchange="this.form.submit()" class="text-xs font-bold bg-gray-50 border border-gray-200 rounded-lg px-2 py-1 focus:border-orange-500 focus:ring-0 cursor-pointer text-slate-600">
+                                <select name="chart_period" onchange="this.form.submit()" 
+                                        class="text-[12px] font-bold bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 focus:border-orange-500 focus:ring-0 cursor-pointer text-slate-600 outline-none">
                                     <option value="daily" {{ request('chart_period') == 'daily' ? 'selected' : '' }}>Daily</option>
                                     <option value="weekly" {{ request('chart_period') == 'weekly' ? 'selected' : '' }}>Weekly</option>
                                     <option value="monthly" {{ request('chart_period') == 'monthly' ? 'selected' : '' }}>Monthly</option>
                                 </select>
                             </form>
                         </div>
-                        <div class="flex gap-3">
-                            <div class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-orange-500"></span><span class="text-[10px] font-bold text-slate-500 uppercase">Revenue</span></div>
-                            <div class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-blue-500"></span><span class="text-[10px] font-bold text-slate-500 uppercase">Bookings</span></div>
+
+                        {{-- Right: Legend Labels --}}
+                        <div class="flex gap-4 w-full sm:w-auto justify-start sm:justify-end border-t sm:border-t-0 pt-3 sm:pt-0 border-slate-100">
+                            <div class="flex items-center gap-2">
+                                <span class="w-2.5 h-2.5 rounded-full bg-orange-500 shadow-sm"></span>
+                                <span class="text-[10px] font-bold text-slate-500 uppercase">Revenue</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="w-2.5 h-2.5 rounded-full bg-blue-500 shadow-sm"></span>
+                                <span class="text-[10px] font-bold text-slate-500 uppercase">Bookings</span>
+                            </div>
                         </div>
                     </div>
-                    <div class="h-64 w-full">
+
+                    {{-- Chart Canvas: Increased height for mobile visibility --}}
+                    <div class="relative h-64 sm:h-72 w-full">
                         <canvas id="dashboardChart"></canvas>
                     </div>
                 </div>
 
                 {{-- NEW TIMELINE SECTION --}}
                 <div class="bg-white rounded-xl border border-gray-200 shadow-sm flex flex-col">
-                    
-                    <!-- {{-- Card Header --}}
-                    <div class="p-6 border-b border-gray-100 flex justify-between items-center shrink-0 z-50">
-                        <div>
-                            <h2 class="text-lg font-bold text-slate-800 truncate">Booking Calendar</h2>
-                        </div>
-                        
-                        {{-- Month Filter --}}
-                        <form action="{{ route('staff.dashboard') }}" method="GET" class="flex items-center gap-3">
-                            <label class="text-sm font-bold text-slate-500">Month:</label>
-                            <input type="month" name="calendar_month" 
-                                   value="{{ request('calendar_month', date('Y-m')) }}" 
-                                   onchange="this.form.submit()"
-                                   class="bg-slate-50 border border-slate-200 text-slate-700 text-sm font-bold rounded-2xl px-3 py-1.5 focus:border-slate-400 outline-none cursor-pointer shadow-sm transition-colors hover:bg-slate-100 min-w-[140px]">
-                        </form>
-                    </div> -->
                     
                     {{-- Card Header --}}
                     <div class="p-5 md:p-6 border-b border-gray-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 shrink-0 z-50">
