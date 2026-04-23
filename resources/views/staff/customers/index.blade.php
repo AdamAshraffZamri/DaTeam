@@ -136,7 +136,7 @@
                                 {{-- LATEST UPDATE TIMESTAMP --}}
                                 <p class="text-[9px] font-medium {{ $customer->accountStat == 'pending' ? 'text-orange-600' : 'text-gray-400' }}">
                                     <i class="fas fa-clock mr-1 text-[8px]"></i>
-                                    Updated: {{ $customer->updated_at->format('d M Y, h:i A') }}
+                                    Updated: {{ $customer->updated_at?->format('d M Y, h:i A') ?? 'N/A' }}
                                 </p>
                             </div>
                         </div>
