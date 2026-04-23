@@ -30,22 +30,22 @@ class AppServiceProvider extends ServiceProvider
         View::composer(['layouts.staff', 'layouts.customer'], function ($view) {
             if (Auth::guard('staff')->check()) {
                 // 1. PENDING BOOKINGS - Bookings awaiting staff action
-                $pendingBookingsCount = Booking::whereIn('bookingStatus', ['Pending', 'Submitted', 'Deposit Paid'])->count();
+                $pendingBookingsCount = Booking::whereIn('bookingStatus', ['Pending', 'Submitted', 'Paid', 'Fully Paid', 'Refund Requested'])->count();
                 
                 // 2. PENDING DEPOSITS - Refunds awaiting processing
-                $pendingDepositsCount = Booking::whereHas('payments', function($q) {
-                    $q->where('depoAmount', '>', 0);
-                })
-                ->where(function($mainQ) {
-                    $mainQ->whereHas('payments', function($q) {
-                        $q->where('depoStatus', 'Requested');
-                    })
-                    ->orWhere(function($subQ) {
-                        $subQ->whereIn('bookingStatus', ['Completed', 'Cancelled', 'Rejected'])
-                             ->whereHas('payments', function($p) {
-                                 $p->where('depoAmount', '>', 0)
-                                   ->whereIn('depoStatus', ['Pending', 'Holding']);
-                             });
+                $pendingDepositsCount = \App\Models\Booking::whereHas('payments', function($q) {
+                    $q->where('depoAmount', '>', 0) // Only count if a deposit exists
+                    ->where(function($sub) {
+                        // 1. Statuses that are strictly "Not Updated"
+                        $sub->whereIn('depoStatus', ['Requested', 'Pending', 'Holding'])
+                            // 2. OR Processed but the staff forgot to add a remark (Still needs action)
+                            ->orWhere(function($inner) {
+                                $inner->where('depoStatus', 'Processed')
+                                        ->where(function($rem) {
+                                            $rem->whereNull('remarks')
+                                                ->orWhere('remarks', '');
+                                        });
+                            });
                     });
                 })->count();
                 
@@ -55,7 +55,7 @@ class AppServiceProvider extends ServiceProvider
                     ->count();
                 
                 // 4. PENDING CUSTOMERS - Customers pending verification
-                $pendingCustomersCount = Customer::where('accountStat', 'unverified')->count();
+                $pendingCustomersCount = Customer::where('accountStat', 'pending')->count();
                 
                 $view->with([
                     'pendingBookingsCount' => $pendingBookingsCount,

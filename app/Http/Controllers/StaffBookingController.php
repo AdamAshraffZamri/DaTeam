@@ -220,12 +220,45 @@ class StaffBookingController extends Controller
             ]);
         }
 
+        $notUpdatedDeposits = \App\Models\Booking::whereHas('payments', function($q) {
+            $q->where('depoAmount', '>', 0)
+            ->where(function($sub) {
+                // 1. Capture all that are Requested, Pending, or Holding
+                $sub->whereIn('depoStatus', ['Requested', 'Pending', 'Holding'])
+                    // 2. OR capture Processed ones that have NO remarks (not fully settled yet)
+                    ->orWhere(function($inner) {
+                        $inner->where('depoStatus', 'Processed')
+                                ->where(function($rem) {
+                                    $rem->whereNull('remarks')
+                                        ->orWhere('remarks', '');
+                                });
+                    });
+            });
+        })->count();
+
+        $counts = [
+            'not_updated' => Booking::whereHas('payments', function($q) {
+                $q->whereIn('depoStatus', ['Requested', 'Pending', 'Holding'])
+                ->orWhere(function($inner) {
+                    $inner->where('depoStatus', 'Processed')
+                            ->where(function($rem) {
+                                $rem->whereNull('remarks')->orWhere('remarks', '');
+                            });
+                });
+            })->count(),
+            'updated' => Booking::whereHas('payments', function($q) {
+                $q->where('depoStatus', 'Processed')
+                ->whereNotNull('remarks')
+                ->where('remarks', '!=', '');
+            })->count(),
+        ];
+
         return view('staff.dashboard', compact(
             'totalRevenue', 'revenueGrowth', 'activeRentalsCount', 'pendingBookingsCount', 'fullyPaidCount', 'depositPaidCount',
             'totalCustomers', 'pendingCustomersCount', 'chartLabels', 'chartRevenue', 'chartBookings',
             'pickupsToday', 'returnsToday', 'recentBookings', 
             'totalVehicles', 'utilizationRate', 'maintenanceRate', 'todayRevenue', 'overdueCount',
-            'calendarEvents' 
+            'calendarEvents', 'counts'
         ));
     }
 
