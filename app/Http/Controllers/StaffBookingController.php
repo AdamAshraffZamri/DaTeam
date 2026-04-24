@@ -245,6 +245,9 @@ class StaffBookingController extends Controller
         $counts = [
             'not_updated' => Booking::whereHas('payments', function($q) {
                 $q->whereIn('depoStatus', ['Requested', 'Pending', 'Holding'])
+                ->whereHas('booking', function($b) {
+                    $b->whereIn('bookingStatus', ['Completed', 'Cancelled', 'Rejected']);
+                })
                 ->orWhere(function($inner) {
                     $inner->where('depoStatus', 'Processed')
                             ->where(function($rem) {
@@ -254,6 +257,9 @@ class StaffBookingController extends Controller
             })->count(),
             'updated' => Booking::whereHas('payments', function($q) {
                 $q->where('depoStatus', 'Processed')
+                ->whereHas('booking', function($b) {
+                    $b->whereIn('bookingStatus', ['Completed', 'Cancelled', 'Rejected']);
+                })
                 ->whereNotNull('remarks')
                 ->where('remarks', '!=', '');
             })->count(),
