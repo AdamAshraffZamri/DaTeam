@@ -32,7 +32,7 @@
                 {{-- Top Section: Image & Status --}}
                 <div class="relative h-64 bg-black/40">
                     @if($vehicle->image)
-                        <img src="{{ Storage::disk('s3')->temporaryUrl($vehicle->image, now()->addMinutes(60)) }}" alt="{{ $vehicle->model }}" 
+                        <img src="{{ asset('storage/' . $vehicle->image) }}" alt="{{ $vehicle->model }}" 
                             class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105">
                     @else
                         <div class="w-full h-full flex items-center justify-center bg-zinc-900">

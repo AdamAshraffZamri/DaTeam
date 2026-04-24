@@ -30,7 +30,7 @@
                         <div class="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 text-xl font-bold shrink-0">
                             @if($booking->customer->avatar && !empty($booking->customer->avatar))
                                 {{-- SHOW AVATAR IMAGE --}}
-                                <img src="{{ Storage::disk('s3')->temporaryUrl($booking->customer->avatar, now()->addMinutes(60)) }}" 
+                                <img src="{{ asset($booking->customer->avatar) }}" 
                                     alt="" 
                                     class="w-full h-full rounded-xl object-cover -rotate-3 group-hover:scale-110 transition-transform duration-300"
                                     onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
@@ -162,7 +162,7 @@
                     <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4 border-b border-gray-100 pb-2">
                         Vehicle Details
                     </h3>
-                    <img src="{{ Storage::disk('s3')->temporaryUrl($booking->vehicle->image, now()->addMinutes(60)) }}" alt="Car" onclick="window.location='{{ route('staff.fleet.show', $booking->vehicle->VehicleID) }}'" class="w-full h-32 object-cover rounded-xl mb-4 bg-gray-50">
+                    <img src="{{ asset('storage/' . $booking->vehicle->image) }}" alt="Car" onclick="window.location='{{ route('staff.fleet.show', $booking->vehicle->VehicleID) }}'" class="w-full h-32 object-cover rounded-xl mb-4 bg-gray-50">
                     
                     {{-- MODIFY VEHICLE FORM --}}
                     @if($booking->bookingStatus == 'Submitted' || $booking->bookingStatus == 'Deposit Paid')
@@ -272,7 +272,7 @@
                                 @php
                                     $receiptUrl = str_contains($receipt->installmentDetails, 'drive.google.com') 
                                                 ? $receipt->installmentDetails 
-                                                : Storage::disk('s3')->temporaryUrl($receipt->installmentDetails, now()->addMinutes(60));
+                                                : asset('storage/' . $receipt->installmentDetails);
                                 @endphp
                                 <div class="flex items-center justify-between bg-blue-50 border border-blue-100 rounded-lg p-2 hover:bg-blue-100 transition">
                                     <div class="flex items-center gap-2 flex-1 min-w-0">
@@ -309,7 +309,7 @@
                                 @php
                                     $agreementUrl = str_contains($booking->aggreementLink, 'drive.google.com') 
                                                   ? $booking->aggreementLink 
-                                                  : Storage::disk('s3')->temporaryUrl($booking->aggreementLink, now()->addMinutes(60));
+                                                  : asset('storage/' . $booking->aggreementLink);
                                 @endphp
                                 <a href="{{ $agreementUrl }}" target="_blank" class="flex flex-col items-center justify-center bg-purple-50 border border-purple-200 text-purple-700 py-2 rounded-lg text-xs font-bold hover:bg-purple-100 transition text-center h-full">
                                     <i class="fas fa-file-signature mb-1 text-lg"></i> Agreement
@@ -377,8 +377,8 @@
                                         @php $photos = json_decode($inspection->photosBefore ?? $inspection->photosAfter); @endphp
                                         @if($photos)
                                             @foreach($photos as $photo)
-                                                <a href="{{ Storage::disk('s3')->temporaryUrl($photo, now()->addMinutes(60)) }}" target="_blank" class="block relative group overflow-hidden rounded-lg border border-gray-200 aspect-square">
-                                                    <img src="{{ Storage::disk('s3')->temporaryUrl($photo, now()->addMinutes(60)) }}" class="w-full h-full object-cover transition transform group-hover:scale-110">
+                                                <a href="{{ asset('storage/'.$photo) }}" target="_blank" class="block relative group overflow-hidden rounded-lg border border-gray-200 aspect-square">
+                                                    <img src="{{ asset('storage/'.$photo) }}" class="w-full h-full object-cover transition transform group-hover:scale-110">
                                                 </a>
                                             @endforeach
                                         @endif
@@ -457,9 +457,9 @@
                                         @endphp
                                         @if($photos)
                                             @foreach($photos as $photo)
-                                                <a href="{{ Storage::disk('s3')->temporaryUrl($photo, now()->addMinutes(60)) }}" target="_blank"
+                                                <a href="{{ asset('storage/'.$photo) }}" target="_blank"
                                                 class="block relative group overflow-hidden rounded-lg border border-gray-200 aspect-square shadow-sm hover:shadow-md transition">
-                                                    <img src="{{ Storage::disk('s3')->temporaryUrl($photo, now()->addMinutes(60)) }}"
+                                                    <img src="{{ asset('storage/'.$photo) }}"
                                                         class="w-full h-full object-cover transition transform group-hover:scale-110">
                                                     <div class="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition"></div>
                                                 </a>
@@ -617,7 +617,7 @@
 
                         {{-- STEP 3: ACTIVE --}}
                         @elseif($booking->bookingStatus == 'Active')
-                            <form action="{{ route('staff.bookings.return', $booking->bookingID) }}" method="POST" onsubmit="return confirm('Complete rental? Deposit will be processed at deposit management.');">@csrf
+                            <form action="{{ route('staff.bookings.return', $booking->bookingID) }}" method="POST" onsubmit="return confirm('Complete rental? Deposit will be processed if any.');">@csrf
                                 <button class="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-xl font-bold transition shadow-lg shadow-blue-500/20">
                                     4. Process Return (Complete)
                                 </button>

@@ -273,7 +273,7 @@
         <div class="h-60 flex items-center justify-center mb-4 relative overflow-hidden rounded-2xl bg-black/30 border border-white/5">
             <div class="absolute inset-0 bg-gradient-to-tr from-orange-500/10 to-transparent opacity-50"></div>
             @if($vehicle->image)
-                <img src="{{ Storage::disk('s3')->temporaryUrl($vehicle->image, now()->addMinutes(60)) }}" alt="{{ $vehicle->model }}" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">
+                <img src="{{ asset('storage/' . $vehicle->image) }}" alt="{{ $vehicle->model }}" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">
             @else
                 <i class="fas fa-{{ $vehicle->vehicle_category == 'bike' ? 'motorcycle' : 'car-side' }} text-6xl text-white/10 group-hover:text-white/20 transition-colors"></i>
             @endif
@@ -376,7 +376,7 @@
                 <div class="relative z-10 space-y-6">
                     <div class="h-56 md:h-64 flex items-center justify-center bg-black/40 rounded-[2rem] overflow-hidden border border-white/10 shadow-inner">
                         @if($vehicle->image)
-                            <img src="{{ Storage::disk('s3')->temporaryUrl($vehicle->image, now()->addMinutes(60)) }}" class="w-full h-full object-cover">
+                            <img src="{{ asset('storage/' . $vehicle->image) }}" class="w-full h-full object-cover">
                         @else
                             <i class="fas fa-{{ $vehicle->vehicle_category == 'bike' ? 'motorcycle' : 'car' }} text-7xl text-white/5"></i>
                         @endif

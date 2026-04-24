@@ -42,7 +42,7 @@
             <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
                 <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4">Vehicle Information</h3>
                 <div class="flex items-center gap-4">
-                    <img src="{{ Storage::disk('s3')->temporaryUrl($booking->vehicle->image, now()->addMinutes(60)) }}" alt="Car" class="w-20 h-20 object-cover rounded-lg bg-gray-50">
+                    <img src="{{ asset('storage/' . $booking->vehicle->image) }}" alt="Car" class="w-20 h-20 object-cover rounded-lg bg-gray-50">
                     <div>
                         <h4 class="font-bold text-gray-900 text-lg">{{ $booking->vehicle->model }}</h4>
                         <p class="text-xs text-gray-500">{{ $booking->vehicle->plateNo }}</p>

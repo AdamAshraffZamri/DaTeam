@@ -209,7 +209,7 @@
                     
                     {{-- Image --}}
                     <div class="h-40 md:h-48 overflow-hidden relative">
-                        <img src="{{ Storage::disk('s3')->temporaryUrl($vehicle->image, now()->addMinutes(60)) }}" alt="{{ $vehicle->model }}" 
+                        <img src="{{ asset('storage/' . $vehicle->image) }}" alt="{{ $vehicle->model }}" 
                              class="w-full h-full object-cover transform group-hover:scale-110 transition duration-700">
                         <div class="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-80"></div>
                         

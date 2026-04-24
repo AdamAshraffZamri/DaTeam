@@ -152,7 +152,7 @@
                         <div class="w-full md:w-5/12 flex flex-col gap-6">
                             <div class="h-60 bg-gray-50 rounded-2xl flex items-center justify-center overflow-hidden border border-gray-100 shrink-0 relative group shadow-sm">
                                 @if($vehicle->image) 
-                                    <img src="{{ Storage::disk('s3')->temporaryUrl($vehicle->image, now()->addMinutes(60)) }}" class="w-full h-full object-cover">
+                                    <img src="{{ asset('storage/' . $vehicle->image) }}" class="w-full h-full object-cover">
                                 @else 
                                     <i class="fas fa-car text-4xl text-gray-300"></i> 
                                 @endif
@@ -227,11 +227,11 @@
                                     {{-- Road Tax --}}
                                     <div class="flex flex-col gap-2">
                                         <div class="group relative aspect-[4/3] rounded-xl border overflow-hidden transition-all w-full {{ $vehicle->road_tax_image ? 'border-gray-200 hover:border-blue-500 shadow-sm cursor-pointer' : 'border-gray-100 bg-gray-50 cursor-not-allowed' }}"
-                                             @if($vehicle->road_tax_image) @click="openViewer('Road Tax', '{{ Storage::disk('s3')->temporaryUrl($vehicle->road_tax_image, now()->addMinutes(60)) }}')" @endif>
+                                             @if($vehicle->road_tax_image) @click="openViewer('Road Tax', '{{ asset('storage/'.$vehicle->road_tax_image) }}')" @endif>
                                             @if($vehicle->road_tax_image)
                                                 @php $rtExt = pathinfo($vehicle->road_tax_image, PATHINFO_EXTENSION); @endphp
                                                 @if(in_array(strtolower($rtExt), ['jpg', 'jpeg', 'png', 'gif', 'webp']))
-                                                    <img src="{{ Storage::disk('s3')->temporaryUrl($vehicle->road_tax_image, now()->addMinutes(60)) }}" class="w-full h-full object-cover blur-[2px] group-hover:blur-0 transition-all duration-300">
+                                                    <img src="{{ asset('storage/' . $vehicle->road_tax_image) }}" class="w-full h-full object-cover blur-[2px] group-hover:blur-0 transition-all duration-300">
                                                 @else
                                                     <div class="w-full h-full flex flex-col items-center justify-center bg-blue-50/50 text-blue-500">
                                                         <div class="w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-md"><i class="fas fa-file-pdf text-xl"></i></div>
@@ -255,11 +255,11 @@
                                     {{-- Grant --}}
                                     <div class="flex flex-col gap-2">
                                         <div class="group relative aspect-[4/3] rounded-xl border overflow-hidden transition-all w-full {{ $vehicle->grant_image ? 'border-gray-200 hover:border-blue-500 shadow-sm cursor-pointer' : 'border-gray-100 bg-gray-50 cursor-not-allowed' }}"
-                                             @if($vehicle->grant_image) @click="openViewer('Grant', '{{ Storage::disk('s3')->temporaryUrl($vehicle->grant_image, now()->addMinutes(60)) }}')" @endif>
+                                             @if($vehicle->grant_image) @click="openViewer('Grant', '{{ asset('storage/'.$vehicle->grant_image) }}')" @endif>
                                             @if($vehicle->grant_image)
                                                 @php $gExt = pathinfo($vehicle->grant_image, PATHINFO_EXTENSION); @endphp
                                                 @if(in_array(strtolower($gExt), ['jpg', 'jpeg', 'png', 'gif', 'webp']))
-                                                    <img src="{{ Storage::disk('s3')->temporaryUrl($vehicle->grant_image, now()->addMinutes(60)) }}" class="w-full h-full object-cover blur-[2px] group-hover:blur-0 transition-all duration-300">
+                                                    <img src="{{ asset('storage/' . $vehicle->grant_image) }}" class="w-full h-full object-cover blur-[2px] group-hover:blur-0 transition-all duration-300">
                                                 @else
                                                     <div class="w-full h-full flex flex-col items-center justify-center bg-blue-50/50 text-blue-500">
                                                         <div class="w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-md"><i class="fas fa-file-pdf text-xl"></i></div>
@@ -283,11 +283,11 @@
                                     {{-- Insurance --}}
                                     <div class="flex flex-col gap-2">
                                         <div class="group relative aspect-[4/3] rounded-xl border overflow-hidden transition-all w-full {{ $vehicle->insurance_image ? 'border-gray-200 hover:border-blue-500 shadow-sm cursor-pointer' : 'border-gray-100 bg-gray-50 cursor-not-allowed' }}"
-                                             @if($vehicle->insurance_image) @click="openViewer('Insurance', '{{ Storage::disk('s3')->temporaryUrl($vehicle->insurance_image, now()->addMinutes(60)) }}')" @endif>
+                                             @if($vehicle->insurance_image) @click="openViewer('Insurance', '{{ asset('storage/'.$vehicle->insurance_image) }}')" @endif>
                                             @if($vehicle->insurance_image)
                                                 @php $iExt = pathinfo($vehicle->insurance_image, PATHINFO_EXTENSION); @endphp
                                                 @if(in_array(strtolower($iExt), ['jpg', 'jpeg', 'png', 'gif', 'webp']))
-                                                    <img src="{{ Storage::disk('s3')->temporaryUrl($vehicle->insurance_image, now()->addMinutes(60)) }}" class="w-full h-full object-cover blur-[2px] group-hover:blur-0 transition-all duration-300">
+                                                    <img src="{{ asset('storage/' . $vehicle->insurance_image) }}" class="w-full h-full object-cover blur-[2px] group-hover:blur-0 transition-all duration-300">
                                                 @else
                                                     <div class="w-full h-full flex flex-col items-center justify-center bg-blue-50/50 text-blue-500">
                                                         <div class="w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-md"><i class="fas fa-file-pdf text-xl"></i></div>

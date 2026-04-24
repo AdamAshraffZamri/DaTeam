@@ -520,40 +520,16 @@ class StaffBookingController extends Controller
                 ]);
             }
 
-            // Handle file uploads to S3
+            // Handle file uploads
             $receiptPath = null;
             $agreementPath = null;
             
             if ($request->hasFile('receipt_image')) {
-                try {
-                    $receiptPath = Storage::disk('s3')->putFile('receipts', $request->file('receipt_image'));
-                    if (!$receiptPath) {
-                        throw new \Exception('Failed to upload receipt.');
-                    }
-                } catch (\Exception $e) {
-                    Log::error('Receipt Upload Error: ' . $e->getMessage());
-                    return response()->json([
-                        'success' => false,
-                        'message' => 'Failed to upload receipt: ' . $e->getMessage(),
-                        'error' => $e->getMessage()
-                    ], 400);
-                }
+                $receiptPath = $request->file('receipt_image')->store('bookings/receipts', 'public');
             }
             
             if ($request->hasFile('agreement_image')) {
-                try {
-                    $agreementPath = Storage::disk('s3')->putFile('agreements', $request->file('agreement_image'));
-                    if (!$agreementPath) {
-                        throw new \Exception('Failed to upload agreement.');
-                    }
-                } catch (\Exception $e) {
-                    Log::error('Agreement Upload Error: ' . $e->getMessage());
-                    return response()->json([
-                        'success' => false,
-                        'message' => 'Failed to upload agreement: ' . $e->getMessage(),
-                        'error' => $e->getMessage()
-                    ], 400);
-                }
+                $agreementPath = $request->file('agreement_image')->store('bookings/agreements', 'public');
             }
             
             // Create booking
@@ -1011,20 +987,11 @@ class StaffBookingController extends Controller
             'photos.size' => "Exactly $requiredCount photos are required for $type inspection."
         ]);
 
-        // 3. Handle File Uploads to S3
+        // 3. Handle File Uploads
         $photoPaths = [];
         if ($request->hasFile('photos')) {
             foreach ($request->file('photos') as $photo) {
-                try {
-                    $photoPath = Storage::disk('s3')->putFile('inspections', $photo);
-                    if (!$photoPath) {
-                        throw new \Exception('Failed to upload inspection photo to S3.');
-                    }
-                    $photoPaths[] = $photoPath;
-                } catch (\Exception $e) {
-                    Log::error('Inspection Photo Upload Error: ' . $e->getMessage());
-                    return back()->with('error', 'Failed to upload inspection photos: ' . $e->getMessage());
-                }
+                $photoPaths[] = $photo->store('inspections', 'public');
             }
         }
         $photoString = json_encode($photoPaths);

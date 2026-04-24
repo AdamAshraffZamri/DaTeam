@@ -8,6 +8,7 @@ use App\Models\Vehicle;
 use App\Models\Penalties;
 use App\Models\Voucher;
 use App\Models\Staff;
+use App\Services\GoogleDriveService;
 use App\Notifications\NewBookingSubmitted;
 use App\Notifications\BookingStatusUpdated;
 use Illuminate\Http\Request;
@@ -33,6 +34,7 @@ use Barryvdh\DomPDF\Facade\Pdf;
  * - Booking status tracking and history
  * - Penalty calculations and dispute handling
  * - Email notifications for booking status changes
+ * - Google Drive integration for document backup
  * 
  * Database Constraints:
  * - bookingStatus: max 50 characters (Pending, Confirmed, Active, Completed, Cancelled, etc.)
@@ -47,12 +49,21 @@ use Barryvdh\DomPDF\Facade\Pdf;
  * - CSRF token requirement for form submissions
  * 
  * Dependencies:
+ * - GoogleDriveService: File backup and storage
  * - Payment model: Payment tracking and history
  * - Vehicle model: Availability and rate information
  * - Carbon library: Date/time calculations
  */
 class BookingController extends Controller
 {
+    protected $driveService;
+
+    // Inject the GoogleDriveService
+    public function __construct(GoogleDriveService $driveService)
+    {
+        $this->driveService = $driveService;
+    }
+
     // --- 1. MY BOOKINGS PAGE ---
     public function index(Request $request)
     {
@@ -523,33 +534,30 @@ class BookingController extends Controller
         $userName = Auth::user()->fullName; 
         $fileNameBase = "[{$userName} - {$timestamp}]";
 
-        // Upload Receipt to S3
+        // Upload Receipt
         $receiptFile = $request->file('payment_proof');
-        try {
-            $localProofPath = Storage::disk('s3')->putFile('receipts', $receiptFile);
-            if (!$localProofPath) {
-                throw new \Exception('Failed to upload receipt to S3.');
-            }
-        } catch (\Exception $e) {
-            \Log::error('Receipt Upload Error: ' . $e->getMessage());
-            return back()->with('error', 'Receipt upload failed: ' . $e->getMessage());
-        }
+        $localProofPath = $receiptFile->store('receipts', 'public'); 
         
-        // Upload Agreement to S3
+        // Upload Agreement
         $agreementFile = $request->file('agreement_proof');
+        $localAgreementPath = $agreementFile->store('agreements', 'public');
+
+        // Try Upload to Drive
         try {
-            $localAgreementPath = Storage::disk('s3')->putFile('agreements', $agreementFile);
-            if (!$localAgreementPath) {
-                throw new \Exception('Failed to upload agreement to S3.');
-            }
+            $receiptLink = $this->driveService->uploadFile(
+                $receiptFile, env('GOOGLE_DRIVE_RECEIPTS'), $fileNameBase . " - Receipt"
+            );
+            $agreementLink = $this->driveService->uploadFile(
+                $agreementFile, env('GOOGLE_DRIVE_AGREEMENTS'), $fileNameBase . " - Agreement"
+            );
         } catch (\Exception $e) {
-            \Log::error('Agreement Upload Error: ' . $e->getMessage());
-            return back()->with('error', 'Agreement upload failed: ' . $e->getMessage());
+            \Log::error("Drive Upload Failed: " . $e->getMessage());
+            $receiptLink = null;
+            $agreementLink = null;
         }
 
-        // Use S3 paths (no Google Drive backup for speed)
-        $finalReceiptPath = $localProofPath;
-        $finalAgreementPath = $localAgreementPath;
+        $finalReceiptPath = $receiptLink ?? $localProofPath;
+        $finalAgreementPath = $agreementLink ?? $localAgreementPath;
 
         // --- 7. CREATE BOOKING ---
         $booking = Booking::create([
@@ -933,16 +941,7 @@ class BookingController extends Controller
         $photoPaths = [];
         if ($request->hasFile('photos')) {
             foreach ($request->file('photos') as $photo) {
-                try {
-                    $photoPath = Storage::disk('s3')->putFile('inspections', $photo);
-                    if (!$photoPath) {
-                        throw new \Exception('Failed to upload inspection photo to S3.');
-                    }
-                    $photoPaths[] = $photoPath;
-                } catch (\Exception $e) {
-                    \Log::error('Inspection Photo Upload Error: ' . $e->getMessage());
-                    return back()->with('error', 'Failed to upload inspection photos: ' . $e->getMessage());
-                }
+                $photoPaths[] = $photo->store('inspections', 'public');
             }
         }
 

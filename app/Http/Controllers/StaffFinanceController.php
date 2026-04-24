@@ -6,7 +6,6 @@ use Illuminate\Http\Request;
 use App\Models\Booking;
 use App\Models\Payment;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Storage;
 use App\Notifications\BookingStatusUpdated;
 use App\Services\GoogleDriveService;
 
@@ -119,21 +118,13 @@ class StaffFinanceController extends Controller
                 $files = $payment->depo_evidence ?? [];
                 
                 foreach ($request->file('attachments') as $index => $file) {
-                    try {
-                        // Upload to S3
-                        $extension = $file->getClientOriginalExtension();
-                        $filename = 'depo_' . $id . '_' . time() . '_' . $index . '.' . $extension;
-                        
-                        // Store in S3
-                        $path = Storage::disk('s3')->putFileAs('deposits', $file, $filename);
-                        if (!$path) {
-                            throw new \Exception('Failed to upload file: ' . $file->getClientOriginalName());
-                        }
-                        $files[] = $path;
-                    } catch (\Exception $e) {
-                        \Log::error('Deposit Evidence Upload Error: ' . $e->getMessage());
-                        return back()->with('error', 'Failed to upload evidence: ' . $e->getMessage());
-                    }
+                    // RENAME LOGIC: depo_UTM3057_1713852000_0.pdf
+                    $extension = $file->getClientOriginalExtension();
+                    $filename = 'depo_' . $id . '_' . time() . '_' . $index . '.' . $extension;
+                    
+                    // Store with the new name
+                    $path = $file->storeAs('deposits', $filename, 'public');
+                    $files[] = $path;
                 }
                 $payment->depo_evidence = $files;
             }
@@ -159,8 +150,8 @@ class StaffFinanceController extends Controller
                 return $file !== $request->path;
             });
 
-            // Delete the physical file from S3
-            \Illuminate\Support\Facades\Storage::disk('s3')->delete($request->path);
+            // Delete the physical file from storage
+            \Illuminate\Support\Facades\Storage::disk('public')->delete($request->path);
 
             // Save the updated array (array_values resets the keys)
             $payment->depo_evidence = array_values($updatedFiles);

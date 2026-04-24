@@ -378,9 +378,9 @@
                             
                             <div class="bg-black/40 rounded-lg overflow-hidden aspect-square flex items-center justify-center">
                                 @if($isImage)
-                                    <img src="{{ Storage::disk('s3')->temporaryUrl($transaction->installmentDetails, now()->addMinutes(60)) }}" alt="Receipt" class="w-full h-full object-cover hover:scale-105 transition cursor-pointer">
+                                    <img src="{{ asset('storage/' . $transaction->installmentDetails) }}" alt="Receipt" class="w-full h-full object-cover hover:scale-105 transition cursor-pointer">
                                 @else
-                                    <a href="{{ Storage::disk('s3')->temporaryUrl($transaction->installmentDetails, now()->addMinutes(60)) }}" target="_blank" class="flex flex-col items-center justify-center w-full h-full text-blue-400 hover:text-blue-300">
+                                    <a href="{{ asset('storage/' . $transaction->installmentDetails) }}" target="_blank" class="flex flex-col items-center justify-center w-full h-full text-blue-400 hover:text-blue-300">
                                         <i class="fas fa-file-pdf text-4xl mb-2"></i>
                                         <span class="text-xs font-bold">PDF File</span>
                                     </a>
@@ -391,7 +391,7 @@
 
                         {{-- View Link --}}
                         @if($transaction->installmentDetails)
-                        <a href="{{ Storage::disk('s3')->temporaryUrl($transaction->installmentDetails, now()->addMinutes(60)) }}" target="_blank" class="text-xs text-blue-400 hover:text-blue-300 flex items-center justify-center w-full py-2 border-t border-white/10 mt-auto">
+                        <a href="{{ asset('storage/' . $transaction->installmentDetails) }}" target="_blank" class="text-xs text-blue-400 hover:text-blue-300 flex items-center justify-center w-full py-2 border-t border-white/10 mt-auto">
                             <i class="fas fa-external-link-alt mr-1"></i> View Receipt
                         </a>
                         @endif

@@ -134,8 +134,11 @@
                             <div class="w-20 h-20 mx-auto bg-white rounded-2xl p-1 shadow-md rotate-3 overflow-hidden">
                                 @if($customer->avatar && !empty($customer->avatar))
                                     {{-- SHOW AVATAR IMAGE --}}
-                                    <img src="{{ Storage::disk('s3')->temporaryUrl($customer->avatar, now()->addMinutes(60)) }}" 
+                                    <!-- <img src="{{ asset('storage/' . $customer->avatar) }}" 
                                         alt="{{ $customer->fullName }}" 
+                                        class="w-full h-full rounded-xl object-cover -rotate-3 group-hover:scale-110 transition-transform duration-300"> -->
+                                    <img src="{{ asset($customer->avatar) }}" 
+                                        alt="" 
                                         class="w-full h-full rounded-xl object-cover -rotate-3 group-hover:scale-110 transition-transform duration-300"
                                         onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
                                 @else
@@ -252,34 +255,27 @@
                                 
                                 @if($doc['file'])
                                     @php 
-                                        $filePath = 'documents/' . basename($doc['file']);
+                                        $filePath = 'storage/documents/' . basename($doc['file']);
                                         $isImage = in_array(pathinfo($doc['file'], PATHINFO_EXTENSION), ['jpg', 'jpeg', 'png', 'gif', 'webp']);
                                     @endphp
 
-                                    @if(Storage::disk('s3')->exists($filePath))
-                                        <a href="{{ Storage::disk('s3')->temporaryUrl($filePath, now()->addMinutes(60)) }}" target="_blank" 
-                                        class="block w-full aspect-video rounded-xl border border-slate-200 overflow-hidden bg-slate-100 hover:border-orange-500 transition-all group relative">
-                                            
-                                            @if($isImage)
-                                                {{-- DIRECT IMAGE PREVIEW --}}
-                                                <img src="{{ Storage::disk('s3')->temporaryUrl($filePath, now()->addMinutes(60)) }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
-                                                <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                                                    <i class="fas fa-search-plus text-white text-xl"></i>
-                                                </div>
-                                            @else
-                                                {{-- PDF/OTHER FILE PREVIEW --}}
-                                                <div class="absolute inset-0 flex flex-col items-center justify-center bg-slate-50 group-hover:bg-white transition-colors">
-                                                    <i class="fas fa-file-pdf text-2xl text-red-500 mb-1"></i>
-                                                    <span class="text-[9px] font-black text-slate-400 uppercase">View PDF Document</span>
-                                                </div>
-                                            @endif
-                                        </a>
-                                    @else
-                                        <div class="w-full aspect-video rounded-xl border border-dashed border-slate-200 bg-slate-50 flex flex-col items-center justify-center">
-                                            <i class="fas fa-times-circle text-slate-300 mb-1"></i>
-                                            <span class="text-[9px] font-bold text-slate-400 uppercase">File Not Found</span>
-                                        </div>
-                                    @endif
+                                    <a href="{{ asset($filePath) }}" target="_blank" 
+                                    class="block w-full aspect-video rounded-xl border border-slate-200 overflow-hidden bg-slate-100 hover:border-orange-500 transition-all group relative">
+                                        
+                                        @if($isImage)
+                                            {{-- DIRECT IMAGE PREVIEW --}}
+                                            <img src="{{ asset($filePath) }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
+                                            <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                                                <i class="fas fa-search-plus text-white text-xl"></i>
+                                            </div>
+                                        @else
+                                            {{-- PDF/OTHER FILE PREVIEW --}}
+                                            <div class="absolute inset-0 flex flex-col items-center justify-center bg-slate-50 group-hover:bg-white transition-colors">
+                                                <i class="fas fa-file-pdf text-2xl text-red-500 mb-1"></i>
+                                                <span class="text-[9px] font-black text-slate-400 uppercase">View PDF Document</span>
+                                            </div>
+                                        @endif
+                                    </a>
                                 @else
                                     <div class="w-full aspect-video rounded-xl border border-dashed border-slate-200 bg-slate-50 flex flex-col items-center justify-center">
                                         <i class="fas fa-times-circle text-slate-300 mb-1"></i>
