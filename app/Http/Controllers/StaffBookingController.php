@@ -80,14 +80,16 @@ class StaffBookingController extends Controller
     public function dashboard(Request $request)
     {
         // 1. === GLOBAL METRICS ===
-        $totalRevenue = Booking::where('bookingStatus', '!=', 'Cancelled')->sum('totalCost');
+        $totalRevenue = Booking::where('bookingStatus', '!=', 'Cancelled')->where('bookingStatus', '!=', 'Deleted')->sum('totalCost');
         
         // Revenue Growth
         $thisMonthRev = Booking::where('bookingStatus', '!=', 'Cancelled')
+            ->where('bookingStatus', '!=', 'Deleted')
             ->whereMonth('created_at', Carbon::now()->month)
             ->sum('totalCost');
             
         $lastMonthRev = Booking::where('bookingStatus', '!=', 'Cancelled')
+            ->where('bookingStatus', '!=', 'Deleted')
             ->whereMonth('created_at', Carbon::now()->subMonth()->month)
             ->sum('totalCost');
 
@@ -111,7 +113,7 @@ class StaffBookingController extends Controller
             for ($i = 5; $i >= 0; $i--) {
                 $date = Carbon::now()->subMonths($i);
                 $chartLabels[] = $date->format('M Y');
-                $stats = Booking::whereYear('created_at', $date->year)->whereMonth('created_at', $date->month)->where('bookingStatus', '!=', 'Cancelled')
+                $stats = Booking::whereYear('created_at', $date->year)->whereMonth('created_at', $date->month)->where('bookingStatus', '!=', 'Cancelled')->where('bookingStatus', '!=', 'Deleted')
                     ->selectRaw('sum(totalCost) as total_money, count(*) as total_count')->first();
                 $chartRevenue[] = $stats->total_money ?? 0;
                 $chartBookings[] = $stats->total_count ?? 0;
@@ -122,7 +124,7 @@ class StaffBookingController extends Controller
                 $startOfWeek = $date->copy()->startOfWeek();
                 $endOfWeek = $date->copy()->endOfWeek();
                 $chartLabels[] = $startOfWeek->format('d M') . ' - ' . $endOfWeek->format('d M');
-                $stats = Booking::whereBetween('created_at', [$startOfWeek, $endOfWeek])->where('bookingStatus', '!=', 'Cancelled')
+                $stats = Booking::whereBetween('created_at', [$startOfWeek, $endOfWeek])->where('bookingStatus', '!=', 'Cancelled')->where('bookingStatus', '!=', 'Deleted')
                     ->selectRaw('sum(totalCost) as total_money, count(*) as total_count')->first();
                 $chartRevenue[] = $stats->total_money ?? 0;
                 $chartBookings[] = $stats->total_count ?? 0;
@@ -131,7 +133,7 @@ class StaffBookingController extends Controller
             for ($i = 6; $i >= 0; $i--) {
                 $date = Carbon::today()->subDays($i);
                 $chartLabels[] = $date->format('d M');
-                $stats = Booking::whereDate('created_at', $date)->where('bookingStatus', '!=', 'Cancelled')
+                $stats = Booking::whereDate('created_at', $date)->where('bookingStatus', '!=', 'Cancelled')->where('bookingStatus', '!=', 'Deleted')
                     ->selectRaw('sum(totalCost) as total_money, count(*) as total_count')->first();
                 $chartRevenue[] = $stats->total_money ?? 0;
                 $chartBookings[] = $stats->total_count ?? 0;
@@ -140,8 +142,8 @@ class StaffBookingController extends Controller
 
         // 3. === OPERATIONAL LISTS ===
         $today = Carbon::today();
-        $pickupsToday = Booking::whereDate('originalDate', $today)->where('bookingStatus', '!=', 'Cancelled')->get();
-        $returnsToday = Booking::whereDate('returnDate', $today)->where('bookingStatus', '!=', 'Cancelled')->get();
+        $pickupsToday = Booking::whereDate('originalDate', $today)->where('bookingStatus', '!=', 'Cancelled')->where('bookingStatus', '!=', 'Deleted')->get();
+        $returnsToday = Booking::whereDate('returnDate', $today)->where('bookingStatus', '!=', 'Cancelled')->where('bookingStatus', '!=', 'Deleted')->get();
         $recentBookings = Booking::latest()->take(5)->get();
         
         // 4. === FLEET PULSE ===
@@ -149,13 +151,14 @@ class StaffBookingController extends Controller
         $activeVehicles = Booking::whereIn('bookingStatus', ['Active', 'Ongoing'])->count();
         $utilizationRate = $totalVehicles > 0 ? ($activeVehicles / $totalVehicles) * 100 : 0;
         $maintenanceRate = 5; 
-        $todayRevenue = Booking::whereDate('created_at', $today)->where('bookingStatus', '!=', 'Cancelled')->sum('totalCost');
+        $todayRevenue = Booking::whereDate('created_at', $today)->where('bookingStatus', '!=', 'Cancelled')->where('bookingStatus', '!=', 'Deleted')->sum('totalCost');
         $overdueCount = Booking::where('returnDate', '<', $today)->whereIn('bookingStatus', ['Active', 'Ongoing'])->count();
 
         // 5. === CALENDAR EVENTS ===
         $calendarEvents = [];
         $allBookings = Booking::with(['vehicle', 'customer'])
             ->where('bookingStatus', '!=', 'Cancelled')
+            ->where('bookingStatus', '!=', 'Deleted')
             ->get();
 
         foreach ($allBookings as $b) {
@@ -1267,6 +1270,16 @@ class StaffBookingController extends Controller
                 $payment->update([
                     'paymentStatus' => 'Void',
                     'depoStatus' => 'Void',
+                ]);
+            }
+
+            // make deposit amount 0
+            if ($payment) {
+                $payment->update([
+                    'depoAmount' => 0,
+                    'amount' => 0,
+                    'depoStatus' => 'Void',
+                    'paymentStatus' => 'Void',
                 ]);
             }
 
