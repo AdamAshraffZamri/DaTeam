@@ -226,8 +226,11 @@ class StaffBookingController extends Controller
         $notUpdatedDeposits = \App\Models\Booking::whereHas('payments', function($q) {
             $q->where('depoAmount', '>', 0)
             ->where(function($sub) {
-                // 1. Capture all that are Requested, Pending, or Holding
+                // 1. Capture all that are Requested, Pending, or Holding but be careful to exclude active bookings that are still in progress and haven't been updated yet, so we only want to show those that are Completed/Cancelled/Rejected to staff for follow-up
                 $sub->whereIn('depoStatus', ['Requested', 'Pending', 'Holding'])
+                    ->whereHas('booking', function($b) {
+                        $b->whereIn('bookingStatus', ['Completed', 'Cancelled', 'Rejected']);
+                    })
                     // 2. OR capture Processed ones that have NO remarks (not fully settled yet)
                     ->orWhere(function($inner) {
                         $inner->where('depoStatus', 'Processed')
@@ -1270,16 +1273,8 @@ class StaffBookingController extends Controller
                 $payment->update([
                     'paymentStatus' => 'Void',
                     'depoStatus' => 'Void',
-                ]);
-            }
-
-            // make deposit amount 0
-            if ($payment) {
-                $payment->update([
                     'depoAmount' => 0,
                     'amount' => 0,
-                    'depoStatus' => 'Void',
-                    'paymentStatus' => 'Void',
                 ]);
             }
 

@@ -34,6 +34,7 @@ class StaffFinanceController extends Controller
 
         // 1. Base Query: Only bookings with a deposit amount
         $query = Booking::with(['customer', 'vehicle', 'payments'])
+            ->where('bookingStatus', '!=', 'Deleted')
             ->whereHas('payments', function($q) {
                 $q->where('depoAmount', '>', 0);
             });
@@ -57,10 +58,11 @@ class StaffFinanceController extends Controller
             // Show only what has been updated (Processed)
             $query->whereHas('payments', fn($q) => $q->where('depoStatus', 'Processed'));
         } else {
-            // Show everything else that needs an update (Requested, Pending, Holding)
+            // Show everything else that needs an update (Requested, Pending, Holding) but make sure bookings status is Completed/Cancelled/Rejected to avoid showing active bookings that are still in progress
             $query->whereHas('payments', function($q) {
                 $q->whereIn('depoStatus', ['Requested', 'Pending', 'Holding']);
-            });
+            })
+            ->whereIn('bookingStatus', ['Completed', 'Cancelled', 'Rejected']);
         }
         
         // 3. Status Filter Logic
