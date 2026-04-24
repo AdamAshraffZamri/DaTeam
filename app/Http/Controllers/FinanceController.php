@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Auth;
 use App\Models\Booking;
 use App\Models\Penalties;
 use App\Models\Payment; 
+use App\Models\Staff;
 
 class FinanceController extends Controller
 {
