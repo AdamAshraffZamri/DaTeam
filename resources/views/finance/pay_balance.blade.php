@@ -137,7 +137,7 @@
                         {{-- Upload --}}
                         <label class="block w-full h-32 border-2 border-dashed border-white/20 rounded-2xl flex flex-col items-center justify-center cursor-pointer hover:border-orange-500 hover:bg-white/5 transition group bg-black/20">
                             <i class="fas fa-cloud-upload-alt text-2xl text-gray-400 group-hover:text-orange-500 mb-2 transition"></i>
-                            <span class="text-xs font-bold text-gray-300">Upload Receipt</span>
+                            <span class="text-xs font-bold text-gray-300">Upload Receipt (jpg, jpeg, png only)</span>
                             <input type="file" name="payment_proof" class="hidden" onchange="document.getElementById('fname').innerText = this.files[0].name">
                         </label>
                         <p id="fname" class="text-xs text-orange-400 font-bold h-4"></p>

@@ -547,7 +547,7 @@
                     <div class="flex flex-wrap gap-3">
                         
                         {{-- STEP 1: INITIAL PROCESSING --}}
-                        @if(in_array($booking->bookingStatus, ['Submitted', 'Deposit Paid', 'Paid']))
+                        @if(in_array($booking->bookingStatus, ['Submitted']))
                             @if($pendingPayments->count() > 0)
                                 <button disabled class="bg-gray-700 text-gray-400 px-6 py-3 rounded-xl font-bold cursor-not-allowed flex items-center">
                                     <i class="fas fa-lock mr-2"></i> Approve Agreement
@@ -557,7 +557,7 @@
                                     <i class="fas fa-ban mr-2"></i> Reject
                                 </button>
                             @else
-                                <form action="{{ route('staff.bookings.approve_agreement', $booking->bookingID) }}" method="POST">@csrf
+                                <form action="{{ route('staff.bookings.approve_agreement', $booking->bookingID) }}" method="POST" onsubmit="return confirm('Confirm approve? Make sure all details are correct, payment received fully and verified and plate number assigned correctly. This action cannot be undone.');">@csrf
                                     <button class="bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-xl font-bold transition shadow-lg shadow-green-500/20">
                                         2. Approve Agreement
                                     </button>

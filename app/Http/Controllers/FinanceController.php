@@ -5,9 +5,14 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Notification;
+use App\Notifications\NewBookingSubmitted;
+use App\Notifications\BookingStatusUpdated;
 use App\Models\Booking;
 use App\Models\Penalties;
 use App\Models\Payment; 
+use App\Models\Staff;
 
 class FinanceController extends Controller
 {
@@ -117,7 +122,14 @@ class FinanceController extends Controller
         ]);
 
         if (in_array($booking->bookingStatus, ['Deposit Paid', 'Confirmed'])) {
-            $booking->update(['bookingStatus' => 'Paid']);
+            $booking->update(['bookingStatus' => 'Submitted']);
+        }
+
+        try {
+            $staff = Staff::all(); 
+            Notification::send($staff, new NewBookingSubmitted($booking));
+        } catch (\Exception $e) {
+            \Log::error("Notification failed: " . $e->getMessage());
         }
 
         return redirect()->route('finance.index')->with('success', 'Balance payment submitted successfully!');

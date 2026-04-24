@@ -26,13 +26,14 @@ class NewBookingSubmitted extends Notification
     public function toMail($notifiable)
     {
         return (new MailMessage)
-            ->subject('New Booking #' . $this->booking->bookingID . ' Submitted')
+            ->subject('STAFF UPDATE: New Booking Received - Booking #' . $this->booking->bookingID)
             ->greeting('Hello ' . $notifiable->name . ',') // Staff has 'name'
             ->line('A new booking request has been received.')
             ->line('**Customer:** ' . ($this->booking->customer->fullName ?? 'Guest'))
-            ->line('**Vehicle:** ' . ($this->booking->vehicle->model ?? 'Unknown') . ' (' . ($this->booking->vehicle->plateNo ?? '') . ')')
+            ->line('**Vehicle:** ' . ($this->booking->vehicle->model ?? 'Unknown') . ($this->booking->bookingStatus === 'Confirmed' || $this->booking->bookingStatus === 'Completed' ? ' (' . ($this->booking->vehicle->plateNo ?? 'N/A') . ')' : ''))
             ->line('**Dates:** ' . $this->booking->originalDate . ' to ' . $this->booking->returnDate)
             ->line('**Total Cost:** RM ' . number_format($this->booking->totalCost, 2))
+            ->line('**Current Status:** ' . $this->booking->bookingStatus)
             ->action('Review Booking', url('/staff/bookings/' . $this->booking->bookingID));
     }
 
@@ -42,6 +43,7 @@ class NewBookingSubmitted extends Notification
             'booking_id' => $this->booking->bookingID,
             'customer_name' => $this->booking->customer->fullName ?? 'Guest',
             'message' => 'New booking #' . $this->booking->bookingID . ' submitted for ' . ($this->booking->vehicle->model ?? 'Vehicle'),
+            'status' => $this->booking->bookingStatus,
         ];
     }
 }
