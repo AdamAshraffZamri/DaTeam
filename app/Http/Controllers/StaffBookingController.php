@@ -95,7 +95,7 @@ class StaffBookingController extends Controller
 
         // Counts
         $activeRentalsCount = Booking::whereIn('bookingStatus', ['Active', 'Ongoing', 'Picked Up'])->count();
-        $pendingBookingsCount = Booking::whereIn('bookingStatus', ['Pending', 'Submitted', 'Deposit Paid'])->count();
+        $pendingBookingsCount = Booking::whereIn('bookingStatus', ['Pending', 'Submitted'])->count();
         $totalCustomers = \App\Models\Customer::count();
         $pendingCustomersCount = \App\Models\Customer::where('accountStat', 'pending')->count();
         $fullyPaidCount = Booking::where('bookingStatus', 'Confirmed')->count();

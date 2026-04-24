@@ -108,7 +108,7 @@ class FinanceController extends Controller
         ]);
 
         if (in_array($booking->bookingStatus, ['Deposit Paid', 'Confirmed'])) {
-            $booking->update(['bookingStatus' => 'Paid']);
+            $booking->update(['bookingStatus' => 'Submitted']);
         }
 
         return redirect()->route('finance.index')->with('success', 'Balance payment submitted successfully!');
