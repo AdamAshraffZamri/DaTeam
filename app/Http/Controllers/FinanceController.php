@@ -5,13 +5,13 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Notifications\Notification;
+use Illuminate\Support\Facades\Notification;
+use App\Notifications\NewBookingSubmitted;
+use App\Notifications\BookingStatusUpdated;
 use App\Models\Booking;
 use App\Models\Penalties;
 use App\Models\Payment; 
 use App\Models\Staff;
-use App\Notifications\NewBookingSubmitted;
-use App\Notifications\BookingStatusUpdated;
 
 class FinanceController extends Controller
 {
