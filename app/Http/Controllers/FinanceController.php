@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 use App\Models\Booking;
 use App\Models\Penalties;
 use App\Models\Payment; 
@@ -95,7 +96,15 @@ class FinanceController extends Controller
             return redirect()->route('finance.index')->with('success', 'Booking is already fully paid.');
         }
 
-        $path = $request->file('payment_proof')->store('receipts', 'public');
+        try {
+            $path = Storage::disk('s3')->putFile('receipts', $request->file('payment_proof'));
+            if (!$path) {
+                throw new \Exception('Failed to upload payment proof to S3.');
+            }
+        } catch (\Exception $e) {
+            \Log::error('Payment Proof Upload Error: ' . $e->getMessage());
+            return back()->with('error', 'Payment proof upload failed: ' . $e->getMessage());
+        }
 
         \App\Models\Payment::create([
             'bookingID' => $booking->bookingID,
@@ -174,8 +183,16 @@ class FinanceController extends Controller
         // CALCULATE TOTAL
         $totalFine = $penalty->amount ?? ($penalty->penaltyFees + $penalty->fuelSurcharge + $penalty->mileageSurcharge);
 
-        // 1. Simpan Gambar ke Folder 'public/receipts'
-        $path = $request->file('payment_proof')->store('receipts', 'public');
+        // 1. Upload Payment Proof to S3
+        try {
+            $path = Storage::disk('s3')->putFile('receipts', $request->file('payment_proof'));
+            if (!$path) {
+                throw new \Exception('Failed to upload payment proof to S3.');
+            }
+        } catch (\Exception $e) {
+            \Log::error('Penalty Payment Proof Upload Error: ' . $e->getMessage());
+            return back()->with('error', 'Payment proof upload failed: ' . $e->getMessage());
+        }
 
         // 2. Create Payment Record (Optional, untuk tracking kewangan)
         Payment::create([
@@ -227,13 +244,11 @@ class FinanceController extends Controller
             abort(404, 'Receipt not found.');
         }
 
-        // Build the file path
-        $filePath = storage_path('app/public/' . $penalty->payment_proof);
-        
-        if (!file_exists($filePath)) {
+        // Check if file exists in S3
+        if (!Storage::disk('s3')->exists($penalty->payment_proof)) {
             abort(404, 'File not found.');
         }
 
-        return response()->file($filePath);
+        return Storage::disk('s3')->download($penalty->payment_proof);
     }
 }

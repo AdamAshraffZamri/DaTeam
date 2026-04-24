@@ -166,7 +166,7 @@
                                                     @php
                                                         $receiptUrl = str_contains($receipt->installmentDetails, 'drive.google.com') 
                                                             ? $receipt->installmentDetails 
-                                                            : asset('storage/' . $receipt->installmentDetails);
+                                                            : Storage::disk('s3')->temporaryUrl($receipt->installmentDetails, now()->addMinutes(60));
                                                     @endphp
                                                     <a href="{{ $receiptUrl }}" target="_blank" 
                                                        class="inline-flex items-center gap-1 text-blue-600 hover:text-blue-800 text-xs font-bold bg-blue-50 hover:bg-blue-100 px-2 py-1 rounded-lg transition border border-blue-100 whitespace-nowrap"

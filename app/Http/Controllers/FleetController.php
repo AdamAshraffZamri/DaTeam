@@ -167,46 +167,68 @@ class FleetController extends Controller
 
         // === 2. HANDLE FILES ===
         
-        // A. Main Vehicle Image (Keeps original path 'vehicles/')
+        // A. Main Vehicle Image to S3
         $imagePath = null;
         if ($request->hasFile('image')) {
-            $file = $request->file('image');
-            $filename = $plateNo . '.' . $file->getClientOriginalExtension();
-            $file->storeAs('vehicles', $filename, 'public');
-            $imagePath = 'vehicles/' . $filename;
+            try {
+                $file = $request->file('image');
+                $filename = $plateNo . '.' . $file->getClientOriginalExtension();
+                $imagePath = Storage::disk('s3')->putFileAs('vehicles', $file, $filename);
+                if (!$imagePath) {
+                    throw new \Exception('Failed to upload vehicle image to S3.');
+                }
+            } catch (\Exception $e) {
+                \Log::error('Vehicle Image Upload Error: ' . $e->getMessage());
+                return back()->with('error', 'Failed to upload vehicle image: ' . $e->getMessage());
+            }
         }
 
-        // B. Road Tax (Now in 'vehiclesDocs/roadtax/')
+        // B. Road Tax to S3
         $roadTaxPath = null;
         if ($request->hasFile('road_tax_image')) {
-            $file = $request->file('road_tax_image');
-            $filename = $plateNo . '_roadtax.' . $file->getClientOriginalExtension();
-            
-            // Auto-creates folder if missing
-            $file->storeAs('vehiclesDocs/roadtax', $filename, 'public'); 
-            $roadTaxPath = 'vehiclesDocs/roadtax/' . $filename;
+            try {
+                $file = $request->file('road_tax_image');
+                $filename = $plateNo . '_roadtax.' . $file->getClientOriginalExtension();
+                $roadTaxPath = Storage::disk('s3')->putFileAs('vehiclesDocs/roadtax', $file, $filename);
+                if (!$roadTaxPath) {
+                    throw new \Exception('Failed to upload road tax document to S3.');
+                }
+            } catch (\Exception $e) {
+                \Log::error('Road Tax Upload Error: ' . $e->getMessage());
+                return back()->with('error', 'Failed to upload road tax: ' . $e->getMessage());
+            }
         }
 
-        // C. Grant (Now in 'vehiclesDocs/grant/')
+        // C. Grant to S3
         $grantPath = null;
         if ($request->hasFile('grant_image')) {
-            $file = $request->file('grant_image');
-            $filename = $plateNo . '_grant.' . $file->getClientOriginalExtension();
-            
-            // Auto-creates folder if missing
-            $file->storeAs('vehiclesDocs/grant', $filename, 'public');
-            $grantPath = 'vehiclesDocs/grant/' . $filename;
+            try {
+                $file = $request->file('grant_image');
+                $filename = $plateNo . '_grant.' . $file->getClientOriginalExtension();
+                $grantPath = Storage::disk('s3')->putFileAs('vehiclesDocs/grant', $file, $filename);
+                if (!$grantPath) {
+                    throw new \Exception('Failed to upload grant document to S3.');
+                }
+            } catch (\Exception $e) {
+                \Log::error('Grant Upload Error: ' . $e->getMessage());
+                return back()->with('error', 'Failed to upload grant: ' . $e->getMessage());
+            }
         }
 
-        // D. Insurance (Now in 'vehiclesDocs/insurance/')
+        // D. Insurance to S3
         $insurancePath = null;
         if ($request->hasFile('insurance_image')) {
-            $file = $request->file('insurance_image');
-            $filename = $plateNo . '_insurance.' . $file->getClientOriginalExtension();
-            
-            // Auto-creates folder if missing
-            $file->storeAs('vehiclesDocs/insurance', $filename, 'public');
-            $insurancePath = 'vehiclesDocs/insurance/' . $filename;
+            try {
+                $file = $request->file('insurance_image');
+                $filename = $plateNo . '_insurance.' . $file->getClientOriginalExtension();
+                $insurancePath = Storage::disk('s3')->putFileAs('vehiclesDocs/insurance', $file, $filename);
+                if (!$insurancePath) {
+                    throw new \Exception('Failed to upload insurance document to S3.');
+                }
+            } catch (\Exception $e) {
+                \Log::error('Insurance Upload Error: ' . $e->getMessage());
+                return back()->with('error', 'Failed to upload insurance: ' . $e->getMessage());
+            }
         }
 
         // === 3. CREATE RECORD ===
@@ -411,77 +433,109 @@ class FleetController extends Controller
 
         // === 2. HANDLE FILES (Matches Store Logic) ===
 
-        // A. Main Image ('vehicles/')
+        // A. Main Image to S3
         if ($request->hasFile('image')) {
-            // Delete old file
-            if ($vehicle->image && Storage::disk('public')->exists($vehicle->image)) {
-                Storage::disk('public')->delete($vehicle->image);
+            try {
+                // Delete old file
+                if ($vehicle->image && Storage::disk('s3')->exists($vehicle->image)) {
+                    Storage::disk('s3')->delete($vehicle->image);
+                }
+                
+                $file = $request->file('image');
+                $filename = $plateNo . '.' . $file->getClientOriginalExtension();
+                $imagePath = Storage::disk('s3')->putFileAs('vehicles', $file, $filename);
+                if (!$imagePath) {
+                    throw new \Exception('Failed to upload vehicle image.');
+                }
+                $data['image'] = $imagePath;
+            } catch (\Exception $e) {
+                \Log::error('Vehicle Image Update Error: ' . $e->getMessage());
+                return back()->with('error', 'Failed to update vehicle image: ' . $e->getMessage());
             }
-            
-            $file = $request->file('image');
-            $filename = $plateNo . '.' . $file->getClientOriginalExtension();
-            $file->storeAs('vehicles', $filename, 'public');
-            $data['image'] = 'vehicles/' . $filename;
         }
 
-        // B. Road Tax ('vehiclesDocs/roadtax/')
+        // B. Road Tax to S3
         if ($request->hasFile('road_tax_image')) {
-            if ($vehicle->road_tax_image && Storage::disk('public')->exists($vehicle->road_tax_image)) {
-                Storage::disk('public')->delete($vehicle->road_tax_image);
-            }
+            try {
+                if ($vehicle->road_tax_image && Storage::disk('s3')->exists($vehicle->road_tax_image)) {
+                    Storage::disk('s3')->delete($vehicle->road_tax_image);
+                }
 
-            $file = $request->file('road_tax_image');
-            $filename = $plateNo . '_roadtax.' . $file->getClientOriginalExtension();
-            $file->storeAs('vehiclesDocs/roadtax', $filename, 'public');
-            $data['road_tax_image'] = 'vehiclesDocs/roadtax/' . $filename;
+                $file = $request->file('road_tax_image');
+                $filename = $plateNo . '_roadtax.' . $file->getClientOriginalExtension();
+                $roadTaxPath = Storage::disk('s3')->putFileAs('vehiclesDocs/roadtax', $file, $filename);
+                if (!$roadTaxPath) {
+                    throw new \Exception('Failed to upload road tax document.');
+                }
+                $data['road_tax_image'] = $roadTaxPath;
+            } catch (\Exception $e) {
+                \Log::error('Road Tax Update Error: ' . $e->getMessage());
+                return back()->with('error', 'Failed to update road tax: ' . $e->getMessage());
+            }
         }
 
         if ($request->input('delete_road_tax') == 1) {
-            // Delete old file from storage
+            // Delete old file from S3
             if ($vehicle->road_tax_image) {
-                Storage::disk('public')->delete($vehicle->road_tax_image);
+                Storage::disk('s3')->delete($vehicle->road_tax_image);
             }
             // Set column to null
             $vehicle->road_tax_image = null;
         }
 
-        // C. Grant ('vehiclesDocs/grant/')
+        // C. Grant to S3
         if ($request->hasFile('grant_image')) {
-            if ($vehicle->grant_image && Storage::disk('public')->exists($vehicle->grant_image)) {
-                Storage::disk('public')->delete($vehicle->grant_image);
-            }
+            try {
+                if ($vehicle->grant_image && Storage::disk('s3')->exists($vehicle->grant_image)) {
+                    Storage::disk('s3')->delete($vehicle->grant_image);
+                }
 
-            $file = $request->file('grant_image');
-            $filename = $plateNo . '_grant.' . $file->getClientOriginalExtension();
-            $file->storeAs('vehiclesDocs/grant', $filename, 'public');
-            $data['grant_image'] = 'vehiclesDocs/grant/' . $filename;
+                $file = $request->file('grant_image');
+                $filename = $plateNo . '_grant.' . $file->getClientOriginalExtension();
+                $grantPath = Storage::disk('s3')->putFileAs('vehiclesDocs/grant', $file, $filename);
+                if (!$grantPath) {
+                    throw new \Exception('Failed to upload grant document.');
+                }
+                $data['grant_image'] = $grantPath;
+            } catch (\Exception $e) {
+                \Log::error('Grant Update Error: ' . $e->getMessage());
+                return back()->with('error', 'Failed to update grant: ' . $e->getMessage());
+            }
         }
 
         if ($request->input('delete_grant') == 1) {
-            // Delete old file from storage
+            // Delete old file from S3
             if ($vehicle->grant_image) {
-                Storage::disk('public')->delete($vehicle->grant_image);
+                Storage::disk('s3')->delete($vehicle->grant_image);
             }
             // Set column to null
             $vehicle->grant_image = null;
         }
 
-        // D. Insurance ('vehiclesDocs/insurance/')
+        // D. Insurance to S3
         if ($request->hasFile('insurance_image')) {
-            if ($vehicle->insurance_image && Storage::disk('public')->exists($vehicle->insurance_image)) {
-                Storage::disk('public')->delete($vehicle->insurance_image);
-            }
+            try {
+                if ($vehicle->insurance_image && Storage::disk('s3')->exists($vehicle->insurance_image)) {
+                    Storage::disk('s3')->delete($vehicle->insurance_image);
+                }
 
-            $file = $request->file('insurance_image');
-            $filename = $plateNo . '_insurance.' . $file->getClientOriginalExtension();
-            $file->storeAs('vehiclesDocs/insurance', $filename, 'public');
-            $data['insurance_image'] = 'vehiclesDocs/insurance/' . $filename;
+                $file = $request->file('insurance_image');
+                $filename = $plateNo . '_insurance.' . $file->getClientOriginalExtension();
+                $insurancePath = Storage::disk('s3')->putFileAs('vehiclesDocs/insurance', $file, $filename);
+                if (!$insurancePath) {
+                    throw new \Exception('Failed to upload insurance document.');
+                }
+                $data['insurance_image'] = $insurancePath;
+            } catch (\Exception $e) {
+                \Log::error('Insurance Update Error: ' . $e->getMessage());
+                return back()->with('error', 'Failed to update insurance: ' . $e->getMessage());
+            }
         }
 
         if ($request->input('delete_insurance') == 1) {
-            // Delete old file from storage
+            // Delete old file from S3
             if ($vehicle->insurance_image) {
-                Storage::disk('public')->delete($vehicle->insurance_image);
+                Storage::disk('s3')->delete($vehicle->insurance_image);
             }
             // Set column to null
             $vehicle->insurance_image = null;
@@ -532,8 +586,11 @@ class FleetController extends Controller
     {
         $vehicle = Vehicle::findOrFail($id);
         
-        // Optional: Delete image if exists
-        if($vehicle->image) { Storage::disk('public')->delete($vehicle->image); }
+        // Delete images from S3 if they exist
+        if($vehicle->image) { Storage::disk('s3')->delete($vehicle->image); }
+        if($vehicle->road_tax_image) { Storage::disk('s3')->delete($vehicle->road_tax_image); }
+        if($vehicle->grant_image) { Storage::disk('s3')->delete($vehicle->grant_image); }
+        if($vehicle->insurance_image) { Storage::disk('s3')->delete($vehicle->insurance_image); }
 
         $vehicle->delete();
         return redirect()->route('staff.fleet.index')
