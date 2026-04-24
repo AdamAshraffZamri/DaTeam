@@ -309,7 +309,7 @@
                                 <div class="w-12 h-12 bg-white/10 rounded-full shadow-xl flex items-center justify-center mb-2 group-hover:scale-110 transition border border-white/10">
                                     <i class="fas fa-cloud-upload-alt text-orange-500 text-lg"></i>
                                 </div>
-                                <span class="text-sm font-bold text-gray-300 group-hover:text-white">Click to upload receipt(jpg, jpeg, png only)</span>
+                                <span class="text-sm font-bold text-gray-300 group-hover:text-white">Click to upload receipt (jpg, jpeg, png only)</span>
                                 <input type="file" id="proof_upload" name="payment_proof" class="hidden" required onchange="document.getElementById('file-name').innerText = 'Selected: ' + this.files[0].name">
                             </label>
                             <p id="file-name" class="text-xs text-orange-400 mt-2 font-bold text-center h-4"></p>

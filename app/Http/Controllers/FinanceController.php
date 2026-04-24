@@ -111,6 +111,13 @@ class FinanceController extends Controller
             $booking->update(['bookingStatus' => 'Submitted']);
         }
 
+        try {
+            $staff = Staff::all(); 
+            Notification::send($staff, new NewBookingSubmitted($booking));
+        } catch (\Exception $e) {
+            \Log::error("Notification failed: " . $e->getMessage());
+        }
+
         return redirect()->route('finance.index')->with('success', 'Balance payment submitted successfully!');
     }
 

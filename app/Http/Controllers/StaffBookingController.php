@@ -1120,7 +1120,7 @@ class StaffBookingController extends Controller
             
             $booking->customer->notify(new \App\Notifications\BookingStatusUpdated(
                 $booking, 
-                "Vehicle update: Your booking #{$booking->bookingID} is now assigned to plate {$booking->vehicle->plateNo}."
+                "Vehicle update: Your booking #{$booking->bookingID} is now assigned to plate <strong>{$booking->vehicle->plateNo}</strong>."
             ));
         } catch (\Exception $e) {
             // Ignore notification errors

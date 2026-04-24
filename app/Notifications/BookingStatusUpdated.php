@@ -47,7 +47,7 @@ class BookingStatusUpdated extends Notification
             ->line($this->message)
             ->line('') // Spacing
             ->line('**Reservation Summary**')
-            ->line('🚗 **Vehicle:** ' . ($this->booking->vehicle->model ?? 'Vehicle') . ' (' . ($this->booking->vehicle->plateNo ?? 'N/A') . ')')
+            ->line('🚗 **Vehicle:** ' . ($this->booking->vehicle->model ?? 'Vehicle') . ($this->booking->bookingStatus === 'Confirmed' || $this->booking->bookingStatus === 'Completed' ? ' (' . ($this->booking->vehicle->plateNo ?? 'N/A') . ')' : ''))
             ->line('📍 **Pickup:** ' . $pickup . ' (' . $this->booking->pickupLocation . ')')
             ->line('📍 **Return:** ' . $dropoff . ' (' . $this->booking->returnLocation . ')')
             ->line('💰 **Total Cost:** RM ' . number_format($this->booking->totalCost, 2))

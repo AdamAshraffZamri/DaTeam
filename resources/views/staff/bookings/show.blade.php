@@ -547,7 +547,7 @@
                     <div class="flex flex-wrap gap-3">
                         
                         {{-- STEP 1: INITIAL PROCESSING --}}
-                        @if(in_array($booking->bookingStatus, ['Submitted', 'Deposit Paid', 'Paid']))
+                        @if(in_array($booking->bookingStatus, ['Submitted']))
                             @if($pendingPayments->count() > 0)
                                 <button disabled class="bg-gray-700 text-gray-400 px-6 py-3 rounded-xl font-bold cursor-not-allowed flex items-center">
                                     <i class="fas fa-lock mr-2"></i> Approve Agreement
