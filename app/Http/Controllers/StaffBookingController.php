@@ -1289,7 +1289,7 @@ class StaffBookingController extends Controller
                 Log::error("Deletion Notification Failed: " . $e->getMessage());
             }
 
-            return back()->with('success', "Booking #{$booking->bookingID} has been successfully deleted.");
+            return redirect()->route('staff.bookings.index')->with('success', "Booking #{$booking->bookingID} has been successfully deleted.");
 
         } catch (\Exception $e) {
             Log::error("Error deleting booking", [
