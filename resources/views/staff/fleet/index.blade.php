@@ -197,7 +197,7 @@
                     {{-- IMAGE --}}
                     <div class="w-full md:w-24 h-20 md:h-16 rounded-lg bg-gray-50 flex items-center justify-center overflow-hidden border border-gray-100 relative shrink-0">
                         @if($vehicle->image)
-                            <img src="{{ Storage::disk('s3')->temporaryUrl($vehicle->image, now()->addMinutes(60)) }}" class="w-full h-full object-cover">
+                            <img src="{{ asset('storage/'.$vehicle->image) }}" class="w-full h-full object-cover">
                         @else
                             <i class="fas fa-car text-gray-300 text-2xl"></i>
                         @endif

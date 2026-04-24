@@ -71,7 +71,7 @@
                 {{-- Avatar Display --}}
                 <div class="w-32 h-32 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center border-4 border-white/20 shadow-2xl overflow-hidden">
                     @if($user->avatar)
-                        <img src="{{ Storage::disk('s3')->temporaryUrl($user->avatar, now()->addMinutes(60)) }}" class="w-full h-full object-cover">
+                        <img src="{{ asset($user->avatar) }}" class="w-full h-full object-cover">
                     @else
                         <i class="fas fa-user text-6xl text-gray-400"></i>
                     @endif
@@ -196,8 +196,8 @@
                                     onchange="showTick(this, 'icon-student_card_image')">
                             </div>
 
-                            @if($user->student_card_image && Storage::disk('s3')->exists($user->student_card_image))
-                                <a href="{{ Storage::disk('s3')->temporaryUrl($user->student_card_image, now()->addMinutes(60)) }}" target="_blank" 
+                            @if($user->student_card_image)
+                                <a href="{{ asset($user->student_card_image) }}" target="_blank" 
                                 class="bg-orange-500/20 border border-orange-500/50 text-orange-400 px-4 rounded-xl flex items-center hover:bg-orange-500/40 transition">
                                     <i class="fas fa-eye"></i>
                                 </a>
@@ -226,8 +226,8 @@
                                     onchange="showTick(this, 'icon-ic_passport_image')">
                             </div>
 
-                            @if($user->ic_passport_image && Storage::disk('s3')->exists($user->ic_passport_image))
-                                <a href="{{ Storage::disk('s3')->temporaryUrl($user->ic_passport_image, now()->addMinutes(60)) }}" target="_blank" 
+                            @if($user->ic_passport_image)
+                                <a href="{{ asset($user->ic_passport_image) }}" target="_blank" 
                                 class="bg-orange-500/20 border border-orange-500/50 text-orange-400 px-4 rounded-xl flex items-center hover:bg-orange-500/40 transition">
                                     <i class="fas fa-eye"></i>
                                 </a>
@@ -256,8 +256,8 @@
                                     onchange="showTick(this, 'icon-driving_license_image')">
                             </div>
 
-                            @if($user->driving_license_image && Storage::disk('s3')->exists($user->driving_license_image))
-                                <a href="{{ Storage::disk('s3')->temporaryUrl($user->driving_license_image, now()->addMinutes(60)) }}" target="_blank" 
+                            @if($user->driving_license_image)
+                                <a href="{{ asset($user->driving_license_image) }}" target="_blank" 
                                 class="bg-orange-500/20 border border-orange-500/50 text-orange-400 px-4 rounded-xl flex items-center hover:bg-orange-500/40 transition">
                                     <i class="fas fa-eye"></i>
                                 </a>

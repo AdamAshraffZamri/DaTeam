@@ -115,7 +115,7 @@
                             {{-- Car Image Container --}}
                             <div class="h-14 w-20 md:h-16 md:w-24 rounded-xl bg-gray-800 overflow-hidden border border-white/10 shrink-0 relative shadow-md">
                                 @if($booking->vehicle->image)
-                                    <img src="{{ Storage::disk('s3')->temporaryUrl($booking->vehicle->image, now()->addMinutes(60)) }}" 
+                                    <img src="{{ asset('storage/' . $booking->vehicle->image) }}" 
                                          alt="{{ $booking->vehicle->model }}" 
                                          class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500">
                                 @else
@@ -574,7 +574,7 @@
                 <div class="p-6 border-b border-white/15 flex items-center gap-4 shrink-0">
                     <div class="w-16 h-16 rounded-lg bg-white/10 border border-white/20 flex items-center justify-center text-gray-500 text-xl">
                         @if($booking->vehicle->image)
-                            <img src="{{ Storage::disk('s3')->temporaryUrl($booking->vehicle->image, now()->addMinutes(60)) }}" 
+                            <img src="{{ asset('storage/' . $booking->vehicle->image) }}" 
                                  alt="{{ $booking->vehicle->model }}" 
                                  class="w-full h-full object-cover rounded-lg">
                         @else    
@@ -742,7 +742,7 @@
                                             @if(!empty($evidence) && is_array($evidence))
                                                 <div class="flex flex-wrap gap-2">
                                                     @foreach($evidence as $index => $path)
-                                                        <a href="{{ Storage::disk('s3')->temporaryUrl($path, now()->addMinutes(60)) }}" target="_blank" 
+                                                        <a href="{{ asset('storage/' . $path) }}" target="_blank" 
                                                         class="flex items-center gap-2 px-3 py-2 bg-green-600 hover:bg-green-500 text-white text-[10px] font-bold rounded-lg transition-all shadow-sm">
                                                             <i class="fas fa-file-alt"></i> DOC #{{ $index + 1 }}
                                                         </a>
@@ -797,7 +797,7 @@
                                             <i class="bi bi-receipt"></i> View Receipt
                                         </a>
                                     @elseif($receipt && $receipt->installmentDetails)
-                                        <a href="{{ Storage::disk('s3')->temporaryUrl($receipt->installmentDetails, now()->addMinutes(60)) }}" target="_blank" class="flex items-center justify-center gap-2 p-3.5 bg-black/25 rounded-xl border border-dashed border-white/20 hover:border-orange-500 hover:text-orange-400 text-gray-300 text-sm transition-colors duration-200">
+                                        <a href="{{ asset('storage/' . $receipt->installmentDetails) }}" target="_blank" class="flex items-center justify-center gap-2 p-3.5 bg-black/25 rounded-xl border border-dashed border-white/20 hover:border-orange-500 hover:text-orange-400 text-gray-300 text-sm transition-colors duration-200">
                                             View Receipt
                                         </a>
                                     @endif

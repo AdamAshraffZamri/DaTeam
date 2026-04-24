@@ -99,14 +99,14 @@
                                         $isImage = in_array($ext, ['jpg', 'jpeg', 'png', 'gif', 'webp']);
                                     @endphp
                                     @if($isImage)
-                                        <img src="{{ Storage::disk('s3')->temporaryUrl($payment->installmentDetails, now()->addMinutes(60)) }}" alt="Payment Receipt" class="w-full h-auto rounded-lg max-h-48 object-cover">
+                                        <img src="{{ asset('storage/' . $payment->installmentDetails) }}" alt="Payment Receipt" class="w-full h-auto rounded-lg max-h-48 object-cover">
                                     @else
-                                        <a href="{{ Storage::disk('s3')->temporaryUrl($payment->installmentDetails, now()->addMinutes(60)) }}" target="_blank" class="flex items-center justify-center p-4 text-blue-400 hover:text-blue-300">
+                                        <a href="{{ asset('storage/' . $payment->installmentDetails) }}" target="_blank" class="flex items-center justify-center p-4 text-blue-400 hover:text-blue-300">
                                             <i class="fas fa-file-pdf text-2xl mr-2"></i> View Receipt (PDF)
                                         </a>
                                     @endif
                                 </div>
-                                <a href="{{ Storage::disk('s3')->temporaryUrl($payment->installmentDetails, now()->addMinutes(60)) }}" target="_blank" class="text-xs text-blue-400 hover:text-blue-300 mt-2 inline-flex items-center">
+                                <a href="{{ asset('storage/' . $payment->installmentDetails) }}" target="_blank" class="text-xs text-blue-400 hover:text-blue-300 mt-2 inline-flex items-center">
                                     <i class="fas fa-external-link-alt mr-1"></i> Open Full Receipt
                                 </a>
                             </div>

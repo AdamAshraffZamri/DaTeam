@@ -147,8 +147,8 @@ class Vehicle extends Model
      */
     public function getImageUrlAttribute()
     {
-        if ($this->image && Storage::disk('s3')->exists($this->image)) {
-            return Storage::disk('s3')->url($this->image);
+        if ($this->image && Storage::disk('public')->exists($this->image)) {
+            return asset('storage/' . $this->image);
         }
 
         // Return a category-based placeholder
