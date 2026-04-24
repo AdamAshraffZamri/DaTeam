@@ -279,12 +279,14 @@
                                     </button>
                                 </form>
                             @else
+                                @if($booking->bookingStatus != 'Deposit Paid')
                                 <form action="{{ route('staff.bookings.approve_agreement', $booking->bookingID) }}" method="POST" onsubmit="return confirm('Confirm approve? Make sure all details are correct, payment received fully and verified and plate number assigned correctly. This action cannot be undone.');">
                                     @csrf
                                     <button type="submit" class="bg-green-100 hover:bg-green-200 text-green-700 px-4 py-2 rounded-lg text-xs font-bold transition flex items-center gap-2 w-24 justify-center shadow-sm">
                                         <i class="fas fa-check"></i> <span>Approve</span>
                                     </button>
                                 </form>
+                                @endif
                             @endif
                             
                         @elseif($booking->bookingStatus == 'Confirmed')
