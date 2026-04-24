@@ -26,7 +26,7 @@ class NewBookingSubmitted extends Notification
     public function toMail($notifiable)
     {
         return (new MailMessage)
-            ->subject('New Booking #' . $this->booking->bookingID . ' SUBMITTED')
+            ->subject('STAFF UPDATE: New Booking Received - Booking #' . $this->booking->bookingID)
             ->greeting('Hello ' . $notifiable->name . ',') // Staff has 'name'
             ->line('A new booking request has been received.')
             ->line('**Customer:** ' . ($this->booking->customer->fullName ?? 'Guest'))
