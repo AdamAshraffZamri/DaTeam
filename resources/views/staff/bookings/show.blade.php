@@ -557,7 +557,7 @@
                                     <i class="fas fa-ban mr-2"></i> Reject
                                 </button>
                             @else
-                                <form action="{{ route('staff.bookings.approve_agreement', $booking->bookingID) }}" method="POST">@csrf
+                                <form action="{{ route('staff.bookings.approve_agreement', $booking->bookingID) }}" method="POST" onsubmit="return confirm('Confirm approve? Make sure all details are correct, payment received fully and verified and plate number assigned correctly. This action cannot be undone.');">@csrf
                                     <button class="bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-xl font-bold transition shadow-lg shadow-green-500/20">
                                         2. Approve Agreement
                                     </button>

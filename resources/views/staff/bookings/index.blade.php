@@ -279,7 +279,7 @@
                                     </button>
                                 </form>
                             @else
-                                <form action="{{ route('staff.bookings.approve_agreement', $booking->bookingID) }}" method="POST">
+                                <form action="{{ route('staff.bookings.approve_agreement', $booking->bookingID) }}" method="POST" onsubmit="return confirm('Confirm approve? Make sure all details are correct, payment received fully and verified and plate number assigned correctly. This action cannot be undone.');">
                                     @csrf
                                     <button type="submit" class="bg-green-100 hover:bg-green-200 text-green-700 px-4 py-2 rounded-lg text-xs font-bold transition flex items-center gap-2 w-24 justify-center shadow-sm">
                                         <i class="fas fa-check"></i> <span>Approve</span>
@@ -370,7 +370,7 @@
                                     </script>
                                 @else
                                     {{-- COMPLETE BUTTON VIEW --}}
-                                    <form action="{{ route('staff.bookings.return', $booking->bookingID) }}" method="POST" class="w-full">
+                                    <form action="{{ route('staff.bookings.return', $booking->bookingID) }}" method="POST" onsubmit="return confirm('Complete rental? Deposit will be processed if any.');" class="w-full">
                                         @csrf
                                         <button type="submit" class="w-full bg-purple-100 hover:bg-purple-200 text-purple-700 py-2.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 justify-center">
                                             <i class="fas fa-pen-alt text-xs"></i>
