@@ -270,7 +270,7 @@
 
                     {{-- 7. ACTION --}}
                     <div class="w-full lg:flex-1 flex justify-end items-center gap-2 pt-2 lg:pt-0 border-t lg:border-t-0 border-gray-100 lg:pl-6" onclick="event.stopPropagation()">
-                         @if($booking->bookingStatus == 'Submitted' || $booking->bookingStatus == 'Paid')
+                         @if($booking->bookingStatus == 'Submitted' || $booking->bookingStatus == 'Paid' || $booking->bookingStatus == 'Deposit Paid')
                             @if(!$booking->payment || $booking->payment->paymentStatus !== 'Verified')
                                 <form action="{{ route('staff.bookings.verify_payment', $booking->bookingID) }}" method="POST">
                                     @csrf
