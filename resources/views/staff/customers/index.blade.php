@@ -109,7 +109,7 @@
 
                         <div class="w-12 h-12 rounded-full overflow-hidden flex items-center justify-center shrink-0 border border-white shadow-inner relative bg-gray-100">
                             @if($customer->avatar && !empty($customer->avatar))
-                                <img src="{{ asset($customer->avatar) }}" 
+                                <img src="{{ Storage::disk('s3')->temporaryUrl($customer->avatar, now()->addMinutes(60)) }}" 
                                     alt="" 
                                     class="w-full h-full object-cover"
                                     onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">

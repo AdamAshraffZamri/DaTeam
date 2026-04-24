@@ -9,15 +9,12 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\File; // Add this
 use Illuminate\Validation\ValidationException;
 use Carbon\Carbon;
-use Google\Client;
-use Google\Service\Drive;
-use Google\Service\Drive\DriveFile;
 
 /**
  * ProfileController
  * 
  * Manages customer profile operations including:
- * - Avatar/profile picture uploads (local + Google Drive backup)
+ * - Avatar/profile picture uploads to S3
  * - Personal information updates (name, email, contact details)
  * - Address information (home, college)
  * - Identity documents (IC/Passport, Student Card, Driving License)
@@ -43,10 +40,8 @@ use Google\Service\Drive\DriveFile;
  * - Confirmation required
  * 
  * File Uploads:
- * - Avatar: 5MB max, JPEG/PNG format
- * - Documents: 5MB max, JPEG/PNG format
- * - Automatic local backup to public/storage/profilepic
- * - Optional Google Drive backup (async)
+ * - Avatar: 5MB max, JPEG/PNG format, stored to AWS S3
+ * - Documents: 5MB max, JPEG/PNG format, stored to AWS S3
  */
 class ProfileController extends Controller
 {
@@ -68,17 +63,14 @@ class ProfileController extends Controller
     /**
      * updateAvatar()
      * 
-     * Handles profile picture upload with dual storage strategy:
-     * 1. Local: Saves to public/storage/profilepic/ for immediate serving
-     * 2. Google Drive: Async backup in customer's Drive folder
+     * Handles profile picture upload to AWS S3:
+     * 1. Uploads to S3 for cloud storage and global CDN access
      * 
      * Process:
      * - Validates image file (5MB max)
      * - Generates unique filename with timestamp
-     * - Creates storage directory if missing
      * - Deletes old avatar if exists
-     * - Stores new avatar locally
-     * - Uploads copy to Google Drive (non-blocking)
+     * - Stores new avatar to S3
      * - Updates account status if previously rejected
      * 
      * Validation:
@@ -98,85 +90,26 @@ class ProfileController extends Controller
         ]);
 
         try {
-            // ========== STEP 1: LOCAL FILE STORAGE ==========
-            // Save directly to public folder for immediate access
+            // ========== STEP 1: S3 FILE STORAGE ==========
+            // Save to S3 for cloud storage
             $file = $request->file('avatar');
             // Generate unique filename: profile_[userID]_[timestamp].[extension]
             $filename = 'profile_' . $user->id . '_' . time() . '.' . $file->getClientOriginalExtension();
             
-            // Define destination path
-            $destinationPath = public_path('storage/profilepic');
+            // Delete old avatar file if it exists (cleanup from S3)
+            if ($user->avatar && Storage::disk('s3')->exists($user->avatar)) {
+                Storage::disk('s3')->delete($user->avatar);
+            }
+
+            // Store file to S3
+            $path = Storage::disk('s3')->putFile('profilepic', $file);
             
-            // Create directory if it doesn't exist (0755 permissions)
-            if (!File::exists($destinationPath)) {
-                File::makeDirectory($destinationPath, 0755, true);
+            if (!$path) {
+                throw new \Exception('Failed to upload avatar to S3. Please try again.');
             }
 
-            // Delete old avatar file if it exists (cleanup)
-            if ($user->avatar && file_exists(public_path($user->avatar))) {
-                unlink(public_path($user->avatar));
-            }
-
-            // Move uploaded file to destination
-            $file->move($destinationPath, $filename);
-
-            // Store relative path in database for easy serving
-            $user->avatar = 'storage/profilepic/' . $filename;
-
-            // ========== STEP 2: GOOGLE DRIVE BACKUP (Optional/Async) ==========
-            // Backup to Drive in customer's personal folder
-            try {
-                // Initialize Google Drive client
-                $client = new Client();
-                $client->setClientId(env('GOOGLE_DRIVE_CLIENT_ID'));
-                $client->setClientSecret(env('GOOGLE_DRIVE_CLIENT_SECRET'));
-                $client->refreshToken(env('GOOGLE_DRIVE_REFRESH_TOKEN'));
-                $service = new Drive($client);
-
-                // Target parent folder (customer information folder from .env)
-                $parentFolderId = env('GOOGLE_DRIVE_CUSTOMER_INFORMATION');
-                // Create folder name: "[StudentID] - [FullName]"
-                $folderName = trim("{$user->stustaffID} - {$user->fullName}");
-                // Escape single quotes for Google API query
-                $escapedName = str_replace("'", "\'", $folderName);
-                
-                // Search for existing folder
-                $query = "mimeType='application/vnd.google-apps.folder' and name = '$escapedName' and '$parentFolderId' in parents and trashed = false";
-                $files = $service->files->listFiles(['q' => $query]);
-                
-                // Use existing folder or create new one
-                if (count($files->getFiles()) > 0) {
-                    $userFolderId = $files->getFiles()[0]->getId();
-                } else {
-                    // Create new folder in Drive
-                    $folderMeta = new DriveFile([
-                        'name' => $folderName,
-                        'mimeType' => 'application/vnd.google-apps.folder',
-                        'parents' => [$parentFolderId]
-                    ]);
-                    $userFolderId = $service->files->create($folderMeta, ['fields' => 'id'])->id;
-                }
-
-                // Upload profile picture to Drive with timestamp
-                $driveFileName = Carbon::now()->format('Y-m-d') . " - Profile Picture." . $file->getClientOriginalExtension();
-                $fileMetadata = new DriveFile([
-                    'name' => $driveFileName,
-                    'parents' => [$userFolderId]
-                ]);
-                
-                // Upload using file content from new local location
-                $content = file_get_contents(public_path($user->avatar));
-                
-                $service->files->create($fileMetadata, [
-                    'data' => $content,
-                    'mimeType' => $file->getMimeType(),
-                    'uploadType' => 'multipart'
-                ]);
-
-            } catch (\Exception $e) {
-                // Log Drive error but don't fail - local save is enough
-                \Log::warning("Google Drive avatar backup failed: " . $e->getMessage());
-            }
+            // Store S3 path in database
+            $user->avatar = $path;
 
             // ========== STEP 3: UPDATE ACCOUNT STATUS ==========
             // If customer was previously rejected, reset to pending for re-review
@@ -192,7 +125,8 @@ class ProfileController extends Controller
 
         } catch (\Exception $e) {
             // Return error message with exception details for debugging
-            return back()->with('error', 'Avatar Update Failed: ' . $e->getMessage());
+            \Log::error('Avatar Upload Error: ' . $e->getMessage());
+            return back()->with('error', 'Avatar Upload Failed: ' . $e->getMessage());
         }
     }
 
@@ -204,7 +138,7 @@ class ProfileController extends Controller
      * 
      * Process:
      * 1. Validates all input fields against database constraints
-     * 2. Uploads identity documents to Google Drive
+     * 2. Uploads identity documents to AWS S3
      * 3. Updates text fields in database
      * 4. Resets account status to pending for staff verification
      * 
@@ -221,12 +155,7 @@ class ProfileController extends Controller
      * - dob: Required, valid date
      * - faculty: Required, max 100 chars
      * - bank info: Required, max 100/50 chars
-     * - Documents: Optional, JPEG/PNG, max 5MB
-     * 
-     * Document Upload (Google Drive):
-     * - Finds/creates "[StudentID] - [FullName]" folder in Drive
-     * - Uploads: Student Card, IC/Passport, Driving License
-     * - File naming: "[Date] - [DocumentType].[ext]"
+     * - Documents: Optional, JPEG/PNG, max 5MB, stored to AWS S3
      * 
      * @param  \Illuminate\Http\Request $request
      * @return \Illuminate\Http\RedirectResponse
@@ -264,7 +193,7 @@ class ProfileController extends Controller
      * Process:
      * 1. Validate all input fields
      * 2. Map form fields to database columns (e.g., phone → phoneNo)
-     * 3. Upload documents to Google Drive if provided
+     * 3. Upload documents to AWS S3 if provided
      * 4. Update customer record
      * 5. Reset status if previously rejected
      * 6. Return success/error message
@@ -314,7 +243,7 @@ class ProfileController extends Controller
             'emergency_contact_name.regex' => 'Emergency contact name can only contain letters and spaces.',
         ]);
 
-        // 2. GOOGLE DRIVE DOCUMENT UPLOADS
+        // 2. DOCUMENT UPLOADS TO S3
         $documents = [
             'student_card_image'    => 'Student_Card',
             'ic_passport_image'     => 'IC_Passport',
@@ -326,68 +255,26 @@ class ProfileController extends Controller
                 $file = $request->file($inputKey);
                 $filename = $fileLabel . '_' . $user->id . '_' . time() . '.' . $file->getClientOriginalExtension();
                 
-                // Step A: Save Locally for Preview
-                $destinationPath = public_path('storage/documents');
-                if (!File::exists($destinationPath)) {
-                    File::makeDirectory($destinationPath, 0755, true);
+                // Step A: Save to S3
+                // Cleanup old S3 file if it exists
+                if ($user->$inputKey && Storage::disk('s3')->exists($user->$inputKey)) {
+                    Storage::disk('s3')->delete($user->$inputKey);
                 }
 
-                // Cleanup old local file if it exists
-                if ($user->$inputKey && File::exists(public_path($user->$inputKey))) {
-                    File::delete(public_path($user->$inputKey));
-                }
-
-                $file->move($destinationPath, $filename);
-                $localPath = 'storage/documents/' . $filename;
-                
-                // Save the local path to the database
-                $user->$inputKey = $localPath;
-
-                // ========== STEP B: GOOGLE DRIVE BACKUP (Existing Logic) ==========
+                // Store file to S3
                 try {
-                    // Initialize Google Drive client
-                    $client = new Client();
-                    $client->setClientId(env('GOOGLE_DRIVE_CLIENT_ID'));
-                    $client->setClientSecret(env('GOOGLE_DRIVE_CLIENT_SECRET'));
-                    $client->refreshToken(env('GOOGLE_DRIVE_REFRESH_TOKEN'));
-                    $service = new Drive($client);
-
-                    $parentFolderId = env('GOOGLE_DRIVE_CUSTOMER_INFORMATION');
-                    $folderName = trim("{$request->student_staff_id} - {$request->name}");
-                    $escapedName = str_replace("'", "\'", $folderName);
+                    $s3Path = Storage::disk('s3')->putFile('documents', $file);
                     
-                    // Find/Create Folder
-                    $query = "mimeType='application/vnd.google-apps.folder' and name = '$escapedName' and '$parentFolderId' in parents and trashed = false";
-                    $files = $service->files->listFiles(['q' => $query]);
-
-                    if (count($files->getFiles()) > 0) {
-                        $userFolderId = $files->getFiles()[0]->getId();
-                    } else {
-                        $folderMeta = new DriveFile([
-                            'name' => $folderName,
-                            'mimeType' => 'application/vnd.google-apps.folder',
-                            'parents' => [$parentFolderId]
-                        ]);
-                        $userFolderId = $service->files->create($folderMeta, ['fields' => 'id'])->id;
+                    if (!$s3Path) {
+                        throw new \Exception('Failed to upload ' . $fileLabel . ' to S3.');
                     }
-
-                    // Upload File
-                    $file = $request->file($inputKey);
-                    $driveFileName = Carbon::now()->format('Y-m-d') . " - $fileLabel." . $file->getClientOriginalExtension();
-                    $fileMeta = new DriveFile(['name' => $driveFileName, 'parents' => [$userFolderId]]);
-                    
-                    // Use the local path we just saved to ensure the path is never empty
-                    $content = file_get_contents(public_path($localPath));
-                    
-                    $service->files->create($fileMeta, [
-                        'data' => $content,
-                        'mimeType' => $file->getClientMimeType(),
-                        'uploadType' => 'multipart'
-                    ]);
                 } catch (\Exception $e) {
-                    // Log error but don't fail the main process
-                    \Log::warning("Drive upload failed for $fileLabel: " . $e->getMessage());
+                    \Log::error("Document Upload Error ($fileLabel): " . $e->getMessage());
+                    return back()->with('error', 'Failed to upload ' . $fileLabel . ': ' . $e->getMessage())->withInput();
                 }
+                
+                // Save the S3 path to the database
+                $user->$inputKey = $s3Path;
             }
         }
 
@@ -473,26 +360,11 @@ class ProfileController extends Controller
         $user = auth()->user();
         $path = $user->{$type . '_image'}; // e.g., student_card_image
 
-        // 1. Check Local Storage first
-        if ($path && File::exists(public_path($path))) {
-            return response()->file(public_path($path));
+        // Check S3 Storage
+        if ($path && Storage::disk('s3')->exists($path)) {
+            return Storage::disk('s3')->download($path);
         }
 
-        // 2. FALLBACK: Redirect to Google Drive
-        // Note: This requires you to store the Drive File ID in your DB, 
-        // or search for the file by name using your existing Drive logic.
-        try {
-            // Logic to get the 'webViewLink' from Google Drive API for this file
-            // For now, we can redirect to a search or a stored Drive URL
-            $driveLink = $user->{$type . '_drive_link'}; 
-            
-            if ($driveLink) {
-                return redirect()->away($driveLink);
-            }
-        } catch (\Exception $e) {
-            return back()->with('error', 'Document could not be retrieved from local or cloud storage.');
-        }
-
-        abort(404, 'File not found locally or on Drive.');
+        abort(404, 'Document not found in S3 storage.');
     }
 }

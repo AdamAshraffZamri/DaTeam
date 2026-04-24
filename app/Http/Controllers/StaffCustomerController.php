@@ -393,16 +393,20 @@ class StaffCustomerController extends Controller
         ];
 
         $fileName = basename($customer->{$columnMap[$type]});
-        $publicPath = 'storage/documents/' . $fileName;
+        $s3Path = 'documents/' . $fileName;
 
-        // Check if the file actually exists in your local folder
-        if (!file_exists(public_path($publicPath))) {
-            return back()->with('error', "Local file not found at: " . $publicPath);
+        // Check if the file exists in S3
+        if (!Storage::disk('s3')->exists($s3Path)) {
+            return back()->with('error', "Document not found in S3: " . $s3Path);
         }
 
-        // Pass the local URL to the view
-        $viewLink = asset($publicPath);
-        return view('staff.customers.view_document', compact('customer', 'viewLink', 'type'));
+        // Return S3 file download or use the actual path from the database
+        $actualPath = $customer->{$columnMap[$type]};
+        if (!Storage::disk('s3')->exists($actualPath)) {
+            return back()->with('error', "Document not found in S3: " . $actualPath);
+        }
+
+        return Storage::disk('s3')->download($actualPath);
     }
 
     public function viewPenaltyReceipt($id)
@@ -413,13 +417,11 @@ class StaffCustomerController extends Controller
             abort(404, 'Receipt not found.');
         }
 
-        // Build the file path
-        $filePath = storage_path('app/public/' . $penalty->payment_proof);
-        
-        if (!file_exists($filePath)) {
-            abort(404, 'File not found.');
+        // Check if file exists in S3
+        if (!Storage::disk('s3')->exists($penalty->payment_proof)) {
+            abort(404, 'File not found in S3.');
         }
 
-        return response()->file($filePath);
+        return Storage::disk('s3')->download($penalty->payment_proof);
     }
 }

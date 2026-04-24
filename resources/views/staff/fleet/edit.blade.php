@@ -441,7 +441,7 @@
             category: '{{ old('vehicle_category', $vehicle->vehicle_category) }}',
             
             // Main Vehicle Image
-            imagePreview: '{{ $vehicle->image ? asset("storage/" . $vehicle->image) : null }}',
+            imagePreview: '{{ $vehicle->image ? Storage::disk('s3')->temporaryUrl($vehicle->image, now()->addMinutes(60)) : null }}',
             fileName: '{{ $vehicle->image ? basename($vehicle->image) : "" }}',
             
             // Delete Flags (0 = keep, 1 = delete)
@@ -450,13 +450,13 @@
             deleteInsurance: 0,
 
             // Document Data
-            roadTaxPreview: '{{ $vehicle->road_tax_image && pathinfo($vehicle->road_tax_image, PATHINFO_EXTENSION) != "pdf" ? asset("storage/" . $vehicle->road_tax_image) : null }}',
+            roadTaxPreview: '{{ $vehicle->road_tax_image && pathinfo($vehicle->road_tax_image, PATHINFO_EXTENSION) != "pdf" ? Storage::disk('s3')->temporaryUrl($vehicle->road_tax_image, now()->addMinutes(60)) : null }}',
             roadTaxName: '{{ $vehicle->road_tax_image ? basename($vehicle->road_tax_image) : "" }}',
             
-            grantPreview: '{{ $vehicle->grant_image && pathinfo($vehicle->grant_image, PATHINFO_EXTENSION) != "pdf" ? asset("storage/" . $vehicle->grant_image) : null }}',
+            grantPreview: '{{ $vehicle->grant_image && pathinfo($vehicle->grant_image, PATHINFO_EXTENSION) != "pdf" ? Storage::disk('s3')->temporaryUrl($vehicle->grant_image, now()->addMinutes(60)) : null }}',
             grantName: '{{ $vehicle->grant_image ? basename($vehicle->grant_image) : "" }}',
             
-            insurancePreview: '{{ $vehicle->insurance_image && pathinfo($vehicle->insurance_image, PATHINFO_EXTENSION) != "pdf" ? asset("storage/" . $vehicle->insurance_image) : null }}',
+            insurancePreview: '{{ $vehicle->insurance_image && pathinfo($vehicle->insurance_image, PATHINFO_EXTENSION) != "pdf" ? Storage::disk('s3')->temporaryUrl($vehicle->insurance_image, now()->addMinutes(60)) : null }}',
             insuranceName: '{{ $vehicle->insurance_image ? basename($vehicle->insurance_image) : "" }}',
 
             previewImage(event) {

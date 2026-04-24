@@ -119,11 +119,20 @@ class InspectionController extends Controller
             'staff_agree' => 'required', // Only Staff agreement required
         ]);
 
-        // 2. Handle File Uploads
+        // 2. Handle File Uploads to S3
         $photoPaths = [];
         if ($request->hasFile('photos')) {
             foreach ($request->file('photos') as $photo) {
-                $photoPaths[] = $photo->store('inspections', 'public');
+                try {
+                    $photoPath = Storage::disk('s3')->putFile('inspections', $photo);
+                    if (!$photoPath) {
+                        throw new \Exception('Failed to upload photo to S3.');
+                    }
+                    $photoPaths[] = $photoPath;
+                } catch (\Exception $e) {
+                    \Log::error('Inspection Photo Upload Error: ' . $e->getMessage());
+                    return back()->with('error', 'Failed to upload inspection photos: ' . $e->getMessage());
+                }
             }
         }
         $photoString = json_encode($photoPaths);
