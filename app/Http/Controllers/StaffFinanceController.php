@@ -88,8 +88,8 @@ class StaffFinanceController extends Controller
 
         // 3. Updated Count Badges
         $counts = [
-            'not_updated' => Booking::whereHas('payments', fn($q) => $q->whereIn('depoStatus', ['Requested', 'Pending', 'Holding']))->count(),
-            'updated'     => Booking::whereHas('payments', fn($q) => $q->where('depoStatus', 'Processed'))->count(),
+            'not_updated' => Booking::whereHas('payments', fn($q) => $q->whereIn('depoStatus', ['Requested', 'Pending', 'Holding'])->whereHas('booking', fn($b) => $b->whereIn('bookingStatus', ['Completed', 'Cancelled', 'Rejected'])))->count(),
+            'updated'     => Booking::whereHas('payments', fn($q) => $q->where('depoStatus', 'Processed')->whereHas('booking', fn($b) => $b->whereIn('bookingStatus', ['Completed', 'Cancelled', 'Rejected'])))->count(),
         ];
 
         return view('staff.finance.deposits', compact('bookings', 'status', 'counts'));
