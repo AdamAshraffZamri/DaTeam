@@ -735,10 +735,18 @@ class StaffBookingController extends Controller
         $reqStart = \Carbon\Carbon::parse($booking->originalDate . ' ' . $booking->bookingTime);
         $reqEnd   = \Carbon\Carbon::parse($booking->returnDate . ' ' . $booking->returnTime);
 
-        // Find cars: Same Model + Same Brand + Not the current one + Available
+        // Find cars: Same Model + Same Brand + Not the current one + Available during the requested time
         $availableCars = \App\Models\Vehicle::where('model', $booking->vehicle->model)
             ->where('brand', $booking->vehicle->brand)
-            ->where('availability', true)
+            ->where('status', '!=', 'inactive')
+            ->with(['bookings' => function($q) use ($reqStart, $reqEnd) {
+                $q->whereNotIn('bookingStatus', ['Cancelled', 'Rejected', 'Deleted'])
+                  ->where(function($query) use ($reqStart, $reqEnd) {
+                      // Merge Date and Time columns into one for an accurate comparison
+                      $query->where(DB::raw("CONCAT(originalDate, ' ', bookingTime)"), '<', $reqEnd)
+                            ->where(DB::raw("CONCAT(returnDate, ' ', returnTime)"), '>', $reqStart);
+                  });
+            }])
             ->where('VehicleID', '!=', $booking->vehicleID) // Don't show the one already assigned
             ->get()
             ->filter(function($v) use ($reqStart, $reqEnd) {
