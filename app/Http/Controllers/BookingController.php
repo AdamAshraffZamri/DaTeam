@@ -529,35 +529,34 @@ class BookingController extends Controller
             $bookingStatus = 'Submitted';
         }
 
-        // --- 6. GOOGLE DRIVE UPLOAD ---
+        // --- 6. INSTANT LOCAL SAVE & ASYNC UPLOAD ---
         $timestamp = now()->format('Y-m-d - H-i');
         $userName = Auth::user()->fullName; 
         $fileNameBase = "[{$userName} - {$timestamp}]";
 
-        // Upload Receipt
         $receiptFile = $request->file('payment_proof');
-        $localProofPath = $receiptFile->store('receipts', 'public'); 
-        
-        // Upload Agreement
         $agreementFile = $request->file('agreement_proof');
+
+        // Instant local save (Takes milliseconds)
+        $localProofPath = $receiptFile->store('receipts', 'public'); 
         $localAgreementPath = $agreementFile->store('agreements', 'public');
 
-        // Try Upload to Drive
-        try {
-            $receiptLink = $this->driveService->uploadFile(
-                $receiptFile, env('GOOGLE_DRIVE_RECEIPTS'), $fileNameBase . " - Receipt"
-            );
-            $agreementLink = $this->driveService->uploadFile(
-                $agreementFile, env('GOOGLE_DRIVE_AGREEMENTS'), $fileNameBase . " - Agreement"
-            );
-        } catch (\Exception $e) {
-            \Log::error("Drive Upload Failed: " . $e->getMessage());
-            $receiptLink = null;
-            $agreementLink = null;
-        }
+        // Fire background jobs so the customer doesn't wait
+        \App\Jobs\UploadGenericFile::dispatch(
+            storage_path('app/public/' . $localProofPath),
+            $fileNameBase . " - Receipt." . $receiptFile->getClientOriginalExtension(),
+            env('GOOGLE_DRIVE_RECEIPTS')
+        );
 
-        $finalReceiptPath = $receiptLink ?? $localProofPath;
-        $finalAgreementPath = $agreementLink ?? $localAgreementPath;
+        \App\Jobs\UploadGenericFile::dispatch(
+            storage_path('app/public/' . $localAgreementPath),
+            $fileNameBase . " - Agreement." . $agreementFile->getClientOriginalExtension(),
+            env('GOOGLE_DRIVE_AGREEMENTS')
+        );
+
+        // Save local paths to DB (so staff can view them instantly on the dashboard)
+        $finalReceiptPath = $localProofPath;
+        $finalAgreementPath = $localAgreementPath;
 
         // --- 7. CREATE BOOKING ---
         $booking = Booking::create([

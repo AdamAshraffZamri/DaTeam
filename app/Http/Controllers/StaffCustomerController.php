@@ -327,55 +327,35 @@ class StaffCustomerController extends Controller
     // ACTION 5: Upload File to Drive
     public function uploadFileToDrive(Request $request, $id)
     {
+        // 1. Find the specific customer
         $customer = Customer::findOrFail($id);
+
         $request->validate([
             'photo' => 'required|image|max:10240',
             'description' => 'required|string|max:50',
         ]);
 
         try {
-            // 1. Connect
-            $client = new \Google\Client();
-            $client->setClientId(env('GOOGLE_DRIVE_CLIENT_ID'));
-            $client->setClientSecret(env('GOOGLE_DRIVE_CLIENT_SECRET'));
-            $client->refreshToken(env('GOOGLE_DRIVE_REFRESH_TOKEN'));
-            $service = new \Google\Service\Drive($client);
-
-            // 2. Find Folder
-            $parentFolderId = env('GOOGLE_DRIVE_CUSTOMER_INFORMATION');
-            $folderName = trim("{$customer->stustaffID} - {$customer->fullName}");
-            
-            $query = "mimeType='application/vnd.google-apps.folder' and name = '" . str_replace("'", "\'", $folderName) . "' and '$parentFolderId' in parents and trashed = false";
-            $files = $service->files->listFiles(['q' => $query]);
-
-            if (count($files->getFiles()) > 0) {
-                $folderId = $files->getFiles()[0]->getId();
-            } else {
-                $folderMeta = new \Google\Service\Drive\DriveFile([
-                    'name' => $folderName,
-                    'mimeType' => 'application/vnd.google-apps.folder',
-                    'parents' => [$parentFolderId]
-                ]);
-                $folderId = $service->files->create($folderMeta, ['fields' => 'id'])->id;
-            }
-
-            // 3. Upload
             $file = $request->file('photo');
-            $fileName = Carbon::now()->format('Y-m-d') . " - " . $request->description . " (" . Carbon::now()->format('H-i-s') . ")." . $file->getClientOriginalExtension();
-
-            $fileMetadata = new \Google\Service\Drive\DriveFile([
-                'name' => $fileName,
-                'parents' => [$folderId]
-            ]);
+            $date = now()->format('Y-m-d');
+            $time = now()->format('H-i-s');
             
-            $content = file_get_contents($file->getRealPath());
-            $service->files->create($fileMetadata, [
-                'data' => $content,
-                'mimeType' => $file->getMimeType(),
-                'uploadType' => 'multipart'
-            ]);
+            // Format name: "2026-04-27 - IC Photo (14-30-05).jpg"
+            $fileName = "{$date} - {$request->description} ({$time})." . $file->getClientOriginalExtension();
 
-            return back()->with('success', 'File uploaded to Customer Folder on Drive!');
+            // 2. Save locally first (so staff sees it immediately)
+            $localPath = $file->storeAs('customer_docs', $fileName, 'public');
+            $fullPath = storage_path('app/public/' . $localPath);
+
+            // 3. Dispatch the Job
+            // This job handles finding/creating the "ID - Name" folder automatically
+            \App\Jobs\UploadToDrive::dispatch(
+                $customer->customerID, 
+                $fullPath, 
+                $fileName
+            );
+
+            return back()->with('success', 'File saved! The system is locating the customer folder and uploading in the background.');
 
         } catch (\Exception $e) {
             return back()->with('error', 'Upload Failed: ' . $e->getMessage());

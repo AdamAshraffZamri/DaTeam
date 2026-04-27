@@ -107,7 +107,8 @@ class Customer extends Authenticatable implements CanResetPasswordContract
     'avatar',
     'student_card_image',
     'ic_passport_image',
-    'driving_license_image'
+    'driving_license_image',
+    'drive_folder_id'
 ];
     protected $casts = [
         'dob' => 'date',

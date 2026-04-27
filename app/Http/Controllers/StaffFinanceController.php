@@ -187,24 +187,13 @@ class StaffFinanceController extends Controller
 
         $fileName = "[Refund - #{$bookingID}] - {$booking->customer->fullName}";
 
-        try {
-            // Use config() instead of env() to avoid cPanel cache issues
-            $folderId = config('services.google_refunds') ?? env('GOOGLE_DRIVE_REFUNDS_FOLDER');
+        // 1. INSTANT LOCAL SAVE
+        $localPath = $request->file('refund_proof')->store('refunds', 'public');
+        $fullLocalPath = storage_path('app/public/' . $localPath);
 
-            $receiptLink = $this->driveService->uploadFile(
-                $request->file('refund_proof'), 
-                $folderId, 
-                $fileName
-            );
-
-            if (!$receiptLink) {
-                throw new \Exception("Google Drive Service returned an empty link.");
-            }
-
-        } catch (\Exception $e) {
-            \Log::error("Refund Drive Upload Failed: " . $e->getMessage());
-            return back()->with('error', 'Google Drive Error: ' . $e->getMessage());
-        }
+        // 2. DISPATCH BACKGROUND GOOGLE DRIVE UPLOAD
+        $folderId = config('services.google_refunds') ?? env('GOOGLE_DRIVE_REFUNDS_FOLDER');
+        \App\Jobs\UploadGenericFile::dispatch($fullLocalPath, $fileName, $folderId);
 
         // UPDATE BOOKING REMARKS
         if ($request->filled('remarks')) {
@@ -216,7 +205,7 @@ class StaffFinanceController extends Controller
         // UPDATE PAYMENT
         $payment->update([
             'depoStatus' => 'Refunded',
-            'refund_proof_link' => $receiptLink,
+            'refund_proof_link' => 'storage/' . $localPath, // Use local path
             'paymentStatus' => 'Refund Completed',
             'depoRefundedDate' => now()
         ]);

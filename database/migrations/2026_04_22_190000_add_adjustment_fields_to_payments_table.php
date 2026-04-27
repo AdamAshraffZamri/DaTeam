@@ -9,34 +9,29 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('payments', function (Blueprint $table) {
-            // Check if 'remarks' column doesn't exist before adding
             if (!Schema::hasColumn('payments', 'remarks')) {
                 $table->text('remarks')->nullable()->after('depoStatus');
             }
 
-            // Check if 'depo_evidence' column doesn't exist before adding
             if (!Schema::hasColumn('payments', 'depo_evidence')) {
                 $table->json('depo_evidence')->nullable()->after('remarks');
             }
 
-            // Check if 'updated_by' column doesn't exist before adding
+            // FIXED: Explicitly reference 'staffID' instead of the default 'id'
             if (!Schema::hasColumn('payments', 'updated_by')) {
-                $table->foreignId('updated_by')
-                      ->nullable()
-                      ->after('depo_evidence')
-                      ->constrained('staff')
+                $table->unsignedBigInteger('updated_by')->nullable()->after('depo_evidence');
+                
+                $table->foreign('updated_by')
+                      ->references('staffID')
+                      ->on('staff')
                       ->onDelete('set null');
             }
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::table('payments', function (Blueprint $table) {
-            // Check existence before dropping foreign keys and columns
             if (Schema::hasColumn('payments', 'updated_by')) {
                 $table->dropForeign(['updated_by']);
                 $table->dropColumn('updated_by');
