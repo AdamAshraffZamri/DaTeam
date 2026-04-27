@@ -287,7 +287,7 @@
                         <label class="block text-gray-400 mb-2 font-bold text-xs uppercase tracking-wider">Faculty <span class="text-red-500">*</span></label>
                         <select name="faculty" class="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white focus:outline-none focus:border-orange-500 focus:bg-white/10 transition cursor-pointer" required>
                             <option value="" class="text-black">-- Select Faculty --</option>
-                            @php $faculties = ["Faculty of Civil Engineering (FKA)", "Faculty of Mechanical Engineering (FKM)", "Faculty of Electrical Engineering (FKE)", "Faculty of Chemical & Energy Engineering (FCEE)", "Faculty of Computing (FC)", "Faculty of Science (FS)", "Faculty of Built Environment & Surveying (FABU)", "Faculty of Social Sciences & Humanities (FSSH)", "Faculty of Management (FM)", "Razak Faculty of Technology and Informatics", "MJIIT", "AHIBS"]; @endphp
+                            @php $faculties = ["Faculty of Civil Engineering (FKA)", "Faculty of Mechanical Engineering (FKM)", "Faculty of Educational Sciences and Technology (FETS)", "Faculty of Electrical Engineering (FKE)", "Faculty of Chemical & Energy Engineering (FKT)", "Faculty of Computing (FC)", "Faculty of Science (FS)", "Faculty of Built Environment & Surveying (FABU)", "Faculty of Social Sciences & Humanities (FSSH)", "Faculty of Management (FM)", "MJIIT", "AHIBS"]; @endphp
                             @foreach($faculties as $fac)
                                 <option value="{{ $fac }}" class="text-black" {{ old('faculty', $user->faculty) == $fac ? 'selected' : '' }}>{{ $fac }}</option>
                             @endforeach
