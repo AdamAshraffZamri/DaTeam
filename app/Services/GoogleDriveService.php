@@ -215,4 +215,35 @@ class GoogleDriveService
         
         return $this->client->createAuthUrl();
     }
+
+    public function getOrCreateFolder($folderName)
+    {
+        // 1. Get the Parent ID from .env
+        $parentId = env('GOOGLE_DRIVE_CUSTOMER_INFORMATION');
+
+        // 2. Search if the folder already exists UNDER that parent
+        $query = "name = '$folderName' and mimeType = 'application/vnd.google-apps.folder' and '$parentId' in parents and trashed = false";
+        $results = $this->service->files->listFiles(['q' => $query]);
+
+        if (count($results->getFiles()) > 0) {
+            return $results->getFiles()[0]->id;
+        }
+
+        // 3. If not found, create it inside the parent
+        $folderMetadata = new DriveFile([
+            'name' => $folderName,
+            'mimeType' => 'application/vnd.google-apps.folder',
+            'parents' => [$parentId] // This is the critical part
+        ]);
+
+        $folder = $this->service->files->create($folderMetadata, ['fields' => 'id']);
+        return $folder->id;
+    }
+
+    public function uploadFromLocalPath($path, $fileName, $folderId = null)
+    {
+        $content = file_get_contents($path);
+        // Reuse your existing uploadFromString logic
+        return $this->uploadFromString($content, $fileName, $folderId);
+    }
 }

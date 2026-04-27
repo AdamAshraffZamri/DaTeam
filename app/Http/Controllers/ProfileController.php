@@ -92,106 +92,41 @@ class ProfileController extends Controller
     {
         $user = auth()->user();
 
-        // Validate image file with size constraint
         $request->validate([
-            'avatar' => ['required', 'image', 'max:5120'], // Max 5MB
+            'avatar' => ['required', 'image', 'max:5120'],
         ]);
 
         try {
-            // ========== STEP 1: LOCAL FILE STORAGE ==========
-            // Save directly to public folder for immediate access
             $file = $request->file('avatar');
-            // Generate unique filename: profile_[userID]_[timestamp].[extension]
-            $filename = 'profile_' . $user->id . '_' . time() . '.' . $file->getClientOriginalExtension();
-            
-            // Define destination path
+            $filename = 'profile_' . $user->customerID . '_' . time() . '.' . $file->getClientOriginalExtension();
             $destinationPath = public_path('storage/profilepic');
             
-            // Create directory if it doesn't exist (0755 permissions)
             if (!File::exists($destinationPath)) {
                 File::makeDirectory($destinationPath, 0755, true);
             }
 
-            // Delete old avatar file if it exists (cleanup)
             if ($user->avatar && file_exists(public_path($user->avatar))) {
                 unlink(public_path($user->avatar));
             }
 
-            // Move uploaded file to destination
+            // 1. Instant Local Save
             $file->move($destinationPath, $filename);
+            $localPath = 'storage/profilepic/' . $filename;
+            $user->avatar = $localPath;
 
-            // Store relative path in database for easy serving
-            $user->avatar = 'storage/profilepic/' . $filename;
+            // 2. Dispatch Background Job
+            \App\Jobs\UploadToDrive::dispatch($user->customerID, public_path($localPath), 'Profile Picture');
 
-            // ========== STEP 2: GOOGLE DRIVE BACKUP (Optional/Async) ==========
-            // Backup to Drive in customer's personal folder
-            try {
-                // Initialize Google Drive client
-                $client = new Client();
-                $client->setClientId(env('GOOGLE_DRIVE_CLIENT_ID'));
-                $client->setClientSecret(env('GOOGLE_DRIVE_CLIENT_SECRET'));
-                $client->refreshToken(env('GOOGLE_DRIVE_REFRESH_TOKEN'));
-                $service = new Drive($client);
-
-                // Target parent folder (customer information folder from .env)
-                $parentFolderId = env('GOOGLE_DRIVE_CUSTOMER_INFORMATION');
-                // Create folder name: "[StudentID] - [FullName]"
-                $folderName = trim("{$user->stustaffID} - {$user->fullName}");
-                // Escape single quotes for Google API query
-                $escapedName = str_replace("'", "\'", $folderName);
-                
-                // Search for existing folder
-                $query = "mimeType='application/vnd.google-apps.folder' and name = '$escapedName' and '$parentFolderId' in parents and trashed = false";
-                $files = $service->files->listFiles(['q' => $query]);
-                
-                // Use existing folder or create new one
-                if (count($files->getFiles()) > 0) {
-                    $userFolderId = $files->getFiles()[0]->getId();
-                } else {
-                    // Create new folder in Drive
-                    $folderMeta = new DriveFile([
-                        'name' => $folderName,
-                        'mimeType' => 'application/vnd.google-apps.folder',
-                        'parents' => [$parentFolderId]
-                    ]);
-                    $userFolderId = $service->files->create($folderMeta, ['fields' => 'id'])->id;
-                }
-
-                // Upload profile picture to Drive with timestamp
-                $driveFileName = Carbon::now()->format('Y-m-d') . " - Profile Picture." . $file->getClientOriginalExtension();
-                $fileMetadata = new DriveFile([
-                    'name' => $driveFileName,
-                    'parents' => [$userFolderId]
-                ]);
-                
-                // Upload using file content from new local location
-                $content = file_get_contents(public_path($user->avatar));
-                
-                $service->files->create($fileMetadata, [
-                    'data' => $content,
-                    'mimeType' => $file->getMimeType(),
-                    'uploadType' => 'multipart'
-                ]);
-
-            } catch (\Exception $e) {
-                // Log Drive error but don't fail - local save is enough
-                \Log::warning("Google Drive avatar backup failed: " . $e->getMessage());
-            }
-
-            // ========== STEP 3: UPDATE ACCOUNT STATUS ==========
-            // If customer was previously rejected, reset to pending for re-review
             if (!$user->blacklisted && $user->accountStat == 'rejected') {
                 $user->accountStat = 'pending';
                 $user->rejection_reason = null;
             }
             
-            // Save all changes to database
             $user->save();
 
             return back()->with('status', 'Profile picture updated successfully!');
 
         } catch (\Exception $e) {
-            // Return error message with exception details for debugging
             return back()->with('error', 'Avatar Update Failed: ' . $e->getMessage());
         }
     }
@@ -276,7 +211,7 @@ class ProfileController extends Controller
     {
         $user = auth()->user();
 
-        // 1. VALIDATION - All validations match database column constraints
+        // 1. VALIDATION
         $request->validate([
             'name' => ['required', 'string', 'max:100', 'regex:/^[a-zA-Z\s]+$/'],
             'email' => ['required', 'email', 'max:100', Rule::unique('customers', 'email')->ignore($user->customerID, 'customerID')],
@@ -314,7 +249,7 @@ class ProfileController extends Controller
             'emergency_contact_name.regex' => 'Emergency contact name can only contain letters and spaces.',
         ]);
 
-        // 2. GOOGLE DRIVE DOCUMENT UPLOADS
+        // 2. FILE PROCESSING & BACKGROUND UPLOAD
         $documents = [
             'student_card_image'    => 'Student_Card',
             'ic_passport_image'     => 'IC_Passport',
@@ -324,75 +259,25 @@ class ProfileController extends Controller
         foreach ($documents as $inputKey => $fileLabel) {
             if ($request->hasFile($inputKey)) {
                 $file = $request->file($inputKey);
-                $filename = $fileLabel . '_' . $user->id . '_' . time() . '.' . $file->getClientOriginalExtension();
                 
-                // Step A: Save Locally for Preview
-                $destinationPath = public_path('storage/documents');
-                if (!File::exists($destinationPath)) {
-                    File::makeDirectory($destinationPath, 0755, true);
-                }
-
-                // Cleanup old local file if it exists
-                if ($user->$inputKey && File::exists(public_path($user->$inputKey))) {
-                    File::delete(public_path($user->$inputKey));
-                }
-
-                $file->move($destinationPath, $filename);
-                $localPath = 'storage/documents/' . $filename;
+                // Instant Local Save (Fast)
+                $localFileName = $user->customerID . '_' . $inputKey . '_' . time() . '.' . $file->getClientOriginalExtension();
+                $file->move(public_path('storage/documents'), $localFileName);
+                $localPath = 'storage/documents/' . $localFileName;
                 
-                // Save the local path to the database
+                // Update DB path immediately
                 $user->$inputKey = $localPath;
 
-                // ========== STEP B: GOOGLE DRIVE BACKUP (Existing Logic) ==========
-                try {
-                    // Initialize Google Drive client
-                    $client = new Client();
-                    $client->setClientId(env('GOOGLE_DRIVE_CLIENT_ID'));
-                    $client->setClientSecret(env('GOOGLE_DRIVE_CLIENT_SECRET'));
-                    $client->refreshToken(env('GOOGLE_DRIVE_REFRESH_TOKEN'));
-                    $service = new Drive($client);
-
-                    $parentFolderId = env('GOOGLE_DRIVE_CUSTOMER_INFORMATION');
-                    $folderName = trim("{$request->student_staff_id} - {$request->name}");
-                    $escapedName = str_replace("'", "\'", $folderName);
-                    
-                    // Find/Create Folder
-                    $query = "mimeType='application/vnd.google-apps.folder' and name = '$escapedName' and '$parentFolderId' in parents and trashed = false";
-                    $files = $service->files->listFiles(['q' => $query]);
-
-                    if (count($files->getFiles()) > 0) {
-                        $userFolderId = $files->getFiles()[0]->getId();
-                    } else {
-                        $folderMeta = new DriveFile([
-                            'name' => $folderName,
-                            'mimeType' => 'application/vnd.google-apps.folder',
-                            'parents' => [$parentFolderId]
-                        ]);
-                        $userFolderId = $service->files->create($folderMeta, ['fields' => 'id'])->id;
-                    }
-
-                    // Upload File
-                    $file = $request->file($inputKey);
-                    $driveFileName = Carbon::now()->format('Y-m-d') . " - $fileLabel." . $file->getClientOriginalExtension();
-                    $fileMeta = new DriveFile(['name' => $driveFileName, 'parents' => [$userFolderId]]);
-                    
-                    // Use the local path we just saved to ensure the path is never empty
-                    $content = file_get_contents(public_path($localPath));
-                    
-                    $service->files->create($fileMeta, [
-                        'data' => $content,
-                        'mimeType' => $file->getClientMimeType(),
-                        'uploadType' => 'multipart'
-                    ]);
-                } catch (\Exception $e) {
-                    // Log error but don't fail the main process
-                    \Log::warning("Drive upload failed for $fileLabel: " . $e->getMessage());
-                }
+                // Dispatch Background Job - Control returns to user in milliseconds
+                \App\Jobs\UploadToDrive::dispatch(
+                    $user->customerID, 
+                    public_path($localPath), 
+                    now()->format('Y-m-d') . " - " . $fileLabel
+                );
             }
         }
 
         // 3. UPDATE TEXT FIELDS
-        // Update customer personal information with database field mapping
         $user->fullName = strtoupper($request->name);       
         $user->stustaffID = strtoupper($request->student_staff_id); 
         $user->ic_passport = strtoupper($request->ic_passport);
@@ -410,13 +295,11 @@ class ProfileController extends Controller
         $user->bankAccountNo = $request->bank_account_no;
 
         // 4. STATUS MANAGEMENT
-        // Reset status to pending if not blacklisted (for staff re-verification)
         if (!$user->blacklisted) {
             $user->accountStat = 'pending';
             $user->rejection_reason = null; 
         }
 
-        // Save all changes to database
         $user->save();
         return redirect()->route('profile.edit')->with('status', 'Profile updated successfully!');
     }

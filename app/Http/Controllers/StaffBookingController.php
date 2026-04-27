@@ -911,27 +911,25 @@ class StaffBookingController extends Controller
                 "Your vehicle return is verified. Booking #{$booking->bookingID} is COMPLETED and your deposit is being processed."
             ));
 
-            // C. Upload to Google Drive & Save Link (NEW)
-            // Use app() to resolve the service without constructor injection
-            $driveService = app(\App\Services\GoogleDriveService::class);
-            
+            // C. Save PDF Locally & Upload to Google Drive (ASYNC)
             $timestamp = now()->format('Ymd_Hi');
             $safeName = preg_replace('/[^A-Za-z0-9 ]/', '', $booking->customer->fullName);
             $fileName = "Invoice_{$booking->bookingID}_{$safeName}_{$timestamp}.pdf";
 
-            // Upload using the raw content method
-            // Uses GOOGLE_DRIVE_INVOICES from your .env
-            $invoiceLink = $driveService->uploadFromString(
-                $pdfContent, 
+            // 1. Save PDF Locally for Instant Access
+            $localPath = 'invoices/' . $fileName;
+            \Illuminate\Support\Facades\Storage::disk('public')->put($localPath, $pdfContent);
+
+            // 2. Fire Background Job for Google Drive
+            \App\Jobs\UploadGenericFile::dispatch(
+                storage_path('app/public/' . $localPath), 
                 $fileName, 
-                env('GOOGLE_DRIVE_INVOICES') 
+                env('GOOGLE_DRIVE_INVOICES')
             );
 
-            // D. Save Link to Database for Customer Dashboard
-            if ($invoiceLink) {
-                $booking->invoiceLink = $invoiceLink;
-                $booking->save();
-            }
+            // D. Save Local Link to Database for Customer Dashboard
+            $booking->invoiceLink = 'storage/' . $localPath;
+            $booking->save();
 
             $vehicle = $booking->vehicle;
             $vehicle->update([
