@@ -243,7 +243,34 @@ class GoogleDriveService
     public function uploadFromLocalPath($path, $fileName, $folderId = null)
     {
         $content = file_get_contents($path);
-        // Reuse your existing uploadFromString logic
-        return $this->uploadFromString($content, $fileName, $folderId);
+        
+        // 1. Get the real extension (e.g., 'jpg', 'png')
+        $extension = strtolower(pathinfo($path, PATHINFO_EXTENSION));
+        
+        // 2. Map the extension to a specific MimeType
+        $mimeTypes = [
+            'jpg'  => 'image/jpeg',
+            'jpeg' => 'image/jpeg',
+            'png'  => 'image/png',
+            'gif'  => 'image/gif',
+            'pdf'  => 'application/pdf',
+        ];
+        
+        $mimeType = $mimeTypes[$extension] ?? 'application/octet-stream';
+
+        // 3. Set 'contentHints' or simply keep 'mimeType' strict
+        $fileMetadata = new \Google\Service\Drive\DriveFile([
+            'name' => $fileName,
+            'parents' => $folderId ? [$folderId] : [],
+            'mimeType' => $mimeType // <--- This prevents the PDF conversion
+        ]);
+
+        // 4. Perform the upload
+        return $this->service->files->create($fileMetadata, [
+            'data' => $content,
+            'mimeType' => $mimeType,
+            'uploadType' => 'multipart',
+            'fields' => 'id'
+        ]);
     }
 }
