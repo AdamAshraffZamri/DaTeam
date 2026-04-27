@@ -80,7 +80,7 @@
                 {{-- AVATAR FORM --}}
                 <form action="{{ route('profile.avatar.update') }}" method="POST" enctype="multipart/form-data" id="avatar-form">
                     @csrf
-                    <input type="file" name="avatar" id="avatar_input" class="hidden" accept="image/*" onchange="document.getElementById('avatar-form').submit();">
+                    <input type="file" name="avatar" id="avatar_input" class="hidden" accept="image/*" onchange="validateAvatarFile(this)">
                     <button type="button" onclick="document.getElementById('avatar_input').click()" class="absolute bottom-0 right-0 bg-[#ea580c] hover:bg-orange-600 text-white p-2 rounded-full w-8 h-8 flex items-center justify-center transition shadow-lg cursor-pointer z-20">
                         <i class="fas fa-pencil-alt text-xs"></i>
                     </button>
@@ -89,7 +89,7 @@
         </div>
 
         {{-- ================= FORM 1: PERSONAL & BANK INFO ================= --}}
-        <form action="{{ route('profile.update') }}" method="POST" enctype="multipart/form-data" id="profileForm" onsubmit="return validateBankDetails()" class="bg-black/25 backdrop-blur-xl border border-white/10 rounded-[2.5rem] shadow-2xl p-8 md:p-12 mb-10">
+        <form action="{{ route('profile.update') }}" method="POST" enctype="multipart/form-data" id="profileForm" onsubmit="return validateProfileForm()" class="bg-black/25 backdrop-blur-xl border border-white/10 rounded-[2.5rem] shadow-2xl p-8 md:p-12 mb-10">
             @csrf
             @method('PUT')
 
@@ -412,6 +412,33 @@
         }
     }
 
+    function validateAvatarFile(input) {
+        const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+        
+        if (input.files && input.files[0]) {
+            const file = input.files[0];
+            
+            // Validate file size
+            if (file.size > MAX_FILE_SIZE) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'File Too Large',
+                    text: `Avatar file size is ${(file.size / 1024 / 1024).toFixed(2)}MB. Maximum allowed is 10MB.`,
+                    confirmButtonColor: '#ea580c',
+                    background: '#1f2937',
+                    color: '#fff'
+                });
+                
+                // Clear the input
+                input.value = '';
+                return false;
+            }
+            
+            // File is valid, submit the form
+            document.getElementById('avatar-form').submit();
+        }
+    }
+
     // 2. Password Toggle Logic
     function togglePassword(inputId, iconId) {
         const input = document.getElementById(inputId);
@@ -487,9 +514,66 @@
         return true;
     }
 
+    function validateProfileForm() {
+        // First validate bank details
+        if (!validateBankDetails()) {
+            return false;
+        }
+
+        // Then validate file sizes
+        const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+        const fileInputs = [
+            'student_file',
+            'ic_passport_file',
+            'driving_license_file'
+        ];
+
+        for (const inputId of fileInputs) {
+            const input = document.getElementById(inputId);
+            if (input && input.files && input.files[0]) {
+                const file = input.files[0];
+                if (file.size > MAX_FILE_SIZE) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'File Too Large',
+                        text: `${file.name} is ${(file.size / 1024 / 1024).toFixed(2)}MB. Maximum allowed is 10MB.`,
+                        confirmButtonColor: '#ea580c',
+                        background: '#1f2937',
+                        color: '#fff'
+                    });
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
+
     function showTick(input, iconId) {
         const icon = document.getElementById(iconId);
+        const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+        
         if (input.files && input.files[0]) {
+            const file = input.files[0];
+            
+            // Validate file size
+            if (file.size > MAX_FILE_SIZE) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'File Too Large',
+                    text: `File size is ${(file.size / 1024 / 1024).toFixed(2)}MB. Maximum allowed is 10MB.`,
+                    confirmButtonColor: '#ea580c',
+                    background: '#1f2937',
+                    color: '#fff'
+                });
+                
+                // Clear the input
+                input.value = '';
+                icon.classList.remove('fa-check', 'text-green-500');
+                icon.classList.add('fa-camera', 'text-gray-400');
+                return false;
+            }
+            
             // Change icon to a green checkmark
             icon.classList.remove('fa-camera', 'text-gray-400');
             icon.classList.add('fa-check', 'text-green-500');
