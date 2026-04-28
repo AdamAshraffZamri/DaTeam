@@ -246,6 +246,7 @@
 
                             if($isCurrentlyRented) {
                                 $currentStatus = 'rented';
+                                $vehicle->availability = false;
                             }
 
                             $statusConfig = match($currentStatus) {
