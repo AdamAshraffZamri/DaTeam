@@ -455,30 +455,10 @@
         }
     }
 
-    // 3. Bank Validation Logic
-    const bankRules = {
-        'Maybank': 12, 'CIMB Bank': 10, 'Public Bank': 10, 'RHB Bank': 10, 'Hong Leong Bank': 10,
-        'AmBank': 13, 'UOB Malaysia': 10, 'Bank Rakyat': 10, 'OCBC Bank': 10, 'HSBC Bank': 12,
-        'Bank Islam': 14, 'Affin Bank': 12, 'Alliance Bank': 10, 'Standard Chartered': 10,
-        'MBSB Bank': 10, 'BSN (Bank Simpanan Nasional)': 16, 'Agrobank': 13, 'Bank Muamalat': 14,
-        'Kuwait Finance House': 10, 'Al Rajhi Bank': 15,
-        'GXBank (Digital)': 'flex', 'Aeon Bank (Digital)': 'flex', 'Boost Bank (Digital)': 'flex'
-    };
-
+    // 3. Bank Validation Logic (No format restrictions)
     function updateBankHint() {
-        const bank = document.getElementById('bankSelect').value;
-        const input = document.getElementById('bankAccInput');
         const errorMsg = document.getElementById('bankError');
-        
         errorMsg.classList.add('hidden');
-        input.classList.remove('border-red-500');
-        input.classList.add('border-white/10');
-
-        if (bank && bankRules[bank] && bankRules[bank] !== 'flex') {
-            input.placeholder = `Enter ${bankRules[bank]} digits`;
-        } else {
-            input.placeholder = "Enter account number";
-        }
     }
 
     function validateBankDetails() {
@@ -487,30 +467,22 @@
         const errorMsg = document.getElementById('bankError');
         const input = document.getElementById('bankAccInput');
 
-        // Only validate if bank is selected
-        if (bank && bankRules[bank]) {
-            const rule = bankRules[bank];
-            const length = accNum.length;
-
-            // Check if numeric
-            if (!/^\d+$/.test(accNum)) {
-                errorMsg.innerText = "Invalid! Only numbers allowed.";
-                errorMsg.classList.remove('hidden');
-                input.classList.add('border-red-500');
-                input.focus();
-                return false;
-            }
-
-            // Check length (if rigid)
-            if (rule !== 'flex' && length !== rule) {
-                errorMsg.innerText = `Invalid! ${bank} account must be exactly ${rule} digits.`;
-                errorMsg.classList.remove('hidden');
-                input.classList.remove('border-white/10');
-                input.classList.add('border-red-500');
-                input.focus();
-                return false;
-            }
+        // Check if bank is selected
+        if (!bank) {
+            errorMsg.innerText = "Please select a bank.";
+            errorMsg.classList.remove('hidden');
+            return false;
         }
+
+        // Check if account number is provided
+        if (!accNum) {
+            errorMsg.innerText = "Please enter an account number.";
+            errorMsg.classList.remove('hidden');
+            input.classList.add('border-red-500');
+            input.focus();
+            return false;
+        }
+
         return true;
     }
 
