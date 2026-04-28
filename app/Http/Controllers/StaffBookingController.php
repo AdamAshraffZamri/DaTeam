@@ -885,6 +885,12 @@ class StaffBookingController extends Controller
             }
         }
 
+        // 3. Update vehicle status to available, and availability to true
+        $booking->vehicle->update([
+            'status' => 'available',
+            'availability' => true
+        ]);
+
         // 3. Trigger Loyalty Points
         $loyaltyController = new \App\Http\Controllers\LoyaltyController();
         $loyaltyController->bookingCompleted($id);
