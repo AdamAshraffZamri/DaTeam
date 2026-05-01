@@ -548,17 +548,6 @@ class FleetController extends Controller
         return view('staff.fleet.edit', compact('vehicle')); 
     }
 
-    // Toggle Vehicle Availability
-    public function toggleAvailability($id)
-    {
-        $vehicle = Vehicle::findOrFail($id);
-        $vehicle->availability = !$vehicle->availability;
-        $vehicle->save();
-
-        return redirect()->route('staff.fleet.index')
-            ->with('success', 'Vehicle availability status updated.');
-    }
-
     public function publicIndex()
     {
         // Fetch vehicles for the public gallery

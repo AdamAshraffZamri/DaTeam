@@ -80,7 +80,7 @@
                 {{-- AVATAR FORM --}}
                 <form action="{{ route('profile.avatar.update') }}" method="POST" enctype="multipart/form-data" id="avatar-form">
                     @csrf
-                    <input type="file" name="avatar" id="avatar_input" class="hidden" accept="image/*" onchange="document.getElementById('avatar-form').submit();">
+                    <input type="file" name="avatar" id="avatar_input" class="hidden" accept="image/*" onchange="validateAvatarFile(this)">
                     <button type="button" onclick="document.getElementById('avatar_input').click()" class="absolute bottom-0 right-0 bg-[#ea580c] hover:bg-orange-600 text-white p-2 rounded-full w-8 h-8 flex items-center justify-center transition shadow-lg cursor-pointer z-20">
                         <i class="fas fa-pencil-alt text-xs"></i>
                     </button>
@@ -89,7 +89,7 @@
         </div>
 
         {{-- ================= FORM 1: PERSONAL & BANK INFO ================= --}}
-        <form action="{{ route('profile.update') }}" method="POST" enctype="multipart/form-data" id="profileForm" onsubmit="return validateBankDetails()" class="bg-black/25 backdrop-blur-xl border border-white/10 rounded-[2.5rem] shadow-2xl p-8 md:p-12 mb-10">
+        <form action="{{ route('profile.update') }}" method="POST" enctype="multipart/form-data" id="profileForm" onsubmit="return validateProfileForm()" class="bg-black/25 backdrop-blur-xl border border-white/10 rounded-[2.5rem] shadow-2xl p-8 md:p-12 mb-10">
             @csrf
             @method('PUT')
 
@@ -287,7 +287,7 @@
                         <label class="block text-gray-400 mb-2 font-bold text-xs uppercase tracking-wider">Faculty <span class="text-red-500">*</span></label>
                         <select name="faculty" class="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white focus:outline-none focus:border-orange-500 focus:bg-white/10 transition cursor-pointer" required>
                             <option value="" class="text-black">-- Select Faculty --</option>
-                            @php $faculties = ["Faculty of Civil Engineering (FKA)", "Faculty of Mechanical Engineering (FKM)", "Faculty of Electrical Engineering (FKE)", "Faculty of Chemical & Energy Engineering (FCEE)", "Faculty of Computing (FC)", "Faculty of Science (FS)", "Faculty of Built Environment & Surveying (FABU)", "Faculty of Social Sciences & Humanities (FSSH)", "Faculty of Management (FM)", "Razak Faculty of Technology and Informatics", "MJIIT", "AHIBS"]; @endphp
+                            @php $faculties = ["Faculty of Civil Engineering (FKA)", "Faculty of Mechanical Engineering (FKM)", "Faculty of Educational Sciences and Technology (FETS)", "Faculty of Electrical Engineering (FKE)", "Faculty of Chemical & Energy Engineering (FKT)", "Faculty of Computing (FC)", "Faculty of Science (FS)", "Faculty of Built Environment & Surveying (FABU)", "Faculty of Social Sciences & Humanities (FSSH)", "Faculty of Management (FM)", "MJIIT", "AHIBS"]; @endphp
                             @foreach($faculties as $fac)
                                 <option value="{{ $fac }}" class="text-black" {{ old('faculty', $user->faculty) == $fac ? 'selected' : '' }}>{{ $fac }}</option>
                             @endforeach
@@ -412,6 +412,33 @@
         }
     }
 
+    function validateAvatarFile(input) {
+        const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+        
+        if (input.files && input.files[0]) {
+            const file = input.files[0];
+            
+            // Validate file size
+            if (file.size > MAX_FILE_SIZE) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'File Too Large',
+                    text: `Avatar file size is ${(file.size / 1024 / 1024).toFixed(2)}MB. Maximum allowed is 10MB.`,
+                    confirmButtonColor: '#ea580c',
+                    background: '#1f2937',
+                    color: '#fff'
+                });
+                
+                // Clear the input
+                input.value = '';
+                return false;
+            }
+            
+            // File is valid, submit the form
+            document.getElementById('avatar-form').submit();
+        }
+    }
+
     // 2. Password Toggle Logic
     function togglePassword(inputId, iconId) {
         const input = document.getElementById(inputId);
@@ -428,30 +455,10 @@
         }
     }
 
-    // 3. Bank Validation Logic
-    const bankRules = {
-        'Maybank': 12, 'CIMB Bank': 10, 'Public Bank': 10, 'RHB Bank': 10, 'Hong Leong Bank': 10,
-        'AmBank': 13, 'UOB Malaysia': 10, 'Bank Rakyat': 10, 'OCBC Bank': 10, 'HSBC Bank': 12,
-        'Bank Islam': 14, 'Affin Bank': 12, 'Alliance Bank': 10, 'Standard Chartered': 10,
-        'MBSB Bank': 10, 'BSN (Bank Simpanan Nasional)': 16, 'Agrobank': 13, 'Bank Muamalat': 14,
-        'Kuwait Finance House': 10, 'Al Rajhi Bank': 15,
-        'GXBank (Digital)': 'flex', 'Aeon Bank (Digital)': 'flex', 'Boost Bank (Digital)': 'flex'
-    };
-
+    // 3. Bank Validation Logic (No format restrictions)
     function updateBankHint() {
-        const bank = document.getElementById('bankSelect').value;
-        const input = document.getElementById('bankAccInput');
         const errorMsg = document.getElementById('bankError');
-        
         errorMsg.classList.add('hidden');
-        input.classList.remove('border-red-500');
-        input.classList.add('border-white/10');
-
-        if (bank && bankRules[bank] && bankRules[bank] !== 'flex') {
-            input.placeholder = `Enter ${bankRules[bank]} digits`;
-        } else {
-            input.placeholder = "Enter account number";
-        }
     }
 
     function validateBankDetails() {
@@ -460,36 +467,85 @@
         const errorMsg = document.getElementById('bankError');
         const input = document.getElementById('bankAccInput');
 
-        // Only validate if bank is selected
-        if (bank && bankRules[bank]) {
-            const rule = bankRules[bank];
-            const length = accNum.length;
+        // Check if bank is selected
+        if (!bank) {
+            errorMsg.innerText = "Please select a bank.";
+            errorMsg.classList.remove('hidden');
+            return false;
+        }
 
-            // Check if numeric
-            if (!/^\d+$/.test(accNum)) {
-                errorMsg.innerText = "Invalid! Only numbers allowed.";
-                errorMsg.classList.remove('hidden');
-                input.classList.add('border-red-500');
-                input.focus();
-                return false;
-            }
+        // Check if account number is provided
+        if (!accNum) {
+            errorMsg.innerText = "Please enter an account number.";
+            errorMsg.classList.remove('hidden');
+            input.classList.add('border-red-500');
+            input.focus();
+            return false;
+        }
 
-            // Check length (if rigid)
-            if (rule !== 'flex' && length !== rule) {
-                errorMsg.innerText = `Invalid! ${bank} account must be exactly ${rule} digits.`;
-                errorMsg.classList.remove('hidden');
-                input.classList.remove('border-white/10');
-                input.classList.add('border-red-500');
-                input.focus();
-                return false;
+        return true;
+    }
+
+    function validateProfileForm() {
+        // First validate bank details
+        if (!validateBankDetails()) {
+            return false;
+        }
+
+        // Then validate file sizes
+        const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+        const fileInputs = [
+            'student_file',
+            'ic_passport_file',
+            'driving_license_file'
+        ];
+
+        for (const inputId of fileInputs) {
+            const input = document.getElementById(inputId);
+            if (input && input.files && input.files[0]) {
+                const file = input.files[0];
+                if (file.size > MAX_FILE_SIZE) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'File Too Large',
+                        text: `${file.name} is ${(file.size / 1024 / 1024).toFixed(2)}MB. Maximum allowed is 10MB.`,
+                        confirmButtonColor: '#ea580c',
+                        background: '#1f2937',
+                        color: '#fff'
+                    });
+                    return false;
+                }
             }
         }
+
         return true;
     }
 
     function showTick(input, iconId) {
         const icon = document.getElementById(iconId);
+        const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+        
         if (input.files && input.files[0]) {
+            const file = input.files[0];
+            
+            // Validate file size
+            if (file.size > MAX_FILE_SIZE) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'File Too Large',
+                    text: `File size is ${(file.size / 1024 / 1024).toFixed(2)}MB. Maximum allowed is 10MB.`,
+                    confirmButtonColor: '#ea580c',
+                    background: '#1f2937',
+                    color: '#fff'
+                });
+                
+                // Clear the input
+                input.value = '';
+                icon.classList.remove('fa-check', 'text-green-500');
+                icon.classList.add('fa-camera', 'text-gray-400');
+                return false;
+            }
+            
             // Change icon to a green checkmark
             icon.classList.remove('fa-camera', 'text-gray-400');
             icon.classList.add('fa-check', 'text-green-500');

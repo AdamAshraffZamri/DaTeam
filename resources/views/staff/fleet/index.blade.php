@@ -238,6 +238,7 @@
                             $currentStatus = strtolower($vehicle->status ?? 'available'); 
 
                             $isCurrentlyRented = $vehicle->bookings()
+                            ->whereNotIn('bookingStatus', ['Cancelled', 'Rejected', 'Deleted'])
                             ->where('bookingStatus', 'Active')
                             ->whereDate('originalDate', '<=', now())
                             ->whereDate('returnDate', '>=', now())
@@ -245,6 +246,7 @@
 
                             if($isCurrentlyRented) {
                                 $currentStatus = 'rented';
+                                $vehicle->availability = false;
                             }
 
                             $statusConfig = match($currentStatus) {

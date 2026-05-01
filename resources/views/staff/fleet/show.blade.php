@@ -63,6 +63,7 @@
                     @php
                         // 1. Determine if vehicle is currently on an active trip
                         $isCurrentlyRented = $vehicle->bookings()
+                            ->whereNotIn('bookingStatus', ['Cancelled', 'Rejected', 'Deleted'])
                             ->where('bookingStatus', 'Active')
                             ->whereDate('originalDate', '<=', now())
                             ->whereDate('returnDate', '>=', now())
