@@ -7,6 +7,7 @@ use App\Models\Payment;
 use App\Models\Staff;
 use App\Models\Customer;
 use App\Models\Vehicle;
+use App\Models\StaffSetting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Notifications\BookingStatusUpdated;
@@ -265,12 +266,16 @@ class StaffBookingController extends Controller
             })->count(),
         ];
 
+        // Fetch staff settings for the current user
+        $staffId = Auth::guard('staff')->id();
+        $staffSettings = StaffSetting::where('staff_id', $staffId)->first();
+
         return view('staff.dashboard', compact(
             'totalRevenue', 'revenueGrowth', 'activeRentalsCount', 'pendingBookingsCount', 'fullyPaidCount', 'depositPaidCount',
             'totalCustomers', 'pendingCustomersCount', 'chartLabels', 'chartRevenue', 'chartBookings',
             'pickupsToday', 'returnsToday', 'recentBookings', 
             'totalVehicles', 'utilizationRate', 'maintenanceRate', 'todayRevenue', 'overdueCount',
-            'calendarEvents', 'counts'
+            'calendarEvents', 'counts', 'staffSettings'
         ));
     }
 

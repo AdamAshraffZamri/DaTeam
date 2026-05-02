@@ -92,4 +92,20 @@ class Staff extends Authenticatable
     protected $hidden = [
         'password',
     ];
+
+    /**
+     * Relationship: Staff has many deals
+     */
+    public function deals()
+    {
+        return $this->hasMany(Deal::class, 'staff_id', 'staffID')->orderBy('order');
+    }
+
+    /**
+     * Relationship: Staff has one settings record
+     */
+    public function settings()
+    {
+        return $this->hasOne(StaffSetting::class, 'staff_id', 'staffID');
+    }
 }
