@@ -205,6 +205,18 @@
                     <div x-show="!sidebarOpen" class="hidden md:block absolute left-16 bg-slate-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 pointer-events-none z-50 ml-1 shadow-lg transition-opacity duration-200">Loyalty</div>
                 </a>
 
+                {{-- Settings --}}
+                <a href="{{ route('staff.settings.edit') }}" 
+                   class="group flex items-center px-4 py-3.5 rounded-xl font-bold text-sm relative overflow-hidden mb-1 transition-all duration-300 {{ request()->routeIs('staff.settings.*') ? $activeClass : $inactiveClass }}"
+                   :class="sidebarOpen ? '' : 'justify-center'">
+                    @if(request()->routeIs('staff.settings.*')) <div class="absolute inset-0 bg-gradient-to-br from-orange-500 to-orange-600 z-0"></div> @endif
+                    <div class="relative z-10 flex items-center w-full" :class="sidebarOpen ? '' : 'justify-center'">
+                        <i class="fas fa-sliders-h w-6 text-center text-lg {{ request()->routeIs('staff.settings.*') ? $iconActive : $iconInactive }}" :class="sidebarOpen ? 'mr-3' : ''"></i> 
+                        <span x-show="sidebarOpen">Settings</span>
+                    </div>
+                    <div x-show="!sidebarOpen" class="hidden md:block absolute left-16 bg-slate-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 pointer-events-none z-50 ml-1 shadow-lg transition-opacity duration-200">Settings</div>
+                </a>
+
                 {{-- Staff Management (Admin Only) --}}
                 @if(Auth::guard('staff')->user()->role === 'admin')
                     <a href="{{ route('staff.management.index') }}" 
