@@ -219,12 +219,15 @@
 </style>
 
 {{-- SECTION 1: HERO --}}
-<div class="relative h-screen min-h-[600px] flex flex-col justify-center bg-gray-900 overflow-hidden">
+{{-- Removed Tailwind's 'h-screen' and added pure CSS 'min-height: 100vh;' --}}
+<div class="relative flex flex-col justify-center bg-gray-900 overflow-hidden" style="min-height: 100vh;">
     
     {{-- Background Image --}}
-    <div class="absolute inset-0 w-full h-full">
+    <div class="absolute inset-0 w-full h-full" style="z-index: 0;">
         <div class="absolute inset-0 bg-gradient-to-r from-black/60 via-black/35 to-black/65 z-10"></div>
-        <img src="{{ asset('hastabg.png') }}" alt="Background" class="w-full h-full object-cover">
+        
+        {{-- Added pure CSS to force the image to pin to the corners and cover the area --}}
+        <img src="{{ asset('hastabg.png') }}" alt="Background" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; object-position: center;">
     </div>
 
     {{-- Content Container --}}
@@ -232,19 +235,12 @@
         
         {{-- Navigation Pill --}}
         <div class="w-full flex justify-center py-4 md:py-6 relative z-40">
-            {{-- 
-                Mobile Fixes:
-                1. w-fit + mx-auto: Centers the container.
-                2. max-w-full: Prevents overflowing the screen width.
-                3. px-4: Ensures a small gap from the screen edges.
-            --}}
             <div class="w-fit max-w-full px-4 mx-auto overflow-x-auto no-scrollbar">
                 
                 {{-- Container --}}
                 <div class="bg-white/10 backdrop-blur-md border border-white/20 rounded-full p-1 md:p-1.5 flex items-center shadow-2xl">
                     
                     {{-- Book Now --}}
-                    {{-- Updated: text-xs (was text-[10px]) and px-4 (was px-3) for better mobile visibility --}}
                     <a href="{{ route('book.create') }}" 
                        class="px-4 sm:px-6 py-2 sm:py-2.5 rounded-full font-bold text-[9px] sm:text-[15px] transition-all duration-300 whitespace-nowrap active:scale-95
                        {{ (request()->routeIs('book.create') || request()->routeIs('book.search') || request()->routeIs('book.show') || request()->routeIs('book.payment') || request()->routeIs('book.payment.submit')) 
@@ -294,7 +290,6 @@
             </p>
             
             <div class="flex flex-col sm:flex-row gap-4 justify-center items-center">
-                {{-- RESTORED GLOW BUTTON --}}
                 <a href="{{ route('book.create') }}"
                 class="glow-on-hover px-10 py-4 transition transform hover:scale-105 shadow-lg flex items-center justify-center">
                     Book a Vehicle <i class="fas fa-arrow-right ml-3"></i>
@@ -302,7 +297,6 @@
 
                 <a href="{{ route('fleet.index') }}" class="fleet-anim-btn">
                     <span class="relative z-10">View Fleet</span>
-                    {{-- Particle Container --}}
                     <div class="absolute inset-0 overflow-hidden pointer-events-none">
                         @for ($i = 0; $i < 10; $i++)
                             <span class="fleet-spot"></span>
