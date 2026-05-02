@@ -284,4 +284,7 @@ Route::middleware('auth')->group(function () {
     Route::patch('/finance/deposits/{id}/update', [App\Http\Controllers\StaffFinanceController::class, 'updateDeposit'])->name('staff.finance.update_deposit');
     Route::post('/finance/deposits/delete-evidence', [App\Http\Controllers\StaffFinanceController::class, 'deleteEvidence'])->name('staff.finance.delete_evidence');
 
+    // Notifications
+    Route::post('/notifications/mark-read', [StaffBookingController::class, 'markStaffNotificationsRead'])->name('staff.notifications.markRead');
+
 });

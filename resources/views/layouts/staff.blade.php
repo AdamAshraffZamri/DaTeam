@@ -313,7 +313,7 @@
 
                         @if($unreadCount > 0)
                             <div class="p-3 bg-gray-50 border-t border-gray-100 text-center">
-                                <form action="{{ route('notifications.markRead') }}" method="POST">@csrf <button type="submit" class="text-[10px] text-orange-600 font-extrabold uppercase">Clear All Notifications</button></form>
+                                <form action="{{ route('staff.notifications.markRead') }}" method="POST">@csrf <button type="submit" class="text-[10px] text-orange-600 font-extrabold uppercase">Clear All Notifications</button></form>
                             </div>
                         @endif
                     </div>

@@ -1229,6 +1229,12 @@ class StaffBookingController extends Controller
         return back();
     }
 
+    // mark all staff notifications as read
+    public function markStaffNotificationsRead() {
+        auth()->guard('staff')->user()->unreadNotifications->markAsRead();
+        return back()->with('success', 'All notifications cleared.');
+    }
+
     // STREAM INVOICE AS PDF
     public function streamInvoice($id)
     {
