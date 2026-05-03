@@ -152,7 +152,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/settings/deals/{id}/edit', [App\Http\Controllers\StaffSettingsController::class, 'editDeal'])->name('staff.deals.edit');
     Route::post('/settings/deals', [App\Http\Controllers\StaffSettingsController::class, 'storeDeal'])->name('staff.deals.store');
     Route::put('/settings/deals/{id}', [App\Http\Controllers\StaffSettingsController::class, 'updateDeal'])->name('staff.deals.update');
-    Route::delete('/settings/deals/{id}', [App\Http\Controllers\StaffSettingsController::class, 'deleteDeal'])->name('staff.deals.delete');
+    Route::post('/settings/deals/{id}/delete', [App\Http\Controllers\StaffSettingsController::class, 'deleteDeal'])->name('staff.deals.delete');
     Route::post('/settings/deals/reorder', [App\Http\Controllers\StaffSettingsController::class, 'reorderDeals'])->name('staff.deals.reorder');
 
     // Booking Management

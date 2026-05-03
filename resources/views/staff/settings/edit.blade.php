@@ -64,7 +64,6 @@
                                             </a>
                                             <form action="{{ route('staff.deals.delete', $deal->id) }}" method="POST" style="display:inline;">
                                                 @csrf
-                                                @method('DELETE')
                                                 <button type="submit" class="text-xs px-3 py-1 bg-red-100 text-red-700 rounded hover:bg-red-200 transition"
                                                         onclick="return confirm('Delete this deal?')">
                                                     Delete

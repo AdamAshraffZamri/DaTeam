@@ -133,7 +133,6 @@
             <p class="text-red-700 mb-4">Delete this deal permanently. This cannot be undone.</p>
             <form action="{{ route('staff.deals.delete', $deal->id) }}" method="POST" style="display:inline;">
                 @csrf
-                @method('DELETE')
                 <button 
                     type="submit" 
                     class="px-6 py-3 bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700 transition"
