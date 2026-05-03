@@ -100,13 +100,6 @@ class StaffSettingsController extends Controller
     public function editDeal($dealId)
     {
         $deal = Deal::findOrFail($dealId);
-        
-        // Ensure staff can only edit their own deals
-        if ($deal->staff_id !== Auth::guard('staff')->id()) {
-            return redirect()->route('staff.settings.edit')
-                ->with('error', 'Unauthorized action');
-        }
-
         return view('staff.settings.edit-deal', compact('deal'));
     }
 
@@ -116,12 +109,6 @@ class StaffSettingsController extends Controller
     public function updateDeal(Request $request, $dealId)
     {
         $deal = Deal::findOrFail($dealId);
-        
-        // Ensure staff can only edit their own deals
-        if ($deal->staff_id !== Auth::guard('staff')->id()) {
-            return redirect()->route('staff.settings.edit')
-                ->with('error', 'Unauthorized action');
-        }
 
         $validated = $request->validate([
             'deal_image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:5120',
@@ -156,12 +143,6 @@ class StaffSettingsController extends Controller
     public function deleteDeal($dealId)
     {
         $deal = Deal::findOrFail($dealId);
-        
-        // Ensure staff can only delete their own deals
-        if ($deal->staff_id !== Auth::guard('staff')->id()) {
-            return redirect()->route('staff.settings.edit')
-                ->with('error', 'Unauthorized action');
-        }
 
         // Delete image
         if ($deal->image_path && Storage::disk('public')->exists($deal->image_path)) {
