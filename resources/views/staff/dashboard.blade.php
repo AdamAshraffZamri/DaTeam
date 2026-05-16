@@ -192,28 +192,28 @@
         {{-- 2. METRICS GRID --}}
         <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
             
-            {{-- Card 1: Submitted Booking --}}
-            <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm hover:border-orange-200 transition-colors group relative">
-                <a href="{{ route('staff.bookings.index', ['search' => '', 'status' => 'Submitted']) }}" class="absolute inset-0 z-10"></a>
+            {{-- Card 1: Pending Customers --}}
+            <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm hover:border-purple-200 transition-colors group relative">
+                <a href="{{ route('staff.customers.index', ['search' => '', 'status' => 'pending']) }}" class="absolute inset-0 z-10"></a>
                 
                 {{-- Notification Trigger --}}
-                @if($pendingBookingsCount > 0)
+                @if($pendingCustomersCount > 0)
                     <span class="absolute top-3 right-3 flex h-2 w-2">
-                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-orange-400 opacity-75"></span>
-                        <span class="relative inline-flex rounded-full h-2 w-2 bg-orange-500"></span>
+                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                        <span class="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
                     </span>
                 @endif
 
                 <div class="flex justify-between items-start">
                     <div>
-                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Submitted Booking</p>
-                        <h3 class="text-2xl font-black {{ $pendingBookingsCount > 0 ? 'text-orange-600' : 'text-slate-800' }} mt-1">{{ $pendingBookingsCount }}</h3>
+                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Pending Customers</p>
+                        <h3 class="text-2xl font-black {{ $pendingCustomersCount > 0 ? 'text-red-600' : 'text-slate-800' }} mt-1">{{ $pendingCustomersCount }}</h3>
                     </div>
-                    <div class="p-2.5 bg-orange-100 text-orange-700 rounded-xl group-hover:bg-orange-600 group-hover:text-white transition-all shadow-sm">
-                        <i class="fas fa-hourglass-half text-lg"></i>
+                    <div class="p-2.5 bg-purple-100 text-purple-700 rounded-xl group-hover:bg-purple-600 group-hover:text-white transition-all shadow-sm">
+                        <i class="fas fa-user-clock text-lg"></i>
                     </div>
                 </div>
-                <div class="mt-3 text-sm font-bold {{ $pendingBookingsCount > 0 ? 'text-orange-600 animate-pulse' : 'text-slate-400' }}">Needs verification</div>
+                <div class="mt-3 text-sm font-bold {{ $pendingCustomersCount > 0 ? 'text-red-600 animate-pulse' : 'text-slate-400' }}">Needs verification</div>
             </div>
 
             {{-- Card 2: Deposit Paid Bookings --}}
@@ -270,28 +270,28 @@
                 <div class="mt-3 text-sm font-bold {{ $counts['not_updated'] > 0 ? 'text-indigo-600 animate-pulse' : 'text-slate-400' }}">Pending update</div>
             </div>
 
-            {{-- Card 4: Pending Customers --}}
-            <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm hover:border-purple-200 transition-colors group relative">
-                <a href="{{ route('staff.customers.index', ['search' => '', 'status' => 'pending']) }}" class="absolute inset-0 z-10"></a>
+            {{-- Card 4: Submitted Booking --}}
+            <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm hover:border-orange-200 transition-colors group relative">
+                <a href="{{ route('staff.bookings.index', ['search' => '', 'status' => 'Submitted']) }}" class="absolute inset-0 z-10"></a>
                 
                 {{-- Notification Trigger --}}
-                @if($pendingCustomersCount > 0)
+                @if($pendingBookingsCount > 0)
                     <span class="absolute top-3 right-3 flex h-2 w-2">
-                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                        <span class="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
+                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-orange-400 opacity-75"></span>
+                        <span class="relative inline-flex rounded-full h-2 w-2 bg-orange-500"></span>
                     </span>
                 @endif
 
                 <div class="flex justify-between items-start">
                     <div>
-                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Pending Customers</p>
-                        <h3 class="text-2xl font-black {{ $pendingCustomersCount > 0 ? 'text-red-600' : 'text-slate-800' }} mt-1">{{ $pendingCustomersCount }}</h3>
+                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Submitted Booking</p>
+                        <h3 class="text-2xl font-black {{ $pendingBookingsCount > 0 ? 'text-orange-600' : 'text-slate-800' }} mt-1">{{ $pendingBookingsCount }}</h3>
                     </div>
-                    <div class="p-2.5 bg-purple-100 text-purple-700 rounded-xl group-hover:bg-purple-600 group-hover:text-white transition-all shadow-sm">
-                        <i class="fas fa-user-clock text-lg"></i>
+                    <div class="p-2.5 bg-orange-100 text-orange-700 rounded-xl group-hover:bg-orange-600 group-hover:text-white transition-all shadow-sm">
+                        <i class="fas fa-hourglass-half text-lg"></i>
                     </div>
                 </div>
-                <div class="mt-3 text-sm font-bold {{ $pendingCustomersCount > 0 ? 'text-red-600 animate-pulse' : 'text-slate-400' }}">Needs verification</div>
+                <div class="mt-3 text-sm font-bold {{ $pendingBookingsCount > 0 ? 'text-orange-600 animate-pulse' : 'text-slate-400' }}">Needs verification</div>
             </div>
             
         </div>
