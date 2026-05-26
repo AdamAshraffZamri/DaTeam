@@ -144,6 +144,17 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile', [App\Http\Controllers\StaffProfileController::class, 'edit'])->name('staff.profile.edit');
     Route::put('/profile', [App\Http\Controllers\StaffProfileController::class, 'update'])->name('staff.profile.update');
 
+    // Settings Management
+    Route::get('/settings', [App\Http\Controllers\StaffSettingsController::class, 'edit'])->name('staff.settings.edit');
+    Route::put('/settings', [App\Http\Controllers\StaffSettingsController::class, 'update'])->name('staff.settings.update');
+    
+    // Deal Management (Multiple Deals)
+    Route::get('/settings/deals/{id}/edit', [App\Http\Controllers\StaffSettingsController::class, 'editDeal'])->name('staff.deals.edit');
+    Route::post('/settings/deals', [App\Http\Controllers\StaffSettingsController::class, 'storeDeal'])->name('staff.deals.store');
+    Route::put('/settings/deals/{id}', [App\Http\Controllers\StaffSettingsController::class, 'updateDeal'])->name('staff.deals.update');
+    Route::post('/settings/deals/{id}/delete', [App\Http\Controllers\StaffSettingsController::class, 'deleteDeal'])->name('staff.deals.delete');
+    Route::post('/settings/deals/reorder', [App\Http\Controllers\StaffSettingsController::class, 'reorderDeals'])->name('staff.deals.reorder');
+
     // Booking Management
     Route::get('/bookings', [StaffBookingController::class, 'index'])->name('staff.bookings.index');
     Route::post('/bookings', [StaffBookingController::class, 'store'])->name('staff.bookings.store');
@@ -272,5 +283,8 @@ Route::middleware('auth')->group(function () {
     Route::post('/finance/deposits/{id}/forfeit', [App\Http\Controllers\StaffFinanceController::class, 'forfeit'])->name('staff.finance.forfeit');
     Route::patch('/finance/deposits/{id}/update', [App\Http\Controllers\StaffFinanceController::class, 'updateDeposit'])->name('staff.finance.update_deposit');
     Route::post('/finance/deposits/delete-evidence', [App\Http\Controllers\StaffFinanceController::class, 'deleteEvidence'])->name('staff.finance.delete_evidence');
+
+    // Notifications
+    Route::post('/notifications/mark-read', [StaffBookingController::class, 'markStaffNotificationsRead'])->name('staff.notifications.markRead');
 
 });

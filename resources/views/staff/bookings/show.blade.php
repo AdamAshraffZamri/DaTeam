@@ -117,7 +117,7 @@
                         <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider">
                             Rental Information
                         </h3>
-                        <a href="{{ route('staff.bookings.edit', $booking->bookingID) }}" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1 rounded-lg text-xs font-bold transition flex items-center gap-1">
+                        <a href="{{ route('staff.bookings.edit', $booking->bookingID) }}" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1 rounded-lg text-xs font-bold transition flex items-center gap-1 pointer-events-none opacity-50 cursor-not-allowed">
                             <i class="fas fa-edit"></i> Edit
                         </a>
                     </div>
@@ -243,7 +243,7 @@
                     <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 flex flex-col justify-between">
                         <div>
                             <div class="flex justify-between items-center mb-2">
-                                <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider">Payment & Docs</h3>
+                                <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider">Payment & Docs Details</h3>
                                 @if($booking->payment)
                                     <span class="text-[10px] font-bold px-2 py-0.5 rounded uppercase
                                         {{ $booking->payment->depoStatus == 'Refunded' ? 'bg-green-100 text-green-700' : 
@@ -266,7 +266,7 @@
                         
                         @if($allReceipts->count() > 0)
                         <div class="mb-4 pb-4 border-b border-gray-100">
-                            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-3">Payment Receipts</p>
+                            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-3">Proof Payments</p>
                             <div class="space-y-2">
                                 @foreach($allReceipts as $receipt)
                                 @php

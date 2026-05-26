@@ -2,6 +2,60 @@
 
 @section('content')
 
+{{-- ALPINE.JS LIBRARY --}}
+<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
+{{-- ALPINE.JS COMPONENT DEFINITIONS (EARLY INITIALIZATION) --}}
+<script>
+    window.dealsCarousel = function(totalDeals) {
+        return {
+            currentSlide: 0,
+            totalDeals: totalDeals,
+            autoPlayInterval: null,
+
+            init() {
+                if (this.totalDeals > 1) {
+                    this.startAutoPlay();
+                }
+            },
+
+            nextSlide() {
+                this.currentSlide = (this.currentSlide + 1) % this.totalDeals;
+                this.resetAutoPlay();
+            },
+
+            prevSlide() {
+                this.currentSlide = (this.currentSlide - 1 + this.totalDeals) % this.totalDeals;
+                this.resetAutoPlay();
+            },
+
+            goToSlide(index) {
+                this.currentSlide = index;
+                this.resetAutoPlay();
+            },
+
+            startAutoPlay() {
+                this.autoPlayInterval = setInterval(() => {
+                    this.nextSlide();
+                }, 5000);
+            },
+
+            resetAutoPlay() {
+                if (this.autoPlayInterval) {
+                    clearInterval(this.autoPlayInterval);
+                    this.startAutoPlay();
+                }
+            },
+
+            destroy() {
+                if (this.autoPlayInterval) {
+                    clearInterval(this.autoPlayInterval);
+                }
+            }
+        }
+    }
+</script>
+
 {{-- CUSTOM STYLES (ORIGINAL RESTORED) --}}
 <style>
     /* Hide scrollbar */
@@ -165,12 +219,15 @@
 </style>
 
 {{-- SECTION 1: HERO --}}
-<div class="relative h-screen min-h-[600px] flex flex-col justify-center bg-gray-900 overflow-hidden">
+{{-- Removed Tailwind's 'h-screen' and added pure CSS 'min-height: 100vh;' --}}
+<div class="relative flex flex-col justify-center bg-gray-900 overflow-hidden" style="min-height: 100vh;">
     
     {{-- Background Image --}}
-    <div class="absolute inset-0 w-full h-full">
+    <div class="absolute inset-0 w-full h-full" style="z-index: 0;">
         <div class="absolute inset-0 bg-gradient-to-r from-black/60 via-black/35 to-black/65 z-10"></div>
-        <img src="{{ asset('hastabg.png') }}" alt="Background" class="w-full h-full object-cover">
+        
+        {{-- Added pure CSS to force the image to pin to the corners and cover the area --}}
+        <img src="{{ asset('hastabg.png') }}" alt="Background" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; object-position: center;">
     </div>
 
     {{-- Content Container --}}
@@ -178,19 +235,12 @@
         
         {{-- Navigation Pill --}}
         <div class="w-full flex justify-center py-4 md:py-6 relative z-40">
-            {{-- 
-                Mobile Fixes:
-                1. w-fit + mx-auto: Centers the container.
-                2. max-w-full: Prevents overflowing the screen width.
-                3. px-4: Ensures a small gap from the screen edges.
-            --}}
             <div class="w-fit max-w-full px-4 mx-auto overflow-x-auto no-scrollbar">
                 
                 {{-- Container --}}
                 <div class="bg-white/10 backdrop-blur-md border border-white/20 rounded-full p-1 md:p-1.5 flex items-center shadow-2xl">
                     
                     {{-- Book Now --}}
-                    {{-- Updated: text-xs (was text-[10px]) and px-4 (was px-3) for better mobile visibility --}}
                     <a href="{{ route('book.create') }}" 
                        class="px-4 sm:px-6 py-2 sm:py-2.5 rounded-full font-bold text-[9px] sm:text-[15px] transition-all duration-300 whitespace-nowrap active:scale-95
                        {{ (request()->routeIs('book.create') || request()->routeIs('book.search') || request()->routeIs('book.show') || request()->routeIs('book.payment') || request()->routeIs('book.payment.submit')) 
@@ -240,7 +290,6 @@
             </p>
             
             <div class="flex flex-col sm:flex-row gap-4 justify-center items-center">
-                {{-- RESTORED GLOW BUTTON --}}
                 <a href="{{ route('book.create') }}"
                 class="glow-on-hover px-10 py-4 transition transform hover:scale-105 shadow-lg flex items-center justify-center">
                     Book a Vehicle <i class="fas fa-arrow-right ml-3"></i>
@@ -248,7 +297,6 @@
 
                 <a href="{{ route('fleet.index') }}" class="fleet-anim-btn">
                     <span class="relative z-10">View Fleet</span>
-                    {{-- Particle Container --}}
                     <div class="absolute inset-0 overflow-hidden pointer-events-none">
                         @for ($i = 0; $i < 10; $i++)
                             <span class="fleet-spot"></span>
@@ -271,54 +319,166 @@
             <p class="text-gray-400 text-sm md:text-base">Exclusive promotions tailored for you.</p>
         </div>
 
-        <div class="relative w-full max-w-6xl mx-auto h-[300px] md:h-[500px] rounded-[2rem] overflow-hidden shadow-[0_0_40px_rgba(234,88,12,0.15)] border border-white/10 group bg-black">
-            
-            {{-- Slide 1 --}}
-            <div class="deal-slide absolute inset-0 transition-opacity duration-1000 opacity-100" data-index="0">
-                <div class="absolute inset-0">
-                    <img src="{{ asset('iklan1.png') }}" class="w-full h-full object-cover blur-2xl scale-110 opacity-50">
-                </div>
-                <img src="{{ asset('iklan1.png') }}" alt="Deal 1" class="relative z-10 w-full h-full object-contain p-4 md:p-0 drop-shadow-2xl">
+        @if ($deals->count() > 0)
+            {{-- Vertical Cards Carousel with Modal --}}
+            <div x-data="{
+                showModal: false,
+                selectedDeal: null,
+                deals: @js($deals->mapWithKeys(function ($deal, $index) {
+                    return [$index => [
+                        'id' => $deal->id,
+                        'title' => $deal->title ?? '',
+                        'description' => $deal->description ?? '',
+                        'image' => Storage::disk('public')->url($deal->image_path)
+                    ]];
+                })->toArray()),
+                openDeal(index) {
+                    this.selectedDeal = this.deals[index];
+                    this.showModal = true;
+                    document.body.style.overflow = 'hidden';
+                },
+                closeDeal() {
+                    this.showModal = false;
+                    this.selectedDeal = null;
+                    document.body.style.overflow = 'auto';
+                },
+                handleBackdropClick(event) {
+                    if (event.target === event.currentTarget) {
+                        this.closeDeal();
+                    }
+                }
+            }" class="relative w-full max-w-4xl mx-auto">
                 
-                <div class="absolute bottom-0 left-0 w-full bg-gradient-to-t from-black/90 to-transparent p-6 md:p-8 z-20 flex flex-col items-center md:items-start">
-                    <span class="bg-orange-600 text-white px-3 py-1 rounded-full text-[10px] md:text-xs font-bold shadow-lg mb-2">LIMITED TIME</span>
-                    <h3 class="text-xl md:text-4xl font-black text-white text-center md:text-left">Diwali Special Promotion</h3>
+                {{-- Cards Container (Vertical) --}}
+                <div class="relative flex flex-col gap-6">
+                    
+                    @foreach ($deals as $index => $deal)
+                        <div @click="openDeal({{ $index }})"
+                             class="glass-card rounded-[1.5rem] w-full h-auto overflow-hidden group hover:shadow-[0_0_40px_rgba(234,88,12,0.3)] transition-all cursor-pointer">
+                            
+                            {{-- Card Layout: Image Left, Content Right --}}
+                            <div class="flex flex-col md:flex-row">
+                                {{-- Card Image --}}
+                                <div class="relative w-full md:w-2/5 h-64 md:h-80 overflow-hidden flex-shrink-0">
+                                    @if ($deal->image_path)
+                                        <img src="{{ Storage::disk('public')->url($deal->image_path) }}" 
+                                             alt="{{ $deal->title ?? 'Deal' }}"
+                                             class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500">
+                                    @else
+                                        <div class="w-full h-full bg-gray-700 flex items-center justify-center">
+                                            <i class="fas fa-image text-gray-500 text-4xl"></i>
+                                        </div>
+                                    @endif
+                                    <div class="absolute inset-0 bg-gradient-to-r from-transparent md:from-black/40 to-transparent md:to-transparent"></div>
+                                </div>
+                                
+                                {{-- Card Content --}}
+                                <div class="p-6 md:p-8 w-full md:w-3/5 flex flex-col justify-center">
+                                    @if ($deal->title)
+                                        <h3 class="text-2xl md:text-3xl font-bold text-white mb-3">{{ $deal->title }}</h3>
+                                    @endif
+                                    @if ($deal->description)
+                                        <p class="text-gray-300 text-sm md:text-base leading-relaxed mb-6">{{ $deal->description }}</p>
+                                    @endif
+                                    <span class="text-orange-500 font-bold flex items-center gap-2 group-hover:gap-4 transition-all text-sm w-fit">
+                                        Learn More <i class="fas fa-arrow-right"></i>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    @endforeach
                 </div>
-            </div>
-
-            {{-- Slide 2 --}}
-            <div class="deal-slide absolute inset-0 transition-opacity duration-1000 opacity-0" data-index="1">
-                <div class="absolute inset-0">
-                    <img src="{{ asset('iklan2.png') }}" class="w-full h-full object-cover blur-2xl scale-110 opacity-50">
-                </div>
-                <img src="{{ asset('iklan2.png') }}" alt="Deal 2" class="relative z-10 w-full h-full object-contain p-4 md:p-0 drop-shadow-2xl">
                 
-                <div class="absolute bottom-0 left-0 w-full bg-gradient-to-t from-black/90 to-transparent p-6 md:p-8 z-20 flex flex-col items-center md:items-start">
-                     <span class="bg-blue-600 text-white px-3 py-1 rounded-full text-[10px] md:text-xs font-bold shadow-lg mb-2">Delivery</span>
-                    <h3 class="text-xl md:text-4xl font-black text-white text-center md:text-left">Vehicle Delivery Available</h3>
-                </div>
+                {{-- Modal for Deal Details --}}
+                <template x-teleport="body">
+                    <div x-show="showModal" 
+                        @click="handleBackdropClick($event)"
+                        class="fixed inset-0 bg-black/80 backdrop-blur-sm z-[99999] flex items-center justify-center p-4"
+                        x-transition
+                        style="display: none;">
+                        
+                        <div class="bg-[#111] rounded-[2rem] max-w-4xl w-full max-h-[90vh] overflow-y-auto border border-white/10 relative">
+                            
+                            {{-- Close Button --}}
+                            <button @click="closeDeal()"
+                                    class="absolute top-4 right-4 z-50 w-10 h-10 rounded-full bg-white/20 hover:bg-orange-600 transition-all flex items-center justify-center">
+                                <i class="fas fa-times text-white text-lg"></i>
+                            </button>
+                            
+                            {{-- Modal Image (Real Size) --}}
+                            <div class="w-full overflow-auto bg-black flex items-center justify-center" style="max-height: 70vh;">
+                                <img x-bind:src="selectedDeal?.image" 
+                                    x-bind:alt="selectedDeal?.title"
+                                    class="h-auto w-auto max-w-full">
+                            </div>
+                            
+                            {{-- Modal Content --}}
+                            <div class="p-8 md:p-12">
+                                <h2 x-text="selectedDeal?.title" class="text-4xl md:text-5xl font-black text-white mb-4"></h2>
+                                <div class="w-16 h-1 bg-orange-600 mb-6 rounded-full"></div>
+                                <p x-text="selectedDeal?.description" class="text-gray-300 text-lg leading-relaxed mb-8"></p>
+                                
+                                <div class="flex gap-4">
+                                    <button @click="closeDeal()" class="bg-orange-600 hover:bg-orange-700 text-white font-bold py-3 px-8 rounded-full transition-all">
+                                        Close
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </template>
             </div>
-
-            {{-- Slide 3 --}}
-            <div class="deal-slide absolute inset-0 transition-opacity duration-1000 opacity-0" data-index="2">
-                <div class="absolute inset-0">
-                    <img src="{{ asset('iklan3.png') }}" class="w-full h-full object-cover blur-2xl scale-110 opacity-50">
-                </div>
-                <img src="{{ asset('iklan3.png') }}" alt="Deal 3" class="relative z-10 w-full h-full object-contain p-4 md:p-0 drop-shadow-2xl">
+        @else
+            {{-- Fallback to Default Carousel Slides --}}
+            <div class="relative w-full max-w-6xl mx-auto h-[300px] md:h-[500px] rounded-[2rem] overflow-hidden shadow-[0_0_40px_rgba(234,88,12,0.15)] border border-white/10 group bg-black">
                 
-                <div class="absolute bottom-0 left-0 w-full bg-gradient-to-t from-black/90 to-transparent p-6 md:p-8 z-20 flex flex-col items-center md:items-start">
-                     <span class="bg-green-600 text-white px-3 py-1 rounded-full text-[10px] md:text-xs font-bold shadow-lg mb-2">REWARDS</span>
-                    <h3 class="text-xl md:text-4xl font-black text-white text-center md:text-left">Free 1 Hour Rental</h3>
+                {{-- Slide 1 --}}
+                <div class="deal-slide absolute inset-0 transition-opacity duration-1000 opacity-100" data-index="0">
+                    <div class="absolute inset-0">
+                        <img src="{{ asset('iklan1.png') }}" class="w-full h-full object-cover blur-2xl scale-110 opacity-50">
+                    </div>
+                    <img src="{{ asset('iklan1.png') }}" alt="Deal 1" class="relative z-10 w-full h-full object-contain p-4 md:p-0 drop-shadow-2xl">
+                    
+                    <div class="absolute bottom-0 left-0 w-full bg-gradient-to-t from-black/90 to-transparent p-6 md:p-8 z-20 flex flex-col items-center md:items-start">
+                        <span class="bg-orange-600 text-white px-3 py-1 rounded-full text-[10px] md:text-xs font-bold shadow-lg mb-2">LIMITED TIME</span>
+                        <h3 class="text-xl md:text-4xl font-black text-white text-center md:text-left">Diwali Special Promotion</h3>
+                    </div>
+                </div>
+
+                {{-- Slide 2 --}}
+                <div class="deal-slide absolute inset-0 transition-opacity duration-1000 opacity-0" data-index="1">
+                    <div class="absolute inset-0">
+                        <img src="{{ asset('iklan2.png') }}" class="w-full h-full object-cover blur-2xl scale-110 opacity-50">
+                    </div>
+                    <img src="{{ asset('iklan2.png') }}" alt="Deal 2" class="relative z-10 w-full h-full object-contain p-4 md:p-0 drop-shadow-2xl">
+                    
+                    <div class="absolute bottom-0 left-0 w-full bg-gradient-to-t from-black/90 to-transparent p-6 md:p-8 z-20 flex flex-col items-center md:items-start">
+                         <span class="bg-blue-600 text-white px-3 py-1 rounded-full text-[10px] md:text-xs font-bold shadow-lg mb-2">Delivery</span>
+                        <h3 class="text-xl md:text-4xl font-black text-white text-center md:text-left">Vehicle Delivery Available</h3>
+                    </div>
+                </div>
+
+                {{-- Slide 3 --}}
+                <div class="deal-slide absolute inset-0 transition-opacity duration-1000 opacity-0" data-index="2">
+                    <div class="absolute inset-0">
+                        <img src="{{ asset('iklan3.png') }}" class="w-full h-full object-cover blur-2xl scale-110 opacity-50">
+                    </div>
+                    <img src="{{ asset('iklan3.png') }}" alt="Deal 3" class="relative z-10 w-full h-full object-contain p-4 md:p-0 drop-shadow-2xl">
+                    
+                    <div class="absolute bottom-0 left-0 w-full bg-gradient-to-t from-black/90 to-transparent p-6 md:p-8 z-20 flex flex-col items-center md:items-start">
+                         <span class="bg-green-600 text-white px-3 py-1 rounded-full text-[10px] md:text-xs font-bold shadow-lg mb-2">REWARDS</span>
+                        <h3 class="text-xl md:text-4xl font-black text-white text-center md:text-left">Free 1 Hour Rental</h3>
+                    </div>
+                </div>
+
+                {{-- Indicators --}}
+                <div class="absolute bottom-4 right-4 md:bottom-6 md:right-8 flex gap-2 md:gap-3 z-30">
+                    <button class="w-8 md:w-12 h-1.5 rounded-full bg-orange-500 transition-all duration-300 deal-indicator" onclick="manualSetSlide(0)"></button>
+                    <button class="w-2 md:w-3 h-1.5 rounded-full bg-white/30 hover:bg-white transition-all duration-300 deal-indicator" onclick="manualSetSlide(1)"></button>
+                    <button class="w-2 md:w-3 h-1.5 rounded-full bg-white/30 hover:bg-white transition-all duration-300 deal-indicator" onclick="manualSetSlide(2)"></button>
                 </div>
             </div>
-
-            {{-- Indicators --}}
-            <div class="absolute bottom-4 right-4 md:bottom-6 md:right-8 flex gap-2 md:gap-3 z-30">
-                <button class="w-8 md:w-12 h-1.5 rounded-full bg-orange-500 transition-all duration-300 deal-indicator" onclick="manualSetSlide(0)"></button>
-                <button class="w-2 md:w-3 h-1.5 rounded-full bg-white/30 hover:bg-white transition-all duration-300 deal-indicator" onclick="manualSetSlide(1)"></button>
-                <button class="w-2 md:w-3 h-1.5 rounded-full bg-white/30 hover:bg-white transition-all duration-300 deal-indicator" onclick="manualSetSlide(2)"></button>
-            </div>
-        </div>
+        @endif
     </div>
 </div>
 
@@ -334,6 +494,15 @@
                 <p class="text-gray-400 max-w-xl">Discover the latest traveling fairs and seasonal bazaars happening around Johor Bahru this April.</p>
             </div>
         </div>
+
+        @if ($staffSettings && $staffSettings->johor_highlights_image_path)
+            {{-- Staff Highlights Image (Full Width) --}}
+            <div class="mb-12 rounded-[2.5rem] overflow-hidden shadow-[0_0_40px_rgba(234,88,12,0.15)] border border-white/10 group cursor-pointer h-[300px] md:h-[500px]">
+                <img src="{{ Storage::disk('public')->url($staffSettings->johor_highlights_image_path) }}" 
+                     alt="Johor Highlights"
+                     class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700">
+            </div>
+        @endif
 
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-8">
             
@@ -458,78 +627,93 @@
             if (track.scrollLeft + track.clientWidth >= track.scrollWidth - 10) {
                 track.scrollTo({ left: 0, behavior: 'smooth' });
             } else {
-                track.scrollBy({ left: 320, behavior: 'smooth' }); // Adjusted for mobile card width
+                track.scrollBy({ left: 320, behavior: 'smooth' });
             }
         }
 
-        if(track && track.childElementCount > 1) {
-             autoScrollInterval = setInterval(autoScroll, 3000);
+        if (track && track.childElementCount > 1) {
+            autoScrollInterval = setInterval(autoScroll, 3000);
 
-            if(nextBtn) {
+            if (nextBtn) {
                 nextBtn.addEventListener('click', () => {
                     clearInterval(autoScrollInterval);
-                    track.scrollBy({ left: 320, behavior: 'smooth' });
+                    if (track) track.scrollBy({ left: 320, behavior: 'smooth' });
                     autoScrollInterval = setInterval(autoScroll, 4000);
                 });
             }
 
-            if(prevBtn) {
+            if (prevBtn) {
                 prevBtn.addEventListener('click', () => {
                     clearInterval(autoScrollInterval);
-                    track.scrollBy({ left: -320, behavior: 'smooth' });
+                    if (track) track.scrollBy({ left: -320, behavior: 'smooth' });
                     autoScrollInterval = setInterval(autoScroll, 4000);
                 });
             }
 
-            track.addEventListener('mouseenter', () => clearInterval(autoScrollInterval));
-            track.addEventListener('mouseleave', () => autoScrollInterval = setInterval(autoScroll, 3000));
-            track.addEventListener('touchstart', () => clearInterval(autoScrollInterval));
-            track.addEventListener('touchend', () => autoScrollInterval = setInterval(autoScroll, 3000));
+            if (track) {
+                track.addEventListener('mouseenter', () => clearInterval(autoScrollInterval));
+                track.addEventListener('mouseleave', () => autoScrollInterval = setInterval(autoScroll, 3000));
+                track.addEventListener('touchstart', () => clearInterval(autoScrollInterval));
+                track.addEventListener('touchend', () => autoScrollInterval = setInterval(autoScroll, 3000));
+            }
         }
 
-        // --- DEALS SLIDESHOW LOGIC ---
-        const slides = document.querySelectorAll('.deal-slide');
-        const indicators = document.querySelectorAll('.deal-indicator');
-        let currentSlide = 0;
-        let dealInterval;
-
-        window.manualSetSlide = function(index) {
-            clearInterval(dealInterval);
-            showSlide(index);
-            startDealAutoPlay();
-        };
-
-        function showSlide(index) {
-            slides.forEach((slide) => {
-                slide.classList.remove('opacity-100');
-                slide.classList.add('opacity-0');
-            });
+        // --- DEALS SLIDESHOW LOGIC (Only for fallback carousel, not Alpine.js carousel) ---
+        // Check if we have the fallback carousel (no active deals)
+        const fallbackSlides = document.querySelectorAll('.deal-slide[data-index]');
+        
+        if (fallbackSlides && fallbackSlides.length > 0) {
+            const indicators = document.querySelectorAll('.deal-indicator');
+            if (!indicators || indicators.length === 0) return;
             
-            indicators.forEach((ind) => {
-                ind.classList.remove('w-8', 'md:w-12', 'bg-orange-500');
-                ind.classList.add('w-2', 'md:w-3', 'bg-white/30');
-            });
+            let currentSlide = 0;
+            let dealInterval;
 
-            slides[index].classList.remove('opacity-0');
-            slides[index].classList.add('opacity-100');
-            
-            indicators[index].classList.remove('w-2', 'md:w-3', 'bg-white/30');
-            indicators[index].classList.add('w-8', 'md:w-12', 'bg-orange-500');
+            window.manualSetSlide = function(index) {
+                clearInterval(dealInterval);
+                showSlide(index);
+                startDealAutoPlay();
+            };
 
-            currentSlide = index;
-        }
+            function showSlide(index) {
+                if (!fallbackSlides || !indicators) return;
+                
+                fallbackSlides.forEach((slide) => {
+                    slide.classList.remove('opacity-100');
+                    slide.classList.add('opacity-0');
+                });
+                
+                indicators.forEach((ind) => {
+                    ind.classList.remove('w-8', 'md:w-12', 'bg-orange-500');
+                    ind.classList.add('w-2', 'md:w-3', 'bg-white/30');
+                });
 
-        function nextSlide() {
-            let next = (currentSlide + 1) % slides.length;
-            showSlide(next);
-        }
+                if (fallbackSlides[index]) {
+                    fallbackSlides[index].classList.remove('opacity-0');
+                    fallbackSlides[index].classList.add('opacity-100');
+                }
+                
+                if (indicators[index]) {
+                    indicators[index].classList.remove('w-2', 'md:w-3', 'bg-white/30');
+                    indicators[index].classList.add('w-8', 'md:w-12', 'bg-orange-500');
+                }
 
-        function startDealAutoPlay() {
-            dealInterval = setInterval(nextSlide, 5000);
-        }
+                currentSlide = index;
+            }
 
-        if(slides.length > 0) {
-            startDealAutoPlay();
+            function nextSlide() {
+                if (!fallbackSlides || fallbackSlides.length === 0) return;
+                let next = (currentSlide + 1) % fallbackSlides.length;
+                showSlide(next);
+            }
+
+            function startDealAutoPlay() {
+                dealInterval = setInterval(nextSlide, 5000);
+            }
+
+            if(fallbackSlides.length > 0) {
+                startDealAutoPlay();
+            }
         }
     });
 </script>
