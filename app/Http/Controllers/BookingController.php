@@ -793,13 +793,23 @@ class BookingController extends Controller
     }
 
     // In showAgreement, handle external links vs local files if you wish
-    public function showAgreement($id)
+    public function showAgreement(Request $request, $id)
     {
         $booking = Booking::with(['customer', 'vehicle'])->findOrFail($id);
         
+        // If user wants a blank form explicitly, give it to them
+        if ($request->has('blank')) {
+            return view('bookings.agreement', compact('booking'));
+        }
+
         // Check if it's a Google Drive Link
         if (str_contains($booking->aggreementLink, 'drive.google.com')) {
             return redirect($booking->aggreementLink);
+        }
+
+        // Check if it's a local file inside the public disk
+        if ($booking->aggreementLink && \Illuminate\Support\Facades\Storage::disk('public')->exists($booking->aggreementLink)) {
+            return redirect(asset('storage/' . $booking->aggreementLink));
         }
 
         // Fallback for old local files
@@ -901,6 +911,25 @@ class BookingController extends Controller
     }
 
     // --- 9. UPLOAD INSPECTION ---
+    public function uploadAgreement2(Request $request, $id)
+    {
+        $booking = Booking::where('customerID', Auth::id())->findOrFail($id);
+        
+        $request->validate([
+            'agreement_proof_2' => 'required|mimes:pdf|max:10240'
+        ]);
+
+        if ($request->hasFile('agreement_proof_2')) {
+            $path = $request->file('agreement_proof_2')->store('agreements', 'public');
+            $booking->aggreementLink2 = $path;
+            $booking->save();
+
+            return redirect()->back()->with('success', 'Agreement 2 uploaded successfully!');
+        }
+
+        return redirect()->back()->with('error', 'Failed to upload agreement.');
+    }
+
     public function uploadInspection(Request $request, $id)
     {
         $booking = Booking::where('customerID', Auth::id())->findOrFail($id);
@@ -1053,5 +1082,22 @@ class BookingController extends Controller
         // 3. Generate and Stream
         $pdf = Pdf::loadView('pdf.invoice', compact('booking'));
         return $pdf->stream('Invoice-' . $booking->bookingID . '.pdf');
+    }
+
+    public function streamReceipt($id)
+    {
+        // 1. Find booking owned by this customer
+        $booking = Booking::with(['customer', 'vehicle', 'payment', 'voucher'])
+                    ->where('customerID', Auth::id())
+                    ->findOrFail($id);
+
+        // 2. Security Check: Only allow if Completed
+        if ($booking->bookingStatus !== 'Completed') {
+            return back()->with('error', 'Official Receipt is only generated for Completed bookings.');
+        }
+
+        // 3. Generate and Stream
+        $pdf = Pdf::loadView('pdf.receipt', compact('booking'));
+        return $pdf->stream('Receipt-' . $booking->bookingID . '.pdf');
     }
 }

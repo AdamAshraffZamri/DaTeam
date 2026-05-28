@@ -93,6 +93,7 @@ Route::middleware('auth')->group(function () {
     // Documents & Inspections
     Route::get('/book/agreement/preview', [BookingController::class, 'previewAgreement'])->name('book.agreement.preview');
     Route::get('/book/agreement/{id}', [BookingController::class, 'showAgreement'])->name('book.agreement');
+    Route::post('/my-bookings/agreement/{id}', [BookingController::class, 'uploadAgreement2'])->name('book.agreement.upload2');
     Route::post('/my-bookings/inspection/{id}', [BookingController::class, 'uploadInspection'])->name('book.inspection.upload');
 
     // 4. Finance
@@ -124,6 +125,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/notifications/mark-read', [App\Http\Controllers\BookingController::class, 'markNotificationsRead'])->name('notifications.markRead');
 
     Route::get('/book/invoice/{id}', [BookingController::class, 'streamInvoice'])->name('book.invoice');
+    Route::get('/book/receipt/{id}', [BookingController::class, 'streamReceipt'])->name('book.receipt');
 });
 
  // <--- PENUTUP UNTUK CUSTOMER AUTH (JANGAN PADAM)
@@ -171,6 +173,8 @@ Route::middleware('auth')->group(function () {
     Route::post('/bookings/{id}/refund', [StaffBookingController::class, 'processRefund'])->name('staff.bookings.refund');
     Route::post('/bookings/{id}/reject', [StaffBookingController::class, 'reject'])->name('staff.bookings.reject');
     Route::post('/bookings/{id}/update-vehicle', [StaffBookingController::class, 'updateVehicle'])->name('staff.bookings.update_vehicle');
+    Route::post('/bookings/{id}/update-remarks', [StaffBookingController::class, 'updateRemarks'])->name('staff.bookings.update_remarks');
+    Route::post('/bookings/{id}/update-cost', [StaffBookingController::class, 'updateCost'])->name('staff.bookings.update_cost');
     Route::post('/bookings/{id}/approve', [StaffBookingController::class, 'approve'])->name('staff.bookings.approve');
 
     // API endpoint for availability calendar
@@ -276,6 +280,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/reports/export', [App\Http\Controllers\ReportController::class, 'exportToDrive'])->name('staff.reports.export');
 
     Route::get('/bookings/{id}/invoice', [StaffBookingController::class, 'streamInvoice'])->name('staff.bookings.invoice');
+    Route::get('/bookings/{id}/receipt', [StaffBookingController::class, 'streamReceipt'])->name('staff.bookings.receipt');
 
     // --- FINANCE / DEPOSIT MANAGEMENT ---
     Route::get('/finance/deposits', [App\Http\Controllers\StaffFinanceController::class, 'index'])->name('staff.finance.deposits');

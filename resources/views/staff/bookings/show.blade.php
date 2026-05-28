@@ -95,21 +95,32 @@
                     </div>
                 </div>
 
-                @if($booking->remarks)
-                <div class="bg-yellow-50 rounded-2xl shadow-sm border border-yellow-200 p-6 relative overflow-hidden">
-                    <div class="absolute top-0 right-0 p-4 opacity-10">
-                        <i class="fas fa-comment-dots text-6xl text-yellow-600"></i>
-                    </div>
-                    <h3 class="text-xs font-bold text-yellow-700 uppercase tracking-wider mb-3 flex items-center relative z-10">
-                        <i class="fas fa-bullhorn mr-2"></i> Remarks
+                {{-- REMARKS SECTION --}}
+                <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                    <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4 border-b border-gray-100 pb-2">
+                        Remarks
                     </h3>
-                    <div class="bg-white/50 rounded-xl p-3 border border-yellow-100 relative z-10">
-                        <p class="text-sm text-gray-800 font-medium italic leading-relaxed">
-                            "{{ $booking->remarks }}"
-                        </p>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="text-[10px] font-bold text-gray-400 uppercase mb-1 block">Customer</label>
+                            <div class="bg-gray-100 text-gray-600 p-3 rounded-lg text-sm {{ !$booking->remarks ? 'italic opacity-60' : '' }}">
+                                {{ $booking->remarks ?? 'No remarks from customer' }}
+                            </div>
+                        </div>
+                        <form action="{{ route('staff.bookings.update_remarks', $booking->bookingID) }}" method="POST">
+                            @csrf
+                            <div>
+                                <label class="text-[10px] font-bold text-gray-400 uppercase mb-1 block">Staff</label>
+                                <textarea name="staffRemarks" rows="3" class="w-full border-gray-300 rounded-lg text-sm p-3 focus:ring-indigo-500 focus:border-indigo-500" placeholder="Type here...">{{ $booking->staffRemarks }}</textarea>
+                            </div>
+                            <div class="mt-2 flex justify-end">
+                                <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition">
+                                    Save Remarks
+                                </button>
+                            </div>
+                        </form>
                     </div>
                 </div>
-                @endif
 
                 {{-- 2. RENTAL INFORMATION --}}
                 <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
@@ -290,53 +301,77 @@
                             </div>
                         </div>
                         @endif
+
+                        {{-- AGREEMENT SECTION --}}
+                        <div class="mb-4 pb-4 border-b border-gray-100">
+                            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-3">Agreement</p>
+                            <div class="flex flex-col gap-2 w-full">
+                                @if($booking->aggreementLink)
+                                    @php
+                                        $agreementUrl = str_contains($booking->aggreementLink, 'drive.google.com') 
+                                                        ? $booking->aggreementLink 
+                                                        : asset('storage/' . $booking->aggreementLink);
+                                    @endphp
+                                    <a href="{{ $agreementUrl }}" target="_blank" class="flex items-center justify-between bg-purple-50 border border-purple-200 text-purple-700 p-2 rounded-lg hover:bg-purple-100 transition">
+                                        <div class="flex items-center gap-2">
+                                            <i class="fas fa-file-signature text-purple-600"></i>
+                                            <span class="text-xs font-bold">Agreement 1</span>
+                                        </div>
+                                        <i class="fas fa-external-link-alt text-xs"></i>
+                                    </a>
+                                @endif
+                                
+                                @if($booking->aggreementLink2)
+                                    @php
+                                        $agreementUrl2 = str_contains($booking->aggreementLink2, 'drive.google.com') 
+                                                        ? $booking->aggreementLink2 
+                                                        : asset('storage/' . $booking->aggreementLink2);
+                                    @endphp
+                                    <a href="{{ $agreementUrl2 }}" target="_blank" class="flex items-center justify-between bg-purple-50 border border-purple-200 text-purple-700 p-2 rounded-lg hover:bg-purple-100 transition">
+                                        <div class="flex items-center gap-2">
+                                            <i class="fas fa-file-signature text-purple-600"></i>
+                                            <span class="text-xs font-bold">Agreement 2</span>
+                                        </div>
+                                        <i class="fas fa-external-link-alt text-xs"></i>
+                                    </a>
+                                @endif
+
+                                @if(!$booking->aggreementLink && !$booking->aggreementLink2)
+                                    <div class="flex items-center justify-center bg-gray-50 border border-gray-200 text-gray-400 p-2 rounded-lg text-xs font-bold opacity-60">
+                                        <i class="fas fa-times mr-2"></i> No Agreement Found
+                                    </div>
+                                @endif
+                            </div>
+                        </div>
                         
                         <div class="grid grid-cols-3 gap-2"> 
                             
-                            {{-- Receipt Summary Button --}}
-                            @if($allReceipts->count() > 0)
-                                <a href="javascript:void(0)" onclick="alert('Receipts Listed Above')" class="flex flex-col items-center justify-center bg-blue-50 border border-blue-200 text-blue-700 py-2 rounded-lg text-xs font-bold hover:bg-blue-100 transition text-center h-full">
-                                    <i class="fas fa-receipt mb-1 text-lg"></i> {{ $allReceipts->count() }} Receipt(s)
-                                </a>
-                            @else
-                                <div class="flex flex-col items-center justify-center bg-gray-50 border border-gray-200 text-gray-400 py-2 rounded-lg text-xs font-bold text-center h-full opacity-60">
-                                    <i class="fas fa-times mb-1 text-lg"></i> No Receipt
-                                </div>
-                            @endif
-
-                            {{-- Agreement Link Logic --}}
-                            @if($booking->aggreementLink)
-                                @php
-                                    $agreementUrl = str_contains($booking->aggreementLink, 'drive.google.com') 
-                                                  ? $booking->aggreementLink 
-                                                  : asset('storage/' . $booking->aggreementLink);
-                                @endphp
-                                <a href="{{ $agreementUrl }}" target="_blank" class="flex flex-col items-center justify-center bg-purple-50 border border-purple-200 text-purple-700 py-2 rounded-lg text-xs font-bold hover:bg-purple-100 transition text-center h-full">
-                                    <i class="fas fa-file-signature mb-1 text-lg"></i> Agreement
-                                </a>
-                            @else
-                                <div class="flex flex-col items-center justify-center bg-gray-50 border border-gray-200 text-gray-400 py-2 rounded-lg text-xs font-bold text-center h-full opacity-60">
-                                    <i class="fas fa-times mb-1 text-lg"></i> No Doc
-                                </div>
-                            @endif
-
                             {{-- Invoice Link Logic --}}
                             @if(!empty($booking->invoiceLink))
-                                {{-- Case 1: Already uploaded to Drive --}}
                                 <a href="{{ $booking->invoiceLink }}" target="_blank" class="flex flex-col items-center justify-center bg-emerald-50 border border-emerald-200 text-emerald-700 py-2 rounded-lg text-xs font-bold hover:bg-emerald-100 transition text-center h-full">
-                                    <i class="fas fa-file-invoice mb-1 text-lg"></i> Invoice
+                                    <i class="fas fa-file-invoice mb-1 text-lg"></i> Invoices
                                 </a>
-                            @elseif($booking->bookingStatus == 'Completed')
-                                {{-- Case 2: Completed but not on Drive (Generate Stream) --}}
+                            @else
                                 <a href="{{ route('staff.bookings.invoice', $booking->bookingID) }}" target="_blank" class="flex flex-col items-center justify-center bg-emerald-50 border border-emerald-200 text-emerald-700 py-2 rounded-lg text-xs font-bold hover:bg-emerald-100 transition text-center h-full">
                                     <i class="fas fa-file-invoice mb-1 text-lg"></i> Gen Invoice
                                 </a>
+                            @endif
+
+                            {{-- Receipt Link (Official Receipt) --}}
+                            @if($booking->bookingStatus == 'Completed')
+                                <a href="{{ route('staff.bookings.receipt', $booking->bookingID) }}" target="_blank" class="flex flex-col items-center justify-center bg-blue-50 border border-blue-200 text-blue-700 py-2 rounded-lg text-xs font-bold hover:bg-blue-100 transition text-center h-full">
+                                    <i class="fas fa-receipt mb-1 text-lg"></i> Official Receipt
+                                </a>
                             @else
-                                {{-- Case 3: Not Ready --}}
-                                <div class="flex flex-col items-center justify-center bg-gray-50 border border-gray-200 text-gray-400 py-2 rounded-lg text-xs font-bold text-center h-full opacity-60" title="Available after completion">
-                                    <i class="fas fa-clock mb-1 text-lg"></i> Invoice
+                                <div class="flex flex-col items-center justify-center bg-gray-50 border border-gray-200 text-gray-400 py-2 rounded-lg text-xs font-bold text-center h-full opacity-60">
+                                    <i class="fas fa-clock mb-1 text-lg"></i> Official Receipt
                                 </div>
                             @endif
+
+                            {{-- Edit Total Cost --}}
+                            <button onclick="document.getElementById('edit-cost-modal').classList.remove('hidden')" class="flex flex-col items-center justify-center bg-orange-50 border border-orange-200 text-orange-700 py-2 rounded-lg text-xs font-bold hover:bg-orange-100 transition text-center h-full">
+                                <i class="fas fa-edit mb-1 text-lg"></i> Edit Total Cost
+                            </button>
                         </div>
                     </div>
 
@@ -883,6 +918,30 @@ function calculateMileageDiff() {
     }
 }
 </script>
+
+{{-- EDIT COST MODAL --}}
+<div id="edit-cost-modal" class="fixed inset-0 z-[100] hidden items-center justify-center bg-gray-900/60 backdrop-blur-sm p-4">
+    <div class="bg-white rounded-2xl shadow-xl w-full max-w-sm overflow-hidden animate-fade-in-down">
+        <div class="flex justify-between items-center p-4 border-b border-gray-100 bg-orange-50">
+            <h3 class="text-sm font-bold text-orange-800"><i class="fas fa-edit mr-2"></i>Edit Total Cost</h3>
+            <button onclick="document.getElementById('edit-cost-modal').classList.add('hidden')" class="text-orange-400 hover:text-orange-700 transition">
+                <i class="fas fa-times text-lg"></i>
+            </button>
+        </div>
+        <form action="{{ route('staff.bookings.update_cost', $booking->bookingID) }}" method="POST" class="p-6">
+            @csrf
+            <div class="mb-4">
+                <label class="text-xs font-bold text-gray-400 uppercase mb-2 block">New Total Cost (RM)</label>
+                <input type="number" name="totalCost" value="{{ $booking->totalCost }}" step="0.01" min="0" class="bg-gray-50 border border-gray-200 text-gray-900 text-sm rounded-lg focus:ring-orange-500 focus:border-orange-500 block w-full p-2.5 font-bold" required>
+                <p class="text-[10px] text-gray-500 mt-2"><i class="fas fa-info-circle text-blue-500 mr-1"></i> This will override the current total cost. Make sure to recalculate if necessary.</p>
+            </div>
+            
+            <button type="submit" class="w-full bg-orange-600 text-white font-bold py-2.5 px-4 rounded-xl text-sm hover:bg-orange-700 transition shadow-lg shadow-orange-500/30">
+                Update Cost
+            </button>
+        </form>
+    </div>
+</div>
 
 <style>
 @keyframes fade-in-down {

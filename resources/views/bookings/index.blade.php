@@ -344,19 +344,17 @@
                     @endif
                     
                     {{-- 3. INVOICE BUTTON --}}
-                    @if($booking->bookingStatus == 'Completed')
                     <div class="border-t border-white/10 pt-4 mt-2">
-                        @if($booking->bookingStatus == 'Completed' && $booking->invoiceLink)
+                        @if($booking->invoiceLink)
                             <a href="{{ $booking->invoiceLink }}" target="_blank" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-3 rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 shadow-lg">
                                 <i class="fas fa-file-invoice-dollar"></i> View Invoice
                             </a>
-                        @elseif($booking->bookingStatus == 'Completed')
+                        @else
                             <a href="{{ route('book.invoice', $booking->bookingID) }}" target="_blank" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-3 rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 shadow-lg">
-                                Generate Invoice
+                                <i class="fas fa-file-invoice-dollar"></i> Generate Invoice
                             </a>
                         @endif
                     </div>
-                    @endif
                 </div>
             @empty
                 {{-- Empty State --}}
@@ -596,28 +594,52 @@
 
                 {{-- Body (Scrollable) --}}
                 <div class="p-6 sm:p-8 space-y-7 overflow-y-auto custom-scrollbar">
-                @if($booking->bookingStatus == 'Rejected' && $booking->remarks)
+                @if($booking->bookingStatus == 'Rejected' && ($booking->remarks || $booking->staffRemarks))
                     <div class="bg-red-500/10 border border-red-500/50 rounded-2xl p-4 flex items-start gap-4">
-                        <div class="bg-red-500 text-white rounded-full p-2 mt-1">
+                        <div class="bg-red-500 text-white rounded-full p-2 mt-1 shrink-0">
                             <i class="fas fa-exclamation-triangle"></i>
                         </div>
-                        <div>
+                        <div class="space-y-3 w-full">
                             <h4 class="text-red-400 font-bold uppercase text-xs tracking-wider mb-1">Booking Rejected</h4>
-                            <p class="text-gray-300 text-sm">{{ $booking->remarks }}</p>
+                            @if($booking->remarks)
+                            <div>
+                                <h5 class="text-[10px] text-red-300 font-bold uppercase mb-0.5">Your Notes</h5>
+                                <p class="text-gray-300 text-sm whitespace-pre-line">{{ $booking->remarks }}</p>
+                            </div>
+                            @endif
+                            @if($booking->staffRemarks)
+                            <div>
+                                <h5 class="text-[10px] text-red-300 font-bold uppercase mb-0.5">Staff Remarks</h5>
+                                <p class="text-gray-300 text-sm whitespace-pre-line bg-black/20 p-3 rounded-xl border border-white/5">{{ $booking->staffRemarks }}</p>
+                            </div>
+                            @endif
                         </div>
                     </div>
                 @endif    
 
-                @if($booking->bookingStatus != 'Rejected' && $booking->remarks)
+                @if($booking->bookingStatus != 'Rejected' && ($booking->remarks || $booking->staffRemarks))
                     <div class="bg-white/5 border border-white/10 rounded-2xl p-4 flex items-start gap-4">
                         <div class="bg-blue-500/20 text-blue-400 rounded-full p-2 mt-0.5 shrink-0">
                             <i class="fas fa-info"></i>
                         </div>
-                        <div>
-                            <h4 class="text-blue-300 font-bold uppercase text-xs tracking-wider mb-1">Notes / Remarks</h4>
-                            <div class="text-gray-300 text-sm leading-relaxed whitespace-pre-line">
-                                {{ $booking->remarks }}
+                        <div class="space-y-4 w-full">
+                            @if($booking->remarks)
+                            <div>
+                                <h4 class="text-blue-300 font-bold uppercase text-xs tracking-wider mb-1">Your Notes</h4>
+                                <div class="text-gray-300 text-sm leading-relaxed whitespace-pre-line">
+                                    {{ $booking->remarks }}
+                                </div>
                             </div>
+                            @endif
+                            
+                            @if($booking->staffRemarks)
+                            <div>
+                                <h4 class="text-orange-300 font-bold uppercase text-xs tracking-wider mb-1">Staff Remarks</h4>
+                                <div class="text-gray-300 text-sm leading-relaxed whitespace-pre-line bg-black/20 p-3 rounded-xl border border-white/5">
+                                    {{ $booking->staffRemarks }}
+                                </div>
+                            </div>
+                            @endif
                         </div>
                     </div>
                 @endif
@@ -776,29 +798,51 @@
                             <div>
                                 <p class="text-[10px] text-gray-400 uppercase font-bold mb-3 tracking-wider">Documents</p>
                                 <div class="grid grid-cols-2 gap-3">
-                                    {{-- Agreement --}}
+                                    {{-- Agreement 1 --}}
                                     @if(str_contains($booking->aggreementLink, 'drive.google.com'))
                                         <a href="{{ $booking->aggreementLink }}" target="_blank" class="flex items-center justify-center gap-2 p-3.5 bg-blue-500/10 rounded-xl border border-blue-500/20 hover:bg-blue-500 hover:text-white text-blue-300 text-sm transition-all duration-200">
-                                            <i class="bi bi-file-earmark-pdf"></i> View Agreement
+                                            <i class="bi bi-file-earmark-pdf"></i> View Agreement 1
                                         </a>
                                     @elseif($booking->aggreementLink)
                                         <a href="{{ route('book.agreement', $booking->bookingID) }}" target="_blank" class="flex items-center justify-center gap-2 p-3.5 bg-blue-500/10 rounded-xl border border-blue-500/20 hover:bg-blue-500 hover:text-white text-blue-300 text-sm transition-all duration-200">
-                                            View Agreement
+                                            View Agreement 1
                                         </a>
                                     @endif
 
-                                    {{-- Receipt --}}
+                                    {{-- Agreement 2 (Upload or View) --}}
+                                    @if($booking->aggreementLink2)
+                                        @php
+                                            $agreementUrl2 = str_contains($booking->aggreementLink2, 'drive.google.com') 
+                                                          ? $booking->aggreementLink2 
+                                                          : asset('storage/' . $booking->aggreementLink2);
+                                        @endphp
+                                        <a href="{{ $agreementUrl2 }}" target="_blank" class="flex items-center justify-center gap-2 p-3.5 bg-purple-500/10 rounded-xl border border-purple-500/20 hover:bg-purple-500 hover:text-white text-purple-300 text-sm transition-all duration-200">
+                                            <i class="bi bi-file-earmark-pdf"></i> View Agreement 2
+                                        </a>
+                                    @elseif($booking->bookingStatus != 'Rejected' && $booking->bookingStatus != 'Cancelled')
+                                        <button onclick="openUploadAgreementModal('{{ $booking->bookingID }}')" class="flex items-center justify-center gap-2 p-3.5 bg-orange-500/10 rounded-xl border border-orange-500/20 hover:bg-orange-500 hover:text-white text-orange-400 text-sm transition-all duration-200">
+                                            <i class="bi bi-upload"></i> Upload Agreement 2
+                                        </button>
+                                    @endif
+
+                                    {{-- Official Receipt & Payment Proofs --}}
+                                    @if($booking->bookingStatus == 'Completed')
+                                        <a href="{{ route('book.receipt', $booking->bookingID) }}" target="_blank" class="flex items-center justify-center gap-2 p-3.5 bg-green-500/10 rounded-xl border border-green-500/20 hover:bg-green-500 hover:text-white text-green-300 text-sm transition-all duration-200">
+                                            <i class="bi bi-receipt"></i> Official Receipt
+                                        </a>
+                                    @endif
+                                    
                                     @php
                                         $receipt = $booking->payments->first(); 
                                     @endphp
 
                                     @if($receipt && str_contains($receipt->installmentDetails, 'drive.google.com'))
                                         <a href="{{ $receipt->installmentDetails }}" target="_blank" class="flex items-center justify-center gap-2 p-3.5 bg-black/25 rounded-xl border border-dashed border-white/20 hover:border-orange-500 hover:text-orange-400 text-gray-300 text-sm transition-colors duration-200">
-                                            <i class="bi bi-receipt"></i> View Receipt
+                                            <i class="bi bi-card-image"></i> Payment Proof
                                         </a>
                                     @elseif($receipt && $receipt->installmentDetails)
                                         <a href="{{ asset('storage/' . $receipt->installmentDetails) }}" target="_blank" class="flex items-center justify-center gap-2 p-3.5 bg-black/25 rounded-xl border border-dashed border-white/20 hover:border-orange-500 hover:text-orange-400 text-gray-300 text-sm transition-colors duration-200">
-                                            View Receipt
+                                            <i class="bi bi-card-image"></i> Payment Proof
                                         </a>
                                     @endif
                                 </div>
@@ -917,4 +961,54 @@
         }
     });
 </script>
+<!-- Upload Agreement 2 Modal -->
+<div id="uploadAgreementModal" class="fixed inset-0 z-[10000] hidden bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-[#1C1C1E] border border-white/10 p-6 rounded-2xl w-full max-w-md">
+        <h4 class="text-lg font-bold text-white mb-4">Upload Additional Agreement</h4>
+        
+        <form id="uploadAgreementForm" method="POST" enctype="multipart/form-data">
+            @csrf
+            
+            <div class="mb-4">
+                <a id="btn_download_agreement2" href="#" target="_blank" class="block w-full text-center py-3 rounded-xl border border-white/20 text-gray-300 text-sm font-bold hover:bg-white/5 transition mb-6">
+                    <i class="fas fa-download mr-2"></i> Download Latest Agreement PDF
+                </a>
+                
+                <label class="block mb-2 text-sm text-gray-400">Please upload your signed Agreement form (PDF only).</label>
+                <div class="relative group cursor-pointer">
+                    <input type="file" name="agreement_proof_2" id="agreement_proof_2" required accept=".pdf" class="hidden" onchange="document.getElementById('agreement2-filename').innerText = this.files[0] ? this.files[0].name : '';">
+                    <label for="agreement_proof_2" class="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-white/20 rounded-xl hover:border-orange-500 hover:bg-white/5 transition cursor-pointer">
+                        <i class="bi bi-cloud-arrow-up text-2xl text-gray-500 group-hover:text-orange-500 mb-2 transition"></i>
+                        <span class="text-sm font-medium text-gray-400 group-hover:text-white transition">Click to browse file</span>
+                        <span id="agreement2-filename" class="text-xs text-orange-400 mt-2 truncate w-3/4 text-center"></span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="flex gap-3 mt-6">
+                <button type="button" onclick="closeUploadAgreementModal()" class="flex-1 py-3 text-sm font-medium text-gray-400 hover:text-white bg-white/5 hover:bg-white/10 rounded-xl transition">
+                    Cancel
+                </button>
+                <button type="submit" class="flex-1 py-3 text-sm font-medium text-white bg-orange-600 hover:bg-orange-700 rounded-xl shadow-lg transition">
+                    Upload
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    function openUploadAgreementModal(bookingID) {
+        document.getElementById('uploadAgreementForm').action = "/my-bookings/agreement/" + bookingID;
+        document.getElementById('btn_download_agreement2').href = "/book/agreement/" + bookingID + "?blank=1";
+        document.getElementById('uploadAgreementModal').classList.remove('hidden');
+    }
+
+    function closeUploadAgreementModal() {
+        document.getElementById('uploadAgreementModal').classList.add('hidden');
+        document.getElementById('uploadAgreementForm').reset();
+        document.getElementById('agreement2-filename').innerText = "";
+    }
+</script>
+
 @endsection

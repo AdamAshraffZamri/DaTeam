@@ -1122,6 +1122,32 @@ class StaffBookingController extends Controller
     }
 
     // [NEW] UPDATE VEHICLE (Swap Plate No)
+    public function updateRemarks(Request $request, $id)
+    {
+        $booking = Booking::findOrFail($id);
+        $request->validate([
+            'staffRemarks' => 'nullable|string'
+        ]);
+        
+        $booking->staffRemarks = $request->staffRemarks;
+        $booking->save();
+
+        return redirect()->back()->with('success', 'Remarks updated successfully.');
+    }
+
+    public function updateCost(Request $request, $id)
+    {
+        $booking = Booking::findOrFail($id);
+        $request->validate([
+            'totalCost' => 'required|numeric|min:0'
+        ]);
+        
+        $booking->totalCost = $request->totalCost;
+        $booking->save();
+
+        return redirect()->back()->with('success', 'Total cost updated successfully.');
+    }
+
     public function updateVehicle(Request $request, $id)
     {
         // 1. Find the booking
@@ -1247,6 +1273,13 @@ class StaffBookingController extends Controller
         // but typically invoice is for completed/paid jobs.
         $pdf = Pdf::loadView('pdf.invoice', compact('booking'));
         return $pdf->stream('Invoice-' . $booking->bookingID . '.pdf');
+    }
+
+    public function streamReceipt($id)
+    {
+        $booking = Booking::with(['customer', 'vehicle', 'payment', 'voucher'])->findOrFail($id);
+        $pdf = Pdf::loadView('pdf.receipt', compact('booking'));
+        return $pdf->stream('Receipt-' . $booking->bookingID . '.pdf');
     }
 
     /**
