@@ -66,6 +66,11 @@
         <div class="text-center mb-8 relative">
             <h1 class="text-3xl font-black text-white drop-shadow-md">Complete Your Profile</h1>
             <p class="text-gray-400 mt-2">These details are required for insurance and refunds.</p>
+            @if(!$user->student_card_image || !$user->ic_passport_image || !$user->driving_license_image)
+                <div class="bg-orange-500/20 border border-orange-500 text-orange-200 px-4 py-2 rounded-lg text-sm animate-pulse">
+                    <i class="fas fa-exclamation-circle"></i> Please upload your ID documents to complete your profile.
+                </div>
+            @endif
 
             <div class="relative mt-6 inline-block">
                 {{-- Avatar Display --}}
@@ -176,94 +181,119 @@
                     </h3>
 
                     {{-- Student/Staff ID Card --}}
-                    <div>
-                        <label class="block text-gray-400 mb-2 font-bold text-xs uppercase tracking-wider">
-                            Student/Staff ID Card 
-                            @if(!$user->student_card_image) <span class="text-red-500">*</span> @endif
-                        </label>
-                        <div class="flex gap-2">
-                            <div class="flex-1 flex">
-                                <input type="text" name="student_staff_id" value="{{ old('student_staff_id', $user->stustaffID) }}" 
-                                    class="w-full bg-white/5 border border-white/10 rounded-l-xl p-3 text-white focus:border-orange-500 uppercase">
-                                
-                                <button type="button" onclick="document.getElementById('student_file').click()" 
-                                        class="bg-white/10 px-4 rounded-r-xl border border-l-0 border-white/10 text-gray-400 hover:text-white transition">
-                                    {{-- ID is used by JS to change the icon --}}
-                                    <i id="icon-student_card_image" class="fas fa-camera"></i>
+                    <div class="grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
+                        
+                        {{-- Typing Space --}}
+                        <div class="md:col-span-3">
+                            <label class="block text-gray-400 mb-2 font-bold text-xs uppercase tracking-wider">
+                                Student/Staff ID No. @if(!$user->student_card_image) <span class="text-red-500">*</span> @endif
+                            </label>
+                            {{-- p-3 here creates the height --}}
+                            <input type="text" name="student_staff_id" value="{{ old('student_staff_id', $user->stustaffID) }}" 
+                                class="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white uppercase" placeholder="Enter ID Number">
+                        </div>
+
+                        {{-- Compact Upload Button --}}
+                        <div class="md:col-span-2">
+                            <label class="block text-gray-400 mb-2 font-bold text-xs uppercase tracking-wider hidden md:block">&nbsp;</label>
+                            
+                            <div id="container-student" class="relative">
+                                {{-- SUCCESS STATE: Matches p-3 height --}}
+                                <div id="success-view-student" class="{{ $user->student_card_image ? 'flex' : 'hidden' }} bg-green-500/20 border border-green-500/50 p-3 rounded-xl items-center justify-between text-green-400 h-[48px]">
+                                    <span class="text-xs font-bold truncate flex items-center">
+                                        <i class="fas fa-check-circle mr-2"></i> Done
+                                    </span>
+                                    <div class="flex gap-3">
+                                        <a href="{{ $user->student_card_image ? asset($user->student_card_image) : '#' }}" target="_blank" class="text-[10px] underline hover:text-white">View</a>
+                                        <button type="button" onclick="document.getElementById('student_file').click()" class="text-[10px] underline hover:text-white">Reupload</button>
+                                    </div>
+                                </div>
+
+                                {{-- UPLOAD TRIGGER: Added h-[48px] to force matching input height --}}
+                                <button type="button" id="upload-btn-student" 
+                                        onclick="document.getElementById('student_file').click()"
+                                        class="w-full bg-white/5 border border-white/20 hover:border-orange-500 p-3 rounded-xl text-gray-400 text-[11px] transition flex items-center justify-center gap-1.5 px-2 h-[48px] {{ $user->student_card_image ? 'hidden' : '' }}">
+                                    <i id="icon-student_card_image" class="fas fa-cloud-upload-alt shrink-0"></i>
+                                    <span class="truncate">Upload Student Card</span>
                                 </button>
                                 
                                 <input type="file" name="student_card_image" id="student_file" class="hidden" accept="image/*" 
-                                    onchange="showTick(this, 'icon-student_card_image')">
+                                    onchange="handleReupload(this, 'icon-student_card_image', 'upload-btn-student', 'success-view-student')">
                             </div>
-
-                            @if($user->student_card_image)
-                                <a href="{{ asset($user->student_card_image) }}" target="_blank" 
-                                class="bg-orange-500/20 border border-orange-500/50 text-orange-400 px-4 rounded-xl flex items-center hover:bg-orange-500/40 transition">
-                                    <i class="fas fa-eye"></i>
-                                </a>
-                            @endif
                         </div>
                     </div>
 
-                    {{-- IC/PASSPORT --}}
-                    <div>
-                        <label class="block text-gray-400 mb-2 font-bold text-xs uppercase tracking-wider">
-                            IC/Passport
-                            @if(!$user->ic_passport_image) <span class="text-red-500">*</span> @endif
-                        </label>
-                        <div class="flex gap-2">
-                            <div class="flex-1 flex">
-                                <input type="text" name="ic_passport" value="{{ old('ic_passport', $user->ic_passport) }}" 
-                                    class="w-full bg-white/5 border border-white/10 rounded-l-xl p-3 text-white focus:border-orange-500 uppercase">
-                                
-                                <button type="button" onclick="document.getElementById('ic_passport_file').click()" 
-                                        class="bg-white/10 px-4 rounded-r-xl border border-l-0 border-white/10 text-gray-400 hover:text-white transition">
-                                    {{-- ID is used by JS to change the icon --}}
-                                    <i id="icon-ic_passport_image" class="fas fa-camera"></i>
+                    {{-- IC / Passport Section --}}
+                    <div class="grid grid-cols-1 md:grid-cols-5 gap-4 items-end mt-6">
+                        <div class="md:col-span-3">
+                            <label class="block text-gray-400 mb-2 font-bold text-xs uppercase tracking-wider">
+                                IC / Passport No. @if(!$user->ic_passport_image) <span class="text-red-500">*</span> @endif
+                            </label>
+                            <input type="text" name="ic_passport" value="{{ old('ic_passport', $user->ic_passport) }}" 
+                                class="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white uppercase" placeholder="Enter IC/Passport">
+                        </div>
+
+                        <div class="md:col-span-2">
+                            <label class="block text-gray-400 mb-2 font-bold text-xs uppercase tracking-wider hidden md:block">&nbsp;</label>
+                            <div id="container-ic" class="relative">
+                                <div id="success-view-ic" class="{{ $user->ic_passport_image ? 'flex' : 'hidden' }} bg-green-500/20 border border-green-500/50 p-3 rounded-xl items-center justify-between text-green-400 h-[48px]">
+                                    <span class="text-xs font-bold truncate flex items-center"><i class="fas fa-check-circle mr-2"></i> Done</span>
+                                    <div class="flex gap-3">
+                                        <a href="{{ $user->ic_passport_image ? asset($user->ic_passport_image) : '#' }}" target="_blank" class="text-[10px] underline hover:text-white">View</a>
+                                        <button type="button" onclick="document.getElementById('ic_file').click()" class="text-[10px] underline hover:text-white">Reupload</button>
+                                    </div>
+                                </div>
+                                <button type="button" id="upload-btn-ic" onclick="document.getElementById('ic_file').click()"
+                                        class="w-full bg-white/5 border border-white/20 hover:border-orange-500 p-3 rounded-xl text-gray-400 text-[11px] transition flex items-center justify-center gap-1.5 px-2 h-[48px] {{ $user->ic_passport_image ? 'hidden' : '' }}">
+                                    <i id="icon-ic_passport_image" class="fas fa-cloud-upload-alt shrink-0"></i>
+                                    <span class="truncate">Upload IC/Passport</span>
                                 </button>
-                                
-                                <input type="file" name="ic_passport_image" id="ic_passport_file" class="hidden" accept="image/*" 
-                                    onchange="showTick(this, 'icon-ic_passport_image')">
+                                <input type="file" name="ic_passport_image" id="ic_file" class="hidden" accept="image/*" 
+                                    onchange="handleReupload(this, 'icon-ic_passport_image', 'upload-btn-ic', 'success-view-ic')">
                             </div>
-
-                            @if($user->ic_passport_image)
-                                <a href="{{ asset($user->ic_passport_image) }}" target="_blank" 
-                                class="bg-orange-500/20 border border-orange-500/50 text-orange-400 px-4 rounded-xl flex items-center hover:bg-orange-500/40 transition">
-                                    <i class="fas fa-eye"></i>
-                                </a>
-                            @endif
                         </div>
                     </div>
 
-                    {{-- LICENSE --}}
-                    <div>
-                        <label class="block text-gray-400 mb-2 font-bold text-xs uppercase tracking-wider">
-                            Driving License Expired Date
-                            @if(!$user->driving_license_image) <span class="text-red-500">*</span> @endif
-                        </label>
-                        <div class="flex gap-2">
-                            <div class="flex-1 flex">
-                                <input type="date" name="driving_license_expiry" value="{{ old('driving_license_expiry', $user->driving_license_expiry) }}" 
-                                    class="w-full bg-white/5 border border-white/10 rounded-l-xl p-3 text-white focus:border-orange-500 uppercase">
+                    {{-- Driving License Section --}}
+                    <div class="grid grid-cols-1 md:grid-cols-5 gap-4 items-end mt-6">
+                        {{-- Typing Space (3/5) --}}
+                        <div class="md:col-span-3">
+                            <label class="block text-gray-400 mb-2 font-bold text-xs uppercase tracking-wider">
+                                License Expiry Date @if(!$user->driving_license_image) <span class="text-red-500">*</span> @endif
+                            </label>
+                            
+                            {{-- Updated to type="date" and added ID for JS selection --}}
+                            <input type="date" name="driving_license_expiry" id="license_expiry_date"
+                                value="{{ old('driving_license_expiry', $user->driving_license_expiry) }}" 
+                                class="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white uppercase" 
+                                placeholder="YYYY-MM-DD">
+                        </div>
+
+                        {{-- Compact Upload Button (2/5) --}}
+                        <div class="md:col-span-2">
+                            <label class="block text-gray-400 mb-2 font-bold text-xs uppercase tracking-wider hidden md:block">&nbsp;</label>
+                            <div id="container-license" class="relative">
+                                {{-- Success State --}}
+                                <div id="success-view-license" class="{{ $user->driving_license_image ? 'flex' : 'hidden' }} bg-green-500/20 border border-green-500/50 p-3 rounded-xl items-center justify-between text-green-400 h-[48px]">
+                                    <span class="text-xs font-bold truncate flex items-center"><i class="fas fa-check-circle mr-2"></i> Done</span>
+                                    <div class="flex gap-3">
+                                        <a href="{{ $user->driving_license_image ? asset($user->driving_license_image) : '#' }}" target="_blank" class="text-[10px] underline hover:text-white">View</a>
+                                        <button type="button" onclick="document.getElementById('license_file').click()" class="text-[10px] underline hover:text-white">Reupload</button>
+                                    </div>
+                                </div>
                                 
-                                <button type="button" onclick="document.getElementById('driving_license_file').click()" 
-                                        class="bg-white/10 px-4 rounded-r-xl border border-l-0 border-white/10 text-gray-400 hover:text-white transition">
-                                    {{-- ID is used by JS to change the icon --}}
-                                    <i id="icon-driving_license_image" class="fas fa-camera"></i>
+                                {{-- Upload Trigger --}}
+                                <button type="button" id="upload-btn-license" onclick="document.getElementById('license_file').click()"
+                                        class="w-full bg-white/5 border border-white/20 hover:border-orange-500 p-3 rounded-xl text-gray-400 text-[11px] transition flex items-center justify-center gap-1.5 px-2 h-[48px] {{ $user->driving_license_image ? 'hidden' : '' }}">
+                                    <i id="icon-driving_license_image" class="fas fa-cloud-upload-alt shrink-0"></i>
+                                    <span class="truncate">Upload License</span>
                                 </button>
-                                
-                                <input type="file" name="driving_license_image" id="driving_license_file" class="hidden" accept="image/*" 
-                                    onchange="showTick(this, 'icon-driving_license_image')">
+                                <input type="file" name="driving_license_image" id="license_file" class="hidden" accept="image/*" 
+                                    onchange="handleReupload(this, 'icon-driving_license_image', 'upload-btn-license', 'success-view-license')">
                             </div>
-
-                            @if($user->driving_license_image)
-                                <a href="{{ asset($user->driving_license_image) }}" target="_blank" 
-                                class="bg-orange-500/20 border border-orange-500/50 text-orange-400 px-4 rounded-xl flex items-center hover:bg-orange-500/40 transition">
-                                    <i class="fas fa-eye"></i>
-                                </a>
-                            @endif
                         </div>
                     </div>
+
                     {{-- ADDRESS --}}
                     <div>
                         <label class="block text-gray-400 mb-2 font-bold text-xs uppercase tracking-wider">Home Address <span class="text-red-500">*</span></label>
@@ -521,38 +551,49 @@
         return true;
     }
 
-    function showTick(input, iconId) {
+    function showTick(input, iconId, btnId) {
         const icon = document.getElementById(iconId);
-        const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+        const btn = document.getElementById(btnId);
         
         if (input.files && input.files[0]) {
-            const file = input.files[0];
+            // Change icon and style to show success
+            icon.classList.remove('fa-cloud-upload-alt');
+            icon.classList.add('fa-check-circle');
+            btn.classList.remove('bg-white/5', 'border-white/20', 'text-gray-400');
+            btn.classList.add('bg-green-500/20', 'border-green-500', 'text-green-400');
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const expiryInput = document.getElementById('license_expiry_date');
+        if (expiryInput) {
+            // Get today's date in YYYY-MM-DD format
+            const today = new Date().toISOString().split('T')[0];
+            // Set the minimum selectable date to today
+            expiryInput.setAttribute('min', today);
+        }
+    });
+
+    function handleReupload(input, iconId, btnId, containerId) {
+        if (input.files && input.files[0]) {
+            // 1. Hide the old success view if it exists
+            const successView = document.getElementById('success-view-student');
+            if (successView) successView.classList.add('hidden');
+
+            // 2. Show the upload button (in case it was hidden)
+            const btn = document.getElementById(btnId);
+            btn.classList.remove('hidden');
             
-            // Validate file size
-            if (file.size > MAX_FILE_SIZE) {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'File Too Large',
-                    text: `File size is ${(file.size / 1024 / 1024).toFixed(2)}MB. Maximum allowed is 10MB.`,
-                    confirmButtonColor: '#ea580c',
-                    background: '#1f2937',
-                    color: '#fff'
-                });
-                
-                // Clear the input
-                input.value = '';
-                icon.classList.remove('fa-check', 'text-green-500');
-                icon.classList.add('fa-camera', 'text-gray-400');
-                return false;
-            }
+            // 3. Update to "Success" look
+            const icon = document.getElementById(iconId);
+            icon.classList.remove('fa-cloud-upload-alt');
+            icon.classList.add('fa-check-circle');
+            btn.classList.remove('bg-white/5', 'border-white/20', 'text-gray-400');
+            btn.classList.add('bg-green-500/20', 'border-green-500', 'text-green-400');
+            btn.querySelector('span').innerText = "File Attached";
             
-            // Change icon to a green checkmark
-            icon.classList.remove('fa-camera', 'text-gray-400');
-            icon.classList.add('fa-check', 'text-green-500');
-        } else {
-            // Revert to camera if selection is cleared
-            icon.classList.remove('fa-check', 'text-green-500');
-            icon.classList.add('fa-camera', 'text-gray-400');
+            // 4. (Optional) Auto-submit or trigger your compression here
+            console.log("File ready for upload: " + input.files[0].name);
         }
     }
 </script>
@@ -579,6 +620,8 @@
         });
     });
 </script>
+
+<script src="https://cdn.jsdelivr.net/npm/browser-image-compression@2.0.1/dist/browser-image-compression.js"></script>
 @endif
 
 @endsection
