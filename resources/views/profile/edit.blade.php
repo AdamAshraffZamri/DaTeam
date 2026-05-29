@@ -4,6 +4,15 @@
 {{-- SweetAlert2 --}}
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
+<style>
+    /* Prevent the image from becoming larger than the modal */
+    #crop_image_element {
+        display: block;
+        max-width: 100%;
+        max-height: 400px;
+    }
+</style>
+
 {{-- 1. FIXED BACKGROUND --}}
 <div class="fixed inset-0 z-0">
     <div class="absolute inset-0 bg-cover bg-center" style="background-image: url('{{ asset('hastabg.png') }}');"></div>
@@ -66,6 +75,7 @@
         <div class="text-center mb-8 relative">
             <h1 class="text-3xl font-black text-white drop-shadow-md">Complete Your Profile</h1>
             <p class="text-gray-400 mt-2">These details are required for insurance and refunds.</p>
+            
             @if(!$user->student_card_image || !$user->ic_passport_image || !$user->driving_license_image)
                 <div class="bg-orange-500/20 border border-orange-500 text-orange-200 px-4 py-2 rounded-lg text-sm animate-pulse">
                     <i class="fas fa-exclamation-circle"></i> Please upload your ID documents to complete your profile.
@@ -75,21 +85,53 @@
             <div class="relative mt-6 inline-block">
                 {{-- Avatar Display --}}
                 <div class="w-32 h-32 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center border-4 border-white/20 shadow-2xl overflow-hidden">
-                    @if($user->avatar)
-                        <img src="{{ asset($user->avatar) }}" class="w-full h-full object-cover">
-                    @else
-                        <i class="fas fa-user text-6xl text-gray-400"></i>
-                    @endif
+                    <img id="avatar_preview" src="{{ $user->avatar ? asset($user->avatar) : '#' }}" 
+                        class="w-full h-full object-cover {{ !$user->avatar ? 'hidden' : '' }}">
+                    <i id="avatar_placeholder" class="fas fa-user text-6xl text-gray-400 {{ $user->avatar ? 'hidden' : '' }}"></i>
                 </div>
 
                 {{-- AVATAR FORM --}}
                 <form action="{{ route('profile.avatar.update') }}" method="POST" enctype="multipart/form-data" id="avatar-form">
                     @csrf
-                    <input type="file" name="avatar" id="avatar_input" class="hidden" accept="image/*" onchange="validateAvatarFile(this)">
-                    <button type="button" onclick="document.getElementById('avatar_input').click()" class="absolute bottom-0 right-0 bg-[#ea580c] hover:bg-orange-600 text-white p-2 rounded-full w-8 h-8 flex items-center justify-center transition shadow-lg cursor-pointer z-20">
+                    {{-- Hidden input for crop coordinates --}}
+                    <input type="hidden" name="crop_data" id="crop_data">
+                    
+                    {{-- Updated input to trigger preview --}}
+                    <input type="file" name="avatar" id="avatar_input" class="hidden" accept="image/*">
+                    
+                    <button type="button" onclick="document.getElementById('avatar_input').click()" 
+                            class="absolute bottom-0 right-0 bg-[#ea580c] hover:bg-orange-600 text-white p-2 rounded-full w-8 h-8 flex items-center justify-center transition shadow-lg cursor-pointer z-20">
                         <i class="fas fa-pencil-alt text-xs"></i>
                     </button>
                 </form>
+            </div>
+        </div>
+
+        {{-- MODAL FOR CROPPING --}}
+        <div id="crop_modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
+            {{-- Backdrop with blur --}}
+            <div class="absolute inset-0 bg-black/70 backdrop-blur-sm"></div>
+            
+            {{-- Modal Card --}}
+            <div class="relative bg-gray-900 border border-white/10 p-6 rounded-2xl max-w-lg w-full shadow-2xl">
+                <h3 class="text-white font-bold text-lg mb-4 text-center">Adjust Your Profile Picture</h3>
+                
+                {{-- Preview container --}}
+                <div class="overflow-hidden rounded-lg bg-gray-800">
+                    <img id="crop_image_element" src="" class="max-w-full">
+                </div>
+                
+                {{-- Actions --}}
+                <div class="mt-6 flex gap-3">
+                    <button type="button" onclick="document.getElementById('crop_modal').classList.add('hidden')" 
+                            class="flex-1 px-4 py-2 rounded-xl bg-gray-700 hover:bg-gray-600 text-white font-medium transition">
+                        Cancel
+                    </button>
+                    <button type="button" id="confirm_crop" 
+                            class="flex-1 px-4 py-2 rounded-xl bg-orange-600 hover:bg-orange-500 text-white font-bold transition shadow-lg shadow-orange-900/50">
+                        Confirm & Save
+                    </button>
+                </div>
             </div>
         </div>
 
@@ -425,6 +467,9 @@
     </div>
 </div>
 
+<link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+
 <script>
     // 1. File Upload Logic
     function fileSelected(type) {
@@ -596,6 +641,53 @@
             console.log("File ready for upload: " + input.files[0].name);
         }
     }
+
+    const avatarInput = document.getElementById('avatar_input');
+    const cropModal = document.getElementById('crop_modal');
+    const cropImageElement = document.getElementById('crop_image_element');
+    const cropDataInput = document.getElementById('crop_data');
+    let cropper;
+
+    window.addEventListener('load', function() {
+        const avatarInput = document.getElementById('avatar_input');
+        const cropModal = document.getElementById('crop_modal');
+        const cropImageElement = document.getElementById('crop_image_element');
+        let cropper;
+
+        avatarInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    cropImageElement.src = event.target.result;
+                    cropModal.classList.remove('hidden');
+                    
+                    if (cropper) cropper.destroy();
+
+                    cropper = new Cropper(cropImageElement, {
+                        aspectRatio: 1,       // Force the output to be a perfect square
+                        viewMode: 2,          // "2" ensures the image covers the entire crop box area
+                        dragMode: 'move',     // Allows user to pan/move the image inside the crop box
+                        autoCropArea: 1,    // Starts with 80% of the image selected
+                        responsive: true,
+                        restore: true,
+                        guides: true,         // Helps the user see the square boundary
+                        center: true,
+                        zoomable: true,       // Enables zoom in/out
+                        // cropBoxMovable: false,// Keeps the crop box centered for better UX
+                        cropBoxResizable: false
+                    });
+                }
+                reader.readAsDataURL(file);
+            }
+        });
+
+        document.getElementById('confirm_crop').addEventListener('click', function() {
+            const data = cropper.getData(true);
+            document.getElementById('crop_data').value = JSON.stringify(data);
+            document.getElementById('avatar-form').submit();
+        });
+    });
 </script>
 
 {{-- Validation Error Popup --}}

@@ -92,43 +92,43 @@ class ProfileController extends Controller
     public function updateAvatar(Request $request)
     {
         $user = auth()->user();
+        $request->validate(['avatar' => ['required', 'image', 'max:2048']]);
 
-        $request->validate([
-            'avatar' => ['required', 'image', 'max:5120'],
-        ]);
+        // Get the JSON string from the hidden input
+        $cropData = json_decode($request->input('crop_data'), true); 
 
         try {
             $file = $request->file('avatar');
-            $filename = 'profile_' . $user->customerID . '_' . time() . '.' . $file->getClientOriginalExtension();
+            $filename = 'profile_' . $user->customerID . '_' . time() . '.jpg';
             $destinationPath = public_path('storage/profilepic');
             
-            if (!File::exists($destinationPath)) {
-                File::makeDirectory($destinationPath, 0755, true);
+            // Ensure folder exists
+            if (!File::exists($destinationPath)) File::makeDirectory($destinationPath, 0755, true);
+
+            // 1. Initialize Manager
+            $manager = new \Intervention\Image\ImageManager(new \Intervention\Image\Drivers\Gd\Driver());
+            $image = $manager->decode($file->get());
+
+            // 2. Crop if user selected area
+            if ($cropData) {
+                $image->crop(
+                    (int)$cropData['width'], 
+                    (int)$cropData['height'], 
+                    (int)$cropData['x'], 
+                    (int)$cropData['y']
+                );
             }
 
-            if ($user->avatar && file_exists(public_path($user->avatar))) {
-                unlink(public_path($user->avatar));
-            }
+            // 3. Resize and Save
+            $image->scale(width: 400); 
+            $image->save($destinationPath . '/' . $filename);
 
-            // 1. Instant Local Save
-            $file->move($destinationPath, $filename);
-            $localPath = 'storage/profilepic/' . $filename;
-            $user->avatar = $localPath;
-
-            // 2. Dispatch Background Job
-            \App\Jobs\UploadToDrive::dispatch($user->customerID, public_path($localPath), 'Profile Picture');
-
-            if (!$user->blacklisted && $user->accountStat == 'rejected') {
-                $user->accountStat = 'pending';
-                $user->rejection_reason = null;
-            }
-            
+            $user->avatar = 'storage/profilepic/' . $filename;
             $user->save();
 
-            return back()->with('status', 'Profile picture updated successfully!');
-
+            return back()->with('status', 'Avatar updated and cropped successfully!');
         } catch (\Exception $e) {
-            return back()->with('error', 'Avatar Update Failed: ' . $e->getMessage());
+            return back()->with('error', 'Update Failed: ' . $e->getMessage());
         }
     }
 
