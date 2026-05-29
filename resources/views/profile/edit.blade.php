@@ -619,25 +619,25 @@
         }
     });
 
-    function handleReupload(input, iconId, btnId, containerId) {
+    function handleReupload(input, iconId, btnId, successViewId) {
         if (input.files && input.files[0]) {
-            // 1. Hide the old success view if it exists
-            const successView = document.getElementById('success-view-student');
+            // 1. DYNAMICALLY hide the success view passed in the argument
+            const successView = document.getElementById(successViewId);
             if (successView) successView.classList.add('hidden');
 
-            // 2. Show the upload button (in case it was hidden)
+            // 2. Show the upload button
             const btn = document.getElementById(btnId);
             btn.classList.remove('hidden');
             
-            // 3. Update to "Success" look
+            // 3. Update to "File Attached" look
             const icon = document.getElementById(iconId);
             icon.classList.remove('fa-cloud-upload-alt');
             icon.classList.add('fa-check-circle');
+            
             btn.classList.remove('bg-white/5', 'border-white/20', 'text-gray-400');
             btn.classList.add('bg-green-500/20', 'border-green-500', 'text-green-400');
             btn.querySelector('span').innerText = "File Attached";
             
-            // 4. (Optional) Auto-submit or trigger your compression here
             console.log("File ready for upload: " + input.files[0].name);
         }
     }
