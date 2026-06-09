@@ -26,6 +26,7 @@ class ReportController extends Controller
         $selectedDate = $request->input('date', Carbon::today()->format('Y-m-d'));
         $selectedMonth = $request->input('month', Carbon::now()->month);
         $selectedYear = $request->input('year', Carbon::now()->year);
+        $selectedVehicle = $request->input('vehicle_filter');
 
         $chartLabels = [];
         $chartData = [];
@@ -33,6 +34,11 @@ class ReportController extends Controller
         $chartTitle = '';
 
         $query = Payment::query();
+
+        if ($selectedVehicle && $selectedVehicle !== 'all') {
+            $bookingIds = Booking::where('vehicleID', $selectedVehicle)->pluck('bookingID');
+            $query->whereIn('bookingID', $bookingIds);
+        }
 
         switch ($filterType) {
             case 'daily':
@@ -45,6 +51,10 @@ class ReportController extends Controller
                 // Group by Hour
                 $hourlyData = Payment::select(DB::raw('HOUR(created_at) as hour'), DB::raw('sum(amount) as total'))
                     ->whereDate('created_at', $date)
+                    ->when($selectedVehicle && $selectedVehicle !== 'all', function($q) use ($selectedVehicle) {
+                                $bookingIds = Booking::where('vehicleID', $selectedVehicle)->pluck('bookingID');
+                                return $q->whereIn('bookingID', $bookingIds);
+                            })
                     ->groupBy('hour')
                     ->pluck('total', 'hour');
 
@@ -66,6 +76,10 @@ class ReportController extends Controller
 
                 $dailyData = Payment::select(DB::raw('DATE(created_at) as date'), DB::raw('sum(amount) as total'))
                     ->whereBetween('created_at', [$startOfWeek, $endOfWeek])
+                    ->when($selectedVehicle && $selectedVehicle !== 'all', function($q) use ($selectedVehicle) {
+                                $bookingIds = Booking::where('vehicleID', $selectedVehicle)->pluck('bookingID');
+                                return $q->whereIn('bookingID', $bookingIds);
+                            })
                     ->groupBy('date')
                     ->pluck('total', 'date');
 
@@ -84,6 +98,10 @@ class ReportController extends Controller
 
                 $monthlyData = Payment::select(DB::raw('MONTH(created_at) as month'), DB::raw('sum(amount) as total'))
                     ->whereYear('created_at', $selectedYear)
+                    ->when($selectedVehicle && $selectedVehicle !== 'all', function($q) use ($selectedVehicle) {
+                                $bookingIds = Booking::where('vehicleID', $selectedVehicle)->pluck('bookingID');
+                                return $q->whereIn('bookingID', $bookingIds);
+                            })
                     ->groupBy('month')
                     ->pluck('total', 'month');
 
@@ -104,6 +122,10 @@ class ReportController extends Controller
                 $dailyData = Payment::select(DB::raw('DAY(created_at) as day'), DB::raw('sum(amount) as total'))
                     ->whereMonth('created_at', $selectedMonth)
                     ->whereYear('created_at', $selectedYear)
+                    ->when($selectedVehicle && $selectedVehicle !== 'all', function($q) use ($selectedVehicle) {
+                        $bookingIds = Booking::where('vehicleID', $selectedVehicle)->pluck('bookingID');
+                        return $q->whereIn('bookingID', $bookingIds);
+                    })
                     ->groupBy('day')
                     ->pluck('total', 'day');
 
@@ -292,7 +314,7 @@ class ReportController extends Controller
             'bookingOverview', 'bookingPeriod', 'bookingTitle',
             'bookingStatus', 'statusRaw', 'statusPeriod', 'topVehicles', 'vehiclePeriod', 'reviews',
             'bookingsByFaculty', 'facultyPeriod', 'bookingsByAddress', 'addressPeriod',
-            'vehicleEarnings', 'vehicleCosts', 'vehicleNetProfit', 'vehicleProfitFilter', 'allVehicles'
+            'vehicleEarnings', 'vehicleCosts', 'vehicleNetProfit', 'vehicleProfitFilter','selectedVehicle','allVehicles'
         ));
     }
 

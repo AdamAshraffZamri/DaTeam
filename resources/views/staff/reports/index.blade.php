@@ -42,6 +42,15 @@
                 {{-- Filter Form --}}
                 <form method="GET" action="{{ route('staff.reports.index') }}" class="flex flex-wrap items-center gap-2">
                     <input type="hidden" name="booking_period" value="{{ $bookingPeriod }}">
+
+                    <select name="vehicle_filter" class="bg-white border border-slate-200 text-slate-800 text-xs font-bold rounded-lg px-3 py-2 focus:border-orange-500 outline-none" onchange="this.form.submit()">
+                        <option value="all">All Vehicles</option>
+                        @foreach($allVehicles as $vehicle)
+                            <option value="{{ $vehicle->VehicleID }}" {{ request('vehicle_filter') == $vehicle->VehicleID ? 'selected' : '' }}>
+                                {{ $vehicle->plateNo }}
+                            </option>
+                        @endforeach
+                    </select>
                     
                     <select name="filter_type" id="filter_type" class="bg-white border border-slate-200 text-slate-800 text-xs font-bold rounded-lg px-3 py-2 focus:border-orange-500 focus:ring-0 outline-none transition-colors" onchange="this.form.submit()">
                         <option value="daily" {{ $filterType == 'daily' ? 'selected' : '' }}>Daily</option>

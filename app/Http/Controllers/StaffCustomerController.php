@@ -79,14 +79,19 @@ class StaffCustomerController extends Controller
             }
         }
 
-        // 2. Search Logic (Grouped to prevent 'orWhere' from breaking the status filter)
+        // 2. Search Logic
         if ($request->filled('search')) {
-            $search = $request->get('search');
+            $search = $request->input('search');
             $query->where(function ($q) use ($search) {
                 $q->where('fullName', 'like', "%{$search}%")
                 ->orWhere('email', 'like', "%{$search}%")
                 ->orWhere('stustaffID', 'like', "%{$search}%");
             });
+        }
+
+        // 3. Date Filter (Matches the specific date regardless of time)
+        if ($request->filled('filter_date')) {
+            $query->whereDate('updated_at', $request->filter_date);
         }
 
         // 3. Custom Sorting (Priority: Pending -> Unverified -> Verified)
@@ -100,7 +105,7 @@ class StaffCustomerController extends Controller
         ");
 
         // 4. Secondary Sort: Earliest updated at the top
-        $query->orderBy('updated_at', 'asc');
+        $query->orderBy('updated_at', 'desc');
 
         // 5. Fetch all records (Removed pagination)
         $customers = $query->paginate(500)->appends($request->all());

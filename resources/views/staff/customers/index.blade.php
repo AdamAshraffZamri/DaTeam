@@ -12,17 +12,24 @@
             </div>
 
             {{-- SEARCH & FILTER FORM --}}
-            <form action="{{ route('staff.customers.index') }}" method="GET" id="filterForm" class="flex flex-col md:flex-row items-center gap-3 w-full xl:w-auto">
+            <form action="{{ route('staff.customers.index') }}" method="GET" id="filterForm" 
+                class="flex flex-col sm:flex-row items-center gap-2 w-full xl:w-auto">
                 
                 {{-- 1. SEARCH INPUT --}}
-                <div class="relative group w-full md:w-72">
+                <div class="relative w-full sm:w-60">
                     <input type="text" name="search" value="{{ request('search') }}" 
-                           placeholder="Search Name, ID, Email..." 
-                           class="w-full pl-10 pr-4 py-3.5 rounded-2xl border border-gray-200 bg-white text-sm font-bold text-gray-700 focus:ring-2 focus:ring-gray-900 focus:border-transparent transition-all shadow-sm group-hover:border-gray-300">
-                    <i class="fas fa-search absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 group-hover:text-gray-600 transition-colors"></i>
+                        placeholder="Search..." 
+                        class="w-full px-4 py-3.5 rounded-2xl border border-gray-200 bg-white text-sm font-bold text-gray-700">
                 </div>
 
-                {{-- 2. STATUS DROPDOWN --}}
+                {{-- 2. DATE FILTER --}}
+                <div class="w-full sm:w-40">
+                    <input type="date" name="filter_date" value="{{ request('filter_date') }}" 
+                        onchange="this.form.submit()"
+                        class="w-full px-4 py-3.5 rounded-2xl border border-gray-200 text-sm font-bold text-gray-600">
+                </div>
+
+                {{-- 3. STATUS FILTER --}}
                 @php
                     $currentStatus = request('status', 'all');
                     $statuses = [
@@ -74,6 +81,11 @@
                         @endforeach
                     </div>
                 </div>
+
+                {{-- 4. RESET BUTTON (Optional but useful) --}}
+                <a href="{{ route('staff.customers.index') }}" class="text-gray-400 hover:text-red-500 text-xs font-bold uppercase underline">
+                    Reset
+                </a>
             </form>
         </div>
 

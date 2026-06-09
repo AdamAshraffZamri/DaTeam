@@ -12,7 +12,8 @@ use Carbon\Carbon;
 use Google\Client;
 use Google\Service\Drive;
 use Google\Service\Drive\DriveFile;
-
+use Intervention\Image\ImageManager;
+use Intervention\Image\Drivers\Gd\Driver;
 /**
  * ProfileController
  * 
@@ -91,43 +92,43 @@ class ProfileController extends Controller
     public function updateAvatar(Request $request)
     {
         $user = auth()->user();
+        $request->validate(['avatar' => ['required', 'image', 'max:2048']]);
 
-        $request->validate([
-            'avatar' => ['required', 'image', 'max:5120'],
-        ]);
+        // Get the JSON string from the hidden input
+        $cropData = json_decode($request->input('crop_data'), true); 
 
         try {
             $file = $request->file('avatar');
-            $filename = 'profile_' . $user->customerID . '_' . time() . '.' . $file->getClientOriginalExtension();
+            $filename = 'profile_' . $user->customerID . '_' . time() . '.jpg';
             $destinationPath = public_path('storage/profilepic');
             
-            if (!File::exists($destinationPath)) {
-                File::makeDirectory($destinationPath, 0755, true);
+            // Ensure folder exists
+            if (!File::exists($destinationPath)) File::makeDirectory($destinationPath, 0755, true);
+
+            // 1. Initialize Manager
+            $manager = new \Intervention\Image\ImageManager(new \Intervention\Image\Drivers\Gd\Driver());
+            $image = $manager->decode($file->get());
+
+            // 2. Crop if user selected area
+            if ($cropData) {
+                $image->crop(
+                    (int)$cropData['width'], 
+                    (int)$cropData['height'], 
+                    (int)$cropData['x'], 
+                    (int)$cropData['y']
+                );
             }
 
-            if ($user->avatar && file_exists(public_path($user->avatar))) {
-                unlink(public_path($user->avatar));
-            }
+            // 3. Resize and Save
+            $image->scale(width: 400); 
+            $image->save($destinationPath . '/' . $filename);
 
-            // 1. Instant Local Save
-            $file->move($destinationPath, $filename);
-            $localPath = 'storage/profilepic/' . $filename;
-            $user->avatar = $localPath;
-
-            // 2. Dispatch Background Job
-            \App\Jobs\UploadToDrive::dispatch($user->customerID, public_path($localPath), 'Profile Picture');
-
-            if (!$user->blacklisted && $user->accountStat == 'rejected') {
-                $user->accountStat = 'pending';
-                $user->rejection_reason = null;
-            }
-            
+            $user->avatar = 'storage/profilepic/' . $filename;
             $user->save();
 
-            return back()->with('status', 'Profile picture updated successfully!');
-
+            return back()->with('status', 'Avatar updated and cropped successfully!');
         } catch (\Exception $e) {
-            return back()->with('error', 'Avatar Update Failed: ' . $e->getMessage());
+            return back()->with('error', 'Update Failed: ' . $e->getMessage());
         }
     }
 
@@ -222,7 +223,7 @@ class ProfileController extends Controller
             'college_address' => ['required', 'string', 'max:500'],
             'student_staff_id' => ['required', 'string', 'max:50', Rule::unique('customers', 'stustaffID')->ignore($user->customerID, 'customerID')],
             'ic_passport' => ['required', 'string', 'max:50', Rule::unique('customers', 'ic_passport')->ignore($user->customerID, 'customerID')],
-            'driving_license_expiry' => ['required', 'date', 'after:today'],
+            'driving_license_expiry' => ['required', 'date', 'after_or_equal:today'],
             'nationality' => ['required', 'string', 'max:50'],
             'dob' => ['required', 'date'],
             'faculty' => ['required', 'string', 'max:100'],
@@ -230,18 +231,9 @@ class ProfileController extends Controller
             'bank_account_no' => ['required', 'string', 'max:50'],
             
             // Files (optional on updates)
-            'student_card_image' => [
-                $user->student_card_image ? 'nullable' : 'required', 
-                'file', 'mimes:jpeg,png,jpg', 'max:5120'
-            ],
-            'ic_passport_image' => [
-                $user->ic_passport_image ? 'nullable' : 'required', 
-                'file', 'mimes:jpeg,png,jpg', 'max:5120'
-            ],
-            'driving_license_image' => [
-                $user->driving_license_image ? 'nullable' : 'required', 
-                'file', 'mimes:jpeg,png,jpg', 'max:5120'
-            ],
+            'student_card_image' => [$user->student_card_image ? 'nullable' : 'required', 'image', 'mimes:jpeg,png,jpg', 'max:2048'],
+            'ic_passport_image' => [$user->ic_passport_image ? 'nullable' : 'required', 'image', 'mimes:jpeg,png,jpg', 'max:2048'],
+            'driving_license_image' => [$user->driving_license_image ? 'nullable' : 'required', 'image', 'mimes:jpeg,png,jpg', 'max:2048'],
         ], [
             'name.regex' => 'Full name can only contain letters and spaces.',
             'phone.regex' => 'Phone number can only contain numbers, hyphens, and plus signs.',
@@ -259,19 +251,34 @@ class ProfileController extends Controller
         foreach ($documents as $inputKey => $fileLabel) {
             if ($request->hasFile($inputKey)) {
                 $file = $request->file($inputKey);
-                
-                // Instant Local Save (Fast)
-                $localFileName = $user->customerID . '_' . $inputKey . '_' . time() . '.' . $file->getClientOriginalExtension();
-                $file->move(public_path('storage/documents'), $localFileName);
-                $localPath = 'storage/documents/' . $localFileName;
-                
-                // Update DB path immediately
-                $user->$inputKey = $localPath;
+                $localFileName = $user->customerID . '_' . $inputKey . '_' . time() . '.jpg';
+                $destinationPath = public_path('storage/documents');
 
-                // Dispatch Background Job - Control returns to user in milliseconds
+                // Create directory if it doesn't exist
+                if (!File::exists($destinationPath)) {
+                    File::makeDirectory($destinationPath, 0755, true);
+                }
+
+                // Define the full path for saving
+                $path = 'storage/documents/' . $localFileName;
+
+                // 1. Initialize the manager
+                $manager = new ImageManager(new Driver());
+
+                // 2. Use decode() with the current file from the loop
+                $image = $manager->decode($file->get());
+
+                // 3. Process and Save
+                $image->scale(width: 800); 
+                $image->save(public_path($path));
+
+                // 4. Update the user record
+                $user->$inputKey = $path;
+
+                // Dispatch Background Job
                 \App\Jobs\UploadToDrive::dispatch(
                     $user->customerID, 
-                    public_path($localPath), 
+                    public_path($path), 
                     now()->format('Y-m-d') . " - " . $fileLabel
                 );
             }
